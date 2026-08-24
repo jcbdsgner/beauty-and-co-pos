@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
+  --background: #f8f6f9;
   --foreground: #171717;
 
   /* Brand tokens — Beauty and Co (shared with the b&co showcase site) */
@@ -17,6 +17,29 @@
   --brand-cream: #f8f6f9;
   --brand-rose-soft: #fef0ee;
   --brand-lilac: #e4c8ff;
+
+  /* POS accent roles — mapped from the Figma "Elite Privé" gold/olive accent onto
+     the existing Beauty and Co tokens (no new brand colors, no gradients):
+     taupe takes over every "dark/emphasis" role (active nav, dark CTA banners,
+     emphasis text), core-brand-color (rose) takes over every "light/primary
+     action" role (filled CTAs, selected pills, prices). Lilac is reserved for
+     the VIP/premium tier badge. */
+  --pos-accent-dark: var(--brand-taupe-muted);
+  --pos-accent-dark-soft: rgba(136, 102, 102, 0.12);
+  --pos-accent: var(--core-brand-color);
+  --pos-accent-on: var(--on-core-brand-color);
+  --pos-tier-vip: var(--brand-lilac);
+  --pos-tier-gold: var(--brand-taupe-muted);
+  --pos-tier-silver: var(--color-gray-400);
+
+  /* Semantic status colors — meaning stays conventional (success/warning/error/info)
+     regardless of brand, tuned warm to sit on the cream background. */
+  --color-success: #12805c;
+  --color-success-soft: #e3f5ee;
+  --color-warning: #b5590a;
+  --color-warning-soft: #fdf0e3;
+  --color-info: #2662d9;
+  --color-info-soft: #e8f0fd;
 
   /* Gray scale — neutral text/border/background values */
   --color-gray-900: #101828;
