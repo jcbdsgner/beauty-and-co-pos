@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+
+  /* Brand tokens — Beauty and Co (shared with the b&co showcase site) */
+  --core-brand-color: #fdcfca;
+  --core-brand-color-2: #eddcda;
+  --on-core-brand-color: #2d2d2d;
+  --text-secondary: #344054;
+  --button-2-color: #a27576;
+  --brand-color-1: rgba(216, 184, 180, 0.5);
+
+  /* Brand neutrals — warm rose/taupe family */
+  --brand-taupe-muted: #886666;
+  --brand-cream: #f8f6f9;
+  --brand-rose-soft: #fef0ee;
+  --brand-lilac: #e4c8ff;
+
+  /* Gray scale — neutral text/border/background values */
+  --color-gray-900: #101828;
+  --color-gray-800: #1d2939;
+  --color-gray-600: #475467;
+  --color-gray-500: #667085;
+  --color-gray-400: #98a2b3;
+  --color-gray-300: #d0d5dd;
+  --color-gray-200: #eaecf0;
+  --color-gray-100: #f2f4f7;
+  --color-gray-50: #f9fafb;
+
+  /* Misc reused colors */
+  --color-error: #b42318;
+  --color-text-tertiary: #374151;
+  --color-slate-500: #64748b;
+  --color-slate-200: #e2e8f0;
+  --color-slate-900: #0f172a;
+  --color-border-light: #e5e7eb;
+  --color-neutral-200: #e4e4e4;
+  --color-bg-subtle: #f7f8fa;
+  --color-ink: #020817;
+  --color-near-black: #303030;
+  --color-black: #000;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-cabinet-grotesk);
+  --font-heading: var(--font-prata);
+  --font-nav: var(--font-cabinet-grotesk);
+  --font-display: var(--font-benedict);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-cabinet-grotesk), Arial, Helvetica, sans-serif;
+  font-weight: 450;
+}
+
+/* Browsers paint autofilled inputs with their own blue/yellow tint that ignores
+   background-color — override it with the brand tint instead. The absurdly long
+   transition-delay is the standard trick to stop it flashing back on re-render. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  box-shadow: 0 0 0 1000px rgba(253, 207, 202, 0.15) inset;
+  -webkit-box-shadow: 0 0 0 1000px rgba(253, 207, 202, 0.15) inset;
+  -webkit-text-fill-color: #020817;
+  transition: background-color 5000s ease-in-out 0s;
+}
