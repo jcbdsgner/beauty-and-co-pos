@@ -4,10 +4,10 @@ import {
   Scissors,
   Flower2,
   Zap,
-  Eye,
   Hand,
   FaceSlightlySmiling,
   Sparkles,
+  Baby,
   ShoppingCart,
   User,
   Camera,
@@ -37,10 +37,6 @@ export function EpilationIcon({ className }: IconProps) {
   return <Zap className={cn("size-6", className)} />;
 }
 
-export function LashIcon({ className }: IconProps) {
-  return <Eye className={cn("size-6", className)} />;
-}
-
 export function ManucureIcon({ className }: IconProps) {
   return <Hand className={cn("size-6", className)} />;
 }
@@ -53,14 +49,18 @@ export function NailArtIcon({ className }: IconProps) {
   return <Sparkles className={cn("size-6", className)} />;
 }
 
+export function MiniCoIcon({ className }: IconProps) {
+  return <Baby className={cn("size-6", className)} />;
+}
+
 const CATEGORY_ICONS: Record<CategoryIcon, (props: IconProps) => React.ReactElement> = {
   coiffure: ScissorsIcon,
   spa: SpaIcon,
   epilation: EpilationIcon,
-  cils: LashIcon,
   manucure: ManucureIcon,
   visage: VisageIcon,
-  nailart: NailArtIcon,
+  onglerie: NailArtIcon,
+  mini: MiniCoIcon,
 };
 
 export function CategoryGlyph({ icon, className }: { icon: CategoryIcon; className?: string }) {

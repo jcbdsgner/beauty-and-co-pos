@@ -29,10 +29,14 @@ export function FullCatalog({ services, onAdd }: FullCatalogProps) {
                 key={service.id}
                 type="button"
                 onClick={() => onAdd(service)}
-                className="flex flex-col items-start gap-1 rounded-2xl border border-[var(--color-gray-200)] bg-white p-4 text-left transition hover:border-[var(--brand-taupe-muted)]"
+                title={service.description}
+                className="flex min-h-[96px] flex-col items-start justify-between gap-2 rounded-2xl border border-[var(--color-gray-200)] bg-white p-4 text-left transition active:scale-[0.97] hover:border-[var(--brand-taupe-muted)]"
               >
                 <span className="text-[15px] font-semibold text-[var(--color-gray-900)]">{service.name}</span>
-                <span className="font-bold text-[var(--button-2-color)]">{formatFcfa(service.price)}</span>
+                <span className="flex w-full items-end justify-between gap-2">
+                  <span className="font-bold text-[var(--button-2-color)]">{formatFcfa(service.price)}</span>
+                  {service.duration && <span className="shrink-0 text-xs font-medium text-[var(--color-gray-500)]">{service.duration}</span>}
+                </span>
               </button>
             ))}
           </div>

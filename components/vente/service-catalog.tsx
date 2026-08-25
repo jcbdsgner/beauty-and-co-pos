@@ -76,10 +76,14 @@ export function ServiceCatalog({ category, services, search, activeFilter, onFil
               key={service.id}
               type="button"
               onClick={() => onAdd(service)}
+              title={service.description}
               className="group relative flex min-h-[104px] flex-col items-start justify-between gap-2 rounded-2xl border border-[var(--color-gray-200)] bg-white p-5 text-left transition active:scale-[0.97] hover:border-[var(--brand-taupe-muted)] hover:shadow-[0px_2px_8px_0px_rgba(0,0,0,0.06)]"
             >
               <span className="pr-8 text-[15px] font-semibold text-[var(--color-gray-900)]">{service.name}</span>
-              <span className="font-bold text-[var(--button-2-color)]">{formatFcfa(service.price)}</span>
+              <span className="flex w-full items-end justify-between gap-2 pr-8">
+                <span className="font-bold text-[var(--button-2-color)]">{formatFcfa(service.price)}</span>
+                {service.duration && <span className="shrink-0 text-xs font-medium text-[var(--color-gray-500)]">{service.duration}</span>}
+              </span>
               <span className="absolute top-4 right-4 flex size-8 items-center justify-center rounded-full bg-[var(--brand-rose-soft)] text-[var(--brand-taupe-muted)] transition group-hover:bg-[var(--core-brand-color)] group-hover:text-black">
                 <Plus className="size-4" />
               </span>
