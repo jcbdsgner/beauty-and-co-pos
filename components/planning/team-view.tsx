@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import { PersonCard } from "@/components/ui/person-card";
 import { Pills } from "@/components/ui/pills";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PeopleIcon } from "@/components/ui/icons";
 import {
   ROLE_BADGE_VARIANT,
   ROLE_FILTERS,
@@ -15,7 +17,7 @@ export function TeamView() {
   const [roleFilter, setRoleFilter] = useState<(typeof ROLE_FILTERS)[number]["value"]>("tous");
 
   const filtered = useMemo(
-    () => (roleFilter === "tous" ? TEAM_MEMBERS : TEAM_MEMBERS.filter((m) => m.role === roleFilter)),
+    () => TEAM_MEMBERS.filter((m) => roleFilter === "tous" || m.role === roleFilter),
     [roleFilter],
   );
 
@@ -25,22 +27,32 @@ export function TeamView() {
 
       <div className="flex items-center justify-between">
         <h2 className="font-[var(--font-heading)] text-xl text-[var(--color-gray-900)]">Équipe</h2>
-        <span className="text-sm text-[var(--color-gray-500)]">{filtered.length} personnes</span>
+        <span className="text-sm text-[var(--color-gray-500)]">
+          {filtered.length} personne{filtered.length > 1 ? "s" : ""}
+        </span>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {filtered.map((member) => (
-          <PersonCard
-            key={member.id}
-            initial={member.initial}
-            name={member.name}
-            badge={{ label: ROLE_LABELS[member.role], variant: ROLE_BADGE_VARIANT[member.role] }}
-            online
-            trailing="Actif"
-            className="[&>span:last-child]:text-[var(--color-success)]"
-          />
-        ))}
-      </div>
+      {filtered.length === 0 ? (
+        <EmptyState
+          icon={<PeopleIcon />}
+          title="Aucun membre pour ce rôle"
+          subtitle="Essayez un autre filtre."
+        />
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {filtered.map((member) => (
+            <PersonCard
+              key={member.id}
+              initial={member.initial}
+              name={member.name}
+              badge={{ label: ROLE_LABELS[member.role], variant: ROLE_BADGE_VARIANT[member.role] }}
+              online
+              trailing="Actif"
+              className="[&>span:last-child]:text-[var(--color-success)]"
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

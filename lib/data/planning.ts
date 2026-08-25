@@ -94,9 +94,17 @@ export const WEEK_DAYS: WeekDay[] = [
   { short: "DIM", dayNumber: 30, full: "Dimanche 30 Août 2026" },
 ];
 
-export const COMPANY_OPTIONS = [
-  { value: "toutes", label: "Toutes entreprises" },
-  { value: "beauty-and-co", label: "Beauty and Co" },
-];
+/** Index of "today" within WEEK_DAYS — this mock week starts on the actual current date
+ *  (Lundi 24 Août 2026), so "today" is the first day. Drives the "Aujourd'hui" shortcut
+ *  button, which only appears once the user has navigated away from this index. */
+export const TODAY_INDEX = 0;
 
-export const SALON_OPTIONS = [{ value: "tous", label: "Tous salons" }];
+// Une seule enseigne (Beauty and Co) avec 2 salons — pas de multi-entreprise réel,
+// contrairement au jeu de données de démo Figma qui suggérait une 2e entreprise fictive.
+export const COMPANY_OPTIONS = [{ value: "beauty-and-co", label: "Beauty and Co" }];
+
+export const SALON_OPTIONS = [
+  { value: "tous", label: "Tous salons" },
+  { value: "almadies", label: "Almadies" },
+  { value: "sea-plaza", label: "Sea Plaza" },
+];

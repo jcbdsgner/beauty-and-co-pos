@@ -3,10 +3,13 @@
 import { useState } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Pills, type PillOption } from "@/components/ui/pills";
+import { Button } from "@/components/ui/button";
+import { CalendarIcon, ChevronIcon } from "@/components/ui/icons";
 import { WeekDaySelector } from "@/components/planning/week-day-selector";
 import { TeamView } from "@/components/planning/team-view";
 import { AppointmentsView } from "@/components/planning/appointments-view";
-import { COMPANY_OPTIONS, SALON_OPTIONS, WEEK_DAYS } from "@/lib/data/planning";
+import { cn } from "@/lib/utils";
+import { COMPANY_OPTIONS, SALON_OPTIONS, TODAY_INDEX, WEEK_DAYS } from "@/lib/data/planning";
 
 type View = "equipe" | "rdv";
 
@@ -19,23 +22,42 @@ function SelectField({
   value,
   onChange,
   options,
+  defaultValue,
+  ariaLabel,
 }: {
   value: string;
   onChange: (value: string) => void;
   options: Array<{ value: string; label: string }>;
+  defaultValue: string;
+  ariaLabel: string;
 }) {
+  // Bordure dorée (accent) quand une sélection autre que la valeur par défaut est active —
+  // reprend le "dropdown actif" documenté dans la spec Figma.
+  const active = value !== defaultValue;
+
   return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="rounded-full border border-[var(--color-gray-200)] bg-white px-4 py-2.5 text-sm font-medium text-[var(--color-gray-700)] focus:border-[var(--brand-taupe-muted)] focus:outline-none"
+    <div
+      className={cn(
+        "flex items-center gap-2 rounded-full border bg-white px-4 py-2.5 transition focus-within:border-[var(--brand-taupe-muted)]",
+        active ? "border-[var(--pos-accent-dark)]" : "border-[var(--color-gray-200)]",
+      )}
     >
-      {options.map((option) => (
-        <option key={option.value} value={option.value}>
-          {option.label}
-        </option>
-      ))}
-    </select>
+      <select
+        aria-label={ariaLabel}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="cursor-pointer appearance-none bg-transparent text-sm font-medium text-[var(--color-gray-700)] focus:outline-none"
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      <span aria-hidden className="pointer-events-none">
+        <ChevronIcon className="rotate-90 text-[var(--color-gray-400)]" />
+      </span>
+    </div>
   );
 }
 
@@ -43,7 +65,7 @@ function SelectField({
 export function PlanningClient({ defaultView = "equipe" }: { defaultView?: View }) {
   const [company, setCompany] = useState(COMPANY_OPTIONS[0].value);
   const [salon, setSalon] = useState(SALON_OPTIONS[0].value);
-  const [dayIndex, setDayIndex] = useState(0);
+  const [dayIndex, setDayIndex] = useState(TODAY_INDEX);
   const [view, setView] = useState<View>(defaultView);
 
   const activeDay = WEEK_DAYS[dayIndex];
@@ -54,13 +76,37 @@ export function PlanningClient({ defaultView = "equipe" }: { defaultView?: View 
         title="Planning"
         subtitle="Tous les salons"
         action={
-          <span className="font-[var(--font-heading)] text-[var(--pos-accent-dark)]">{activeDay.full}</span>
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            {dayIndex !== TODAY_INDEX && (
+              <Button
+                variant="outline"
+                icon={<CalendarIcon className="size-4" />}
+                className="px-3 py-1.5 text-xs"
+                onClick={() => setDayIndex(TODAY_INDEX)}
+              >
+                Aujourd&rsquo;hui
+              </Button>
+            )}
+            <span className="font-[var(--font-heading)] text-[var(--pos-accent-dark)]">{activeDay.full}</span>
+          </div>
         }
       />
 
       <div className="flex flex-wrap gap-3">
-        <SelectField value={company} onChange={setCompany} options={COMPANY_OPTIONS} />
-        <SelectField value={salon} onChange={setSalon} options={SALON_OPTIONS} />
+        <SelectField
+          value={company}
+          onChange={setCompany}
+          options={COMPANY_OPTIONS}
+          defaultValue={COMPANY_OPTIONS[0].value}
+          ariaLabel="Filtrer par entreprise"
+        />
+        <SelectField
+          value={salon}
+          onChange={setSalon}
+          options={SALON_OPTIONS}
+          defaultValue={SALON_OPTIONS[0].value}
+          ariaLabel="Filtrer par salon"
+        />
       </div>
 
       <WeekDaySelector days={WEEK_DAYS} selectedIndex={dayIndex} onSelect={setDayIndex} />

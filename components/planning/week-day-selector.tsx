@@ -33,6 +33,8 @@ export function WeekDaySelector({ days, selectedIndex, onSelect }: WeekDaySelect
             <button
               key={day.full}
               type="button"
+              aria-pressed={active}
+              aria-label={day.full}
               onClick={() => onSelect(index)}
               className={cn(
                 "flex flex-col items-center gap-1 rounded-2xl px-2 py-3 text-sm transition",
