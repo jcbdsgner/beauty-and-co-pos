@@ -137,13 +137,15 @@ const CATEGORY_VISUAL: Record<LookbookCategory, { bg: string; fg: string; icon: 
 type CategoryVisualProps = {
   category: LookbookCategory;
   className?: string;
+  /** Overrides the icon's default `size-8` — used by the detail dialog's larger visual. */
+  iconClassName?: string;
 };
 
-export function CategoryVisual({ category, className }: CategoryVisualProps) {
+export function CategoryVisual({ category, className, iconClassName }: CategoryVisualProps) {
   const { bg, fg, icon: Icon } = CATEGORY_VISUAL[category];
   return (
     <div className={cn("flex aspect-square items-center justify-center rounded-t-2xl", bg, className)}>
-      <Icon className={fg} />
+      <Icon className={cn(fg, iconClassName)} />
     </div>
   );
 }

@@ -4,8 +4,9 @@ import { useMemo, useState } from "react";
 import { TagHeartIcon } from "@/components/ui/icons";
 import { Pills, type PillOption } from "@/components/ui/pills";
 import { LookbookCard } from "@/components/lookbook/lookbook-card";
+import { LookbookDetailDialog } from "@/components/lookbook/lookbook-detail-dialog";
 import { LookbookEmpty } from "@/components/lookbook/lookbook-empty";
-import { LOOKBOOK_CATEGORY_LABELS, LOOKBOOK_ITEMS, type LookbookCategory } from "@/lib/data/lookbook";
+import { LOOKBOOK_CATEGORY_LABELS, LOOKBOOK_ITEMS, type LookbookCategory, type LookbookItem } from "@/lib/data/lookbook";
 
 type CategoryFilter = "tous" | LookbookCategory;
 
@@ -21,6 +22,7 @@ const CATEGORY_ORDER: LookbookCategory[] = [
 
 export default function LookbookPage() {
   const [filter, setFilter] = useState<CategoryFilter>("tous");
+  const [selectedItem, setSelectedItem] = useState<LookbookItem | null>(null);
 
   const filterOptions: PillOption[] = useMemo(
     () => [
@@ -54,14 +56,21 @@ export default function LookbookPage() {
       <Pills options={filterOptions} value={filter} onChange={(value) => setFilter(value as CategoryFilter)} />
 
       {items.length === 0 ? (
-        <LookbookEmpty />
+        <LookbookEmpty categoryLabel={filter === "tous" ? undefined : LOOKBOOK_CATEGORY_LABELS[filter]} />
       ) : (
         <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4">
           {items.map((item) => (
-            <LookbookCard key={item.id} item={item} />
+            <LookbookCard
+              key={item.id}
+              item={item}
+              selected={selectedItem?.id === item.id}
+              onSelect={setSelectedItem}
+            />
           ))}
         </div>
       )}
+
+      <LookbookDetailDialog item={selectedItem} onClose={() => setSelectedItem(null)} />
     </div>
   );
 }
