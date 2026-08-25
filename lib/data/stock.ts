@@ -25,14 +25,16 @@ export type ProductType = "revente" | "backbar";
 export type Entreprise = { id: string; label: string };
 export type Salon = { id: string; label: string; entrepriseId: string };
 
-// Une seule enseigne (Beauty and Co) avec 2 salons — pas de multi-entreprise réel,
-// contrairement au jeu de données de démo Figma qui suggérait une 2e entreprise fictive.
-export const ENTREPRISES: Entreprise[] = [{ id: "beauty-and-co", label: "Beauty and Co" }];
+export const ENTREPRISES: Entreprise[] = [
+  { id: "beauty-and-co", label: "Beauty and Co" },
+  { id: "michele-ka", label: "Michele Ka" },
+];
 
 export const SALONS: Salon[] = [
   { id: "tous", label: "Tous les salons", entrepriseId: "beauty-and-co" },
   { id: "almadies", label: "Almadies", entrepriseId: "beauty-and-co" },
-  { id: "sea-plaza", label: "Sea Plaza", entrepriseId: "beauty-and-co" },
+  { id: "michele-ka-salon", label: "Michele Ka", entrepriseId: "michele-ka" },
+  { id: "sea-plaza", label: "Sea Plaza", entrepriseId: "michele-ka" },
 ];
 
 export type Product = {
@@ -159,7 +161,7 @@ export const PRODUCTS: Product[] = [
     depotStock: 0,
     min: 8,
     toOrder: 8,
-    salonId: "almadies",
+    salonId: "michele-ka-salon",
     salonStock: 0,
   },
   {
@@ -191,10 +193,10 @@ export const PRODUCTS: Product[] = [
   {
     id: "p-shampoing-blond",
     name: "Shampoing Blond Absolu 250ml",
-    ref: "BC-SHP-002",
+    ref: "MK-SHP-002",
     category: "capillaire",
     type: "revente",
-    entrepriseId: "beauty-and-co",
+    entrepriseId: "michele-ka",
     depotStock: 0,
     min: 4,
     toOrder: 8,
@@ -217,10 +219,10 @@ export const PRODUCTS: Product[] = [
   {
     id: "p-serum-eclat",
     name: "Serum eclat premium",
-    ref: "BC-SER-018",
+    ref: "MK-SER-018",
     category: "visage",
     type: "revente",
-    entrepriseId: "beauty-and-co",
+    entrepriseId: "michele-ka",
     depotStock: 43,
     min: 5,
     toOrder: 0,
@@ -237,7 +239,7 @@ export const PRODUCTS: Product[] = [
     depotStock: 22,
     min: 6,
     toOrder: 0,
-    salonId: "almadies",
+    salonId: "michele-ka-salon",
     salonStock: 5,
   },
   {
@@ -263,7 +265,7 @@ export const PRODUCTS: Product[] = [
     depotStock: 9,
     min: 6,
     toOrder: 0,
-    salonId: "almadies",
+    salonId: "michele-ka-salon",
     salonStock: 2,
   },
 ];
@@ -314,7 +316,7 @@ export const STOCK_REQUESTS: StockRequest[] = [
   {
     id: "req-2",
     productName: "Vernis Semi-Permanent Nude",
-    salonLabel: "Almadies",
+    salonLabel: "Michele Ka",
     entrepriseLabel: "Beauty and Co",
     qty: 10,
     salonStock: 1,
@@ -326,8 +328,8 @@ export const STOCK_REQUESTS: StockRequest[] = [
   {
     id: "req-3",
     productName: "Shampoing Blond Absolu 250ml",
-    salonLabel: "Almadies",
-    entrepriseLabel: "Beauty and Co",
+    salonLabel: "Michele Ka",
+    entrepriseLabel: "Michele Ka",
     qty: 8,
     salonStock: 1,
     depotStock: 0,
