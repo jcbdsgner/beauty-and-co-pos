@@ -116,10 +116,10 @@ export const suiviSections: SuiviSection[] = [
     count: 3,
     cards: [
       {
-        id: "soin-bineta-test",
+        id: "soin-bineta-diagne",
         variant: "expanded",
-        initials: "BT",
-        name: "Bineta Test",
+        initials: "BD",
+        name: "Bineta Diagne",
         subtitle: "Fenêtre gel se referme — Bineta",
         typeLabel: "FENÊTRE GEL",
         lateDays: 3,
@@ -246,10 +246,10 @@ export const suiviSections: SuiviSection[] = [
         action: { kind: "discount", percent: 15, code: "RETOURC0MBA" },
       },
       {
-        id: "reconquete-mariam-test",
+        id: "reconquete-mariam-kane",
         variant: "expanded",
-        initials: "MT",
-        name: "Mariam Test",
+        initials: "MK",
+        name: "Mariam Kane",
         subtitle: "Reconquête (remise -15 % à autoriser) — Mariam",
         typeLabel: "RECONQUÊTE",
         lateDays: 3,
@@ -266,10 +266,10 @@ export const suiviSections: SuiviSection[] = [
     count: 1,
     cards: [
       {
-        id: "lookbook-awa-test",
+        id: "lookbook-awa-sarr",
         variant: "expanded",
-        initials: "AT",
-        name: "Awa Test",
+        initials: "AS",
+        name: "Awa Sarr",
         subtitle: "Rappel — Perfect Manucure Russe",
         typeLabel: "RECOMMANDATION",
         lateDays: 3,

@@ -155,11 +155,11 @@ export const CATEGORIES: Category[] = [
 ];
 
 export const CLIENTS: Client[] = [
-  { id: "cli-awa-test", initial: "AT", name: "Awa Test", phone: "+221781208686", points: 180 },
-  { id: "cli-fatou-test", initial: "FT", name: "Fatou Test", phone: "+221781208686", points: 0 },
-  { id: "cli-coumba-test", initial: "CT", name: "Coumba Test", phone: "+221781208686", points: 75 },
-  { id: "cli-bineta-test", initial: "BT", name: "Bineta Test", phone: "+221781208686", points: 25 },
-  { id: "cli-mariam-test", initial: "MT", name: "Mariam Test", phone: "+221781208686", points: 0 },
+  { id: "cli-awa-sarr", initial: "AS", name: "Awa Sarr", phone: "+221784455661", points: 180 },
+  { id: "cli-fatou-camara", initial: "FC", name: "Fatou Camara", phone: "+221771122334", points: 0 },
+  { id: "cli-coumba-thiam", initial: "CT", name: "Coumba Thiam", phone: "+221765544332", points: 75 },
+  { id: "cli-bineta-diagne", initial: "BD", name: "Bineta Diagne", phone: "+221709988776", points: 25 },
+  { id: "cli-mariam-kane", initial: "MK", name: "Mariam Kane", phone: "+221781234567", points: 0 },
   {
     id: "cli-awa-niang",
     initial: "AN",

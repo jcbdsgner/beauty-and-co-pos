@@ -60,10 +60,10 @@ export const CLIENTS: Client[] = [
   {
     id: "CLT-4E7CAB",
     firstName: "Awa",
-    lastName: "Test",
-    phone: "+221781208686",
-    whatsapp: "+221781208686",
-    email: "awa.test@gmail.com",
+    lastName: "Sarr",
+    phone: "+221784455661",
+    whatsapp: "+221784455661",
+    email: "awa.sarr@gmail.com",
     address: undefined,
     profession: undefined,
     birthday: "23 août 1992",
@@ -103,7 +103,7 @@ export const CLIENTS: Client[] = [
   {
     id: "CLT-91A2FD",
     firstName: "Fatou",
-    lastName: "Test",
+    lastName: "Camara",
     phone: "+221771122334",
     whatsapp: "+221771122334",
     email: undefined,
@@ -117,7 +117,7 @@ export const CLIENTS: Client[] = [
   {
     id: "CLT-3B8C10",
     firstName: "Coumba",
-    lastName: "Test",
+    lastName: "Thiam",
     phone: "+221765544332",
     tier: "classic",
     tenureLabel: "4 sem.",
@@ -129,7 +129,7 @@ export const CLIENTS: Client[] = [
   {
     id: "CLT-6D45E2",
     firstName: "Bineta",
-    lastName: "Test",
+    lastName: "Diagne",
     phone: "+221709988776",
     whatsapp: "+221709988776",
     tier: "classic",
@@ -143,7 +143,7 @@ export const CLIENTS: Client[] = [
   {
     id: "CLT-7F12AA",
     firstName: "Mariam",
-    lastName: "Test",
+    lastName: "Kane",
     phone: "+221781234567",
     tier: "classic",
     tenureLabel: "2 mois",
