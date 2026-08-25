@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { Dialog } from "@/components/ui/dialog";
 import { CloseButton } from "@/components/ui/icon-button";
 import { Button } from "@/components/ui/button";
@@ -12,9 +13,40 @@ type ScanModalProps = {
   onDetected: (client: Client) => void;
 };
 
-/** "Scanner QR Client" modal — no real camera access here, just the viewfinder chrome plus a
- * "Simuler la détection" button that stands in for a successful scan during demos/dev. */
+/** "Scanner QR Client" modal — activates the device camera for a live viewfinder feed.
+ * QR decoding isn't wired to real client data (there's no encoded payload behind the loyalty
+ * card's QR placeholder), so "Simuler la détection" still stands in for a successful scan. */
 export function ScanModal({ open, onClose, onDetected }: ScanModalProps) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    let stream: MediaStream | null = null;
+    let cancelled = false;
+
+    navigator.mediaDevices
+      ?.getUserMedia({ video: { facingMode: "environment" } })
+      .then((mediaStream) => {
+        if (cancelled) {
+          mediaStream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+        stream = mediaStream;
+        setCameraError(null);
+        if (videoRef.current) videoRef.current.srcObject = mediaStream;
+      })
+      .catch(() => {
+        if (!cancelled) setCameraError("Impossible d'accéder à la caméra");
+      });
+
+    return () => {
+      cancelled = true;
+      stream?.getTracks().forEach((track) => track.stop());
+    };
+  }, [open]);
+
   return (
     <Dialog open={open} labelledBy="scan-modal-title" className="max-w-sm rounded-2xl p-6 shadow-2xl">
       <div className="relative mb-4 flex items-center gap-2">
@@ -26,10 +58,13 @@ export function ScanModal({ open, onClose, onDetected }: ScanModalProps) {
       </div>
 
       <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-[var(--color-gray-900)]">
+        <video ref={videoRef} autoPlay muted playsInline className="absolute inset-0 size-full object-cover" />
         <div className="absolute inset-8 text-white/80">
           <QrFrameIcon />
         </div>
-        <p className="text-xs text-white/40">Caméra indisponible en mode démo</p>
+        {cameraError && (
+          <p className="relative max-w-[80%] text-center text-xs text-white/60">{cameraError}</p>
+        )}
       </div>
 
       <p className="mt-4 text-center text-sm text-[var(--color-gray-500)]">

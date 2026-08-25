@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type PageHeaderProps = {
@@ -21,15 +22,7 @@ export function PageHeader({ title, subtitle, backHref, align = "left", action, 
             aria-label="Retour"
             className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-full text-[var(--color-gray-500)] hover:bg-[var(--color-gray-100)]"
           >
-            <svg aria-hidden viewBox="0 0 20 20" fill="none" className="size-5">
-              <path
-                d="M12.5 15L7.5 10L12.5 5"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <ChevronLeft aria-hidden className="size-5" />
           </Link>
         )}
         <div>

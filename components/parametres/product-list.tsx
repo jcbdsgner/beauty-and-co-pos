@@ -9,6 +9,14 @@ import { Pills, type PillOption } from "@/components/ui/pills";
 import { SearchInput } from "@/components/ui/search-input";
 import { Switch } from "@/components/ui/switch";
 import { PencilIcon, PlusIcon } from "@/components/ui/icons";
+import {
+  AlertTriangleIcon,
+  FolderIcon,
+  GlobeIcon,
+  ProductIcon,
+  TrendingDownIcon,
+  TrendingUpIcon,
+} from "@/components/parametres/icons";
 import { cn } from "@/lib/utils";
 import {
   COMPANY_OPTIONS,
@@ -58,8 +66,8 @@ function ProductCard({ product, onEdit }: { product: Product; onEdit: () => void
   return (
     <Card className="p-4">
       <div className="flex items-start gap-4">
-        <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-rose-soft)] text-lg">
-          🧴
+        <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-rose-soft)] text-[var(--brand-taupe-muted)]">
+          <ProductIcon />
         </div>
         <div className="min-w-0 flex-1">
           <p className={cn("truncate text-[15px] font-semibold text-[var(--color-gray-900)]", !product.active && "text-[var(--color-gray-400)]")}>
@@ -69,21 +77,21 @@ function ProductCard({ product, onEdit }: { product: Product; onEdit: () => void
 
           <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
             <span className="font-bold text-[var(--brand-taupe-muted)]">{formatFCFA(product.priceSale)}</span>
-            <span className="text-[var(--color-gray-400)]">Cout : {formatFCFA(product.priceCost)}</span>
+            <span className="text-[var(--color-gray-400)]">Coût : {formatFCFA(product.priceCost)}</span>
           </div>
 
           <div className="mt-2 flex flex-wrap gap-1.5">
             {lowStock ? (
-              <Badge variant="error" icon={<span aria-hidden>{product.stock === 0 ? "📉" : "📊"}</span>}>
+              <Badge variant="error" icon={product.stock === 0 ? <TrendingDownIcon /> : <TrendingUpIcon />}>
                 {product.stock} en stock
               </Badge>
             ) : (
-              <Badge variant="success" icon={<span aria-hidden>📊</span>}>
+              <Badge variant="success" icon={<TrendingUpIcon />}>
                 {product.stock} en stock
               </Badge>
             )}
             {product.foreignCurrency && (
-              <Badge variant="info" icon={<span aria-hidden>🌐</span>}>
+              <Badge variant="info" icon={<GlobeIcon />}>
                 {product.foreignCurrency}
               </Badge>
             )}
@@ -184,8 +192,8 @@ export function ProductList() {
         subtitle="Stock, prix, fournisseurs"
         action={
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setCategoriesOpen(true)}>
-              📁 Categories
+            <Button variant="outline" onClick={() => setCategoriesOpen(true)} icon={<FolderIcon />}>
+              Catégories
             </Button>
             <Button variant="brand" onClick={openCreate} icon={<PlusIcon />}>
               Ajouter
@@ -202,7 +210,7 @@ export function ProductList() {
       {lowCount > 0 && (
         <div className="flex items-center justify-between rounded-xl bg-[var(--color-warning-soft)] px-4 py-3 text-sm text-[var(--color-warning)]">
           <span className="flex items-center gap-2 font-medium">
-            <span aria-hidden>⚠️</span> {lowCount} produits en stock bas
+            <AlertTriangleIcon /> {lowCount} produits en stock bas
           </span>
           <button
             type="button"
@@ -223,7 +231,7 @@ export function ProductList() {
       <Pills options={CATEGORY_PILLS} value={category} onChange={setCategory} />
 
       {lowStockOnly && (
-        <Badge variant="warning" icon={<span aria-hidden>⚠️</span>} className="w-fit">
+        <Badge variant="warning" icon={<AlertTriangleIcon />} className="w-fit">
           Stock bas uniquement
         </Badge>
       )}

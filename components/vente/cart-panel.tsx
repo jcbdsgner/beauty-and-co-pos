@@ -8,7 +8,7 @@ import { Stepper } from "@/components/ui/stepper";
 import { HeroNumber } from "@/components/ui/hero-number";
 import { EmptyState } from "@/components/ui/empty-state";
 import { TrashIcon, ChevronIcon } from "@/components/ui/icons";
-import { CartGlyphIcon, ReceiptTagIcon, KeyGlyphIcon } from "@/components/vente/icons";
+import { CartGlyphIcon, ReceiptTagIcon, KeyGlyphIcon, StarGlyphIcon } from "@/components/vente/icons";
 import { computeTotals, formatFcfa, type CartItem, type Sale } from "@/lib/data/vente";
 
 type CartPanelProps = {
@@ -163,7 +163,10 @@ export function CartPanel({
                 {sale.client && (
                   <div>
                     <div className="mb-1 flex items-center justify-between text-xs font-semibold text-[var(--color-gray-500)] uppercase">
-                      <span>★ Points fidélité ({sale.client.points} pts)</span>
+                      <span className="flex items-center gap-1.5">
+                        <StarGlyphIcon className="size-3.5" filled />
+                        Points fidélité ({sale.client.points} pts)
+                      </span>
                       {redeemableLoyaltyPoints > 0 && (
                         <span className="text-[var(--color-gray-700)] normal-case">{sale.loyaltyPointsUsed} pts</span>
                       )}

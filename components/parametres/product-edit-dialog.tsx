@@ -1,9 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
+import { CheckIcon, XIcon } from "@/components/ui/icons";
+import { GlobeIcon } from "@/components/parametres/icons";
 import { cn } from "@/lib/utils";
 import {
   PRODUCT_CATEGORY_OPTIONS,
@@ -93,14 +96,14 @@ function ProductEditForm({
           aria-label="Fermer"
           className="flex size-8 shrink-0 items-center justify-center rounded-full text-[var(--color-gray-400)] hover:bg-[var(--color-gray-100)]"
         >
-          ✕
+          <XIcon />
         </button>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5 px-6 py-5">
         <div className="flex items-center gap-4">
           <div className="flex size-16 shrink-0 flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-[var(--color-gray-300)] bg-[var(--color-gray-50)] text-[var(--color-gray-400)]">
-            <CameraIcon />
+            <Camera aria-hidden className="size-5" />
             <span className="text-[10px]">Photo</span>
           </div>
           <p className="text-sm text-[var(--color-gray-500)]">
@@ -117,13 +120,13 @@ function ProductEditForm({
             required
             value={draft.name}
             onChange={(event) => update("name", event.target.value)}
-            placeholder="Ex : Apres-shampoing Kerastase 200ml"
+            placeholder="Ex : Après-shampoing Kerastase 200ml"
             className={fieldClass}
           />
         </div>
 
         <div>
-          <label className={labelClass}>SKU (Reference) *</label>
+          <label className={labelClass}>SKU (Référence) *</label>
           <input
             required
             value={draft.sku}
@@ -131,11 +134,11 @@ function ProductEditForm({
             placeholder="BC-XXX-000"
             className={fieldClass}
           />
-          <p className="mt-1 text-xs text-[var(--color-gray-400)]">Genere automatiquement. Modifiable.</p>
+          <p className="mt-1 text-xs text-[var(--color-gray-400)]">Généré automatiquement. Modifiable.</p>
         </div>
 
         <div>
-          <label className={labelClass}>Categorie *</label>
+          <label className={labelClass}>Catégorie *</label>
           <select
             value={draft.category}
             onChange={(event) => {
@@ -153,7 +156,7 @@ function ProductEditForm({
         </div>
 
         <div>
-          <label className={labelClass}>Sous-categorie</label>
+          <label className={labelClass}>Sous-catégorie</label>
           <select
             value={draft.subCategory ?? ""}
             onChange={(event) => update("subCategory", event.target.value || undefined)}
@@ -196,14 +199,14 @@ function ProductEditForm({
           <Switch
             checked={!!draft.foreignCurrency}
             onChange={(checked) => update("foreignCurrency", checked ? "USD" : undefined)}
-            label="Achete a l'etranger"
+            label="Acheté à l'étranger"
           />
           <button
             type="button"
             onClick={() => update("foreignCurrency", draft.foreignCurrency ? undefined : "USD")}
-            className="text-left text-sm text-[var(--color-gray-700)]"
+            className="flex items-center gap-1.5 text-left text-sm text-[var(--color-gray-700)]"
           >
-            🌐 Achete a l&apos;etranger
+            <GlobeIcon /> Acheté à l&apos;étranger
           </button>
         </div>
 
@@ -255,33 +258,19 @@ function ProductEditForm({
         </p>
 
         <div className="rounded-2xl border border-[var(--color-gray-200)] bg-[var(--brand-cream)] p-4 text-sm text-[var(--color-gray-600)]">
-          Note : Le prix defini ici sera applique au POS et ne pourra pas etre modifie par les caissiers. Le stock est
-          gere separement par salon et par depot.
+          Note : Le prix défini ici sera appliqué au POS et ne pourra pas être modifié par les caissiers. Le stock est
+          géré séparément par salon et par dépôt.
         </div>
 
         <div className="flex gap-3 pt-2">
           <Button type="button" variant="outline" onClick={onClose} className="flex-1">
             Annuler
           </Button>
-          <Button type="submit" variant="brand" className="flex-1">
-            ✓ Enregistrer
+          <Button type="submit" variant="brand" className="flex-1" icon={<CheckIcon />}>
+            Enregistrer
           </Button>
         </div>
       </form>
     </>
-  );
-}
-
-function CameraIcon() {
-  return (
-    <svg aria-hidden viewBox="0 0 24 24" fill="none" className="size-5">
-      <path
-        d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2l1-2h7l1 2h2A1.5 1.5 0 0 1 20 8.5v9A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5z"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinejoin="round"
-      />
-      <circle cx="12" cy="12.5" r="3.2" stroke="currentColor" strokeWidth="1.5" />
-    </svg>
   );
 }

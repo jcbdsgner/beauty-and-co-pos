@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { IconButton } from "@/components/ui/icon-button";
-import { TrashIcon } from "@/components/ui/icons";
+import { PencilIcon, PeopleIcon, TrashIcon } from "@/components/ui/icons";
 import type { Campaign } from "@/lib/data/suivi";
 
 /** Carte campagne — titre + badge de statut, aperçu du message, audience ciblée, actions Modifier/Supprimer. */
@@ -16,10 +16,12 @@ export function CampaignCard({ campaign }: { campaign: Campaign }) {
         </Badge>
       </div>
       <p className="line-clamp-3 text-sm text-[var(--color-gray-500)]">{campaign.message}</p>
-      <p className="text-sm text-[var(--color-gray-500)]">👥 {campaign.audience}</p>
+      <p className="flex items-center gap-1.5 text-sm text-[var(--color-gray-500)]">
+        <PeopleIcon className="size-4" /> {campaign.audience}
+      </p>
       <div className="mt-1 flex items-center gap-2">
-        <Button variant="outline" className="flex-1">
-          ✏ Modifier
+        <Button variant="outline" className="flex-1" icon={<PencilIcon />}>
+          Modifier
         </Button>
         <IconButton
           aria-label={`Supprimer la campagne « ${campaign.title} »`}

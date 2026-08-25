@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { PlusIcon } from "@/components/ui/icons";
+import { PlusIcon, XIcon } from "@/components/ui/icons";
 import type { Sale } from "@/lib/data/vente";
 
 type SaleTabsProps = {
@@ -47,7 +47,7 @@ export function SaleTabs({ sales, activeSaleId, onSelect, onClose, onAdd }: Sale
                   active ? "hover:bg-black/10" : "hover:bg-[var(--color-gray-100)]",
                 )}
               >
-                ✕
+                <XIcon className="size-3.5" />
               </button>
             )}
           </div>

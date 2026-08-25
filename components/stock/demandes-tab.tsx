@@ -11,7 +11,7 @@ type SubFilter = RequestStatus | "toutes";
 
 const SUB_FILTERS: PillOption[] = [
   { value: "en_attente", label: "En attente" },
-  { value: "preparation", label: "Preparation" },
+  { value: "preparation", label: "Préparation" },
   { value: "envoye", label: "Envoyé" },
   { value: "toutes", label: "Toutes" },
 ];

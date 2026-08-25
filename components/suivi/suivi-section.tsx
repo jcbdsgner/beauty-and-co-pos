@@ -6,9 +6,7 @@ export function SuiviSection({ section }: { section: SuiviSectionData }) {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
-        <span aria-hidden className="text-base leading-none">
-          {section.icon}
-        </span>
+        <section.icon aria-hidden className="size-4 text-[var(--brand-taupe-muted)]" />
         <p className="text-xs font-semibold tracking-[0.14em] text-[var(--brand-taupe-muted)] uppercase">
           {section.label} · {section.count}
         </p>

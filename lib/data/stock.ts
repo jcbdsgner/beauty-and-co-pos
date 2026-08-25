@@ -30,11 +30,14 @@ export const ENTREPRISES: Entreprise[] = [
   { id: "michele-ka", label: "Michele Ka" },
 ];
 
+// Sea Plaza héberge deux salons distincts, un par entreprise (Beauty and Co ET Michele Ka
+// y sont chacun implantés) ; Almadies n'appartient qu'à Beauty and Co, qui n'a pas d'autre
+// salon que ces deux-là. Michele Ka n'a pas de salon Almadies.
 export const SALONS: Salon[] = [
   { id: "tous", label: "Tous les salons", entrepriseId: "beauty-and-co" },
   { id: "almadies", label: "Almadies", entrepriseId: "beauty-and-co" },
-  { id: "michele-ka-salon", label: "Michele Ka", entrepriseId: "michele-ka" },
-  { id: "sea-plaza", label: "Sea Plaza", entrepriseId: "michele-ka" },
+  { id: "sea-plaza-bc", label: "Sea Plaza", entrepriseId: "beauty-and-co" },
+  { id: "sea-plaza-mk", label: "Sea Plaza", entrepriseId: "michele-ka" },
 ];
 
 export type Product = {
@@ -69,7 +72,7 @@ export const PRODUCTS: Product[] = [
     depotStock: 0,
     min: 5,
     toOrder: 5,
-    salonId: "sea-plaza",
+    salonId: "sea-plaza-bc",
     salonStock: 0,
   },
   {
@@ -82,7 +85,7 @@ export const PRODUCTS: Product[] = [
     depotStock: 0,
     min: 6,
     toOrder: 8,
-    salonId: "sea-plaza",
+    salonId: "sea-plaza-bc",
     salonStock: 0,
   },
   {
@@ -109,7 +112,7 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "p-creme-solaire",
-    name: "Creme Solaire SPF50 Visage",
+    name: "Crème Solaire SPF50 Visage",
     ref: "BC-CRM-033",
     category: "visage",
     type: "revente",
@@ -120,7 +123,7 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "p-huile-seche-corps",
-    name: "Huile Seche Corps Multi-Usage",
+    name: "Huile Sèche Corps Multi-Usage",
     ref: "BC-HUI-006",
     category: "corps",
     type: "revente",
@@ -131,7 +134,7 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "p-beurre-karite",
-    name: "Beurre de Karite Pur 200g",
+    name: "Beurre de Karité Pur 200g",
     ref: "BC-BEU-011",
     category: "corps",
     type: "revente",
@@ -161,7 +164,7 @@ export const PRODUCTS: Product[] = [
     depotStock: 0,
     min: 8,
     toOrder: 8,
-    salonId: "michele-ka-salon",
+    salonId: "sea-plaza-bc",
     salonStock: 0,
   },
   {
@@ -174,14 +177,14 @@ export const PRODUCTS: Product[] = [
     depotStock: 0,
     min: 8,
     toOrder: 8,
-    salonId: "sea-plaza",
+    salonId: "sea-plaza-bc",
     salonStock: 2,
   },
 
   // Stock bas (sous le seuil, mais pas a zero) — visibles dans Depot/Salon avec plus de detail
   {
     id: "p-serum-olaplex",
-    name: "Serum Anti-Casse Olaplex No.6",
+    name: "Sérum Anti-Casse Olaplex No.6",
     ref: "BC-SER-002",
     category: "capillaire",
     type: "revente",
@@ -211,14 +214,14 @@ export const PRODUCTS: Product[] = [
     depotStock: 4,
     min: 6,
     toOrder: 4,
-    salonId: "sea-plaza",
+    salonId: "sea-plaza-bc",
     salonStock: 1,
   },
 
   // Stock correct — variete pour les jauges de progression
   {
     id: "p-serum-eclat",
-    name: "Serum eclat premium",
+    name: "Sérum éclat premium",
     ref: "MK-SER-018",
     category: "visage",
     type: "revente",
@@ -226,7 +229,7 @@ export const PRODUCTS: Product[] = [
     depotStock: 43,
     min: 5,
     toOrder: 0,
-    salonId: "sea-plaza",
+    salonId: "sea-plaza-mk",
     salonStock: 7,
   },
   {
@@ -239,7 +242,7 @@ export const PRODUCTS: Product[] = [
     depotStock: 22,
     min: 6,
     toOrder: 0,
-    salonId: "michele-ka-salon",
+    salonId: "sea-plaza-bc",
     salonStock: 5,
   },
   {
@@ -252,12 +255,12 @@ export const PRODUCTS: Product[] = [
     depotStock: 15,
     min: 5,
     toOrder: 0,
-    salonId: "sea-plaza",
+    salonId: "sea-plaza-bc",
     salonStock: 6,
   },
   {
     id: "p-dissolvant",
-    name: "Dissolvant Sans Acetone 200ml",
+    name: "Dissolvant Sans Acétone 200ml",
     ref: "BC-DIS-037",
     category: "ongles",
     type: "revente",
@@ -265,7 +268,7 @@ export const PRODUCTS: Product[] = [
     depotStock: 9,
     min: 6,
     toOrder: 0,
-    salonId: "michele-ka-salon",
+    salonId: "sea-plaza-bc",
     salonStock: 2,
   },
 ];
@@ -302,7 +305,7 @@ export type StockRequest = {
 export const STOCK_REQUESTS: StockRequest[] = [
   {
     id: "req-1",
-    productName: "Creme Coiffante Boucles",
+    productName: "Crème Coiffante Boucles",
     salonLabel: "Sea Plaza",
     entrepriseLabel: "Beauty and Co",
     qty: 5,
@@ -316,7 +319,7 @@ export const STOCK_REQUESTS: StockRequest[] = [
   {
     id: "req-2",
     productName: "Vernis Semi-Permanent Nude",
-    salonLabel: "Michele Ka",
+    salonLabel: "Sea Plaza",
     entrepriseLabel: "Beauty and Co",
     qty: 10,
     salonStock: 1,
@@ -328,7 +331,7 @@ export const STOCK_REQUESTS: StockRequest[] = [
   {
     id: "req-3",
     productName: "Shampoing Blond Absolu 250ml",
-    salonLabel: "Michele Ka",
+    salonLabel: "Sea Plaza",
     entrepriseLabel: "Michele Ka",
     qty: 8,
     salonStock: 1,
@@ -350,14 +353,14 @@ export const STOCK_REQUESTS: StockRequest[] = [
     status: "envoye",
     requestedBy: "Diarra",
     requestedAt: "1 avr., 09:40",
-    sentBy: "Depot Beauty and Co",
+    sentBy: "Dépôt Beauty and Co",
     sentAt: "1 avr., 11:00",
   },
 ];
 
 export const REQUEST_STATUS_LABELS: Record<RequestStatus, string> = {
   en_attente: "En attente",
-  preparation: "Preparation",
+  preparation: "Préparation",
   envoye: "Envoyé",
 };
 
@@ -382,7 +385,7 @@ export type StockMovement = {
 
 export const MOVEMENT_TYPE_LABELS: Record<MovementType, string> = {
   transfert: "Transfert",
-  reception: "Reception",
+  reception: "Réception",
 };
 
 /** Aucun mouvement historise pour ce jeu de donnees de demo — l'onglet "Historique" se peuple au fil des envois vers salon effectues dans la session. */

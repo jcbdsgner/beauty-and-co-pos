@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { CampaignCard } from "@/components/suivi/campaign-card";
+import { MegaphoneIcon } from "@/components/suivi/icons";
 import { campaigns } from "@/lib/data/suivi";
 
 export default function CampagnesPage() {
@@ -15,8 +16,8 @@ export default function CampagnesPage() {
 
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-3">
-          <span className="mt-1 flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--brand-rose-soft)] text-lg">
-            📣
+          <span className="mt-1 flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--brand-rose-soft)] text-[var(--brand-taupe-muted)]">
+            <MegaphoneIcon className="size-5" />
           </span>
           <div>
             <h1 className="font-[var(--font-heading)] text-2xl text-[var(--color-gray-900)]">Campagnes</h1>

@@ -6,7 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CloseButton, IconButton } from "@/components/ui/icon-button";
+import { CalendarIcon, CheckIcon } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
+import { ChatBubbleIcon, MailIcon, ShieldIcon } from "@/components/suivi/icons";
 import { useSuiviValidation } from "@/components/suivi/suivi-validation-context";
 import type { SuiviCard as SuiviCardData } from "@/lib/data/suivi";
 
@@ -64,7 +66,7 @@ export function SuiviCard({ card }: { card: SuiviCardData }) {
             compactSent ? "bg-[var(--color-success)] opacity-60" : "bg-[var(--color-success)] hover:opacity-90",
           )}
         >
-          {compactSent ? "✓" : "💬"}
+          {compactSent ? <CheckIcon className="size-4" /> : <ChatBubbleIcon className="size-4" />}
         </IconButton>
       </Card>
     );
@@ -105,8 +107,8 @@ export function SuiviCard({ card }: { card: SuiviCardData }) {
 
       {card.action.kind === "contact" &&
         (booked ? (
-          <div className="rounded-xl bg-[var(--color-success-soft)] px-4 py-3 text-sm font-medium text-[var(--color-success)]">
-            ✓ Rendez-vous pris — merci de l&apos;avoir noté
+          <div className="flex items-center gap-1.5 rounded-xl bg-[var(--color-success-soft)] px-4 py-3 text-sm font-medium text-[var(--color-success)]">
+            <CheckIcon className="size-4" /> Rendez-vous pris — merci de l&apos;avoir noté
           </div>
         ) : (
           <div className="flex flex-wrap gap-2">
@@ -115,31 +117,33 @@ export function SuiviCard({ card }: { card: SuiviCardData }) {
               className="flex-1"
               onClick={() => setChannelsSent((s) => ({ ...s, whatsapp: true }))}
               disabled={channelsSent.whatsapp}
+              icon={channelsSent.whatsapp ? <CheckIcon className="size-4" /> : <ChatBubbleIcon className="size-4" />}
             >
-              {channelsSent.whatsapp ? "✓ Envoyé" : "💬 WhatsApp"}
+              {channelsSent.whatsapp ? "Envoyé" : "WhatsApp"}
             </Button>
             <Button
               variant="dark"
               className="flex-1"
               onClick={() => setChannelsSent((s) => ({ ...s, email: true }))}
               disabled={channelsSent.email}
+              icon={channelsSent.email ? <CheckIcon className="size-4" /> : <MailIcon className="size-4" />}
             >
-              {channelsSent.email ? "✓ Envoyé" : "✉ Email"}
+              {channelsSent.email ? "Envoyé" : "Email"}
             </Button>
-            <Button variant="brand" className="flex-1" onClick={() => setBooked(true)}>
-              📅 RDV pris
+            <Button variant="brand" className="flex-1" onClick={() => setBooked(true)} icon={<CalendarIcon className="size-4" />}>
+              RDV pris
             </Button>
           </div>
         ))}
 
       {card.action.kind === "pending" &&
         (sent ? (
-          <div className="rounded-xl bg-[var(--color-success-soft)] px-4 py-3 text-sm font-medium text-[var(--color-success)]">
-            ✓ Message envoyé
+          <div className="flex items-center gap-1.5 rounded-xl bg-[var(--color-success-soft)] px-4 py-3 text-sm font-medium text-[var(--color-success)]">
+            <CheckIcon className="size-4" /> Message envoyé
           </div>
         ) : (
-          <div className="rounded-xl bg-[var(--color-warning-soft)] px-4 py-3 text-sm font-medium text-[var(--color-warning)]">
-            🛡 En attente de validation — comprise dans « Valider &amp; envoyer »
+          <div className="flex items-center gap-1.5 rounded-xl bg-[var(--color-warning-soft)] px-4 py-3 text-sm font-medium text-[var(--color-warning)]">
+            <ShieldIcon className="size-4" /> En attente de validation — comprise dans « Valider &amp; envoyer »
           </div>
         ))}
 
@@ -147,17 +151,23 @@ export function SuiviCard({ card }: { card: SuiviCardData }) {
         <div className="flex flex-col gap-3">
           <div
             className={cn(
-              "rounded-xl px-4 py-3 text-sm font-medium",
+              "flex items-center gap-1.5 rounded-xl px-4 py-3 text-sm font-medium",
               authorized
                 ? "bg-[var(--color-success-soft)] text-[var(--color-success)]"
                 : "bg-[var(--color-warning-soft)] text-[var(--color-warning)]",
             )}
           >
-            {sent && authorized
-              ? `✓ Message envoyé avec la remise -${card.action.percent} % (code ${card.action.code})`
-              : authorized
-                ? `✓ Remise -${card.action.percent} % autorisée (code ${card.action.code}) — sera incluse dans « Valider & envoyer »`
-                : `⊘ Remise -${card.action.percent} % (code ${card.action.code}) — en attente d'autorisation de la direction`}
+            {sent && authorized ? (
+              <>
+                <CheckIcon className="size-4" /> Message envoyé avec la remise -{card.action.percent} % (code {card.action.code})
+              </>
+            ) : authorized ? (
+              <>
+                <CheckIcon className="size-4" /> Remise -{card.action.percent} % autorisée (code {card.action.code}) — sera incluse dans « Valider & envoyer »
+              </>
+            ) : (
+              `⊘ Remise -${card.action.percent} % (code ${card.action.code}) — en attente d'autorisation de la direction`
+            )}
           </div>
           {!sent && (
             <Button
@@ -165,10 +175,11 @@ export function SuiviCard({ card }: { card: SuiviCardData }) {
               className={cn("w-full", authorized && "opacity-60")}
               onClick={() => setAuthorized(true)}
               disabled={authorized}
+              icon={authorized ? <CheckIcon className="size-4" /> : <ShieldIcon className="size-4" />}
             >
               {authorized
-                ? `✓ Remise -${card.action.percent} % autorisée`
-                : `🛡 Autoriser la remise -${card.action.percent} %`}
+                ? `Remise -${card.action.percent} % autorisée`
+                : `Autoriser la remise -${card.action.percent} %`}
             </Button>
           )}
         </div>

@@ -12,7 +12,7 @@ type SubFilter = "tout" | "transferts" | "receptions";
 const SUB_FILTERS: PillOption[] = [
   { value: "tout", label: "Tout" },
   { value: "transferts", label: "Transferts" },
-  { value: "receptions", label: "Receptions" },
+  { value: "receptions", label: "Réceptions" },
 ];
 
 type HistoriqueTabProps = {
@@ -47,12 +47,12 @@ export function HistoriqueTab({ movements }: HistoriqueTabProps) {
         </Card>
         <Card className="p-4 text-center">
           <p className="font-[var(--font-heading)] text-2xl text-[var(--color-success)]">{receptionsCount}</p>
-          <p className="text-xs text-[var(--color-gray-500)]">Receptions</p>
+          <p className="text-xs text-[var(--color-gray-500)]">Réceptions</p>
         </Card>
       </div>
 
       {filtered.length === 0 ? (
-        <EmptyState icon={<WarehouseIcon />} title="Aucun mouvement enregistre" />
+        <EmptyState icon={<WarehouseIcon />} title="Aucun mouvement enregistré" />
       ) : (
         <div className="flex flex-col gap-3">
           {filtered.map((movement) => (
@@ -63,7 +63,7 @@ export function HistoriqueTab({ movements }: HistoriqueTabProps) {
               <div className="min-w-0 flex-1">
                 <p className="truncate font-semibold text-[var(--color-gray-900)]">{movement.productName}</p>
                 <p className="text-xs text-[var(--color-gray-500)]">
-                  {MOVEMENT_TYPE_LABELS[movement.type]} · Qte {movement.qty} · {movement.salonLabel} ·{" "}
+                  {MOVEMENT_TYPE_LABELS[movement.type]} · Qté {movement.qty} · {movement.salonLabel} ·{" "}
                   {movement.entrepriseLabel}
                 </p>
                 {movement.note && <p className="mt-1 text-xs italic text-[var(--color-gray-400)]">{movement.note}</p>}

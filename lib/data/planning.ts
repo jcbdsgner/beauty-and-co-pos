@@ -99,15 +99,24 @@ export const WEEK_DAYS: WeekDay[] = [
  *  button, which only appears once the user has navigated away from this index. */
 export const TODAY_INDEX = 0;
 
-// Une seule enseigne (Beauty and Co) avec 2 salons — pas de multi-entreprise réel,
-// contrairement au jeu de données de démo Figma qui suggérait une 2e entreprise fictive.
-export const COMPANY_OPTIONS = [{ value: "beauty-and-co", label: "Beauty and Co" }];
-
-export const SALON_OPTIONS = [
-  { value: "tous", label: "Tous salons" },
-  { value: "almadies", label: "Almadies" },
-  { value: "sea-plaza", label: "Sea Plaza" },
+// Deux entreprises distinctes, qui se partagent l'emplacement Sea Plaza : Beauty and Co
+// (Almadies + Sea Plaza) et Michele Ka (Sea Plaza uniquement, pas de salon Almadies).
+export const COMPANY_OPTIONS = [
+  { value: "beauty-and-co", label: "Beauty and Co" },
+  { value: "michele-ka", label: "Michele Ka" },
 ];
+
+export const SALON_OPTIONS_BY_COMPANY: Record<string, Array<{ value: string; label: string }>> = {
+  "beauty-and-co": [
+    { value: "tous", label: "Tous salons" },
+    { value: "almadies", label: "Almadies" },
+    { value: "sea-plaza", label: "Sea Plaza" },
+  ],
+  "michele-ka": [
+    { value: "tous", label: "Tous salons" },
+    { value: "sea-plaza", label: "Sea Plaza" },
+  ],
+};
 
 /**
  * Rendez-vous mock (vue "Rendez-vous" du Planning) — cf. CONTEXT.md : même événement que le

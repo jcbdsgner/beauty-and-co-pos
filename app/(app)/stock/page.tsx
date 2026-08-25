@@ -47,7 +47,7 @@ export default function StockPage() {
   const TABS: PillOption[] = [
     { value: "overview", label: "Vue d'ensemble" },
     { value: "demandes", label: "Demandes", count: pendingCount },
-    { value: "depot", label: "Depot" },
+    { value: "depot", label: "Dépôt" },
     { value: "salon", label: "Salon" },
     { value: "historique", label: "Historique" },
   ];
@@ -87,7 +87,7 @@ export default function StockPage() {
     const entrepriseLabel = ENTREPRISES.find((e) => e.id === product.entrepriseId)?.label ?? product.entrepriseId;
     const salonLabel = product.salonId
       ? (SALONS.find((s) => s.id === product.salonId)?.label ?? "Salon")
-      : "Depot central";
+      : "Dépôt central";
 
     const newRequest: StockRequest = {
       id: `req-${Date.now()}`,
@@ -140,7 +140,7 @@ export default function StockPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Gestion Depot" backHref="/" align="center" />
+      <PageHeader title="Gestion Dépôt" backHref="/" align="center" />
 
       <div className="flex flex-col gap-3 sm:flex-row">
         <EntitySelect

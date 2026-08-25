@@ -2,12 +2,14 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Pills, type PillOption } from "@/components/ui/pills";
 import { SearchInput } from "@/components/ui/search-input";
 import { PencilIcon, PlusIcon, TrashIcon } from "@/components/ui/icons";
+import { ClockIcon, LightbulbIcon, SparkleIcon } from "@/components/parametres/icons";
 import {
   BEAUTY_TIPS,
   CARE_FAMILY_LABELS,
@@ -29,9 +31,7 @@ function BackArrow() {
       aria-label="Retour"
       className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-full text-[var(--color-gray-500)] hover:bg-[var(--color-gray-100)]"
     >
-      <svg aria-hidden viewBox="0 0 20 20" fill="none" className="size-5">
-        <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
+      <ChevronLeft aria-hidden className="size-5" />
     </Link>
   );
 }
@@ -91,7 +91,7 @@ export function BeautyTipList() {
         <BackArrow />
         <div>
           <h1 className="flex items-center gap-2 font-[var(--font-heading)] text-2xl text-[var(--color-gray-900)]">
-            <span aria-hidden>💡</span> Conseils beauté
+            <LightbulbIcon /> Conseils beauté
           </h1>
           <p className="mt-1 text-sm text-[var(--color-gray-500)]">
             Vos connaissances, injectées dans les messages de la conseillère.
@@ -101,7 +101,9 @@ export function BeautyTipList() {
 
       <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="font-[var(--font-heading)] text-lg text-[var(--color-gray-900)]">✨ Mes conseils</h2>
+          <h2 className="flex items-center gap-1.5 font-[var(--font-heading)] text-lg text-[var(--color-gray-900)]">
+            <SparkleIcon /> Mes conseils
+          </h2>
           <Button variant="brand" onClick={openCreate} icon={<PlusIcon />}>
             Ajouter
           </Button>
@@ -146,7 +148,9 @@ export function BeautyTipList() {
 
       <section className="space-y-4">
         <div>
-          <h2 className="font-[var(--font-heading)] text-lg text-[var(--color-gray-900)]">🕐 Cycles &amp; conseils par service</h2>
+          <h2 className="flex items-center gap-1.5 font-[var(--font-heading)] text-lg text-[var(--color-gray-900)]">
+            <ClockIcon /> Cycles &amp; conseils par service
+          </h2>
           <p className="mt-1 text-sm text-[var(--color-gray-500)]">
             Délai de relance automatique après chaque prestation.
           </p>

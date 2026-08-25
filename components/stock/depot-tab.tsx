@@ -74,7 +74,7 @@ export function DepotTab({ entrepriseId, entrepriseLabel, onReappro, onOpenSendD
         </Card>
         <Card className="p-4 text-center">
           <p className="font-[var(--font-heading)] text-2xl text-[var(--color-success)]">{totalUnits}</p>
-          <p className="text-xs text-[var(--color-gray-500)]">Total unites</p>
+          <p className="text-xs text-[var(--color-gray-500)]">Total unités</p>
         </Card>
         <Card className="p-4 text-center">
           <p className="font-[var(--font-heading)] text-2xl text-[var(--color-warning)]">{lowStockCount}</p>
@@ -102,11 +102,11 @@ export function DepotTab({ entrepriseId, entrepriseLabel, onReappro, onOpenSendD
         onClick={onOpenHistorique}
         className="inline-flex items-center gap-1.5 self-start text-sm font-medium text-[var(--color-gray-500)] hover:text-[var(--color-gray-700)]"
       >
-        <ClockIcon /> Historique receptions <ChevronIcon className="rotate-90" />
+        <ClockIcon /> Historique réceptions <ChevronIcon className="rotate-90" />
       </button>
 
       <div className="flex items-center justify-between">
-        <h2 className="font-[var(--font-heading)] text-xl text-[var(--color-gray-900)]">Depot {entrepriseLabel}</h2>
+        <h2 className="font-[var(--font-heading)] text-xl text-[var(--color-gray-900)]">Dépôt {entrepriseLabel}</h2>
         <span className="text-sm text-[var(--color-gray-500)]">{depotProducts.length} articles</span>
       </div>
 

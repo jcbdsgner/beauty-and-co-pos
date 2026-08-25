@@ -1,3 +1,4 @@
+import { TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { CategoryVisual } from "@/components/lookbook/category-visual";
@@ -5,17 +6,7 @@ import { LOOKBOOK_CATEGORY_LABELS, formatLookbookPrice, type LookbookItem } from
 import { cn } from "@/lib/utils";
 
 export function TrendIcon({ className }: { className?: string }) {
-  return (
-    <svg aria-hidden viewBox="0 0 24 24" fill="none" className={cn("size-3", className)}>
-      <path
-        d="M5 15l5.5-5.5L14 13l5.5-6M14 6.5h5.5V12"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
+  return <TrendingUp aria-hidden className={cn("size-3", className)} />;
 }
 
 type LookbookCardProps = {

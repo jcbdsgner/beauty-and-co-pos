@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Pills, type PillOption } from "@/components/ui/pills";
 import { SuiviSection } from "@/components/suivi/suivi-section";
+import { ClockIcon } from "@/components/suivi/icons";
 import { HeartPulseIcon } from "@/components/ui/icons";
 import { suiviSections } from "@/lib/data/suivi";
 
@@ -21,7 +22,7 @@ export function SuiviTabs() {
   const options: PillOption[] = [
     { value: "today", label: "Aujourd'hui", count: totalToday },
     { value: "upcoming", label: "À venir" },
-    { value: "history", label: "Historique", icon: <span aria-hidden>🕐</span> },
+    { value: "history", label: "Historique", icon: <ClockIcon className="size-3.5" /> },
   ];
 
   const upcomingSections = useMemo(

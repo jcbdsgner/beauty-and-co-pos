@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { HeartPulseIcon } from "@/components/ui/icons";
+import { MegaphoneIcon, SparkleIcon } from "@/components/suivi/icons";
 import { StatTiles } from "@/components/suivi/stat-tiles";
 import { SuiviTabs } from "@/components/suivi/suivi-tabs";
 import { SuiviValidationProvider } from "@/components/suivi/suivi-validation-context";
@@ -22,11 +23,11 @@ export default function SuiviPage() {
           </div>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-2">
-          <Button variant="dark" href="/lookbook">
-            ✨ Lookbook
+          <Button variant="dark" href="/lookbook" icon={<SparkleIcon />}>
+            Lookbook
           </Button>
-          <Button variant="outline" href="/suivi/campagnes">
-            📣 Campagnes
+          <Button variant="outline" href="/suivi/campagnes" icon={<MegaphoneIcon />}>
+            Campagnes
           </Button>
         </div>
       </div>

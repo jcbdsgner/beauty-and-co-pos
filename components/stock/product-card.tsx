@@ -88,7 +88,7 @@ export function ProductCard(props: ProductCardProps) {
             {product.depotStock}
           </span>
           <Button variant="brand" icon={<span className="text-xs">+</span>} className="px-3 py-1.5 text-xs" onClick={() => props.onReappro?.(product)}>
-            Reappro
+            Réappro
           </Button>
         </div>
       </Card>
@@ -131,7 +131,7 @@ export function ProductCard(props: ProductCardProps) {
               {product.depotStock}
             </span>
             <Button variant="brand" className="px-3 py-1.5 text-xs" onClick={() => props.onReappro?.(product)}>
-              + Reappro
+              + Réappro
             </Button>
           </div>
         </div>
@@ -167,7 +167,7 @@ export function ProductCard(props: ProductCardProps) {
             <TypeBadge type={product.type} />
           </div>
           <p className="mt-2 text-xs text-[var(--color-gray-500)]">En stock : {product.salonStock ?? 0}</p>
-          <p className="text-xs text-[var(--color-gray-400)]">Stock depot : {product.depotStock}</p>
+          <p className="text-xs text-[var(--color-gray-400)]">Stock dépôt : {product.depotStock}</p>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-2">
           <span
@@ -179,7 +179,7 @@ export function ProductCard(props: ProductCardProps) {
             {product.salonStock ?? 0}
           </span>
           <Button variant="outline" icon={<PaperPlaneIcon />} className="px-3 py-1.5 text-xs" onClick={() => props.onReappro?.(product)}>
-            Reappro
+            Réappro
           </Button>
         </div>
       </div>

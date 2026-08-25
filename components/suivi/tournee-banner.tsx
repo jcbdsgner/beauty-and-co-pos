@@ -1,6 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { CheckIcon } from "@/components/ui/icons";
+import { PaperPlaneIcon } from "@/components/suivi/icons";
 import { useSuiviValidation } from "@/components/suivi/suivi-validation-context";
 
 type TourneeBannerProps = {
@@ -31,8 +33,14 @@ export function TourneeBanner({ messagesReady, toValidate, discounts15 }: Tourne
         <div>
           <p className="text-xs font-semibold tracking-[0.14em] text-white/70 uppercase">Tournée du matin</p>
           <p className="mt-1 font-[var(--font-heading)] text-4xl leading-none">{messagesReady} messages prêts</p>
-          <p className="mt-2 text-sm text-white/80" role="status">
-            {sent ? "✓ Tournée envoyée avec succès" : `${toValidate} à valider · ${discounts15} remises -15 %`}
+          <p className="mt-2 flex items-center gap-1.5 text-sm text-white/80" role="status">
+            {sent ? (
+              <>
+                <CheckIcon className="size-4" /> Tournée envoyée avec succès
+              </>
+            ) : (
+              `${toValidate} à valider · ${discounts15} remises -15 %`
+            )}
           </p>
         </div>
         <Button
@@ -40,8 +48,9 @@ export function TourneeBanner({ messagesReady, toValidate, discounts15 }: Tourne
           className="bg-white! text-[var(--pos-accent-dark)]! shrink-0"
           onClick={markSent}
           disabled={sent}
+          icon={sent ? <CheckIcon className="size-4" /> : <PaperPlaneIcon className="size-4" />}
         >
-          {sent ? "✓ Envoyé" : "✈ Valider & envoyer"}
+          {sent ? "Envoyé" : "Valider & envoyer"}
         </Button>
       </div>
     </div>

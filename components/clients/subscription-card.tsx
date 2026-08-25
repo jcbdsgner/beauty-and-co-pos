@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { Gem } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { DiamondIcon, ChevronIcon } from "@/components/ui/icons";
+import { ChevronIcon } from "@/components/ui/icons";
 import { CrownIcon, GiftIcon, SparkleIcon } from "@/components/clients/icons";
 import { type Client, type SubscriptionCredit } from "@/lib/data/clients";
 
@@ -20,7 +21,7 @@ function CreditCard({ credit }: { credit: SubscriptionCredit }) {
     <Card className="flex items-center justify-between gap-3 p-5">
       <div className="flex items-center gap-3">
         <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--brand-rose-soft)] text-[var(--brand-taupe-muted)]">
-          {credit.icon === "diamond" ? <DiamondIcon className="size-5" /> : <SparkleIcon className="size-5" />}
+          {credit.icon === "diamond" ? <Gem className="size-5" /> : <SparkleIcon className="size-5" />}
         </span>
         <div>
           <p className="text-xs font-semibold tracking-wide text-[var(--color-gray-500)] uppercase">

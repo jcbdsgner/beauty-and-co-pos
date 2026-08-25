@@ -37,8 +37,10 @@ export function SettingsHubGrid() {
               item.href ? "hover:border-[var(--brand-taupe-muted)]" : "opacity-55",
             )}
           >
-            <span className={cn("flex size-11 shrink-0 items-center justify-center rounded-2xl text-xl", item.bg)}>
-              <span aria-hidden>{item.emoji}</span>
+            <span
+              className={cn("flex size-11 shrink-0 items-center justify-center rounded-2xl text-[var(--brand-taupe-muted)]", item.bg)}
+            >
+              <item.icon className="size-5" aria-hidden />
             </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate font-semibold text-[var(--color-gray-900)]">{item.title}</span>

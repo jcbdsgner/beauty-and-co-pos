@@ -40,7 +40,7 @@ export function ClientDirectory() {
   return (
     <div className="flex flex-col gap-6">
       <SearchInput
-        placeholder="Nom, telephone, ou email..."
+        placeholder="Nom, téléphone, ou email..."
         value={query}
         onChange={(event) => setQuery(event.target.value)}
       />
@@ -52,7 +52,7 @@ export function ClientDirectory() {
       />
 
       <div className="flex items-center justify-between">
-        <h2 className="font-[var(--font-heading)] text-xl text-[var(--color-gray-900)]">Clients recents</h2>
+        <h2 className="font-[var(--font-heading)] text-xl text-[var(--color-gray-900)]">Clients récents</h2>
         <span className="text-sm text-[var(--color-gray-500)]">{filtered.length} client{filtered.length > 1 ? "s" : ""}</span>
       </div>
 

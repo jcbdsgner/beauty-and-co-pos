@@ -15,7 +15,7 @@ export { formatFCFA };
 export const COMPANY_OPTIONS = [{ value: "beauty-and-co", label: "Beauty and Co" }];
 
 export const DEPOT_OPTIONS = [
-  { value: "global", label: "Stock depot (global)" },
+  { value: "global", label: "Stock dépôt (global)" },
   { value: "almadies", label: "Salon Almadies" },
   { value: "sea-plaza", label: "Salon Sea Plaza" },
 ];
@@ -38,7 +38,7 @@ export const SERVICE_CATEGORY_LABELS: Record<ServiceCategoryValue, string> = {
   "spa-massages": "Spa & Massages",
   epilation: "Épilation",
   "cils-sourcils": "Cils & Sourcils",
-  "manucure-pedicure": "Manucure / Pedicure",
+  "manucure-pedicure": "Manucure / Pédicure",
   "soins-visage": "Soins Visage",
   "nail-art": "Nail art",
 };
@@ -142,7 +142,7 @@ export type Product = {
 export const PRODUCTS: Product[] = [
   {
     id: "prd-1",
-    name: "Apres-shampoing Kerastase 200ml",
+    name: "Après-shampoing Kérastase 200ml",
     sku: "BC-ASH-001",
     category: "capillaire",
     subCategory: "Soins capillaires",
@@ -150,7 +150,7 @@ export const PRODUCTS: Product[] = [
     priceCost: 10500,
     stock: 52,
     lowStockThreshold: 5,
-    supplier: "Kerastase",
+    supplier: "Kérastase",
     productType: "revente",
     active: true,
   },
@@ -171,7 +171,7 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "prd-3",
-    name: "Shampoing Kerastase Nutritive 250ml",
+    name: "Shampoing Kérastase Nutritive 250ml",
     sku: "BC-SKN-002",
     category: "capillaire",
     subCategory: "Shampooings",
@@ -179,7 +179,7 @@ export const PRODUCTS: Product[] = [
     priceCost: 9500,
     stock: 34,
     lowStockThreshold: 8,
-    supplier: "Kerastase",
+    supplier: "Kérastase",
     productType: "revente",
     active: true,
   },
@@ -227,7 +227,7 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "prd-7",
-    name: "Creme Solaire SPF50 Visage",
+    name: "Crème Solaire SPF50 Visage",
     sku: "BC-CSF-006",
     category: "soins-visage",
     subCategory: "Hydratants",

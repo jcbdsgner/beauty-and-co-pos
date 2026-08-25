@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
-import { ChevronIcon } from "@/components/ui/icons";
+import { ChevronIcon, XIcon } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 import { PRODUCT_CATEGORY_TREE } from "@/lib/data/parametres-catalogue";
 
@@ -34,9 +34,9 @@ export function ProductCategoryDialog({ open, onClose }: ProductCategoryDialogPr
       <div className="flex items-start justify-between px-6 pt-4">
         <div>
           <h2 id="product-categories-title" className="font-[var(--font-heading)] text-xl text-[var(--color-gray-900)]">
-            Categories produits
+            Catégories produits
           </h2>
-          <p className="mt-1 text-sm text-[var(--color-gray-500)]">2 niveaux : Categorie → Sous-categorie</p>
+          <p className="mt-1 text-sm text-[var(--color-gray-500)]">2 niveaux : Catégorie → Sous-catégorie</p>
         </div>
         <button
           type="button"
@@ -44,7 +44,7 @@ export function ProductCategoryDialog({ open, onClose }: ProductCategoryDialogPr
           aria-label="Fermer"
           className="flex size-8 shrink-0 items-center justify-center rounded-full text-[var(--color-gray-400)] hover:bg-[var(--color-gray-100)]"
         >
-          ✕
+          <XIcon />
         </button>
       </div>
 

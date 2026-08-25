@@ -1,10 +1,11 @@
-import { Avatar } from "@/components/ui/avatar";
 import { BellIcon } from "@/components/ui/icons";
 
-/** Top-right identity row (avatar + role + name + notifications) used on dashboard-style pages that don't use PageHeader. */
+/** Top-right notification affordance used on dashboard-style pages that don't use PageHeader.
+ *  Identity (avatar + role + name) already lives permanently in the sidebar footer — no need
+ *  to repeat it here. */
 export function Topbar() {
   return (
-    <div className="flex items-center justify-end gap-3">
+    <div className="flex items-center justify-end">
       <button
         type="button"
         aria-label="Notifications"
@@ -12,15 +13,6 @@ export function Topbar() {
       >
         <BellIcon />
       </button>
-      <Avatar
-        initial="PE"
-        size={36}
-        className="border-2 border-[var(--brand-taupe-muted)] bg-[var(--brand-rose-soft)] font-semibold text-[var(--brand-taupe-muted)]"
-      />
-      <div className="text-sm">
-        <p className="text-[11px] font-semibold tracking-wide text-[var(--color-gray-400)] uppercase">Admin</p>
-        <p className="font-semibold text-[var(--color-gray-900)]">Proprietaire</p>
-      </div>
     </div>
   );
 }

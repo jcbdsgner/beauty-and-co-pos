@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Pills } from "@/components/ui/pills";
+import { CheckIcon, XIcon } from "@/components/ui/icons";
 import { ChipSelect } from "@/components/parametres/chip-select";
 import {
   CARE_FAMILY_CHIP_OPTIONS,
@@ -89,7 +90,7 @@ function BeautyTipForm({
           aria-label="Fermer"
           className="flex size-8 shrink-0 items-center justify-center rounded-full text-[var(--color-gray-400)] hover:bg-[var(--color-gray-100)]"
         >
-          ✕
+          <XIcon />
         </button>
       </div>
 
@@ -152,8 +153,8 @@ function BeautyTipForm({
           <Button type="button" variant="outline" onClick={onClose} className="flex-1">
             Annuler
           </Button>
-          <Button type="submit" variant="brand" className="flex-1">
-            ✓ Enregistrer
+          <Button type="submit" variant="brand" className="flex-1" icon={<CheckIcon />}>
+            Enregistrer
           </Button>
         </div>
       </form>
@@ -214,7 +215,7 @@ function ServiceCycleForm({
           aria-label="Fermer"
           className="flex size-8 shrink-0 items-center justify-center rounded-full text-[var(--color-gray-400)] hover:bg-[var(--color-gray-100)]"
         >
-          ✕
+          <XIcon />
         </button>
       </div>
 
@@ -255,8 +256,8 @@ function ServiceCycleForm({
           <Button type="button" variant="outline" onClick={onClose} className="flex-1">
             Annuler
           </Button>
-          <Button type="submit" variant="brand" className="flex-1">
-            ✓ Enregistrer
+          <Button type="submit" variant="brand" className="flex-1" icon={<CheckIcon />}>
+            Enregistrer
           </Button>
         </div>
       </form>

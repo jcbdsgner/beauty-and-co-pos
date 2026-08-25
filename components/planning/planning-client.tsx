@@ -4,18 +4,18 @@ import { useState } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Pills, type PillOption } from "@/components/ui/pills";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, ChevronIcon } from "@/components/ui/icons";
+import { CalendarIcon, ChevronIcon, PeopleIcon } from "@/components/ui/icons";
 import { WeekDaySelector } from "@/components/planning/week-day-selector";
 import { TeamView } from "@/components/planning/team-view";
 import { AppointmentsView } from "@/components/planning/appointments-view";
 import { cn } from "@/lib/utils";
-import { COMPANY_OPTIONS, SALON_OPTIONS, TODAY_INDEX, WEEK_DAYS } from "@/lib/data/planning";
+import { COMPANY_OPTIONS, SALON_OPTIONS_BY_COMPANY, TODAY_INDEX, WEEK_DAYS } from "@/lib/data/planning";
 
 type View = "equipe" | "rdv";
 
 const VIEW_OPTIONS: PillOption[] = [
-  { value: "equipe", label: "Équipe", icon: <span aria-hidden>👥</span> },
-  { value: "rdv", label: "Rendez-vous", icon: <span aria-hidden>📅</span> },
+  { value: "equipe", label: "Équipe", icon: <PeopleIcon className="size-3.5" /> },
+  { value: "rdv", label: "Rendez-vous", icon: <CalendarIcon className="size-3.5" /> },
 ];
 
 function SelectField({
@@ -64,11 +64,19 @@ function SelectField({
 /** Orchestrateur client du module Planning : sélecteurs, semaine, toggle équipe/RDV et vue filtrée. */
 export function PlanningClient({ defaultView = "equipe" }: { defaultView?: View }) {
   const [company, setCompany] = useState(COMPANY_OPTIONS[0].value);
-  const [salon, setSalon] = useState(SALON_OPTIONS[0].value);
+  const [salon, setSalon] = useState("tous");
   const [dayIndex, setDayIndex] = useState(TODAY_INDEX);
   const [view, setView] = useState<View>(defaultView);
 
   const activeDay = WEEK_DAYS[dayIndex];
+  const salonOptions = SALON_OPTIONS_BY_COMPANY[company];
+
+  function handleCompanyChange(value: string) {
+    setCompany(value);
+    // Michele Ka n'a pas de salon Almadies — repartir de "Tous salons" évite de garder
+    // sélectionnée une option qui n'existe pas pour la nouvelle entreprise.
+    setSalon("tous");
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -95,7 +103,7 @@ export function PlanningClient({ defaultView = "equipe" }: { defaultView?: View 
       <div className="flex flex-wrap gap-3">
         <SelectField
           value={company}
-          onChange={setCompany}
+          onChange={handleCompanyChange}
           options={COMPANY_OPTIONS}
           defaultValue={COMPANY_OPTIONS[0].value}
           ariaLabel="Filtrer par entreprise"
@@ -103,8 +111,8 @@ export function PlanningClient({ defaultView = "equipe" }: { defaultView?: View 
         <SelectField
           value={salon}
           onChange={setSalon}
-          options={SALON_OPTIONS}
-          defaultValue={SALON_OPTIONS[0].value}
+          options={salonOptions}
+          defaultValue="tous"
           ariaLabel="Filtrer par salon"
         />
       </div>

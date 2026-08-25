@@ -44,7 +44,7 @@ export function SalonTab({ salonId, salonLabel, onReappro, onOpenSendDialog }: S
 
   const categoriesPresent = Array.from(new Set(salonProducts.map((p) => p.category)));
   const categoryOptions: PillOption[] = [
-    { value: "toutes", label: "Toutes categories" },
+    { value: "toutes", label: "Toutes catégories" },
     ...categoriesPresent.map((cat) => ({ value: cat, label: CATEGORY_LABELS[cat] })),
   ];
 
@@ -93,7 +93,7 @@ export function SalonTab({ salonId, salonLabel, onReappro, onOpenSendDialog }: S
         </Card>
         <Card className="p-4 text-center">
           <p className="font-[var(--font-heading)] text-2xl text-[var(--color-success)]">{totalUnits}</p>
-          <p className="text-xs text-[var(--color-gray-500)]">Total unites</p>
+          <p className="text-xs text-[var(--color-gray-500)]">Total unités</p>
         </Card>
         <Card className="p-4 text-center">
           <p className="font-[var(--font-heading)] text-2xl text-[var(--color-warning)]">{lowStockCount}</p>

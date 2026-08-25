@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Check } from "lucide-react";
 import { Pills, type PillOption } from "@/components/ui/pills";
 import { PhotoPlaceholder } from "@/components/ui/photo-placeholder";
 import { ChevronIcon, TrashIcon } from "@/components/ui/icons";
@@ -14,19 +15,12 @@ import {
 
 const TAB_OPTIONS: PillOption[] = PHOTO_CATEGORIES.map((category) => ({
   value: category.key,
-  label: `${category.emoji} ${category.label}`,
+  label: category.label,
+  icon: <category.icon aria-hidden className="size-3.5" />,
 }));
 
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-taupe-muted)] focus-visible:ring-offset-2";
-
-function CheckIcon({ className }: { className?: string }) {
-  return (
-    <svg aria-hidden viewBox="0 0 20 20" fill="none" className={className}>
-      <path d="M4 10.5l4 4 8-9" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
 
 /**
  * Company selector + category tabs + upload grid for "Photos de référence". A single
@@ -100,7 +94,7 @@ export function PhotoReferenceGrid() {
                 <div className="aspect-[3/4] w-full" style={{ backgroundColor: item.swatch }} />
               ) : (
                 <div className="flex aspect-[3/4] w-full flex-col items-center justify-center gap-1.5 bg-[var(--brand-rose-soft)] text-[var(--brand-taupe-muted)]">
-                  <CheckIcon className="size-6" />
+                  <Check aria-hidden className="size-6" />
                   <span className="text-xs font-medium">Photo ajoutée</span>
                 </div>
               )}

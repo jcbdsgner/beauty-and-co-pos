@@ -95,7 +95,7 @@ export function RequestCard({ request, onPrepare, onCancel, onEditQty, onEditCom
       <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-[var(--color-gray-500)]">
         {editingQty ? (
           <span className="inline-flex items-center gap-1">
-            Qte:
+            Qté:
             <input
               type="number"
               min={1}
@@ -119,11 +119,11 @@ export function RequestCard({ request, onPrepare, onCancel, onEditQty, onEditCom
             onClick={() => setEditingQty(true)}
             className="inline-flex items-center gap-1 hover:text-[var(--color-gray-700)]"
           >
-            Qte: {request.qty} <PencilIcon className="size-3" />
+            Qté: {request.qty} <PencilIcon className="size-3" />
           </button>
         )}
         <Badge variant="neutral">Salon: {request.salonStock}</Badge>
-        <Badge variant="neutral">Depot: {request.depotStock}</Badge>
+        <Badge variant="neutral">Dépôt: {request.depotStock}</Badge>
       </div>
 
       <div className="mt-4 flex flex-col">
@@ -192,7 +192,7 @@ export function RequestCard({ request, onPrepare, onCancel, onEditQty, onEditCom
         <div className="flex items-center gap-2">
           {!isSent && (
             <Button variant="dark" icon={<BoxIcon />} className="px-3 py-2 text-sm" onClick={() => onPrepare(request.id)}>
-              Preparer
+              Préparer
             </Button>
           )}
           {!isSent && (

@@ -27,7 +27,7 @@ export default async function ClientProfilePage({ params }: { params: Promise<{ 
           <HeroNumber label="Visites" value={String(client.visits)} align="center" />
         </Card>
         <Card className="p-5">
-          <HeroNumber label="Depenses" value={client.spend.toLocaleString("fr-FR")} hint="FCFA" align="center" />
+          <HeroNumber label="Dépenses" value={client.spend.toLocaleString("fr-FR")} hint="FCFA" align="center" />
         </Card>
         <Card className="p-5">
           <HeroNumber label="Points" value={String(client.points)} align="center" />
@@ -39,7 +39,7 @@ export default async function ClientProfilePage({ params }: { params: Promise<{ 
           <ClockIcon className="size-5" />
         </span>
         <div>
-          <p className="text-xs text-[var(--color-gray-500)]">Derniere visite</p>
+          <p className="text-xs text-[var(--color-gray-500)]">Dernière visite</p>
           <p
             className={
               client.lastVisit

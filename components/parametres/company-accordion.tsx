@@ -1,37 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { Building2, Store } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ChevronIcon } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 import { COMPANIES } from "@/lib/data/parametres-general";
-
-function BuildingIcon({ className }: { className?: string }) {
-  return (
-    <svg aria-hidden viewBox="0 0 24 24" fill="none" className={className}>
-      <path d="M5 20V5.5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1V20" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-      <path d="M13 10.5h4a1 1 0 0 1 1 1V20" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-      <path d="M3 20h18M7.5 8h1.5M7.5 11.5h1.5M7.5 15h1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function StoreIcon({ className }: { className?: string }) {
-  return (
-    <svg aria-hidden viewBox="0 0 24 24" fill="none" className={className}>
-      <path d="M4 9.5l1-4.5h14l1 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-      <path
-        d="M4.5 9.5a2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinejoin="round"
-      />
-      <path d="M5.5 10.5V19a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-8.5" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-      <path d="M10 20v-4.5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1V20" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-    </svg>
-  );
-}
 
 /** Accordion of companies, each expandable to reveal its salons — "Entreprises & Salons" screen. */
 export function CompanyAccordion() {
@@ -53,7 +28,7 @@ export function CompanyAccordion() {
               className="flex w-full items-center gap-3 rounded-2xl p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-taupe-muted)] focus-visible:ring-offset-2"
             >
               <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--core-brand-color-2)] text-[var(--brand-taupe-muted)]">
-                <BuildingIcon className="size-5" />
+                <Building2 aria-hidden className="size-5" />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block font-semibold text-[var(--color-gray-900)]">{company.name}</span>
@@ -74,7 +49,7 @@ export function CompanyAccordion() {
                     {company.salons.map((salon) => (
                       <div key={salon.name} className="flex items-center gap-3 rounded-xl bg-white px-4 py-3">
                         <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-rose-soft)] text-[var(--brand-taupe-muted)]">
-                          <StoreIcon className="size-4" />
+                          <Store aria-hidden className="size-4" />
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="block text-sm font-medium text-[var(--color-gray-900)]">{salon.name}</span>

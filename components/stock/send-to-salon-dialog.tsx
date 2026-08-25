@@ -122,7 +122,7 @@ export function SendToSalonDialog({ open, salons, defaultSalonId, onClose, onSen
 
         <div>
           <p className="mb-2 text-sm font-semibold text-[var(--color-gray-900)]">
-            Produits a envoyer ({items.length})
+            Produits à envoyer ({items.length})
           </p>
 
           {availableToAdd.length > 0 && (
@@ -130,7 +130,7 @@ export function SendToSalonDialog({ open, salons, defaultSalonId, onClose, onSen
               <select
                 value={selectedProductToAdd}
                 onChange={(e) => setProductToAdd(e.target.value)}
-                aria-label="Choisir un produit a ajouter"
+                aria-label="Choisir un produit à ajouter"
                 className="w-full rounded-xl border border-[var(--color-gray-200)] bg-white px-3 py-2.5 text-sm text-[var(--color-gray-900)] focus:border-[var(--brand-taupe-muted)] focus:outline-none"
               >
                 {availableToAdd.map((p) => (
@@ -152,7 +152,7 @@ export function SendToSalonDialog({ open, salons, defaultSalonId, onClose, onSen
           {items.length === 0 ? (
             <EmptyState
               icon={<PlusIcon className="size-12" />}
-              title="Ajoutez des produits a transférer"
+              title="Ajoutez des produits à transférer"
               className="rounded-2xl bg-[var(--color-gray-50)] py-10"
             />
           ) : (
@@ -169,7 +169,7 @@ export function SendToSalonDialog({ open, salons, defaultSalonId, onClose, onSen
                         type="button"
                         onClick={() => handleQtyChange(item.id, -1)}
                         disabled={item.qty <= 1}
-                        aria-label={`Diminuer la quantite de ${item.name}`}
+                        aria-label={`Diminuer la quantité de ${item.name}`}
                         className="flex size-6 items-center justify-center rounded-full text-[var(--color-gray-600)] hover:bg-[var(--color-gray-100)] disabled:pointer-events-none disabled:opacity-30"
                       >
                         −
@@ -180,7 +180,7 @@ export function SendToSalonDialog({ open, salons, defaultSalonId, onClose, onSen
                       <button
                         type="button"
                         onClick={() => handleQtyChange(item.id, 1)}
-                        aria-label={`Augmenter la quantite de ${item.name}`}
+                        aria-label={`Augmenter la quantité de ${item.name}`}
                         className="flex size-6 items-center justify-center rounded-full text-[var(--color-gray-600)] hover:bg-[var(--color-gray-100)]"
                       >
                         +

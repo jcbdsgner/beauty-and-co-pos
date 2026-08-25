@@ -147,9 +147,9 @@ export function groupServicesBySubcat(services: Service[]): ServiceGroup[] {
 export const CATEGORIES: Category[] = [
   { id: "coiffure", name: "Coiffure", icon: "coiffure", bg: "bg-[var(--brand-rose-soft)]", count: countFor("coiffure") },
   { id: "spa", name: "Spa & Massages", icon: "spa", bg: "bg-[var(--brand-lilac)]/30", count: countFor("spa") },
-  { id: "epilation", name: "Epilation", icon: "epilation", bg: "bg-[var(--color-gray-100)]", count: countFor("epilation") },
+  { id: "epilation", name: "Épilation", icon: "epilation", bg: "bg-[var(--color-gray-100)]", count: countFor("epilation") },
   { id: "cils-sourcils", name: "Cils & Sourcils", icon: "cils", bg: "bg-[var(--pos-accent-dark-soft)]", count: countFor("cils-sourcils") },
-  { id: "manucure-pedicure", name: "Manucure / Pedicure", icon: "manucure", bg: "bg-[var(--brand-rose-soft)]", count: countFor("manucure-pedicure") },
+  { id: "manucure-pedicure", name: "Manucure / Pédicure", icon: "manucure", bg: "bg-[var(--brand-rose-soft)]", count: countFor("manucure-pedicure") },
   { id: "soins-visage", name: "Soins Visage", icon: "visage", bg: "bg-[var(--brand-lilac)]/30", count: countFor("soins-visage") },
   { id: "nail-art", name: "Nail art", icon: "nailart", bg: "bg-[var(--color-gray-100)]", count: countFor("nail-art") },
 ];

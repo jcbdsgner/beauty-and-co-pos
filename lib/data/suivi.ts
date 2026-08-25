@@ -1,3 +1,5 @@
+import { Cake, Heart, Sparkles, Star, Tag, type LucideIcon } from "lucide-react";
+
 /**
  * Mock data for the Suivi module (CRM / relances automatisées) — dashboard "Tournée du
  * matin", ses sections classées par urgence, et la liste des campagnes.
@@ -41,7 +43,7 @@ export type SuiviCard = SuiviCompactCard | SuiviExpandedCard;
 export type SuiviSection = {
   id: string;
   label: string;
-  icon: string;
+  icon: LucideIcon;
   count: number;
   cards: SuiviCard[];
 };
@@ -65,7 +67,7 @@ export const suiviSections: SuiviSection[] = [
   {
     id: "anniversaires",
     label: "Anniversaires",
-    icon: "🎂",
+    icon: Cake,
     count: 4,
     cards: [
       {
@@ -112,7 +114,7 @@ export const suiviSections: SuiviSection[] = [
   {
     id: "soins-rdv",
     label: "Soins & rendez-vous",
-    icon: "💅",
+    icon: Sparkles,
     count: 3,
     cards: [
       {
@@ -156,7 +158,7 @@ export const suiviSections: SuiviSection[] = [
   {
     id: "fidelite",
     label: "Fidélité",
-    icon: "⭐",
+    icon: Star,
     count: 25,
     cards: [
       {
@@ -203,7 +205,7 @@ export const suiviSections: SuiviSection[] = [
   {
     id: "reconquete",
     label: "Reconquête",
-    icon: "♡",
+    icon: Heart,
     count: 11,
     cards: [
       {
@@ -262,7 +264,7 @@ export const suiviSections: SuiviSection[] = [
   {
     id: "rappels-lookbook",
     label: "Rappels Lookbook",
-    icon: "🏷",
+    icon: Tag,
     count: 1,
     cards: [
       {

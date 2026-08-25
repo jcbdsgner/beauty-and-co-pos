@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
+import { CheckIcon, XIcon } from "@/components/ui/icons";
 import { SERVICE_CATEGORY_LABELS, SERVICE_CATEGORY_OPTIONS, type Service } from "@/lib/data/parametres-catalogue";
 
 type ServiceEditDialogProps = {
@@ -80,7 +81,7 @@ function ServiceEditForm({
           aria-label="Fermer"
           className="flex size-8 shrink-0 items-center justify-center rounded-full text-[var(--color-gray-400)] hover:bg-[var(--color-gray-100)]"
         >
-          ✕
+          <XIcon />
         </button>
       </div>
 
@@ -98,7 +99,7 @@ function ServiceEditForm({
         </div>
 
         <div>
-          <label className={labelClass}>Categorie *</label>
+          <label className={labelClass}>Catégorie *</label>
           <select
             value={draft.category}
             onChange={(event) => {
@@ -175,8 +176,8 @@ function ServiceEditForm({
           <Button type="button" variant="outline" onClick={onClose} className="flex-1">
             Annuler
           </Button>
-          <Button type="submit" variant="brand" className="flex-1">
-            ✓ Enregistrer
+          <Button type="submit" variant="brand" className="flex-1" icon={<CheckIcon />}>
+            Enregistrer
           </Button>
         </div>
       </form>

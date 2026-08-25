@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
 import { Pills } from "@/components/ui/pills";
 import { SearchInput } from "@/components/ui/search-input";
@@ -80,6 +81,15 @@ function buildReceipt(sale: Sale, invoiceSeq: number): ReceiptSnapshot {
  * Figma flow where the whole tunnel happens as interactions on one POS screen rather than
  * client-side route navigation. */
 export default function VentePage() {
+  return (
+    <Suspense>
+      <VentePageContent />
+    </Suspense>
+  );
+}
+
+function VentePageContent() {
+  const searchParams = useSearchParams();
   const [sales, setSales] = useState<Sale[]>(() => [createSale(1)]);
   const [activeSaleId, setActiveSaleId] = useState(sales[0].id);
   const [step, setStep] = useState<Step>("categories");
@@ -88,7 +98,7 @@ export default function VentePage() {
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("tous");
   const [showClientModal, setShowClientModal] = useState(false);
-  const [showScanModal, setShowScanModal] = useState(false);
+  const [showScanModal, setShowScanModal] = useState(searchParams.get("scan") === "1");
   const [invoiceSeq, setInvoiceSeq] = useState(18);
   const [receipt, setReceipt] = useState<ReceiptSnapshot | null>(null);
 

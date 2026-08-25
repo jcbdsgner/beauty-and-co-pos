@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // No gradient variant, deliberately — flat brand fills only (rose/taupe/lilac/semantic).
@@ -62,22 +63,7 @@ export function Button(props: ButtonProps) {
       >
         {icon}
         {children}
-        {external && !hideExternalIcon && (
-          <svg
-            aria-hidden
-            viewBox="0 0 20 20"
-            fill="none"
-            className="size-4 shrink-0"
-          >
-            <path
-              d="M7 13L13 7M13 7H8M13 7V12"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        )}
+        {external && !hideExternalIcon && <ArrowUpRight aria-hidden className="size-4 shrink-0" />}
       </Link>
     );
   }

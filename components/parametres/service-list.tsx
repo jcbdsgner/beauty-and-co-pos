@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog } from "@/components/ui/dialog";
@@ -8,7 +9,8 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Pills, type PillOption } from "@/components/ui/pills";
 import { SearchInput } from "@/components/ui/search-input";
 import { Switch } from "@/components/ui/switch";
-import { PencilIcon, PlusIcon } from "@/components/ui/icons";
+import { PencilIcon, PlusIcon, XIcon } from "@/components/ui/icons";
+import { SparkleIcon } from "@/components/parametres/icons";
 import { cn } from "@/lib/utils";
 import {
   COMPANY_OPTIONS,
@@ -52,8 +54,8 @@ function SelectField({
 function ServiceCard({ service, onEdit }: { service: Service; onEdit: () => void }) {
   return (
     <Card className="flex items-center gap-4 p-4">
-      <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-rose-soft)] text-lg">
-        ✨
+      <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-rose-soft)] text-[var(--brand-taupe-muted)]">
+        <SparkleIcon />
       </div>
       <div className="min-w-0 flex-1">
         <p className={cn("truncate text-[15px] font-semibold text-[var(--color-gray-900)]", !service.active && "text-[var(--color-gray-400)]")}>
@@ -62,7 +64,7 @@ function ServiceCard({ service, onEdit }: { service: Service; onEdit: () => void
         <div className="mt-1 flex items-center gap-3 text-sm">
           <span className="font-bold text-[var(--brand-taupe-muted)]">{formatFCFA(service.price)}</span>
           <span className="inline-flex items-center gap-1 text-[var(--color-gray-500)]">
-            <ClockIcon /> {service.durationMin} min
+            <Clock aria-hidden className="size-3.5" /> {service.durationMin} min
           </span>
         </div>
       </div>
@@ -75,15 +77,6 @@ function ServiceCard({ service, onEdit }: { service: Service; onEdit: () => void
         <PencilIcon />
       </button>
     </Card>
-  );
-}
-
-function ClockIcon() {
-  return (
-    <svg aria-hidden viewBox="0 0 20 20" fill="none" className="size-3.5">
-      <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M10 6v4l3 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
   );
 }
 
@@ -114,7 +107,7 @@ function ServiceCategoriesDialog({
       <div className="flex items-start justify-between px-6 pt-4">
         <div>
           <h2 id="service-categories-title" className="font-[var(--font-heading)] text-xl text-[var(--color-gray-900)]">
-            Categories de services
+            Catégories de services
           </h2>
           <p className="mt-1 text-sm text-[var(--color-gray-500)]">Liste des catégories disponibles</p>
         </div>
@@ -124,7 +117,7 @@ function ServiceCategoriesDialog({
           aria-label="Fermer"
           className="flex size-8 shrink-0 items-center justify-center rounded-full text-[var(--color-gray-400)] hover:bg-[var(--color-gray-100)]"
         >
-          ✕
+          <XIcon />
         </button>
       </div>
       <ul className="space-y-2 px-6 py-5">
@@ -204,11 +197,11 @@ export function ServiceList() {
       <PageHeader
         backHref="/parametres"
         title="Gestion Services"
-        subtitle="Categories, prix, durees"
+        subtitle="Catégories, prix, durées"
         action={
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setCategoriesOpen(true)}>
-              ⇄ Categories
+              ⇄ Catégories
             </Button>
             <Button variant="brand" onClick={openCreate} icon={<PlusIcon />}>
               Ajouter
