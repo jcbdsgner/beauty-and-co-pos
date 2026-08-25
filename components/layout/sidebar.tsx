@@ -76,7 +76,7 @@ export function Sidebar() {
             className="border-2 border-[var(--brand-taupe-muted)] bg-[var(--brand-rose-soft)] font-semibold text-[var(--brand-taupe-muted)]"
           />
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-[var(--color-gray-900)]">Proprietaire Elite</p>
+            <p className="truncate text-sm font-semibold text-[var(--color-gray-900)]">Proprietaire</p>
             <p className="text-[11px] font-semibold tracking-wide text-[var(--color-gray-400)] uppercase">Admin</p>
           </div>
         </div>

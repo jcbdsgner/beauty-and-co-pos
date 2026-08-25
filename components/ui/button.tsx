@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-// No gradient variant, deliberately — flat brand fills only (rose/taupe/lilac).
-type Variant = "brand" | "dark" | "outline" | "lilac";
+// No gradient variant, deliberately — flat brand fills only (rose/taupe/lilac/semantic).
+type Variant = "brand" | "dark" | "outline" | "lilac" | "success" | "info" | "danger-outline";
 
 const variants: Record<Variant, string> = {
   brand:
@@ -13,10 +13,17 @@ const variants: Record<Variant, string> = {
     "bg-white border border-[var(--brand-color-1,rgba(216,184,180,0.5))] text-[var(--button-2-color,#a27576)] hover:bg-[#f5f5f5]",
   lilac:
     "bg-[var(--brand-lilac,#e4c8ff)] text-[var(--text-secondary,#344054)] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] hover:opacity-90",
+  // Semantic actions (WhatsApp-style confirm, informational) — flat fills, same family as Badge's success/info.
+  success:
+    "bg-[var(--color-success,#12805c)] text-white shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] hover:opacity-90",
+  info:
+    "bg-[var(--color-info,#2662d9)] text-white shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] hover:opacity-90",
+  // Quiet destructive/secondary action (e.g. "Annuler" on a pending request) — text-only red, no fill.
+  "danger-outline": "bg-white border border-[var(--color-gray-200)] text-[var(--color-error,#b42318)] hover:bg-[#fdece9]",
 };
 
 const base =
-  "inline-flex items-center justify-center gap-2 rounded-full px-4 py-3 text-[17px] font-[450] transition";
+  "inline-flex items-center justify-center gap-2 rounded-full px-4 py-3 text-[17px] font-[450] transition disabled:pointer-events-none disabled:opacity-40";
 
 type CommonProps = {
   children: React.ReactNode;

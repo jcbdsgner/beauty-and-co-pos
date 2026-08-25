@@ -19,7 +19,7 @@ export function Topbar() {
       />
       <div className="text-sm">
         <p className="text-[11px] font-semibold tracking-wide text-[var(--color-gray-400)] uppercase">Admin</p>
-        <p className="font-semibold text-[var(--color-gray-900)]">Proprietaire Elite</p>
+        <p className="font-semibold text-[var(--color-gray-900)]">Proprietaire</p>
       </div>
     </div>
   );
