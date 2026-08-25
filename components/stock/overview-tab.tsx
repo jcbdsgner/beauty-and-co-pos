@@ -5,12 +5,18 @@ import { HeroNumber } from "@/components/ui/hero-number";
 import { AlertTriangleIcon } from "@/components/stock/icons";
 import { ProductCard } from "@/components/stock/product-card";
 import { stockLevel } from "@/components/stock/stock-progress-bar";
-import { ENTREPRISES, PRODUCTS, STOCK_SUMMARY } from "@/lib/data/stock";
+import { ENTREPRISES, PRODUCTS, STOCK_SUMMARY, type Product } from "@/lib/data/stock";
 
 const LEVEL_RANK: Record<ReturnType<typeof stockLevel>, number> = { rupture: 0, bas: 1, ok: 2 };
 
+type OverviewTabProps = {
+  /** Bascule vers l'onglet "Depot", qui contient la liste complete des produits filtree par entreprise. */
+  onSeeDetail: () => void;
+  onReappro: (product: Product) => void;
+};
+
 /** "Vue d'ensemble" — bandeau d'alerte, KPI stock, liste des produits triee par urgence de reapprovisionnement. */
-export function OverviewTab() {
+export function OverviewTab({ onSeeDetail, onReappro }: OverviewTabProps) {
   const sorted = [...PRODUCTS].sort((a, b) => {
     const rankDiff = LEVEL_RANK[stockLevel(a.depotStock, a.min)] - LEVEL_RANK[stockLevel(b.depotStock, b.min)];
     if (rankDiff !== 0) return rankDiff;
@@ -47,7 +53,13 @@ export function OverviewTab() {
         <p className="text-xs font-semibold tracking-wide text-[var(--color-gray-500)] uppercase">
           {STOCK_SUMMARY.totalProducts} produits · triés par urgence
         </p>
-        <span className="text-sm font-medium text-[var(--pos-accent-dark)]">Voir le détail ›</span>
+        <button
+          type="button"
+          onClick={onSeeDetail}
+          className="text-sm font-medium text-[var(--pos-accent-dark)] hover:underline"
+        >
+          Voir le détail ›
+        </button>
       </div>
 
       <div className="flex flex-col gap-3">
@@ -57,6 +69,7 @@ export function OverviewTab() {
             variant="overview"
             product={product}
             locationLabel={ENTREPRISES.find((e) => e.id === product.entrepriseId)?.label ?? product.entrepriseId}
+            onReappro={onReappro}
           />
         ))}
       </div>

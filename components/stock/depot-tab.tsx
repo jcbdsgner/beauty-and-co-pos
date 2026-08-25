@@ -17,10 +17,11 @@ type DepotTabProps = {
   entrepriseLabel: string;
   onReappro: (product: Product) => void;
   onOpenSendDialog: () => void;
+  onOpenHistorique: () => void;
 };
 
 /** Onglet "Depot" — stock central de l'entreprise selectionnee, groupe par categorie. */
-export function DepotTab({ entrepriseId, entrepriseLabel, onReappro, onOpenSendDialog }: DepotTabProps) {
+export function DepotTab({ entrepriseId, entrepriseLabel, onReappro, onOpenSendDialog, onOpenHistorique }: DepotTabProps) {
   const [query, setQuery] = useState("");
   const [onlyLowStock, setOnlyLowStock] = useState(false);
 
@@ -82,7 +83,13 @@ export function DepotTab({ entrepriseId, entrepriseLabel, onReappro, onOpenSendD
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row">
-        <Button variant="brand" icon={<DocumentIcon />} className="flex-1">
+        <Button
+          variant="brand"
+          icon={<DocumentIcon />}
+          className="flex-1"
+          disabled
+          title="Entrée dépôt — bientôt disponible"
+        >
           Entrée dépôt
         </Button>
         <Button variant="outline" icon={<PaperPlaneIcon />} className="flex-1" onClick={onOpenSendDialog}>
@@ -90,9 +97,13 @@ export function DepotTab({ entrepriseId, entrepriseLabel, onReappro, onOpenSendD
         </Button>
       </div>
 
-      <span className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--color-gray-500)]">
+      <button
+        type="button"
+        onClick={onOpenHistorique}
+        className="inline-flex items-center gap-1.5 self-start text-sm font-medium text-[var(--color-gray-500)] hover:text-[var(--color-gray-700)]"
+      >
         <ClockIcon /> Historique receptions <ChevronIcon className="rotate-90" />
-      </span>
+      </button>
 
       <div className="flex items-center justify-between">
         <h2 className="font-[var(--font-heading)] text-xl text-[var(--color-gray-900)]">Depot {entrepriseLabel}</h2>

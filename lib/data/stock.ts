@@ -32,6 +32,7 @@ export const ENTREPRISES: Entreprise[] = [
 
 export const SALONS: Salon[] = [
   { id: "tous", label: "Tous les salons", entrepriseId: "beauty-and-co" },
+  { id: "almadies", label: "Almadies", entrepriseId: "beauty-and-co" },
   { id: "michele-ka-salon", label: "Michele Ka", entrepriseId: "michele-ka" },
   { id: "sea-plaza", label: "Sea Plaza", entrepriseId: "michele-ka" },
 ];
@@ -365,3 +366,24 @@ export const TRANSFER_CATALOG: Array<{ id: string; name: string }> = PRODUCTS.ma
   id: p.id,
   name: p.name,
 }));
+
+export type MovementType = "transfert" | "reception";
+
+export type StockMovement = {
+  id: string;
+  type: MovementType;
+  productName: string;
+  qty: number;
+  salonLabel: string;
+  entrepriseLabel: string;
+  date: string;
+  note?: string;
+};
+
+export const MOVEMENT_TYPE_LABELS: Record<MovementType, string> = {
+  transfert: "Transfert",
+  reception: "Reception",
+};
+
+/** Aucun mouvement historise pour ce jeu de donnees de demo — l'onglet "Historique" se peuple au fil des envois vers salon effectues dans la session. */
+export const STOCK_MOVEMENTS: StockMovement[] = [];

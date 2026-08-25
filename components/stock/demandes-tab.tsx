@@ -20,10 +20,12 @@ type DemandesTabProps = {
   requests: StockRequest[];
   onPrepare: (id: string) => void;
   onCancel: (id: string) => void;
+  onEditQty: (id: string, qty: number) => void;
+  onEditComment: (id: string, comment: string) => void;
 };
 
 /** Onglet "Demandes" — sous-filtres par statut + liste de demandes avec timeline et actions Preparer/Annuler. Les demandes elles-memes sont detenues par la page parente (le badge de compteur du bandeau d'onglets en depend). */
-export function DemandesTab({ requests, onPrepare, onCancel }: DemandesTabProps) {
+export function DemandesTab({ requests, onPrepare, onCancel, onEditQty, onEditComment }: DemandesTabProps) {
   const [filter, setFilter] = useState<SubFilter>("en_attente");
 
   const filtered = useMemo(
@@ -40,7 +42,14 @@ export function DemandesTab({ requests, onPrepare, onCancel }: DemandesTabProps)
       ) : (
         <div className="flex flex-col gap-4">
           {filtered.map((request) => (
-            <RequestCard key={request.id} request={request} onPrepare={onPrepare} onCancel={onCancel} />
+            <RequestCard
+              key={request.id}
+              request={request}
+              onPrepare={onPrepare}
+              onCancel={onCancel}
+              onEditQty={onEditQty}
+              onEditComment={onEditComment}
+            />
           ))}
         </div>
       )}

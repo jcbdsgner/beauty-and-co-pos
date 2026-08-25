@@ -1,10 +1,10 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import type { Product } from "@/lib/data/stock";
+import { SALONS, type Product } from "@/lib/data/stock";
 import { cn } from "@/lib/utils";
 import { BagIcon } from "@/components/ui/icons";
-import { DropIcon, HourglassIcon, PaperPlaneIcon } from "@/components/stock/icons";
+import { DropIcon, HourglassIcon, PaperPlaneIcon, StoreIcon } from "@/components/stock/icons";
 import { stockLevel, StockProgressBar } from "@/components/stock/stock-progress-bar";
 
 const LEVEL_BORDER: Record<ReturnType<typeof stockLevel>, string> = {
@@ -15,7 +15,7 @@ const LEVEL_BORDER: Record<ReturnType<typeof stockLevel>, string> = {
 
 const LEVEL_BADGE_BG: Record<ReturnType<typeof stockLevel>, string> = {
   rupture: "bg-[var(--color-error)] text-white",
-  bas: "bg-[#fdece9] text-[var(--color-error)]",
+  bas: "bg-[var(--color-warning-soft)] text-[var(--color-warning)]",
   ok: "bg-[var(--color-success-soft)] text-[var(--color-success)]",
 };
 
@@ -71,14 +71,12 @@ export function ProductCard(props: ProductCardProps) {
             <TypeBadge type={product.type} />
           </div>
           <StockProgressBar stock={product.depotStock} min={product.min} className="mt-3" />
-          <div className="mt-2 flex items-center justify-between">
-            <span className="flex items-center gap-1 text-xs text-[var(--color-gray-400)]">
-              <HourglassIcon />—
-            </span>
-            {product.toOrder > 0 && (
+          {product.toOrder > 0 && (
+            <div className="mt-2 flex items-center justify-end gap-1.5">
+              <HourglassIcon className="text-[var(--pos-accent-dark)]" />
               <span className="text-xs font-semibold text-[var(--pos-accent-dark)]">Commander ~{product.toOrder}</span>
-            )}
-          </div>
+            </div>
+          )}
         </div>
         <div className="flex shrink-0 flex-col items-end gap-2">
           <span
@@ -99,6 +97,7 @@ export function ProductCard(props: ProductCardProps) {
 
   if (props.variant === "depot") {
     const isRupture = level === "rupture";
+    const salonLabel = product.salonId ? SALONS.find((s) => s.id === product.salonId)?.label : undefined;
     return (
       <Card className={cn("border-l-4 p-4", LEVEL_BORDER[level])}>
         <div className="flex items-start gap-4">
@@ -117,7 +116,7 @@ export function ProductCard(props: ProductCardProps) {
               <span className="text-[var(--color-gray-400)]">{product.ref}</span>
             </div>
             {level !== "ok" && (
-              <Badge variant="error" className="mt-2">
+              <Badge variant={isRupture ? "error" : "warning"} className="mt-2">
                 {isRupture ? "RUPTURE" : `STOCK BAS (MIN: ${product.min})`}
               </Badge>
             )}
@@ -136,6 +135,21 @@ export function ProductCard(props: ProductCardProps) {
             </Button>
           </div>
         </div>
+        {salonLabel && (
+          <div className="mt-3 flex items-center justify-between gap-3 border-t border-[var(--color-gray-100)] pt-3">
+            <div>
+              <p className="flex items-center gap-1.5 text-xs text-[var(--color-gray-500)]">
+                <StoreIcon className="size-3.5" /> Stock en salon :
+              </p>
+              <p className="mt-0.5 text-sm font-semibold tracking-wide text-[var(--color-gray-700)] uppercase">
+                {salonLabel}
+              </p>
+            </div>
+            <span className="shrink-0 text-sm font-semibold text-[var(--color-gray-900)]">
+              {product.salonStock ?? 0}
+            </span>
+          </div>
+        )}
       </Card>
     );
   }

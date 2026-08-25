@@ -105,6 +105,19 @@ export function DropIcon({ className }: IconProps) {
   );
 }
 
+export function CommentIcon({ className }: IconProps) {
+  return (
+    <svg aria-hidden viewBox="0 0 24 24" fill="none" className={cn("size-4", className)}>
+      <path
+        d="M4 5.5h16v11H9l-4 3.5v-3.5H4v-11z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function WarehouseIcon({ className }: IconProps) {
   return (
     <svg aria-hidden viewBox="0 0 24 24" fill="none" className={cn("size-12", className)}>

@@ -11,7 +11,16 @@ import { DepotTab } from "@/components/stock/depot-tab";
 import { SalonTab } from "@/components/stock/salon-tab";
 import { HistoriqueTab } from "@/components/stock/historique-tab";
 import { SendToSalonDialog } from "@/components/stock/send-to-salon-dialog";
-import { ENTREPRISES, SALONS, STOCK_REQUESTS, type Product, type StockRequest } from "@/lib/data/stock";
+import { Toast } from "@/components/stock/toast";
+import {
+  ENTREPRISES,
+  SALONS,
+  STOCK_MOVEMENTS,
+  STOCK_REQUESTS,
+  type Product,
+  type StockMovement,
+  type StockRequest,
+} from "@/lib/data/stock";
 
 type StockTab = "overview" | "demandes" | "depot" | "salon" | "historique";
 
@@ -21,8 +30,10 @@ export default function StockPage() {
   const [selectedEntreprise, setSelectedEntreprise] = useState(ENTREPRISES[0].id);
   const [selectedSalon, setSelectedSalon] = useState("tous");
   const [requests, setRequests] = useState<StockRequest[]>(STOCK_REQUESTS);
+  const [movements, setMovements] = useState<StockMovement[]>(STOCK_MOVEMENTS);
   const [sendDialogOpen, setSendDialogOpen] = useState(false);
   const [sendDialogDefaultSalon, setSendDialogDefaultSalon] = useState<string | undefined>(undefined);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const salonsForEntreprise = useMemo(
     () => SALONS.filter((s) => s.id === "tous" || s.entrepriseId === selectedEntreprise),
@@ -47,6 +58,7 @@ export default function StockPage() {
   }
 
   function handlePrepareRequest(id: string) {
+    const request = requests.find((r) => r.id === id);
     setRequests((prev) =>
       prev.map((r) =>
         r.id === id
@@ -54,10 +66,21 @@ export default function StockPage() {
           : r,
       ),
     );
+    if (request) setToastMessage(`"${request.productName}" passée en préparation`);
   }
 
   function handleCancelRequest(id: string) {
+    const request = requests.find((r) => r.id === id);
     setRequests((prev) => prev.filter((r) => r.id !== id));
+    if (request) setToastMessage(`Demande "${request.productName}" annulée`);
+  }
+
+  function handleEditRequestQty(id: string, qty: number) {
+    setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, qty } : r)));
+  }
+
+  function handleEditRequestComment(id: string, comment: string) {
+    setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, comment: comment || undefined } : r)));
   }
 
   function handleReappro(product: Product) {
@@ -80,11 +103,36 @@ export default function StockPage() {
     };
 
     setRequests((prev) => [newRequest, ...prev]);
+    setToastMessage(`Demande de réapprovisionnement créée pour "${product.name}"`);
   }
 
   function handleOpenSendDialog(defaultSalonId?: string) {
     setSendDialogDefaultSalon(defaultSalonId);
     setSendDialogOpen(true);
+  }
+
+  function handleSendToSalon(payload: { salonId: string; items: { name: string; qty: number }[]; note: string }) {
+    const salon = SALONS.find((s) => s.id === payload.salonId);
+    const salonLabel = salon?.label ?? "Salon";
+    const movementEntrepriseLabel = ENTREPRISES.find((e) => e.id === salon?.entrepriseId)?.label ?? entrepriseLabel;
+
+    const newMovements: StockMovement[] = payload.items.map((item, index) => ({
+      id: `mov-${Date.now()}-${index}`,
+      type: "transfert",
+      productName: item.name,
+      qty: item.qty,
+      salonLabel,
+      entrepriseLabel: movementEntrepriseLabel,
+      date: "Aujourd'hui",
+      note: payload.note || undefined,
+    }));
+
+    setMovements((prev) => [...newMovements, ...prev]);
+    setToastMessage(
+      payload.items.length === 1
+        ? `1 produit envoyé vers ${salonLabel}`
+        : `${payload.items.length} produits envoyés vers ${salonLabel}`,
+    );
   }
 
   const entrepriseLabel = ENTREPRISES.find((e) => e.id === selectedEntreprise)?.label ?? "";
@@ -113,10 +161,18 @@ export default function StockPage() {
         <Pills options={TABS} value={activeTab} onChange={(v) => setActiveTab(v as StockTab)} />
       </div>
 
-      {activeTab === "overview" && <OverviewTab />}
+      {activeTab === "overview" && (
+        <OverviewTab onSeeDetail={() => setActiveTab("depot")} onReappro={handleReappro} />
+      )}
 
       {activeTab === "demandes" && (
-        <DemandesTab requests={requests} onPrepare={handlePrepareRequest} onCancel={handleCancelRequest} />
+        <DemandesTab
+          requests={requests}
+          onPrepare={handlePrepareRequest}
+          onCancel={handleCancelRequest}
+          onEditQty={handleEditRequestQty}
+          onEditComment={handleEditRequestComment}
+        />
       )}
 
       {activeTab === "depot" && (
@@ -125,6 +181,7 @@ export default function StockPage() {
           entrepriseLabel={entrepriseLabel}
           onReappro={handleReappro}
           onOpenSendDialog={() => handleOpenSendDialog(selectedSalon !== "tous" ? selectedSalon : undefined)}
+          onOpenHistorique={() => setActiveTab("historique")}
         />
       )}
 
@@ -137,15 +194,17 @@ export default function StockPage() {
         />
       )}
 
-      {activeTab === "historique" && <HistoriqueTab />}
+      {activeTab === "historique" && <HistoriqueTab movements={movements} />}
 
       <SendToSalonDialog
         open={sendDialogOpen}
         salons={dialogSalons}
         defaultSalonId={sendDialogDefaultSalon}
         onClose={() => setSendDialogOpen(false)}
-        onSend={() => {}}
+        onSend={handleSendToSalon}
       />
+
+      <Toast message={toastMessage} onDismiss={() => setToastMessage(null)} />
     </div>
   );
 }
