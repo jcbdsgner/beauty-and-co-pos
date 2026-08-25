@@ -12,9 +12,10 @@ type ChipSelectProps = {
 };
 
 /**
- * Multi-select chip grid — several chips can be active at once (skin/hair types, familles de
- * soin in the "Nouveau conseil beauté" form). Distinct from `Pills`, which is an exclusive
- * single-choice control (tabs/filters): here toggling one chip never clears the others.
+ * Multi-select chip grid — several chips can be active at once (targeted skin/hair types in the
+ * "Nouveau conseil beauté" form, both optional and non-exclusive). Distinct from `Pills`, which
+ * is an exclusive single-choice control (tabs/filters, and the form's single "famille de soin"
+ * field): here toggling one chip never clears the others.
  */
 export function ChipSelect({ options, selected, onToggle, className }: ChipSelectProps) {
   return (

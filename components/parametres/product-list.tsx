@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Pills, type PillOption } from "@/components/ui/pills";
 import { SearchInput } from "@/components/ui/search-input";
 import { Switch } from "@/components/ui/switch";
-import { PencilIcon } from "@/components/ui/icons";
+import { PencilIcon, PlusIcon } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 import {
   COMPANY_OPTIONS,
@@ -90,9 +90,7 @@ function ProductCard({ product, onEdit }: { product: Product; onEdit: () => void
             {product.productType === "revente" ? (
               <Badge variant="success">Revente</Badge>
             ) : (
-              <Badge variant="dark" className="bg-[var(--brand-lilac)] text-[var(--text-secondary)]">
-                Backbar
-              </Badge>
+              <Badge variant="vip">Backbar</Badge>
             )}
           </div>
 
@@ -121,6 +119,7 @@ export function ProductList() {
   const [category, setCategory] = useState("tous");
   const [query, setQuery] = useState("");
   const [showInactive, setShowInactive] = useState(false);
+  const [lowStockOnly, setLowStockOnly] = useState(false);
   const [products, setProducts] = useState(PRODUCTS);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [editing, setEditing] = useState<Product | undefined>(undefined);
@@ -132,6 +131,7 @@ export function ProductList() {
     const q = query.trim().toLowerCase();
     return products.filter((product) => {
       if (!showInactive && !product.active) return false;
+      if (lowStockOnly && !isLowStock(product)) return false;
       if (category !== "tous" && product.category !== category) return false;
       if (
         q &&
@@ -142,7 +142,7 @@ export function ProductList() {
         return false;
       return true;
     });
-  }, [category, products, query, showInactive]);
+  }, [category, lowStockOnly, products, query, showInactive]);
 
   const groups = useMemo(() => {
     const order: string[] = [];
@@ -187,7 +187,7 @@ export function ProductList() {
             <Button variant="outline" onClick={() => setCategoriesOpen(true)}>
               📁 Categories
             </Button>
-            <Button variant="brand" onClick={openCreate} icon={<span aria-hidden>+</span>}>
+            <Button variant="brand" onClick={openCreate} icon={<PlusIcon />}>
               Ajouter
             </Button>
           </div>
@@ -204,8 +204,12 @@ export function ProductList() {
           <span className="flex items-center gap-2 font-medium">
             <span aria-hidden>⚠️</span> {lowCount} produits en stock bas
           </span>
-          <button type="button" onClick={() => setShowInactive(true)} className="font-semibold underline underline-offset-2">
-            Filtrer
+          <button
+            type="button"
+            onClick={() => setLowStockOnly((value) => !value)}
+            className="font-semibold underline underline-offset-2"
+          >
+            {lowStockOnly ? "Réinitialiser" : "Filtrer"}
           </button>
         </div>
       )}
@@ -218,9 +222,21 @@ export function ProductList() {
 
       <Pills options={CATEGORY_PILLS} value={category} onChange={setCategory} />
 
+      {lowStockOnly && (
+        <Badge variant="warning" icon={<span aria-hidden>⚠️</span>} className="w-fit">
+          Stock bas uniquement
+        </Badge>
+      )}
+
       <div className="flex items-center gap-3">
         <Switch checked={showInactive} onChange={setShowInactive} label="Afficher les produits inactifs" />
-        <span className="text-sm text-[var(--color-gray-600)]">Afficher les produits inactifs</span>
+        <button
+          type="button"
+          onClick={() => setShowInactive((value) => !value)}
+          className="text-left text-sm text-[var(--color-gray-600)]"
+        >
+          Afficher les produits inactifs
+        </button>
       </div>
 
       <div className="space-y-6">

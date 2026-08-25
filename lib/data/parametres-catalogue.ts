@@ -444,6 +444,10 @@ export type BeautyTip = {
   /** Primary family used for the section label on the card ("MASSAGE & CORPS", "ONGLES"…). */
   family: CareFamilyValue;
   text: string;
+  /** Optional audience targeting collected in the "Nouveau conseil beauté" form (values from
+   * SKIN_TYPE_OPTIONS / HAIR_TYPE_OPTIONS). Empty/undefined = applies to everyone. */
+  skinTypes?: string[];
+  hairTypes?: string[];
 };
 
 export const BEAUTY_TIPS: BeautyTip[] = [

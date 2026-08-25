@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Pills, type PillOption } from "@/components/ui/pills";
 import { SearchInput } from "@/components/ui/search-input";
 import { Switch } from "@/components/ui/switch";
-import { PencilIcon } from "@/components/ui/icons";
+import { PencilIcon, PlusIcon } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 import {
   COMPANY_OPTIONS,
@@ -18,6 +18,7 @@ import {
   type Service,
   type ServiceCategoryValue,
 } from "@/lib/data/parametres-catalogue";
+import { ServiceEditDialog } from "@/components/parametres/service-edit-dialog";
 
 const CATEGORY_PILLS: PillOption[] = [
   { value: "tous", label: "Tous" },
@@ -48,7 +49,7 @@ function SelectField({
   );
 }
 
-function ServiceCard({ service }: { service: Service }) {
+function ServiceCard({ service, onEdit }: { service: Service; onEdit: () => void }) {
   return (
     <Card className="flex items-center gap-4 p-4">
       <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-rose-soft)] text-lg">
@@ -67,6 +68,7 @@ function ServiceCard({ service }: { service: Service }) {
       </div>
       <button
         type="button"
+        onClick={onEdit}
         aria-label={`Modifier ${service.name}`}
         className="flex size-9 shrink-0 items-center justify-center rounded-full text-[var(--color-gray-400)] hover:bg-[var(--color-gray-100)] hover:text-[var(--brand-taupe-muted)]"
       >
@@ -85,12 +87,20 @@ function ClockIcon() {
   );
 }
 
-function ServiceCategoriesDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+function ServiceCategoriesDialog({
+  open,
+  services,
+  onClose,
+}: {
+  open: boolean;
+  services: Service[];
+  onClose: () => void;
+}) {
   const counts = useMemo(() => {
     const map = new Map<ServiceCategoryValue, number>();
-    for (const service of SERVICES) map.set(service.category, (map.get(service.category) ?? 0) + 1);
+    for (const service of services) map.set(service.category, (map.get(service.category) ?? 0) + 1);
     return map;
-  }, []);
+  }, [services]);
 
   return (
     <Dialog
@@ -137,23 +147,26 @@ function ServiceCategoriesDialog({ open, onClose }: { open: boolean; onClose: ()
 }
 
 /** Orchestrateur client de "Gestion Services" : entreprise, recherche, filtre catégorie, switch
- * inactifs, liste groupée par sous-catégorie. */
+ * inactifs, liste groupée par sous-catégorie, modales Categories / Modifier le service. */
 export function ServiceList() {
   const [company, setCompany] = useState(COMPANY_OPTIONS[0].value);
   const [category, setCategory] = useState("tous");
   const [query, setQuery] = useState("");
   const [showInactive, setShowInactive] = useState(false);
+  const [services, setServices] = useState(SERVICES);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
+  const [editing, setEditing] = useState<Service | undefined>(undefined);
+  const [editorOpen, setEditorOpen] = useState(false);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return SERVICES.filter((service) => {
+    return services.filter((service) => {
       if (!showInactive && !service.active) return false;
       if (category !== "tous" && service.category !== category) return false;
       if (q && !service.name.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [category, query, showInactive]);
+  }, [category, query, services, showInactive]);
 
   const groups = useMemo(() => {
     const order: string[] = [];
@@ -168,6 +181,24 @@ export function ServiceList() {
     return order.map((label) => ({ label, services: map.get(label)! }));
   }, [filtered]);
 
+  function openCreate() {
+    setEditing(undefined);
+    setEditorOpen(true);
+  }
+
+  function openEdit(service: Service) {
+    setEditing(service);
+    setEditorOpen(true);
+  }
+
+  function handleSave(service: Service) {
+    setServices((prev) => {
+      const exists = prev.some((item) => item.id === service.id);
+      return exists ? prev.map((item) => (item.id === service.id ? service : item)) : [service, ...prev];
+    });
+    setEditorOpen(false);
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -179,7 +210,7 @@ export function ServiceList() {
             <Button variant="outline" onClick={() => setCategoriesOpen(true)}>
               ⇄ Categories
             </Button>
-            <Button variant="brand" icon={<span aria-hidden>+</span>}>
+            <Button variant="brand" onClick={openCreate} icon={<PlusIcon />}>
               Ajouter
             </Button>
           </div>
@@ -198,7 +229,13 @@ export function ServiceList() {
 
       <div className="flex items-center gap-3">
         <Switch checked={showInactive} onChange={setShowInactive} label="Afficher les services inactifs" />
-        <span className="text-sm text-[var(--color-gray-600)]">Afficher les services inactifs</span>
+        <button
+          type="button"
+          onClick={() => setShowInactive((value) => !value)}
+          className="text-left text-sm text-[var(--color-gray-600)]"
+        >
+          Afficher les services inactifs
+        </button>
       </div>
 
       <div className="space-y-6">
@@ -212,14 +249,20 @@ export function ServiceList() {
             </p>
             <div className="space-y-2">
               {group.services.map((service) => (
-                <ServiceCard key={service.id} service={service} />
+                <ServiceCard key={service.id} service={service} onEdit={() => openEdit(service)} />
               ))}
             </div>
           </div>
         ))}
       </div>
 
-      <ServiceCategoriesDialog open={categoriesOpen} onClose={() => setCategoriesOpen(false)} />
+      <ServiceCategoriesDialog open={categoriesOpen} services={services} onClose={() => setCategoriesOpen(false)} />
+      <ServiceEditDialog
+        open={editorOpen}
+        service={editing}
+        onClose={() => setEditorOpen(false)}
+        onSave={handleSave}
+      />
     </div>
   );
 }

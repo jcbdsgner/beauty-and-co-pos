@@ -11,7 +11,7 @@ export type SettingsProfile = {
 
 export const PARAMETRES_PROFILE: SettingsProfile = {
   initials: "PE",
-  name: "Proprietaire Elite",
+  name: "Proprietaire",
   role: "admin",
   company: "Beauty and Co",
 };
@@ -79,7 +79,7 @@ export const PHOTO_REFERENCE_ITEMS: Record<PhotoCategoryKey, PhotoReferenceItem[
     { label: "Rouge classique", filled: true, swatch: "#7c1d1d" },
     { label: "Rouge bordeaux", filled: true, swatch: "#5a1620" },
     { label: "Noir", filled: true, swatch: "#c81d25" },
-    { label: "Rouge corail", filled: false },
+    { label: "Rouge corail", filled: true, swatch: "#e0432b" },
     { label: "Nude", filled: false },
     { label: "Rose poudré", filled: false },
   ],
@@ -105,6 +105,8 @@ export type Company = {
   salons: Salon[];
 };
 
+// Une seule enseigne (Beauty and Co) avec 2 salons — pas de multi-entreprise réel,
+// contrairement au jeu de données de démo Figma qui suggérait une 2e entreprise fictive.
 export const COMPANIES: Company[] = [
   {
     key: "beauty-and-co",
@@ -115,12 +117,5 @@ export const COMPANIES: Company[] = [
       { name: "Almadies", address: "Route des Almadies, Dakar", active: true },
       { name: "Sea Plaza", address: "Sea Plaza, Corniche Ouest, Dakar", active: true },
     ],
-  },
-  {
-    key: "michele-ka",
-    name: "Michele Ka",
-    slug: "michele-ka",
-    expandedDefault: false,
-    salons: [],
   },
 ];

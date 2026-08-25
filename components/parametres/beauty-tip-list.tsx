@@ -1,30 +1,51 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Pills, type PillOption } from "@/components/ui/pills";
 import { SearchInput } from "@/components/ui/search-input";
-import { PencilIcon, TrashIcon } from "@/components/ui/icons";
+import { PencilIcon, PlusIcon, TrashIcon } from "@/components/ui/icons";
 import {
   BEAUTY_TIPS,
   CARE_FAMILY_LABELS,
   CARE_FAMILY_TAB_OPTIONS,
   SERVICE_CYCLE_TIPS,
   type BeautyTip,
+  type ServiceCycleTip,
 } from "@/lib/data/parametres-catalogue";
-import { BeautyTipDialog } from "@/components/parametres/beauty-tip-dialog";
+import { BeautyTipDialog, ServiceCycleDialog } from "@/components/parametres/beauty-tip-dialog";
 
 const FAMILY_PILLS: PillOption[] = [{ value: "tous", label: "Tous" }, ...CARE_FAMILY_TAB_OPTIONS];
 
-/** Orchestrateur client de "Conseils beauté" : section "Mes conseils" (filtrable, CRUD léger)
- * + section "Cycles & conseils par service" (lecture seule, non filtrée par famille). */
+/** Back arrow, styled identically to `PageHeader`'s (out of scope to extend — it only accepts a
+ * plain string title, and this screen's title carries a leading ampoule icon per spec). */
+function BackArrow() {
+  return (
+    <Link
+      href="/parametres"
+      aria-label="Retour"
+      className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-full text-[var(--color-gray-500)] hover:bg-[var(--color-gray-100)]"
+    >
+      <svg aria-hidden viewBox="0 0 20 20" fill="none" className="size-5">
+        <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </Link>
+  );
+}
+
+/** Orchestrateur client de "Conseils beauté" : section "Mes conseils" (filtrable, CRUD complet)
+ * + section "Cycles & conseils par service" (délai de relance éditable par service). */
 export function BeautyTipList() {
   const [family, setFamily] = useState("tous");
   const [tips, setTips] = useState(BEAUTY_TIPS);
+  const [cycles, setCycles] = useState(SERVICE_CYCLE_TIPS);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingTip, setEditingTip] = useState<BeautyTip | undefined>(undefined);
   const [cycleQuery, setCycleQuery] = useState("");
+  const [editingCycle, setEditingCycle] = useState<ServiceCycleTip | undefined>(undefined);
 
   const filteredTips = useMemo(
     () => (family === "tous" ? tips : tips.filter((tip) => tip.family === family)),
@@ -33,12 +54,25 @@ export function BeautyTipList() {
 
   const filteredCycles = useMemo(() => {
     const q = cycleQuery.trim().toLowerCase();
-    if (!q) return SERVICE_CYCLE_TIPS;
-    return SERVICE_CYCLE_TIPS.filter((cycle) => cycle.serviceName.toLowerCase().includes(q));
-  }, [cycleQuery]);
+    if (!q) return cycles;
+    return cycles.filter((cycle) => cycle.serviceName.toLowerCase().includes(q));
+  }, [cycleQuery, cycles]);
 
-  function handleCreate(tip: BeautyTip) {
-    setTips((prev) => [tip, ...prev]);
+  function openCreate() {
+    setEditingTip(undefined);
+    setDialogOpen(true);
+  }
+
+  function openEditTip(tip: BeautyTip) {
+    setEditingTip(tip);
+    setDialogOpen(true);
+  }
+
+  function handleSaveTip(tip: BeautyTip) {
+    setTips((prev) => {
+      const exists = prev.some((item) => item.id === tip.id);
+      return exists ? prev.map((item) => (item.id === tip.id ? tip : item)) : [tip, ...prev];
+    });
     setDialogOpen(false);
   }
 
@@ -46,14 +80,19 @@ export function BeautyTipList() {
     setTips((prev) => prev.filter((tip) => tip.id !== id));
   }
 
+  function handleSaveCycle(cycle: ServiceCycleTip) {
+    setCycles((prev) => prev.map((item) => (item.id === cycle.id ? cycle : item)));
+    setEditingCycle(undefined);
+  }
+
   return (
     <div className="space-y-8">
       <div className="flex items-start gap-3">
-        <span aria-hidden className="mt-1 text-2xl">
-          💡
-        </span>
+        <BackArrow />
         <div>
-          <h1 className="font-[var(--font-heading)] text-2xl text-[var(--color-gray-900)]">Conseils beauté</h1>
+          <h1 className="flex items-center gap-2 font-[var(--font-heading)] text-2xl text-[var(--color-gray-900)]">
+            <span aria-hidden>💡</span> Conseils beauté
+          </h1>
           <p className="mt-1 text-sm text-[var(--color-gray-500)]">
             Vos connaissances, injectées dans les messages de la conseillère.
           </p>
@@ -63,7 +102,7 @@ export function BeautyTipList() {
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="font-[var(--font-heading)] text-lg text-[var(--color-gray-900)]">✨ Mes conseils</h2>
-          <Button variant="brand" onClick={() => setDialogOpen(true)} icon={<span aria-hidden>+</span>}>
+          <Button variant="brand" onClick={openCreate} icon={<PlusIcon />}>
             Ajouter
           </Button>
         </div>
@@ -85,6 +124,7 @@ export function BeautyTipList() {
               <div className="flex shrink-0 gap-1">
                 <button
                   type="button"
+                  onClick={() => openEditTip(tip)}
                   aria-label={`Modifier le conseil ${tip.text}`}
                   className="flex size-8 items-center justify-center rounded-full text-[var(--color-gray-400)] hover:bg-[var(--color-gray-100)] hover:text-[var(--brand-taupe-muted)]"
                 >
@@ -119,6 +159,9 @@ export function BeautyTipList() {
         />
 
         <div className="space-y-2">
+          {filteredCycles.length === 0 && (
+            <p className="py-6 text-center text-sm text-[var(--color-gray-400)]">Aucun service trouvé.</p>
+          )}
           {filteredCycles.map((cycle) => (
             <Card key={cycle.id} className="flex items-center gap-3 p-4">
               <div className="min-w-0 flex-1">
@@ -130,6 +173,7 @@ export function BeautyTipList() {
               </Badge>
               <button
                 type="button"
+                onClick={() => setEditingCycle(cycle)}
                 aria-label={`Modifier le cycle ${cycle.serviceName}`}
                 className="flex size-8 shrink-0 items-center justify-center rounded-full text-[var(--color-gray-400)] hover:bg-[var(--color-gray-100)] hover:text-[var(--brand-taupe-muted)]"
               >
@@ -140,7 +184,13 @@ export function BeautyTipList() {
         </div>
       </section>
 
-      <BeautyTipDialog open={dialogOpen} onClose={() => setDialogOpen(false)} onSave={handleCreate} />
+      <BeautyTipDialog open={dialogOpen} tip={editingTip} onClose={() => setDialogOpen(false)} onSave={handleSaveTip} />
+      <ServiceCycleDialog
+        open={!!editingCycle}
+        cycle={editingCycle}
+        onClose={() => setEditingCycle(undefined)}
+        onSave={handleSaveCycle}
+      />
     </div>
   );
 }

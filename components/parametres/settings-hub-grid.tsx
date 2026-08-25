@@ -52,14 +52,18 @@ export function SettingsHubGrid() {
 
         if (item.href) {
           return (
-            <Link key={item.key} href={item.href}>
+            <Link
+              key={item.key}
+              href={item.href}
+              className="rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-taupe-muted)] focus-visible:ring-offset-2"
+            >
               {inner}
             </Link>
           );
         }
 
         return (
-          <div key={item.key} aria-disabled className="cursor-default select-none">
+          <div key={item.key} aria-disabled="true" className="cursor-default select-none">
             {inner}
           </div>
         );

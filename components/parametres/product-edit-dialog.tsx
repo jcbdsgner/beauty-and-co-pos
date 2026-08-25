@@ -72,7 +72,10 @@ function ProductEditForm({
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    onSave(draft);
+    const name = draft.name.trim();
+    const sku = draft.sku.trim();
+    if (!name || !sku) return;
+    onSave({ ...draft, name, sku });
   }
 
   return (
@@ -110,6 +113,7 @@ function ProductEditForm({
         <div>
           <label className={labelClass}>Nom du produit *</label>
           <input
+            autoFocus
             required
             value={draft.name}
             onChange={(event) => update("name", event.target.value)}
@@ -136,7 +140,7 @@ function ProductEditForm({
             value={draft.category}
             onChange={(event) => {
               update("category", event.target.value as Product["category"]);
-              update("subCategory", undefined as unknown as string);
+              update("subCategory", undefined);
             }}
             className={fieldClass}
           >
@@ -194,7 +198,13 @@ function ProductEditForm({
             onChange={(checked) => update("foreignCurrency", checked ? "USD" : undefined)}
             label="Achete a l'etranger"
           />
-          <span className="text-sm text-[var(--color-gray-700)]">🌐 Achete a l&apos;etranger</span>
+          <button
+            type="button"
+            onClick={() => update("foreignCurrency", draft.foreignCurrency ? undefined : "USD")}
+            className="text-left text-sm text-[var(--color-gray-700)]"
+          >
+            🌐 Achete a l&apos;etranger
+          </button>
         </div>
 
         <div>
@@ -225,6 +235,7 @@ function ProductEditForm({
                 <button
                   key={type}
                   type="button"
+                  aria-pressed={draft.productType === type}
                   onClick={() => update("productType", type)}
                   className={cn(
                     "flex-1 rounded-full px-3 py-2 text-sm font-semibold capitalize transition",

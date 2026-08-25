@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { ChevronIcon } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 import { COMPANIES } from "@/lib/data/parametres-general";
@@ -49,7 +50,7 @@ export function CompanyAccordion() {
               type="button"
               onClick={() => setExpanded((prev) => ({ ...prev, [company.key]: !prev[company.key] }))}
               aria-expanded={isOpen}
-              className="flex w-full items-center gap-3 p-4 text-left"
+              className="flex w-full items-center gap-3 rounded-2xl p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-taupe-muted)] focus-visible:ring-offset-2"
             >
               <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--core-brand-color-2)] text-[var(--brand-taupe-muted)]">
                 <BuildingIcon className="size-5" />
@@ -79,13 +80,9 @@ export function CompanyAccordion() {
                           <span className="block text-sm font-medium text-[var(--color-gray-900)]">{salon.name}</span>
                           <span className="block truncate text-xs text-[var(--color-gray-500)]">{salon.address}</span>
                         </span>
-                        {salon.active && (
-                          <span
-                            aria-label="Salon actif"
-                            className="size-2 shrink-0 rounded-full bg-[var(--color-success)]"
-                          />
-                        )}
-                        <ChevronIcon className="shrink-0 text-[var(--color-gray-300)]" />
+                        <Badge variant={salon.active ? "success" : "neutral"} className="shrink-0">
+                          {salon.active ? "Actif" : "Inactif"}
+                        </Badge>
                       </div>
                     ))}
                   </div>

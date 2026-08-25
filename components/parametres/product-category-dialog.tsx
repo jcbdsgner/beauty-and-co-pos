@@ -36,7 +36,7 @@ export function ProductCategoryDialog({ open, onClose }: ProductCategoryDialogPr
           <h2 id="product-categories-title" className="font-[var(--font-heading)] text-xl text-[var(--color-gray-900)]">
             Categories produits
           </h2>
-          <p className="mt-1 text-sm text-[var(--color-gray-500)]">3 niveaux : Categorie → Sous-categorie → Specialite</p>
+          <p className="mt-1 text-sm text-[var(--color-gray-500)]">2 niveaux : Categorie → Sous-categorie</p>
         </div>
         <button
           type="button"
@@ -58,12 +58,10 @@ export function ProductCategoryDialog({ open, onClose }: ProductCategoryDialogPr
                 type="button"
                 onClick={() => hasChildren && toggle(node.label)}
                 disabled={!hasChildren}
+                aria-expanded={hasChildren ? isOpen : undefined}
                 className="flex w-full items-center justify-between text-left disabled:cursor-default"
               >
-                <span className="flex items-center gap-2">
-                  <span className="text-[15px] font-bold text-[var(--color-gray-900)]">{node.label}</span>
-                  <span className="text-xs text-[var(--color-gray-400)]">L1</span>
-                </span>
+                <span className="text-[15px] font-bold text-[var(--color-gray-900)]">{node.label}</span>
                 {hasChildren && (
                   <ChevronIcon className={cn("size-4 text-[var(--color-gray-400)] transition", isOpen && "rotate-90")} />
                 )}
@@ -71,9 +69,8 @@ export function ProductCategoryDialog({ open, onClose }: ProductCategoryDialogPr
               {hasChildren && isOpen && (
                 <ul className="mt-2 space-y-2 pl-4">
                   {node.children!.map((child) => (
-                    <li key={child} className="flex items-center justify-between">
-                      <span className="text-[15px] text-[var(--color-gray-700)]">{child}</span>
-                      <span className="text-xs text-[var(--color-gray-400)]">L2</span>
+                    <li key={child} className="text-[15px] text-[var(--color-gray-700)]">
+                      {child}
                     </li>
                   ))}
                 </ul>
