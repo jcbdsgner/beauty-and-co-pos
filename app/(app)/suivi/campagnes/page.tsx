@@ -1,10 +1,43 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { CampaignCard } from "@/components/suivi/campaign-card";
+import { CampaignEditDialog } from "@/components/suivi/campaign-edit-dialog";
 import { MegaphoneIcon } from "@/components/suivi/icons";
-import { campaigns } from "@/lib/data/suivi";
+import { campaigns as initialCampaigns, type Campaign } from "@/lib/data/suivi";
 
 export default function CampagnesPage() {
+  const [list, setList] = useState<Campaign[]>(initialCampaigns);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingCampaign, setEditingCampaign] = useState<Campaign | undefined>(undefined);
+
+  function handleCreate() {
+    setEditingCampaign(undefined);
+    setDialogOpen(true);
+  }
+
+  function handleEdit(campaign: Campaign) {
+    setEditingCampaign(campaign);
+    setDialogOpen(true);
+  }
+
+  function handleDelete(id: string) {
+    setList((prev) => prev.filter((item) => item.id !== id));
+  }
+
+  function handleSave(savedCampaign: Campaign) {
+    setList((prev) => {
+      const exists = prev.some((item) => item.id === savedCampaign.id);
+      if (exists) {
+        return prev.map((item) => (item.id === savedCampaign.id ? savedCampaign : item));
+      }
+      return [savedCampaign, ...prev];
+    });
+    setDialogOpen(false);
+  }
+
   return (
     <div className="flex flex-col gap-8">
       <Link
@@ -26,16 +59,33 @@ export default function CampagnesPage() {
             </p>
           </div>
         </div>
-        <Button variant="brand" className="shrink-0">
+        <Button variant="brand" className="shrink-0" onClick={handleCreate}>
           + Créer
         </Button>
       </div>
 
       <div className="flex flex-col gap-4">
-        {campaigns.map((campaign) => (
-          <CampaignCard key={campaign.id} campaign={campaign} />
+        {list.map((campaign) => (
+          <CampaignCard
+            key={campaign.id}
+            campaign={campaign}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
         ))}
+        {list.length === 0 && (
+          <div className="rounded-2xl border border-dashed border-[var(--color-gray-300)] p-8 text-center text-sm text-[var(--color-gray-500)]">
+            Aucune campagne pour le moment. Cliquez sur « + Créer » pour en rédiger une.
+          </div>
+        )}
       </div>
+
+      <CampaignEditDialog
+        open={dialogOpen}
+        campaign={editingCampaign}
+        onClose={() => setDialogOpen(false)}
+        onSave={handleSave}
+      />
     </div>
   );
 }
