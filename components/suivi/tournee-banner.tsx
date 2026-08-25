@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useSuiviValidation } from "@/components/suivi/suivi-validation-context";
 
 type TourneeBannerProps = {
   messagesReady: number;
@@ -13,9 +13,13 @@ type TourneeBannerProps = {
  * Bandeau CTA "Tournée du matin" — aplat `--pos-accent-dark` (jamais de gradient, refusé
  * par le client). Quelques cercles décoratifs blancs à faible opacité apportent la texture
  * à la place du dégradé doré du Figma d'origine.
+ *
+ * L'état "envoyé" vient du contexte partagé `SuiviValidationProvider` : valider ici met aussi
+ * à jour chaque carte "en attente de validation" plus bas dans la liste, pour que le feedback
+ * ne se limite pas au bouton lui-même.
  */
 export function TourneeBanner({ messagesReady, toValidate, discounts15 }: TourneeBannerProps) {
-  const [sent, setSent] = useState(false);
+  const { sent, markSent } = useSuiviValidation();
 
   return (
     <div className="relative overflow-hidden rounded-2xl bg-[var(--pos-accent-dark)] p-6 text-white sm:p-8">
@@ -27,14 +31,14 @@ export function TourneeBanner({ messagesReady, toValidate, discounts15 }: Tourne
         <div>
           <p className="text-xs font-semibold tracking-[0.14em] text-white/70 uppercase">Tournée du matin</p>
           <p className="mt-1 font-[var(--font-heading)] text-4xl leading-none">{messagesReady} messages prêts</p>
-          <p className="mt-2 text-sm text-white/80">
-            {toValidate} à valider · {discounts15} remises -15 %
+          <p className="mt-2 text-sm text-white/80" role="status">
+            {sent ? "✓ Tournée envoyée avec succès" : `${toValidate} à valider · ${discounts15} remises -15 %`}
           </p>
         </div>
         <Button
           variant="brand"
           className="bg-white! text-[var(--pos-accent-dark)]! shrink-0"
-          onClick={() => setSent(true)}
+          onClick={markSent}
           disabled={sent}
         >
           {sent ? "✓ Envoyé" : "✈ Valider & envoyer"}

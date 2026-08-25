@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { HeartPulseIcon } from "@/components/ui/icons";
 import { StatTiles } from "@/components/suivi/stat-tiles";
 import { SuiviTabs } from "@/components/suivi/suivi-tabs";
+import { SuiviValidationProvider } from "@/components/suivi/suivi-validation-context";
 import { TourneeBanner } from "@/components/suivi/tournee-banner";
 import { tourneeDuMatin } from "@/lib/data/suivi";
 
@@ -30,15 +31,17 @@ export default function SuiviPage() {
         </div>
       </div>
 
-      <TourneeBanner
-        messagesReady={tourneeDuMatin.messagesReady}
-        toValidate={tourneeDuMatin.toValidate}
-        discounts15={tourneeDuMatin.discounts15}
-      />
+      <SuiviValidationProvider>
+        <TourneeBanner
+          messagesReady={tourneeDuMatin.messagesReady}
+          toValidate={tourneeDuMatin.toValidate}
+          discounts15={tourneeDuMatin.discounts15}
+        />
 
-      <StatTiles />
+        <StatTiles />
 
-      <SuiviTabs />
+        <SuiviTabs />
+      </SuiviValidationProvider>
     </div>
   );
 }

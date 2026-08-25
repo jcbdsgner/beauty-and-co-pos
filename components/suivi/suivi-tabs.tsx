@@ -11,10 +11,10 @@ type Tab = "today" | "upcoming" | "history";
 
 /** Les 3 onglets pilule de la tournée : liste complète du jour, échéances à venir, ou historique des tournées déjà envoyées. */
 export function SuiviTabs() {
-  const totalToday = useMemo(
-    () => suiviSections.reduce((sum, section) => sum + section.cards.length, 0),
-    [],
-  );
+  // Compte affiché sur l'onglet "Aujourd'hui" : la somme des compteurs de section (issus de la
+  // spec, ex. Fidélité · 25) plutôt que le nombre de cartes réellement rendues — certaines
+  // sections n'exposent que quelques cartes exemple pour un total plus large.
+  const totalToday = useMemo(() => suiviSections.reduce((sum, section) => sum + section.count, 0), []);
 
   const [tab, setTab] = useState<Tab>("today");
 
