@@ -11,3 +11,7 @@ _À définir._
 
 **Caisse**:
 _À définir._
+
+**Rendez-vous**:
+Un créneau occupé sur le planning d'un·e praticien·ne : client, service, horaire de début, durée. Conceptuellement le même événement que le Créneau du parcours de réservation b&co (voir [b&co/CONTEXT.md](../b&co/CONTEXT.md)), vu côté équipe plutôt que côté client — mais aucun lien d'id n'existe encore entre les deux mocks, chaque projet ayant ses propres données locales.
+_Avoid_: RDV (abréviation d'affichage uniquement, pas le terme du glossaire), Créneau (réservé au vocabulaire b&co côté client)

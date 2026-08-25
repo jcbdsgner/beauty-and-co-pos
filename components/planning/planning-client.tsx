@@ -113,7 +113,7 @@ export function PlanningClient({ defaultView = "equipe" }: { defaultView?: View 
 
       <Pills options={VIEW_OPTIONS} value={view} onChange={(v) => setView(v as View)} />
 
-      {view === "equipe" ? <TeamView /> : <AppointmentsView dateLabel={activeDay.full} />}
+      {view === "equipe" ? <TeamView /> : <AppointmentsView dayIndex={dayIndex} dateLabel={activeDay.full} />}
     </div>
   );
 }
