@@ -9,7 +9,7 @@ export function LoyaltyCard({ client }: { client: Client }) {
         <div className="flex flex-col gap-4">
           <div>
             <p className="font-[var(--font-heading)] text-lg tracking-wide text-[var(--pos-accent-dark)]">
-              Elite Privé
+              Beauty and Co
             </p>
             <p className="text-xs font-semibold tracking-widest text-[var(--color-gray-500)] uppercase">
               Carte de fidélité

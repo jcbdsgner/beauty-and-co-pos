@@ -1,8 +1,46 @@
+"use client";
+
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DiamondIcon, ChevronIcon } from "@/components/ui/icons";
 import { CrownIcon, GiftIcon, SparkleIcon } from "@/components/clients/icons";
-import { type Client } from "@/lib/data/clients";
+import { type Client, type SubscriptionCredit } from "@/lib/data/clients";
+
+/**
+ * A single subscription credit. "Utiliser" consumes one credit on click — the count
+ * decrements immediately (visible feedback) and the button locks to "Épuisé" at zero
+ * instead of silently doing nothing forever.
+ */
+function CreditCard({ credit }: { credit: SubscriptionCredit }) {
+  const [count, setCount] = useState(credit.count);
+  const depleted = count <= 0;
+
+  return (
+    <Card className="flex items-center justify-between gap-3 p-5">
+      <div className="flex items-center gap-3">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--brand-rose-soft)] text-[var(--brand-taupe-muted)]">
+          {credit.icon === "diamond" ? <DiamondIcon className="size-5" /> : <SparkleIcon className="size-5" />}
+        </span>
+        <div>
+          <p className="text-xs font-semibold tracking-wide text-[var(--color-gray-500)] uppercase">
+            {credit.label}
+          </p>
+          <p className="font-[var(--font-heading)] text-2xl text-[var(--color-gray-900)]">{count}</p>
+        </div>
+      </div>
+      <Button
+        type="button"
+        variant="brand"
+        className="px-4 py-2 text-sm"
+        disabled={depleted}
+        onClick={() => setCount((current) => Math.max(0, current - 1))}
+      >
+        {depleted ? "Épuisé" : "Utiliser"}
+      </Button>
+    </Card>
+  );
+}
 
 export function SubscriptionCard({ client }: { client: Client }) {
   const subscription = client.subscription;
@@ -24,22 +62,7 @@ export function SubscriptionCard({ client }: { client: Client }) {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {subscription.credits.map((credit) => (
-          <Card key={credit.label} className="flex items-center justify-between gap-3 p-5">
-            <div className="flex items-center gap-3">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--brand-rose-soft)] text-[var(--brand-taupe-muted)]">
-                {credit.icon === "diamond" ? <DiamondIcon className="size-5" /> : <SparkleIcon className="size-5" />}
-              </span>
-              <div>
-                <p className="text-xs font-semibold tracking-wide text-[var(--color-gray-500)] uppercase">
-                  {credit.label}
-                </p>
-                <p className="font-[var(--font-heading)] text-2xl text-[var(--color-gray-900)]">{credit.count}</p>
-              </div>
-            </div>
-            <Button variant="brand" className="px-4 py-2 text-sm">
-              Utiliser
-            </Button>
-          </Card>
+          <CreditCard key={credit.label} credit={credit} />
         ))}
       </div>
 

@@ -1,7 +1,8 @@
-import Link from "next/link";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { QrPlaceholder } from "@/components/clients/qr-placeholder";
+import { PrintButton } from "@/components/clients/print-button";
 import { PrinterIcon, WhatsAppIcon } from "@/components/clients/icons";
 import { type Client, fullName, initials, tierMemberLabel } from "@/lib/data/clients";
 
@@ -25,22 +26,18 @@ export function IdentityCard({ client }: { client: Client }) {
         </div>
 
         <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-          <button
-            type="button"
-            className="inline-flex items-center gap-2 rounded-full bg-[var(--color-gray-100)] px-4 py-2.5 text-sm font-medium text-[var(--color-gray-700)] transition hover:opacity-90"
-          >
-            <PrinterIcon className="size-4" />
+          <PrintButton variant="outline" icon={<PrinterIcon className="size-4" />}>
             Imprimer carte
-          </button>
-          <Link
+          </PrintButton>
+          <Button
+            variant="success"
             href={waNumber ? `https://wa.me/${waNumber}` : "#"}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-full bg-[var(--color-success-soft)] px-4 py-2.5 text-sm font-medium text-[var(--color-success)] transition hover:opacity-90"
+            external
+            hideExternalIcon
+            icon={<WhatsAppIcon className="size-4" />}
           >
-            <WhatsAppIcon className="size-4" />
             Envoyer WhatsApp
-          </Link>
+          </Button>
         </div>
       </div>
 

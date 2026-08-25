@@ -7,14 +7,15 @@ import { Pills, type PillOption } from "@/components/ui/pills";
 import { PersonCard } from "@/components/ui/person-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PeopleIcon, PlusIcon } from "@/components/ui/icons";
+import { ClockIcon, SlidersIcon } from "@/components/clients/icons";
 import { CLIENTS, fullName, initials, tierBadge } from "@/lib/data/clients";
 
 type FilterValue = "all" | "nouveaux" | "historique" | "vip";
 
 const FILTERS: PillOption[] = [
   { value: "nouveaux", label: "Nouveaux", icon: <PlusIcon className="size-3.5" /> },
-  { value: "historique", label: "Historique" },
-  { value: "vip", label: "VIP" },
+  { value: "historique", label: "Historique", icon: <ClockIcon className="size-3.5" /> },
+  { value: "vip", label: "VIP", icon: <SlidersIcon className="size-3.5" /> },
 ];
 
 export function ClientDirectory() {

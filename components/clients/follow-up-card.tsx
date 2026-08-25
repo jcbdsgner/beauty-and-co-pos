@@ -1,19 +1,47 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { HeartPulseIcon, ChevronIcon } from "@/components/ui/icons";
 import { ChatBubbleIcon, SparkleIcon } from "@/components/clients/icons";
-import { type Client } from "@/lib/data/clients";
+import { type Client, type FollowUpSuggestion } from "@/lib/data/clients";
 
-function ProposerButton() {
+/**
+ * A single "à lui proposer" suggestion. Clicking "Proposer" gives immediate feedback
+ * by turning into the same "Envoyée" badge already used below for a sent recommendation
+ * — reusing an existing status vocabulary instead of inventing a new one.
+ */
+function SuggestionRow({ suggestion }: { suggestion: FollowUpSuggestion }) {
+  const [sent, setSent] = useState(false);
+
   return (
-    <button
-      type="button"
-      className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[var(--color-success)] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
-    >
-      <ChatBubbleIcon />
-      Proposer
-    </button>
+    <div className="flex items-center justify-between gap-4 rounded-xl border border-[var(--color-gray-200)] p-4">
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="font-semibold text-[var(--color-gray-900)]">{suggestion.name}</p>
+          <Badge variant="neutral">{suggestion.category}</Badge>
+        </div>
+        <p className="mt-0.5 text-sm text-[var(--color-gray-500)]">{suggestion.reason}</p>
+      </div>
+      {sent ? (
+        <Badge variant="info" className="shrink-0">
+          Envoyée
+        </Badge>
+      ) : (
+        <Button
+          type="button"
+          variant="success"
+          icon={<ChatBubbleIcon />}
+          className="shrink-0 px-4 py-2 text-sm"
+          onClick={() => setSent(true)}
+        >
+          Proposer
+        </Button>
+      )}
+    </div>
   );
 }
 
@@ -62,19 +90,7 @@ export function FollowUpCard({ client }: { client: Client }) {
               À lui proposer
             </p>
             {followUp.suggestions.map((suggestion) => (
-              <div
-                key={suggestion.name}
-                className="flex items-center justify-between gap-4 rounded-xl border border-[var(--color-gray-200)] p-4"
-              >
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-semibold text-[var(--color-gray-900)]">{suggestion.name}</p>
-                    <Badge variant="neutral">{suggestion.category}</Badge>
-                  </div>
-                  <p className="mt-0.5 text-sm text-[var(--color-gray-500)]">{suggestion.reason}</p>
-                </div>
-                <ProposerButton />
-              </div>
+              <SuggestionRow key={suggestion.name} suggestion={suggestion} />
             ))}
           </div>
 

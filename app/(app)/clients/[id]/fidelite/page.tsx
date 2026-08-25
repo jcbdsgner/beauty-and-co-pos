@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { QrPlaceholder } from "@/components/clients/qr-placeholder";
 import { LoyaltyCard } from "@/components/clients/loyalty-card";
+import { PrintButton } from "@/components/clients/print-button";
 import { DownloadIcon, MailIcon, PrinterIcon, WhatsAppIcon } from "@/components/clients/icons";
 import { fullName, getClientById, tierCardLabel } from "@/lib/data/clients";
 
@@ -16,28 +16,28 @@ export default async function ClientLoyaltyCardPage({ params }: { params: Promis
       <PageHeader backHref={`/clients/${client.id}`} title="Carte de fidélité" align="center" />
 
       <div className="flex flex-wrap items-center justify-center gap-3">
-        <Link
+        <Button
+          variant="success"
           href={waNumber ? `https://wa.me/${waNumber}` : "#"}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 rounded-full bg-[var(--color-success)] px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
+          external
+          hideExternalIcon
+          icon={<WhatsAppIcon className="size-4" />}
         >
-          <WhatsAppIcon className="size-4" />
           Envoyer par WhatsApp
-        </Link>
-        <Link
+        </Button>
+        <Button
+          variant="info"
           href={client.email ? `mailto:${client.email}` : "#"}
-          className="inline-flex items-center gap-2 rounded-full bg-[var(--color-info)] px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
+          icon={<MailIcon className="size-4" />}
         >
-          <MailIcon className="size-4" />
           Envoyer par email
-        </Link>
+        </Button>
         <Button variant="dark" icon={<DownloadIcon className="size-4" />}>
           Télécharger
         </Button>
-        <Button variant="outline" icon={<PrinterIcon className="size-4" />}>
+        <PrintButton variant="outline" icon={<PrinterIcon className="size-4" />}>
           Imprimer
-        </Button>
+        </PrintButton>
       </div>
 
       <div className="flex flex-col items-center gap-2">

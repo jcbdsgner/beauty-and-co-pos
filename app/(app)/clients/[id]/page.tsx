@@ -40,7 +40,15 @@ export default async function ClientProfilePage({ params }: { params: Promise<{ 
         </span>
         <div>
           <p className="text-xs text-[var(--color-gray-500)]">Derniere visite</p>
-          <p className="font-semibold text-[var(--color-gray-900)]">{client.lastVisit?.label ?? "—"}</p>
+          <p
+            className={
+              client.lastVisit
+                ? "font-semibold text-[var(--color-gray-900)]"
+                : "text-sm text-[var(--color-gray-400)]"
+            }
+          >
+            {client.lastVisit?.label ?? "—"}
+          </p>
         </div>
       </Card>
 

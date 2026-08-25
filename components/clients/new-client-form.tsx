@@ -133,7 +133,7 @@ export function NewClientForm() {
       </Card>
 
       <Button type="submit" variant="brand" className="w-full" disabled={submitting}>
-        Créer le client
+        {submitting ? "Création..." : "Créer le client"}
       </Button>
     </form>
   );

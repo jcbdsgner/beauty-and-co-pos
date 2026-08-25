@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { type Client } from "@/lib/data/clients";
 import {
   BriefcaseIcon,
@@ -29,7 +30,14 @@ function ContactRow({
       </span>
       <div className="min-w-0">
         <p className="text-xs text-[var(--color-gray-500)]">{label}</p>
-        <p className="truncate text-[15px] font-medium text-[var(--color-gray-900)]">{value || "—"}</p>
+        <p
+          className={cn(
+            "truncate text-[15px]",
+            value ? "font-medium text-[var(--color-gray-900)]" : "text-[var(--color-gray-400)]",
+          )}
+        >
+          {value || "—"}
+        </p>
       </div>
     </div>
   );

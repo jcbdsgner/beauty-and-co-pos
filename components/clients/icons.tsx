@@ -188,6 +188,17 @@ export function DownloadIcon({ className }: IconProps) {
   );
 }
 
+export function SlidersIcon({ className }: IconProps) {
+  return (
+    <svg aria-hidden viewBox="0 0 24 24" fill="none" className={cn("size-5", className)}>
+      <path d="M4 6h4.5M12.5 6H20M4 12h9M16.5 12H20M4 18h4.5M12.5 18H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="10.5" cy="6" r="2" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="14.5" cy="12" r="2" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="10.5" cy="18" r="2" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
 export function ChatBubbleIcon({ className }: IconProps) {
   return (
     <svg aria-hidden viewBox="0 0 24 24" fill="none" className={cn("size-4", className)}>
