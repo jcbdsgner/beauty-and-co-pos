@@ -232,6 +232,16 @@ export function ReceiptTagIcon({ className }: IconProps) {
   );
 }
 
+export function NoResultsIcon({ className }: IconProps) {
+  return (
+    <svg aria-hidden viewBox="0 0 24 24" fill="none" className={cn("size-10", className)}>
+      <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M20 20l-4.3-4.3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M8 10.5h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function KeyGlyphIcon({ className }: IconProps) {
   return (
     <svg aria-hidden viewBox="0 0 24 24" fill="none" className={cn("size-4", className)}>

@@ -9,19 +9,21 @@ import { ClientField } from "@/components/vente/client-field";
 import { ClientModal } from "@/components/vente/client-modal";
 import { ScanModal } from "@/components/vente/scan-modal";
 import { CategoryGrid } from "@/components/vente/category-grid";
+import { FullCatalog } from "@/components/vente/full-catalog";
 import { ServiceCatalog } from "@/components/vente/service-catalog";
 import { CartPanel } from "@/components/vente/cart-panel";
 import { PaymentScreen } from "@/components/vente/payment-screen";
 import { ReceiptScreen, type NextVisitSuggestion, type PaymentLine } from "@/components/vente/receipt-screen";
+import { CameraIcon } from "@/components/vente/icons";
 import {
   CATEGORIES,
   PAYMENT_METHODS,
   PRACTITIONERS,
   PRODUCTS,
+  SALON,
   SERVICES,
   computeTotals,
   createSale,
-  resetSaleCounter,
   type Client,
   type PaymentMethodId,
   type Sale,
@@ -78,7 +80,7 @@ function buildReceipt(sale: Sale, invoiceSeq: number): ReceiptSnapshot {
  * Figma flow where the whole tunnel happens as interactions on one POS screen rather than
  * client-side route navigation. */
 export default function VentePage() {
-  const [sales, setSales] = useState<Sale[]>(() => [createSale()]);
+  const [sales, setSales] = useState<Sale[]>(() => [createSale(1)]);
   const [activeSaleId, setActiveSaleId] = useState(sales[0].id);
   const [step, setStep] = useState<Step>("categories");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -109,20 +111,26 @@ export default function VentePage() {
   }
 
   function handleCloseSaleTab(id: string) {
-    setSales((prev) => {
-      const next = prev.filter((sale) => sale.id !== id);
-      if (next.length === 0) return prev;
-      if (id === activeSaleId) {
-        setActiveSaleId(next[0].id);
-        setStep("categories");
-        resetBrowsing();
-      }
-      return next;
-    });
+    const sale = sales.find((s) => s.id === id);
+    if (sale && sale.cart.length > 0) {
+      const itemCount = sale.cart.reduce((sum, item) => sum + item.qty, 0);
+      const confirmed = window.confirm(
+        `Fermer « ${sale.name} » ? Le panier (${itemCount} article${itemCount > 1 ? "s" : ""}) sera perdu.`,
+      );
+      if (!confirmed) return;
+    }
+    const next = sales.filter((s) => s.id !== id);
+    if (next.length === 0) return;
+    setSales(next);
+    if (id === activeSaleId) {
+      setActiveSaleId(next[0].id);
+      setStep("categories");
+      resetBrowsing();
+    }
   }
 
   function handleAddSale() {
-    const sale = createSale();
+    const sale = createSale(sales.length + 1);
     setSales((prev) => [...prev, sale]);
     setActiveSaleId(sale.id);
     setStep("categories");
@@ -162,7 +170,9 @@ export default function VentePage() {
         ...sale,
         cart: [
           ...sale.cart,
-          { id: `item-${service.id}-${Date.now()}`, serviceId: service.id, name: service.name, unitPrice: service.price, qty: 1, practitioner: null },
+          // New lines default to the logged-in cashier (matches the Figma capture, where every
+          // cart line already reads the cashier's name until reassigned to another praticien).
+          { id: `item-${service.id}-${Date.now()}`, serviceId: service.id, name: service.name, unitPrice: service.price, qty: 1, practitioner: SALON.cashier },
         ],
       };
     });
@@ -207,10 +217,17 @@ export default function VentePage() {
   }
 
   function handleNewSale() {
-    resetSaleCounter();
-    const sale = createSale();
-    setSales([sale]);
-    setActiveSaleId(sale.id);
+    // The just-completed sale is done — drop it, but any other sale tabs the cashier had open
+    // in parallel (e.g. "Vente 2" being served by another practitioner) must survive untouched.
+    const remaining = sales.filter((sale) => sale.id !== activeSaleId);
+    if (remaining.length > 0) {
+      setSales(remaining);
+      setActiveSaleId(remaining[0].id);
+    } else {
+      const sale = createSale(1);
+      setSales([sale]);
+      setActiveSaleId(sale.id);
+    }
     setStep("categories");
     setActiveTab("services");
     resetBrowsing();
@@ -237,7 +254,17 @@ export default function VentePage() {
       <PaymentScreen
         sale={activeSale}
         onBack={() => setStep(activeCategory ? "catalog" : "categories")}
-        onSelectMethod={(method) => updateActiveSale((sale) => ({ ...sale, paymentMethod: method }))}
+        onSelectMethod={(method) =>
+          updateActiveSale((sale) => ({
+            ...sale,
+            paymentMethod: method,
+            // Switching method 1 onto whatever method 2 currently holds would silently make
+            // the mixed split "pay twice with the same method" — clear method 2 so it must be
+            // re-picked deliberately.
+            mixedMethod2: sale.mixedMethod2 === method ? null : sale.mixedMethod2,
+            mixedAmount2: sale.mixedMethod2 === method ? "" : sale.mixedAmount2,
+          }))
+        }
         onToggleMixed={(checked) =>
           updateActiveSale((sale) => ({
             ...sale,
@@ -262,7 +289,20 @@ export default function VentePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Nouvelle Vente" backHref="/" />
+      <PageHeader
+        title="Nouvelle Vente"
+        backHref="/"
+        action={
+          <button
+            type="button"
+            onClick={() => setShowScanModal(true)}
+            aria-label="Scanner la carte de fidélité d'un client"
+            className="flex size-9 items-center justify-center rounded-full text-[var(--color-gray-500)] transition hover:bg-[var(--color-gray-100)] hover:text-[var(--brand-taupe-muted)]"
+          >
+            <CameraIcon />
+          </button>
+        }
+      />
 
       <SaleTabs sales={sales} activeSaleId={activeSaleId} onSelect={handleSelectSaleTab} onClose={handleCloseSaleTab} onAdd={handleAddSale} />
 
@@ -311,7 +351,10 @@ export default function VentePage() {
               hideFilters
             />
           ) : step === "categories" ? (
-            <CategoryGrid categories={CATEGORIES} onSelect={handleSelectCategory} />
+            <div className="flex flex-col gap-6">
+              <CategoryGrid categories={CATEGORIES} onSelect={handleSelectCategory} />
+              <FullCatalog services={SERVICES} onAdd={handleAddToCart} />
+            </div>
           ) : (
             <ServiceCatalog
               category={category}

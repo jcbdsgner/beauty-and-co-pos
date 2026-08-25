@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Stepper } from "@/components/ui/stepper";
 import { HeroNumber } from "@/components/ui/hero-number";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -49,7 +50,7 @@ function CartLine({
             type="button"
             onClick={onRemove}
             aria-label={`Retirer ${item.name} du panier`}
-            className="flex size-7 items-center justify-center rounded-full text-[var(--color-error)] hover:bg-[#fdece9]"
+            className="flex size-7 items-center justify-center rounded-full text-[var(--color-error)] hover:bg-[var(--color-error)]/10"
           >
             <TrashIcon />
           </button>
@@ -90,6 +91,8 @@ export function CartPanel({
   const totals = computeTotals(sale);
   const itemCount = sale.cart.reduce((sum, item) => sum + item.qty, 0);
   const canCheckout = sale.cart.length > 0 && sale.client !== null;
+  const hasDiscount = sale.promoApplied !== null || sale.managerDiscountApplied > 0 || sale.loyaltyPointsUsed > 0;
+  const redeemableLoyaltyPoints = sale.client ? Math.floor(sale.client.points / 100) * 100 : 0;
 
   return (
     <Card className="flex h-fit flex-col gap-4 p-5">
@@ -99,7 +102,11 @@ export function CartPanel({
       </div>
 
       {sale.cart.length === 0 ? (
-        <EmptyState icon={<CartGlyphIcon className="size-12" />} title="Panier vide" />
+        <EmptyState
+          icon={<CartGlyphIcon className="size-12" />}
+          title="Panier vide"
+          subtitle="Ajoutez un service ou un produit pour commencer la vente."
+        />
       ) : (
         <>
           <div className="flex flex-col gap-3">
@@ -124,6 +131,7 @@ export function CartPanel({
               <span className="flex items-center gap-1.5">
                 <ReceiptTagIcon />
                 Remise / Code promo
+                {hasDiscount && <Badge variant="success">Actif</Badge>}
               </span>
               <ChevronIcon className={discountOpen ? "rotate-90" : ""} />
             </button>
@@ -141,13 +149,14 @@ export function CartPanel({
                       placeholder="PROMO20"
                       className="w-full rounded-lg border border-[var(--color-gray-200)] px-3 py-2 text-sm focus:border-[var(--brand-taupe-muted)] focus:outline-none"
                     />
-                    <button
-                      type="button"
+                    <Button
+                      variant="brand"
                       onClick={onApplyPromo}
-                      className="shrink-0 rounded-full bg-[var(--core-brand-color)] px-4 text-sm font-semibold text-black hover:opacity-90"
+                      disabled={!sale.discountCode.trim()}
+                      className="w-auto shrink-0 px-4 py-2 text-sm"
                     >
                       OK
-                    </button>
+                    </Button>
                   </div>
                   {sale.promoApplied && (
                     <p className="mt-1 text-xs font-medium text-[var(--color-success)]">
@@ -160,18 +169,38 @@ export function CartPanel({
                   <div>
                     <div className="mb-1 flex items-center justify-between text-xs font-semibold text-[var(--color-gray-500)] uppercase">
                       <span>★ Points fidélité ({sale.client.points} pts)</span>
-                      <span className="text-[var(--color-gray-700)] normal-case">{sale.loyaltyPointsUsed}</span>
+                      {redeemableLoyaltyPoints > 0 && (
+                        <span className="text-[var(--color-gray-700)] normal-case">{sale.loyaltyPointsUsed} pts</span>
+                      )}
                     </div>
-                    <input
-                      type="range"
-                      min={0}
-                      max={sale.client.points}
-                      step={100}
-                      value={sale.loyaltyPointsUsed}
-                      onChange={(event) => onLoyaltyChange(Number(event.target.value))}
-                      className="w-full accent-[var(--brand-taupe-muted)]"
-                    />
-                    <p className="mt-1 text-xs text-[var(--color-gray-500)]">100 pts = 1 000 FCFA</p>
+                    {redeemableLoyaltyPoints > 0 ? (
+                      <>
+                        <input
+                          type="range"
+                          min={0}
+                          max={redeemableLoyaltyPoints}
+                          step={100}
+                          value={sale.loyaltyPointsUsed}
+                          onChange={(event) => onLoyaltyChange(Number(event.target.value))}
+                          className="w-full accent-[var(--brand-taupe-muted)]"
+                        />
+                        <p className="mt-1 text-xs text-[var(--color-gray-500)]">
+                          100 pts = 1 000 FCFA
+                          {sale.loyaltyPointsUsed > 0 && (
+                            <>
+                              {" · "}
+                              <span className="font-medium text-[var(--color-success)]">
+                                -{formatFcfa(Math.floor(sale.loyaltyPointsUsed / 100) * 1000)}
+                              </span>
+                            </>
+                          )}
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-xs text-[var(--color-gray-500)]">
+                        Minimum 100 pts requis pour une réduction fidélité.
+                      </p>
+                    )}
                   </div>
                 )}
 
@@ -186,13 +215,14 @@ export function CartPanel({
                       placeholder="DISC-1234"
                       className="w-full rounded-lg border border-[var(--color-gray-200)] px-3 py-2 text-sm focus:border-[var(--brand-taupe-muted)] focus:outline-none"
                     />
-                    <button
-                      type="button"
+                    <Button
+                      variant="dark"
                       onClick={onApplyManagerCode}
-                      className="shrink-0 rounded-full bg-[var(--pos-accent-dark)] px-4 text-sm font-semibold text-white hover:opacity-90"
+                      disabled={!sale.managerCode.trim()}
+                      className="w-auto shrink-0 px-4 py-2 text-sm"
                     >
                       OK
-                    </button>
+                    </Button>
                   </div>
                   {sale.managerDiscountApplied > 0 && (
                     <p className="mt-1 text-xs font-medium text-[var(--color-success)]">
@@ -220,12 +250,7 @@ export function CartPanel({
             </div>
           </div>
 
-          <Button
-            variant="brand"
-            className={canCheckout ? "w-full" : "w-full opacity-40"}
-            disabled={!canCheckout}
-            onClick={onCheckout}
-          >
+          <Button variant="brand" className="w-full" disabled={!canCheckout} onClick={onCheckout}>
             Encaisser {formatFcfa(totals.total)}
           </Button>
           {!canCheckout && sale.client === null && (

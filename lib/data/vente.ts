@@ -126,6 +126,24 @@ function countFor(categoryId: string) {
   return SERVICES.filter((service) => service.categoryId === categoryId).length;
 }
 
+export type ServiceGroup = { subcat: string; services: Service[] };
+
+/** Groups a flat service list into subcategory sections (first-appearance order) — used by the
+ * "categories" landing step to show the full browsable catalogue under the category grid,
+ * matching the Figma capture where the grid isn't the only way to reach a service. */
+export function groupServicesBySubcat(services: Service[]): ServiceGroup[] {
+  const order: string[] = [];
+  const map = new Map<string, Service[]>();
+  for (const service of services) {
+    if (!map.has(service.subcat)) {
+      map.set(service.subcat, []);
+      order.push(service.subcat);
+    }
+    map.get(service.subcat)!.push(service);
+  }
+  return order.map((subcat) => ({ subcat, services: map.get(subcat)! }));
+}
+
 export const CATEGORIES: Category[] = [
   { id: "coiffure", name: "Coiffure", icon: "coiffure", bg: "bg-[var(--brand-rose-soft)]", count: countFor("coiffure") },
   { id: "spa", name: "Spa & Massages", icon: "spa", bg: "bg-[var(--brand-lilac)]/30", count: countFor("spa") },
@@ -160,7 +178,10 @@ export const CLIENTS: Client[] = [
   },
 ];
 
-export const PRACTITIONERS: string[] = ["Fatou", "Bineta", "William", "Michelle", "Codou"];
+// The logged-in cashier ("Propriétaire", per SALON.cashier below) always heads the list — cart
+// lines default to them (see createCartItem) rather than an unassigned placeholder, matching the
+// Figma capture where every new line already reads "✂ Propriétaire" until reassigned.
+export const PRACTITIONERS: string[] = ["Propriétaire", "Fatou", "Bineta", "William", "Michelle", "Codou"];
 
 export const PAYMENT_METHODS: { id: PaymentMethodId; label: string }[] = [
   { id: "wave", label: "Wave" },
@@ -174,21 +195,25 @@ export const SALON = {
   area: "Almadies",
   address: "Route des Almadies, Dakar",
   phone: "+221 33 820 00 01",
-  cashier: "Proprietaire",
+  cashier: "Propriétaire",
 };
 
 export function formatFcfa(amount: number) {
   return `${Math.round(amount).toLocaleString("fr-FR")} F`;
 }
 
-let saleCounter = 0;
-
-/** Fresh empty sale — used both for the first tab and every "+" click. */
-export function createSale(): Sale {
-  saleCounter += 1;
+/**
+ * Fresh empty sale — used both for the first tab and every "+" click. `seq` (1-based) drives
+ * the "Vente N" label and must be supplied by the caller (sales.length + 1, or 1 to reset) —
+ * deliberately NOT a module-level counter, which under React Strict Mode's double-invocation
+ * of state initializers produced a server/client hydration mismatch (SSR saw "Vente 1", the
+ * client's doubled initializer call landed on "Vente 2"). `Date.now()` is safe here since it
+ * only feeds the id (never rendered as text), giving uniqueness without affecting hydration.
+ */
+export function createSale(seq: number): Sale {
   return {
-    id: `sale-${Date.now()}-${saleCounter}`,
-    name: `Vente ${saleCounter}`,
+    id: `sale-${seq}-${Date.now()}`,
+    name: `Vente ${seq}`,
     client: null,
     cart: [],
     discountCode: "",
@@ -202,10 +227,6 @@ export function createSale(): Sale {
     mixedAmount1: "",
     mixedAmount2: "",
   };
-}
-
-export function resetSaleCounter() {
-  saleCounter = 0;
 }
 
 export type SaleTotals = {

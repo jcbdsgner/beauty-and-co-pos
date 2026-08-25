@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { HeroNumber } from "@/components/ui/hero-number";
+import { Pills } from "@/components/ui/pills";
 import { PersonSilhouetteIcon, WaveGlyphIcon, OrangeMoneyGlyphIcon, CashGlyphIcon, CardGlyphIcon } from "@/components/vente/icons";
 import {
   PAYMENT_METHODS,
@@ -35,7 +36,12 @@ export function PaymentScreen({ sale, onBack, onSelectMethod, onToggleMixed, onS
   const amount1 = Number(sale.mixedAmount1) || 0;
   const amount2 = Number(sale.mixedAmount2) || 0;
   const mixedSum = amount1 + amount2;
-  const mixedValid = sale.mixedMethod2 !== null && amount1 > 0 && amount2 > 0 && mixedSum === totals.total;
+  const mixedValid =
+    sale.mixedMethod2 !== null &&
+    sale.mixedMethod2 !== sale.paymentMethod &&
+    amount1 > 0 &&
+    amount2 > 0 &&
+    mixedSum === totals.total;
   const valid = sale.mixedPayment ? mixedValid : sale.paymentMethod !== null;
   const method1Label = sale.paymentMethod ? PAYMENT_METHODS.find((method) => method.id === sale.paymentMethod)?.label : null;
 
@@ -93,16 +99,23 @@ export function PaymentScreen({ sale, onBack, onSelectMethod, onToggleMixed, onS
         </div>
       </div>
 
-      <label className="flex items-center gap-2 text-sm text-[var(--color-gray-700)]">
-        <input
-          type="checkbox"
-          checked={sale.mixedPayment}
-          disabled={sale.paymentMethod === null}
-          onChange={(event) => onToggleMixed(event.target.checked)}
-          className="size-4 accent-[var(--brand-taupe-muted)]"
-        />
-        Paiement mixte (2 méthodes)
-      </label>
+      <div>
+        <label className="flex items-center gap-2 text-sm text-[var(--color-gray-700)]">
+          <input
+            type="checkbox"
+            checked={sale.mixedPayment}
+            disabled={sale.paymentMethod === null}
+            onChange={(event) => onToggleMixed(event.target.checked)}
+            className="size-4 accent-[var(--brand-taupe-muted)]"
+          />
+          Paiement mixte (2 méthodes)
+        </label>
+        {sale.paymentMethod === null && (
+          <p className="mt-1 text-xs text-[var(--color-gray-500)]">
+            Choisissez d&apos;abord un mode de paiement ci-dessus pour activer le partage.
+          </p>
+        )}
+      </div>
 
       {sale.mixedPayment && (
         <div className="flex flex-col gap-4 rounded-2xl border border-[var(--color-gray-200)] bg-white p-4">
@@ -119,23 +132,14 @@ export function PaymentScreen({ sale, onBack, onSelectMethod, onToggleMixed, onS
 
           <div>
             <label className="mb-1 block text-xs font-semibold text-[var(--color-gray-500)] uppercase">2e mode de paiement</label>
-            <div className="flex flex-wrap gap-2">
-              {PAYMENT_METHODS.filter((method) => method.id !== sale.paymentMethod).map((method) => (
-                <button
-                  key={method.id}
-                  type="button"
-                  onClick={() => onSelectMethod2(method.id)}
-                  className={cn(
-                    "rounded-full px-3 py-1.5 text-xs font-medium transition",
-                    sale.mixedMethod2 === method.id
-                      ? "bg-[var(--core-brand-color)] text-black"
-                      : "border border-[var(--color-gray-200)] text-[var(--color-gray-600)] hover:bg-[var(--color-gray-50)]",
-                  )}
-                >
-                  {method.label}
-                </button>
-              ))}
-            </div>
+            <Pills
+              options={PAYMENT_METHODS.filter((method) => method.id !== sale.paymentMethod).map((method) => ({
+                value: method.id,
+                label: method.label,
+              }))}
+              value={sale.mixedMethod2 ?? ""}
+              onChange={(value) => onSelectMethod2(value as PaymentMethodId)}
+            />
             <input
               type="number"
               placeholder="Montant"
@@ -151,7 +155,7 @@ export function PaymentScreen({ sale, onBack, onSelectMethod, onToggleMixed, onS
         </div>
       )}
 
-      <Button variant="brand" className={valid ? "w-full" : "w-full opacity-40"} disabled={!valid} onClick={onConfirm}>
+      <Button variant="brand" className="w-full" disabled={!valid} onClick={onConfirm}>
         Confirmer {formatFcfa(totals.total)}
       </Button>
     </div>

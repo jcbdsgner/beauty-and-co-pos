@@ -6,7 +6,8 @@ import { Dialog } from "@/components/ui/dialog";
 import { CloseButton } from "@/components/ui/icon-button";
 import { SearchInput } from "@/components/ui/search-input";
 import { PersonCard } from "@/components/ui/person-card";
-import { CameraIcon, PersonSilhouetteIcon } from "@/components/vente/icons";
+import { EmptyState } from "@/components/ui/empty-state";
+import { CameraIcon, NoResultsIcon, PersonSilhouetteIcon } from "@/components/vente/icons";
 import { CLIENTS, type Client } from "@/lib/data/vente";
 
 type ClientModalProps = {
@@ -63,7 +64,12 @@ export function ClientModal({ open, onClose, onSelect, onScanQr }: ClientModalPr
 
       <div className="flex flex-col gap-2">
         {results.length === 0 && (
-          <p className="py-8 text-center text-sm text-[var(--color-gray-500)]">Aucun client ne correspond à cette recherche.</p>
+          <EmptyState
+            icon={<NoResultsIcon />}
+            title="Aucun client trouvé"
+            subtitle="Essayez un autre nom ou numéro, scannez sa carte, ou créez son profil."
+            className="py-8"
+          />
         )}
         {results.map((client) => (
           <PersonCard

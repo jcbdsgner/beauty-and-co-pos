@@ -2,6 +2,8 @@
 
 import { useMemo } from "react";
 import { Pills } from "@/components/ui/pills";
+import { EmptyState } from "@/components/ui/empty-state";
+import { NoResultsIcon } from "@/components/vente/icons";
 import { formatFcfa, type Category, type Service } from "@/lib/data/vente";
 
 type ServiceCatalogProps = {
@@ -41,7 +43,7 @@ export function ServiceCatalog({ category, services, search, activeFilter, onFil
             onClick={onBack}
             className="text-sm font-medium text-[var(--brand-taupe-muted)] hover:underline"
           >
-            ‹ Categories
+            ‹ Catégories
           </button>
           <span className="text-sm text-[var(--color-gray-500)]">{category.name}</span>
         </div>
@@ -56,7 +58,15 @@ export function ServiceCatalog({ category, services, search, activeFilter, onFil
       )}
 
       {filtered.length === 0 ? (
-        <p className="py-10 text-center text-sm text-[var(--color-gray-500)]">Aucun service ne correspond à cette recherche.</p>
+        <EmptyState
+          icon={<NoResultsIcon />}
+          title="Aucun résultat"
+          subtitle={
+            search.trim()
+              ? `Aucun service ne correspond à « ${search.trim()} ».`
+              : "Aucun service dans cette catégorie pour le moment."
+          }
+        />
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {filtered.map((service) => (
