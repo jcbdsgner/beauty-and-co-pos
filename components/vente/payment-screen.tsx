@@ -15,6 +15,10 @@ import {
   type Sale,
 } from "@/lib/data/vente";
 
+/** Disabled state must stay legible (DESIGN.md's Disabled-Is-Not-Invisible Rule) — a muted solid
+ *  fill instead of the shared Button component's default translucent wash over a light color. */
+const LEGIBLE_DISABLED = "disabled:bg-[var(--color-gray-200)] disabled:text-[var(--color-gray-500)] disabled:opacity-100";
+
 const METHOD_ICONS: Record<PaymentMethodId, (props: { className?: string }) => React.ReactElement> = {
   wave: WaveGlyphIcon,
   orange_money: OrangeMoneyGlyphIcon,
@@ -161,7 +165,7 @@ export function PaymentScreen({ sale, onBack, onSelectMethod, onToggleMixed, onS
         </div>
       )}
 
-      <Button variant="brand" className="w-full" disabled={!valid} onClick={onConfirm}>
+      <Button variant="brand" className={`w-full ${LEGIBLE_DISABLED}`} disabled={!valid} onClick={onConfirm}>
         Confirmer {formatFcfa(totals.total)}
       </Button>
     </div>

@@ -1,13 +1,8 @@
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import type { CategoryIcon } from "@/lib/data/vente";
 import {
   Scissors,
-  Flower2,
-  Zap,
-  Hand,
-  FaceSlightlySmiling,
-  Sparkles,
-  Baby,
   ShoppingCart,
   User,
   Camera,
@@ -19,6 +14,8 @@ import {
   Tag,
   SearchX,
   Key,
+  Gift,
+  ScanLine,
 } from "lucide-react";
 
 type IconProps = { className?: string };
@@ -29,43 +26,29 @@ export function ScissorsIcon({ className }: IconProps) {
   return <Scissors className={cn("size-6", className)} />;
 }
 
-export function SpaIcon({ className }: IconProps) {
-  return <Flower2 className={cn("size-6", className)} />;
-}
-
-export function EpilationIcon({ className }: IconProps) {
-  return <Zap className={cn("size-6", className)} />;
-}
-
-export function ManucureIcon({ className }: IconProps) {
-  return <Hand className={cn("size-6", className)} />;
-}
-
-export function VisageIcon({ className }: IconProps) {
-  return <FaceSlightlySmiling className={cn("size-6", className)} />;
-}
-
-export function NailArtIcon({ className }: IconProps) {
-  return <Sparkles className={cn("size-6", className)} />;
-}
-
-export function MiniCoIcon({ className }: IconProps) {
-  return <Baby className={cn("size-6", className)} />;
-}
-
-const CATEGORY_ICONS: Record<CategoryIcon, (props: IconProps) => React.ReactElement> = {
-  coiffure: ScissorsIcon,
-  spa: SpaIcon,
-  epilation: EpilationIcon,
-  manucure: ManucureIcon,
-  visage: VisageIcon,
-  onglerie: NailArtIcon,
-  mini: MiniCoIcon,
+/** Same hand-drawn category pictograms as the b&co booking site (public/images/rdv on that
+ *  project), copied into public/images/services here — keeps the two products' category
+ *  iconography identical instead of drifting onto generic lucide glyphs. */
+const CATEGORY_IMAGES: Record<CategoryIcon, string> = {
+  coiffure: "/images/services/service-coiffure.svg",
+  spa: "/images/services/service-spa.svg",
+  epilation: "/images/services/service-epilation.svg",
+  manucure: "/images/services/service-manucure-pedicure.svg",
+  visage: "/images/services/service-soin-visage.svg",
+  onglerie: "/images/services/icon-onglerie.svg",
+  mini: "/images/services/service-mini-co.png",
 };
 
 export function CategoryGlyph({ icon, className }: { icon: CategoryIcon; className?: string }) {
-  const Icon = CATEGORY_ICONS[icon];
-  return <Icon className={className} />;
+  return (
+    <Image
+      src={CATEGORY_IMAGES[icon]}
+      alt=""
+      width={24}
+      height={24}
+      className={cn("size-6 object-contain", className)}
+    />
+  );
 }
 
 export function CartGlyphIcon({ className }: IconProps) {
@@ -143,4 +126,12 @@ export function NoResultsIcon({ className }: IconProps) {
 
 export function KeyGlyphIcon({ className }: IconProps) {
   return <Key className={cn("size-4", className)} />;
+}
+
+export function GiftIcon({ className }: IconProps) {
+  return <Gift className={cn("size-4", className)} />;
+}
+
+export function ScanLineIcon({ className }: IconProps) {
+  return <ScanLine className={cn("size-4", className)} />;
 }

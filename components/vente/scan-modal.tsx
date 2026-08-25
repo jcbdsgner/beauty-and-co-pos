@@ -5,18 +5,21 @@ import { Dialog } from "@/components/ui/dialog";
 import { CloseButton } from "@/components/ui/icon-button";
 import { Button } from "@/components/ui/button";
 import { CameraIcon, QrFrameIcon } from "@/components/vente/icons";
-import { CLIENTS, type Client } from "@/lib/data/vente";
 
 type ScanModalProps = {
   open: boolean;
   onClose: () => void;
-  onDetected: (client: Client) => void;
+  title: string;
+  instructions: string;
+  /** Runs when a scan "succeeds" — the caller owns what that means (select a client, apply a gift card...). */
+  onSimulateDetect: () => void;
 };
 
-/** "Scanner QR Client" modal — activates the device camera for a live viewfinder feed.
- * QR decoding isn't wired to real client data (there's no encoded payload behind the loyalty
- * card's QR placeholder), so "Simuler la détection" still stands in for a successful scan. */
-export function ScanModal({ open, onClose, onDetected }: ScanModalProps) {
+/** Generic QR-scan modal — activates the device camera for a live viewfinder feed. Used both for
+ * the client loyalty card and the carte cadeau. QR decoding isn't wired to a real payload (there's
+ * no encoded data behind either card's QR placeholder), so "Simuler la détection" stands in for a
+ * successful scan; the caller decides what a detection means. */
+export function ScanModal({ open, onClose, title, instructions, onSimulateDetect }: ScanModalProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
 
@@ -52,7 +55,7 @@ export function ScanModal({ open, onClose, onDetected }: ScanModalProps) {
       <div className="relative mb-4 flex items-center gap-2">
         <CameraIcon className="size-5 text-[var(--brand-taupe-muted)]" />
         <h2 id="scan-modal-title" className="font-[var(--font-heading)] text-lg text-[var(--color-gray-900)]">
-          Scanner QR Client
+          {title}
         </h2>
         <CloseButton onClick={onClose} />
       </div>
@@ -67,15 +70,9 @@ export function ScanModal({ open, onClose, onDetected }: ScanModalProps) {
         )}
       </div>
 
-      <p className="mt-4 text-center text-sm text-[var(--color-gray-500)]">
-        Pointez la caméra vers le QR code de la carte client
-      </p>
+      <p className="mt-4 text-center text-sm text-[var(--color-gray-500)]">{instructions}</p>
 
-      <Button
-        variant="dark"
-        className="mt-4 w-full"
-        onClick={() => onDetected(CLIENTS[0])}
-      >
+      <Button variant="dark" className="mt-4 w-full" onClick={onSimulateDetect}>
         Simuler la détection
       </Button>
     </Dialog>

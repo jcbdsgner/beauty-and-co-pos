@@ -25,6 +25,17 @@ export type Category = {
   count: number;
 };
 
+/** A Beauty and Co carte cadeau — a real product (see b&co's externalServices "carte-cadeau"),
+ *  stored-value rather than a percentage-off promo code. Redeeming one deducts its balance
+ *  (capped at the sale's subtotal) from the total. */
+export type GiftCard = { code: string; balance: number };
+
+export const GIFT_CARDS: GiftCard[] = [
+  { code: "BACO-GIFT-25000", balance: 25000 },
+  { code: "BACO-GIFT-50000", balance: 50000 },
+  { code: "BACO-GIFT-100000", balance: 100000 },
+];
+
 export type ClientBadge = { label: string; variant: "vip" | "gold" | "silver" };
 
 export type Client = {
@@ -52,8 +63,8 @@ export type Sale = {
   name: string;
   client: Client | null;
   cart: CartItem[];
-  discountCode: string;
-  promoApplied: { code: string; percent: number } | null;
+  giftCardCode: string;
+  giftCardApplied: { code: string; amount: number } | null;
   loyaltyPointsUsed: number;
   managerCode: string;
   managerDiscountApplied: number;
@@ -298,8 +309,8 @@ export function createSale(seq: number): Sale {
     name: `Vente ${seq}`,
     client: null,
     cart: [],
-    discountCode: "",
-    promoApplied: null,
+    giftCardCode: "",
+    giftCardApplied: null,
     loyaltyPointsUsed: 0,
     managerCode: "",
     managerDiscountApplied: 0,
@@ -313,7 +324,7 @@ export function createSale(seq: number): Sale {
 
 export type SaleTotals = {
   subtotal: number;
-  promoDiscount: number;
+  giftCardDiscount: number;
   managerDiscount: number;
   loyaltyDiscount: number;
   total: number;
@@ -321,9 +332,9 @@ export type SaleTotals = {
 
 export function computeTotals(sale: Sale): SaleTotals {
   const subtotal = sale.cart.reduce((sum, item) => sum + item.unitPrice * item.qty, 0);
-  const promoDiscount = sale.promoApplied ? Math.round(subtotal * sale.promoApplied.percent) : 0;
+  const giftCardDiscount = sale.giftCardApplied ? Math.min(sale.giftCardApplied.amount, subtotal) : 0;
   const managerDiscount = sale.managerDiscountApplied;
   const loyaltyDiscount = Math.floor(sale.loyaltyPointsUsed / 100) * 1000;
-  const total = Math.max(0, subtotal - promoDiscount - managerDiscount - loyaltyDiscount);
-  return { subtotal, promoDiscount, managerDiscount, loyaltyDiscount, total };
+  const total = Math.max(0, subtotal - giftCardDiscount - managerDiscount - loyaltyDiscount);
+  return { subtotal, giftCardDiscount, managerDiscount, loyaltyDiscount, total };
 }

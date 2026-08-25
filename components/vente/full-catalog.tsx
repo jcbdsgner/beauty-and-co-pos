@@ -8,9 +8,8 @@ type FullCatalogProps = {
   onAdd: (service: Service) => void;
 };
 
-/** Full browsable catalogue, grouped by subcategory — sits below the CategoryGrid on the
- * "categories" landing step so a cashier can scroll straight to a service without picking a
- * category card first (matches the Figma capture, where the grid isn't the only way in). */
+/** Full browsable catalogue, grouped by subcategory — shown when the "Tous" category chip is
+ * active, so a cashier can scroll straight to a service without picking a category first. */
 export function FullCatalog({ services, onAdd }: FullCatalogProps) {
   const groups = groupServicesBySubcat(services);
 
@@ -32,7 +31,7 @@ export function FullCatalog({ services, onAdd }: FullCatalogProps) {
                 title={service.description}
                 className="flex min-h-[96px] flex-col items-start justify-between gap-2 rounded-2xl border border-[var(--color-gray-200)] bg-white p-4 text-left transition active:scale-[0.97] hover:border-[var(--brand-taupe-muted)]"
               >
-                <span className="text-[15px] font-semibold text-[var(--color-gray-900)]">{service.name}</span>
+                <span className="line-clamp-2 text-[15px] font-semibold text-[var(--color-gray-900)]">{service.name}</span>
                 <span className="flex w-full items-end justify-between gap-2">
                   <span className="font-bold text-[var(--button-2-color)]">{formatFcfa(service.price)}</span>
                   {service.duration && <span className="shrink-0 text-xs font-medium text-[var(--color-gray-500)]">{service.duration}</span>}
