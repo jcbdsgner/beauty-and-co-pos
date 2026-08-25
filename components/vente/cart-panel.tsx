@@ -39,27 +39,27 @@ function CartLine({
   onAssignPractitioner: (practitioner: string | null) => void;
 }) {
   return (
-    <div className="border-b border-[var(--color-gray-200)] pb-3 last:border-b-0 last:pb-0">
-      <div className="flex items-center gap-2">
+    <div className="border-b border-[var(--color-gray-200)] pb-4 last:border-b-0 last:pb-0">
+      <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
           <Stepper label={item.name} hint={formatFcfa(item.unitPrice)} value={item.qty} min={1} max={20} onChange={onQtyChange} />
         </div>
-        <div className="flex shrink-0 flex-col items-end gap-2">
+        <div className="flex shrink-0 flex-col items-end gap-3 pt-1">
           <span className="text-sm font-semibold text-[var(--color-gray-900)]">{formatFcfa(item.unitPrice * item.qty)}</span>
           <button
             type="button"
             onClick={onRemove}
             aria-label={`Retirer ${item.name} du panier`}
-            className="flex size-7 items-center justify-center rounded-full text-[var(--color-error)] hover:bg-[var(--color-error)]/10"
+            className="flex size-10 items-center justify-center rounded-full text-[var(--color-error)] transition active:scale-[0.94] hover:bg-[var(--color-error)]/10"
           >
-            <TrashIcon />
+            <TrashIcon className="size-5" />
           </button>
         </div>
       </div>
       <select
         value={item.practitioner ?? ""}
         onChange={(event) => onAssignPractitioner(event.target.value || null)}
-        className="mt-1 w-full rounded-lg border border-[var(--color-gray-200)] bg-white px-2.5 py-1.5 text-xs text-[var(--color-gray-600)] focus:border-[var(--brand-taupe-muted)] focus:outline-none"
+        className="mt-2 w-full rounded-full border border-[var(--color-gray-200)] bg-white px-4 py-2.5 text-sm text-[var(--color-gray-700)] focus:border-[var(--brand-taupe-muted)] focus:outline-none"
       >
         <option value="">✂ Praticien — non assigné</option>
         {practitioners.map((name) => (
@@ -95,7 +95,7 @@ export function CartPanel({
   const redeemableLoyaltyPoints = sale.client ? Math.floor(sale.client.points / 100) * 100 : 0;
 
   return (
-    <Card className="flex h-fit flex-col gap-4 p-5">
+    <Card className="sticky top-6 flex max-h-[calc(100vh-3rem)] flex-col gap-4 self-start overflow-y-auto p-5">
       <div className="flex items-center gap-2">
         <CartGlyphIcon className="text-[var(--brand-taupe-muted)]" />
         <h2 className="font-[var(--font-heading)] text-lg text-[var(--color-gray-900)]">Panier ({itemCount})</h2>
@@ -126,14 +126,14 @@ export function CartPanel({
             <button
               type="button"
               onClick={() => setDiscountOpen((open) => !open)}
-              className="flex w-full items-center justify-between text-sm font-medium text-[var(--color-gray-700)]"
+              className="flex w-full items-center justify-between rounded-xl py-2 text-[15px] font-medium text-[var(--color-gray-700)] transition active:scale-[0.99] hover:bg-[var(--color-gray-50)]"
             >
               <span className="flex items-center gap-1.5">
                 <ReceiptTagIcon />
                 Remise / Code promo
                 {hasDiscount && <Badge variant="success">Actif</Badge>}
               </span>
-              <ChevronIcon className={discountOpen ? "rotate-90" : ""} />
+              <ChevronIcon className={discountOpen ? "size-5 rotate-90" : "size-5"} />
             </button>
 
             {discountOpen && (
@@ -149,12 +149,7 @@ export function CartPanel({
                       placeholder="PROMO20"
                       className="w-full rounded-lg border border-[var(--color-gray-200)] px-3 py-2 text-sm focus:border-[var(--brand-taupe-muted)] focus:outline-none"
                     />
-                    <Button
-                      variant="brand"
-                      onClick={onApplyPromo}
-                      disabled={!sale.discountCode.trim()}
-                      className="w-auto shrink-0 px-4 py-2 text-sm"
-                    >
+                    <Button variant="brand" onClick={onApplyPromo} disabled={!sale.discountCode.trim()} className="w-auto shrink-0">
                       OK
                     </Button>
                   </div>
@@ -215,12 +210,7 @@ export function CartPanel({
                       placeholder="DISC-1234"
                       className="w-full rounded-lg border border-[var(--color-gray-200)] px-3 py-2 text-sm focus:border-[var(--brand-taupe-muted)] focus:outline-none"
                     />
-                    <Button
-                      variant="dark"
-                      onClick={onApplyManagerCode}
-                      disabled={!sale.managerCode.trim()}
-                      className="w-auto shrink-0 px-4 py-2 text-sm"
-                    >
+                    <Button variant="dark" onClick={onApplyManagerCode} disabled={!sale.managerCode.trim()} className="w-auto shrink-0">
                       OK
                     </Button>
                   </div>

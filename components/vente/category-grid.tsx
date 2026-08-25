@@ -17,7 +17,7 @@ export function CategoryGrid({ categories, onSelect }: CategoryGridProps) {
           key={category.id}
           type="button"
           onClick={() => onSelect(category.id)}
-          className={`flex flex-col items-center gap-2 rounded-2xl ${category.bg} p-5 text-center transition hover:opacity-90`}
+          className={`flex flex-col items-center gap-2 rounded-2xl ${category.bg} p-5 text-center transition active:scale-[0.97] hover:opacity-90`}
         >
           <span className="flex size-11 items-center justify-center rounded-full bg-white/70 text-[var(--brand-taupe-muted)]">
             <CategoryGlyph icon={category.icon} />
