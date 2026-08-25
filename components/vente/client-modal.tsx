@@ -29,6 +29,9 @@ export function ClientModal({ open, onClose, onSelect, onScanQr }: ClientModalPr
     );
   }, [search]);
 
+  const trimmedSearch = search.trim();
+  const showCreateOption = trimmedSearch.length > 0;
+
   return (
     <Dialog open={open} labelledBy="client-modal-title" className="max-h-[85vh] max-w-md overflow-y-auto rounded-2xl p-6 shadow-2xl">
       <div className="relative mb-4">
@@ -63,7 +66,26 @@ export function ClientModal({ open, onClose, onSelect, onScanQr }: ClientModalPr
       </div>
 
       <div className="flex flex-col gap-2">
-        {results.length === 0 && (
+        {showCreateOption && (
+          <Link
+            href={`/clients/nouveau?name=${encodeURIComponent(trimmedSearch)}`}
+            className="flex items-center gap-3 rounded-2xl border-2 border-dashed border-[var(--brand-taupe-muted)] bg-[var(--brand-rose-soft)]/40 p-3.5 text-left transition hover:bg-[var(--brand-rose-soft)]"
+          >
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--brand-taupe-muted)] text-white font-bold text-lg">
+              +
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="block text-xs font-semibold uppercase tracking-wider text-[var(--brand-taupe-muted)]">
+                Création rapide (1 clic)
+              </span>
+              <span className="block truncate font-semibold text-[var(--color-gray-900)]">
+                Créer « {trimmedSearch} »
+              </span>
+            </div>
+          </Link>
+        )}
+
+        {results.length === 0 && !showCreateOption && (
           <EmptyState
             icon={<NoResultsIcon />}
             title="Aucun client trouvé"
@@ -71,12 +93,24 @@ export function ClientModal({ open, onClose, onSelect, onScanQr }: ClientModalPr
             className="py-8"
           />
         )}
+
+        {results.length === 0 && showCreateOption && (
+          <div className="py-2 text-center text-xs text-[var(--color-gray-500)]">
+            Aucun client existant ne correspond à cette recherche.
+          </div>
+        )}
+
         {results.map((client) => (
           <PersonCard
             key={client.id}
             initial={client.initial}
             name={client.name}
-            meta={`${client.phone} · ${client.points} pts`}
+            meta={
+              <span className="flex flex-col gap-0.5">
+                <span className="font-semibold text-[var(--color-gray-700)]">{client.phone}</span>
+                <span className="text-xs text-[var(--color-gray-500)]">{client.points} points de fidélité</span>
+              </span>
+            }
             badge={client.badge}
             onClick={() => onSelect(client)}
           />

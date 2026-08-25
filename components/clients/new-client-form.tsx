@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -40,7 +40,34 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 export function NewClientForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [submitting, setSubmitting] = useState(false);
+
+  const initialNameParam = searchParams.get("name") || "";
+  const initialPhoneParam = searchParams.get("phone") || "";
+
+  let defaultFirstName = searchParams.get("firstName") || "";
+  let defaultLastName = searchParams.get("lastName") || "";
+
+  if (initialNameParam && !defaultFirstName && !defaultLastName) {
+    const parts = initialNameParam.trim().split(" ");
+    if (parts.length === 1) {
+      defaultFirstName = parts[0];
+    } else {
+      defaultFirstName = parts[0];
+      defaultLastName = parts.slice(1).join(" ");
+    }
+  }
+
+  const [firstName, setFirstName] = useState(defaultFirstName);
+  const [lastName, setLastName] = useState(defaultLastName);
+  const [phone, setPhone] = useState(initialPhoneParam);
+
+  useEffect(() => {
+    if (defaultFirstName) setFirstName(defaultFirstName);
+    if (defaultLastName) setLastName(defaultLastName);
+    if (initialPhoneParam) setPhone(initialPhoneParam);
+  }, [defaultFirstName, defaultLastName, initialPhoneParam]);
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -56,15 +83,37 @@ export function NewClientForm() {
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Prénom" required>
-            <input name="firstName" required placeholder="Prénom" className={inputClass} />
+            <input
+              name="firstName"
+              required
+              placeholder="Prénom"
+              className={inputClass}
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+            />
           </Field>
           <Field label="Nom" required>
-            <input name="lastName" required placeholder="Nom" className={inputClass} />
+            <input
+              name="lastName"
+              required
+              placeholder="Nom"
+              className={inputClass}
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+            />
           </Field>
         </div>
 
         <Field label="Téléphone" required>
-          <input name="phone" required type="tel" placeholder="+221 77 123 45 67" className={inputClass} />
+          <input
+            name="phone"
+            required
+            type="tel"
+            placeholder="+221 77 123 45 67"
+            className={inputClass}
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+          />
         </Field>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

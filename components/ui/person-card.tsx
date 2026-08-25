@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 type PersonCardProps = {
   initial: string;
   name: string;
-  meta?: string;
+  meta?: React.ReactNode;
   badge?: { label: string; variant: BadgeVariant };
   trailing?: string;
   online?: boolean;
