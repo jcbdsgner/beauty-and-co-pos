@@ -40,6 +40,7 @@
   --color-warning-soft: #fdf0e3;
   --color-info: #2662d9;
   --color-info-soft: #e8f0fd;
+  --color-error-soft: #fdece9;
 
   /* Gray scale — neutral text/border/background values */
   --color-gray-900: #101828;
@@ -80,6 +81,25 @@ body {
   color: var(--foreground);
   font-family: var(--font-cabinet-grotesk), Arial, Helvetica, sans-serif;
   font-weight: 450;
+}
+
+/* Radix Accordion's content height is read from its own custom property — see
+   components/ui/molecules/accordion.tsx. */
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
 }
 
 /* Browsers paint autofilled inputs with their own blue/yellow tint that ignores
