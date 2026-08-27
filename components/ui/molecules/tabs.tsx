@@ -13,19 +13,26 @@ type TabsProps = {
 };
 
 /**
- * ARIA tabbed-panel switcher — distinct from Pills/SegmentedToggle (which only ever switch a
- * filter, never unmount/remount panel content). Use Tabs when each option owns real panel
- * content (e.g. "Détails" / "Historique" / "Notes" on a client profile).
+ * Rebuilt as an underline tab bar — text + a taupe underline on the active item, sitting on a
+ * hairline rule. A page switcher (owns real panel content, e.g. Répertoire/Relances/Campagnes/
+ * Styles) needs to read as navigation, not as a filter you could also mistake for Pills or a
+ * mode-switch you could mistake for SegmentedToggle — three different jobs, three different
+ * shapes now. min-h-11 keeps each trigger a real touch target despite the leaner visual weight.
  */
 export function Tabs({ items, value, onChange, className }: TabsProps) {
   return (
-    <TabsPrimitive.Root value={value} onValueChange={onChange} className={cn("flex flex-col gap-4", className)}>
-      <TabsPrimitive.List className="inline-flex w-fit items-center gap-1 rounded-full bg-[var(--color-gray-100)] p-1">
+    <TabsPrimitive.Root value={value} onValueChange={onChange} className={cn("flex flex-col gap-5", className)}>
+      <TabsPrimitive.List className="flex items-center gap-6 overflow-x-auto border-b border-[var(--color-gray-200)]">
         {items.map((item) => (
           <TabsPrimitive.Trigger
             key={item.value}
             value={item.value}
-            className="rounded-full px-4 py-3 text-sm font-medium text-[var(--color-gray-600)] transition active:scale-[0.97] data-[state=active]:bg-white data-[state=active]:text-[var(--color-gray-900)] data-[state=active]:shadow-[0px_1px_3px_0px_rgba(0,0,0,0.08)]"
+            className={cn(
+              "relative flex min-h-11 shrink-0 items-center px-1 pb-3 text-[15px] font-semibold whitespace-nowrap text-[var(--color-gray-500)] transition",
+              "after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:rounded-full after:bg-transparent after:transition-colors",
+              "data-[state=active]:text-[var(--color-gray-900)] data-[state=active]:after:bg-[var(--brand-taupe-muted)]",
+              "active:opacity-70",
+            )}
           >
             {item.label}
           </TabsPrimitive.Trigger>

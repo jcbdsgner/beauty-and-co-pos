@@ -130,10 +130,11 @@ export function clientInitial(c: Cliente) {
   return `${c.firstName[0] ?? ""}${c.lastName[0] ?? ""}`.toUpperCase();
 }
 
-export function searchClients(query: string) {
+/** Takes the live `clients` array (from `useAppData()`) rather than the static seed list, so a cliente created this session is searchable immediately. */
+export function searchClients(clients: Cliente[], query: string) {
   const q = query.trim().toLowerCase();
-  if (!q) return CLIENTS;
-  return CLIENTS.filter(
+  if (!q) return clients;
+  return clients.filter(
     (c) => clientFullName(c).toLowerCase().includes(q) || c.phone.replace(/\s/g, "").includes(q.replace(/\s/g, "")),
   );
 }

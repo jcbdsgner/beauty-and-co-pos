@@ -13,7 +13,8 @@ type DropdownMenuProps = {
   align?: "start" | "center" | "end";
 };
 
-/** Trigger + floating action list — row-level "..." menus (edit/duplicate/delete on a product, a campaign, a request). */
+/** Row-level "..." menu — items are now min-h-11 (was ~40px) and press with active:bg, since a
+ *  short, rare menu is still a menu someone has to actually hit with a finger. */
 export function DropdownMenu({ trigger, items, align = "end" }: DropdownMenuProps) {
   return (
     <DropdownMenuPrimitive.Root>
@@ -22,7 +23,7 @@ export function DropdownMenu({ trigger, items, align = "end" }: DropdownMenuProp
         <DropdownMenuPrimitive.Content
           align={align}
           sideOffset={6}
-          className="z-50 min-w-44 overflow-hidden rounded-2xl border border-[var(--color-gray-200)] bg-white p-1.5 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.1)]"
+          className="z-50 min-w-48 overflow-hidden rounded-2xl border border-[var(--color-gray-200)] bg-white p-1.5 shadow-[0px_12px_32px_-8px_rgba(0,0,0,0.25)]"
         >
           {items.map((item, i) =>
             item.type === "separator" ? (
@@ -33,7 +34,7 @@ export function DropdownMenu({ trigger, items, align = "end" }: DropdownMenuProp
                 disabled={item.disabled}
                 onSelect={item.onSelect}
                 className={cn(
-                  "flex cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium outline-none transition data-[highlighted]:bg-[var(--brand-rose-soft)] data-[disabled]:cursor-not-allowed data-[disabled]:opacity-40",
+                  "flex min-h-11 cursor-pointer items-center gap-2.5 rounded-xl px-3 text-sm font-medium outline-none transition active:scale-[0.98] data-[highlighted]:bg-[var(--brand-rose-soft)] data-[disabled]:cursor-not-allowed data-[disabled]:opacity-40",
                   item.tone === "danger" ? "text-[var(--color-error)]" : "text-[var(--color-gray-800)]",
                 )}
               >

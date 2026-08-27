@@ -14,16 +14,22 @@ const TONE_CLASS: Record<StatTileTone, string> = {
 type StatTileProps = {
   value: React.ReactNode;
   label: string;
+  icon?: React.ReactNode;
   tone?: StatTileTone;
   className?: string;
 };
 
-/** A single centered number+label tile, e.g. the 3-up summary row above a stock/history list. */
-export function StatTile({ value, label, tone = "neutral", className }: StatTileProps) {
+/** Label now leads (small, uppercase) with an optional icon beside it, number sits below —
+ *  matching how the eye actually reads a stat ("what is this, then what's the number") instead
+ *  of a bare number on top forcing a re-read of the label underneath to make sense of it. */
+export function StatTile({ value, label, icon, tone = "neutral", className }: StatTileProps) {
   return (
-    <Card className={cn("p-4 text-center", className)}>
-      <p className={cn("font-[var(--font-heading)] text-2xl", TONE_CLASS[tone])}>{value}</p>
-      <p className="text-xs text-[var(--color-gray-500)]">{label}</p>
+    <Card className={cn("p-4", className)}>
+      <p className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-[var(--color-gray-500)] uppercase">
+        {icon}
+        {label}
+      </p>
+      <p className={cn("mt-1 font-[var(--font-heading)] text-2xl", TONE_CLASS[tone])}>{value}</p>
     </Card>
   );
 }
@@ -33,7 +39,6 @@ type StatTileRowProps = {
   className?: string;
 };
 
-/** Equal-width grid wrapper for a row of StatTile — defaults to 3 columns, the common case. */
 export function StatTileRow({ children, className }: StatTileRowProps) {
   return <div className={cn("grid grid-cols-3 gap-3", className)}>{children}</div>;
 }

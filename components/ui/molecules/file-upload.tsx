@@ -1,10 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { UploadCloud, X } from "lucide-react";
+import { ImageIcon, UploadCloud, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type UploadedFile = { name: string; sizeLabel: string };
+export type UploadedFile = { name: string; sizeLabel: string; previewUrl?: string };
 
 type FileUploadProps = {
   files: UploadedFile[];
@@ -16,13 +16,19 @@ type FileUploadProps = {
   className?: string;
 };
 
-/** Dashed dropzone for reference photos, product images, documents — drag-and-drop or click-to-browse, with a removable file chip list underneath. */
+/**
+ * Rebuilt around what this component actually holds in this app: reference photos and product
+ * shots, not arbitrary documents — a filename-and-size row told a caissière nothing about what
+ * she'd just uploaded. Uploaded files now render as a grid of real image thumbnails (falling
+ * back to a plain icon tile only when no preview exists yet), the way you'd lay out swatch cards
+ * on a counter, not a file manager's list view.
+ */
 export function FileUpload({ files, onAdd, onRemove, accept = "image/*", multiple = true, hint = "PNG, JPG jusqu'à 10 Mo", className }: FileUploadProps) {
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div className={cn("flex flex-col gap-3", className)}>
+    <div className={cn("flex flex-col gap-4", className)}>
       <div
         role="button"
         tabIndex={0}
@@ -39,12 +45,12 @@ export function FileUpload({ files, onAdd, onRemove, accept = "image/*", multipl
           if (e.dataTransfer.files.length) onAdd(e.dataTransfer.files);
         }}
         className={cn(
-          "flex cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 border-dashed p-8 text-center transition",
+          "flex min-h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-6 text-center transition active:scale-[0.99]",
           dragOver ? "border-[var(--brand-taupe-muted)] bg-[var(--brand-rose-soft)]" : "border-[var(--color-gray-300)] bg-[var(--color-gray-50)]",
         )}
       >
         <UploadCloud aria-hidden className="size-8 text-[var(--brand-taupe-muted)]" />
-        <p className="text-sm font-semibold text-[var(--color-gray-700)]">Glissez un fichier ou cliquez pour parcourir</p>
+        <p className="text-sm font-semibold text-[var(--color-gray-700)]">Touchez pour choisir une photo</p>
         <p className="text-xs text-[var(--color-gray-400)]">{hint}</p>
         <input
           ref={inputRef}
@@ -57,27 +63,30 @@ export function FileUpload({ files, onAdd, onRemove, accept = "image/*", multipl
       </div>
 
       {files.length > 0 && (
-        <ul className="flex flex-col gap-2">
+        <ul className="grid grid-cols-3 gap-3 sm:grid-cols-4">
           {files.map((file) => (
-            <li
-              key={file.name}
-              className="flex items-center justify-between gap-3 rounded-xl border border-[var(--color-gray-200)] bg-white px-3 py-2 text-sm"
-            >
-              <span className="truncate text-[var(--color-gray-800)]">{file.name}</span>
-              <span className="flex shrink-0 items-center gap-2 text-xs text-[var(--color-gray-400)]">
-                {file.sizeLabel}
-                {/* Visible glyph stays small (a 44px icon would tower over the compact chip row),
-                    but the actual tap target doesn't shrink with it — same invisible-hit-area
-                    trick as Checkbox, via negative margin rather than a bigger row. */}
-                <button
-                  type="button"
-                  onClick={() => onRemove(file.name)}
-                  aria-label={`Retirer ${file.name}`}
-                  className="-m-2.5 flex size-11 items-center justify-center rounded-full text-[var(--color-gray-400)] transition active:scale-90 active:bg-[var(--color-error-soft)] active:text-[var(--color-error)] hover:bg-[var(--color-error-soft)] hover:text-[var(--color-error)]"
-                >
-                  <X aria-hidden className="size-3.5" />
-                </button>
-              </span>
+            <li key={file.name} className="relative aspect-square overflow-hidden rounded-2xl border border-[var(--color-gray-200)] bg-white">
+              {file.previewUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element -- local blob/object URL, not a Next Image asset
+                <img src={file.previewUrl} alt={file.name} className="size-full object-cover" />
+              ) : (
+                <div className="flex size-full flex-col items-center justify-center gap-1 bg-[var(--color-gray-50)] text-[var(--color-gray-400)]">
+                  <ImageIcon aria-hidden className="size-6" />
+                  <span className="px-1 text-center text-[10px] leading-tight truncate">{file.name}</span>
+                </div>
+              )}
+              {/* A 28px badge, not the app's usual 44px minimum: removing one photo from a small,
+                  glanceable set is low-stakes and instantly reversible by re-adding it — the same
+                  exception a photo app's own "remove from selection" badge makes. Generous gap-3
+                  between tiles keeps a mis-tap from landing on the neighboring photo instead. */}
+              <button
+                type="button"
+                onClick={() => onRemove(file.name)}
+                aria-label={`Retirer ${file.name}`}
+                className="absolute top-1.5 right-1.5 flex size-7 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur transition active:scale-90 active:bg-[var(--color-error)]"
+              >
+                <X aria-hidden className="size-4" />
+              </button>
             </li>
           ))}
         </ul>

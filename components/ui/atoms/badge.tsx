@@ -1,10 +1,10 @@
 import { cn } from "@/lib/utils";
 
 /**
- * Colored pill for statuses, tiers and roles. Semantic variants (success/warning/error/info)
- * keep their conventional meaning; "vip"/"gold"/"silver" are the loyalty-tier badges (mapped
- * onto brand tokens — lilac/taupe/gray, no literal gold); "brand"/"dark"/"neutral" are generic
- * accents for role badges (équipe, catégories…) that don't carry semantic meaning.
+ * Rebuilt distinct from Pills/SegmentedToggle/Tabs: those are things you tap, a Badge is
+ * something you read. Same rounded-full chip shape for both was reading as one interactive
+ * family — a Badge is now a small rounded-md tag with a leading status dot (semantic tones) or
+ * a solid mini-flag (loyalty tiers), never a pill, never tappable.
  */
 export type BadgeVariant =
   | "success"
@@ -18,16 +18,26 @@ export type BadgeVariant =
   | "dark"
   | "neutral";
 
-const variants: Record<BadgeVariant, string> = {
-  success: "bg-[var(--color-success-soft)] text-[var(--color-success)]",
-  warning: "bg-[var(--color-warning-soft)] text-[var(--color-warning)]",
-  error: "bg-[var(--color-error-soft)] text-[var(--color-error)]",
-  info: "bg-[var(--color-info-soft)] text-[var(--color-info)]",
+const DOT_TONE: Record<string, string> = {
+  success: "bg-[var(--color-success)]",
+  warning: "bg-[var(--color-warning)]",
+  error: "bg-[var(--color-error)]",
+  info: "bg-[var(--color-info)]",
+};
+
+const FLAG_TONE: Record<string, string> = {
   vip: "bg-[var(--pos-tier-vip)] text-[var(--text-secondary)]",
   gold: "bg-[var(--pos-tier-gold)] text-white",
   silver: "bg-[var(--pos-tier-silver)] text-white",
   brand: "bg-[var(--core-brand-color)] text-black",
   dark: "bg-[var(--pos-accent-dark)] text-white",
+};
+
+const SOFT_TONE: Record<string, string> = {
+  success: "bg-[var(--color-success-soft)] text-[var(--color-success)]",
+  warning: "bg-[var(--color-warning-soft)] text-[var(--color-warning)]",
+  error: "bg-[var(--color-error-soft)] text-[var(--color-error)]",
+  info: "bg-[var(--color-info-soft)] text-[var(--color-info)]",
   neutral: "bg-[var(--color-gray-100)] text-[var(--color-gray-600)]",
 };
 
@@ -39,15 +49,17 @@ type BadgeProps = {
 };
 
 export function Badge({ variant = "neutral", icon, className, children }: BadgeProps) {
+  const isFlag = variant in FLAG_TONE;
+
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap",
-        variants[variant],
+        "inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold whitespace-nowrap",
+        isFlag ? FLAG_TONE[variant] : (SOFT_TONE[variant] ?? SOFT_TONE.neutral),
         className,
       )}
     >
-      {icon}
+      {icon ?? (DOT_TONE[variant] && <span className={cn("size-1.5 shrink-0 rounded-full", DOT_TONE[variant])} />)}
       {children}
     </span>
   );

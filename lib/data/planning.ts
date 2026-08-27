@@ -23,3 +23,21 @@ export const RENDEZ_VOUS: RendezVous[] = [
 export function appointmentsForDay() {
   return RENDEZ_VOUS;
 }
+
+/** "HH:mm" -> minutes since midnight. */
+export function timeToMinutes(time: string) {
+  const [h, m] = time.split(":").map(Number);
+  return h * 60 + m;
+}
+
+/** minutes since midnight -> "HH:mm". */
+export function minutesToTime(minutes: number) {
+  const h = Math.floor(minutes / 60) % 24;
+  const m = minutes % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+/** A rendez-vous's end time, "HH:mm" — start + durationMin. */
+export function appointmentEndTime(appointment: Pick<RendezVous, "start" | "durationMin">) {
+  return minutesToTime(timeToMinutes(appointment.start) + appointment.durationMin);
+}

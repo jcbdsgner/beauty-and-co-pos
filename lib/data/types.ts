@@ -96,7 +96,8 @@ export type CartLine = {
   staffId?: string;
 };
 
-export type SaleStatus = "ouverte_catalogue" | "ouverte_paiement" | "encaissee" | "abandonnee";
+export type SaleStatus = "ouverte" | "encaissee" | "abandonnee";
+export type SaleStep = "vente" | "paiement" | "recu";
 
 export type Sale = {
   id: string;
@@ -109,8 +110,10 @@ export type Sale = {
   managerCode: string;
   managerDiscountApplied: number;
   status: SaleStatus;
+  step: SaleStep;
   originAppointmentId?: string;
   payment?: { modes: { mode: PaymentMode; amount: number }[] };
+  loyaltyPointsEarned?: number;
   createdAt: string;
   encaisseeAt?: string;
 };

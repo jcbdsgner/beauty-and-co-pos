@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Prata } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
+import { AppDataProvider } from "@/components/providers/app-data-provider";
+import { TooltipProvider } from "@/components/ui/atoms/tooltip";
+import { AppShell } from "@/components/shell/app-shell";
 
 const cabinetGrotesk = localFont({
   src: "./fonts/CabinetGrotesk-Variable.woff2",
@@ -35,7 +38,13 @@ export default function RootLayout({
       lang="fr"
       className={`${cabinetGrotesk.variable} ${prata.variable} ${benedict.variable} h-full antialiased`}
     >
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        <AppDataProvider>
+          <TooltipProvider>
+            <AppShell>{children}</AppShell>
+          </TooltipProvider>
+        </AppDataProvider>
+      </body>
     </html>
   );
 }

@@ -16,15 +16,26 @@ type SegmentedToggleProps = {
 };
 
 /**
- * A true mode switch — two entirely different catalogues (Services vs Produits), not a filter
- * over one list. Deliberately a different shape language from the Pills filter-chip row (used
- * for subcategory filters) and the vente screen's other exclusive-choice controls (sale tabs,
- * category chips): one enclosed track with a solid active segment, not loose pills floating on
- * the page background, so "switch catalogue" never reads as "filter this list."
+ * Rebuilt as a real segmented control — a sliding white thumb moves under the active segment
+ * (CSS grid placement, no measurement/JS needed) rather than each segment just swapping its own
+ * background. This is a *mode* switch (Services vs Produits: two entirely different catalogues),
+ * so it needed to feel like a physical toggle you flip, not a filter chip you tap — which is
+ * exactly what made it look identical to Pills before. Touch target: py-3 (44px).
  */
 export function SegmentedToggle({ options, value, onChange, className }: SegmentedToggleProps) {
+  const index = Math.max(0, options.findIndex((o) => o.value === value));
+  const count = options.length;
+
   return (
-    <div className={cn("inline-flex gap-1 rounded-full bg-[var(--color-gray-100)] p-1", className)}>
+    <div
+      className={cn("relative grid rounded-full bg-[var(--color-gray-100)] p-1", className)}
+      style={{ gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))` }}
+    >
+      <span
+        aria-hidden
+        className="absolute top-1 bottom-1 rounded-full bg-white shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1)] transition-[left] duration-200 ease-out"
+        style={{ left: `calc(${index} * (100% / ${count}))`, width: `calc(100% / ${count})` }}
+      />
       {options.map((option) => {
         const active = option.value === value;
         return (
@@ -32,11 +43,10 @@ export function SegmentedToggle({ options, value, onChange, className }: Segment
             key={option.value}
             type="button"
             onClick={() => onChange(option.value)}
+            aria-pressed={active}
             className={cn(
-              "flex items-center gap-1.5 rounded-full px-5 py-3 text-sm font-semibold transition active:scale-[0.97]",
-              active
-                ? "bg-white text-[var(--color-gray-900)] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1)]"
-                : "text-[var(--color-gray-500)] hover:text-[var(--color-gray-700)]",
+              "relative z-10 flex items-center justify-center gap-1.5 rounded-full px-5 py-3 text-sm font-semibold transition active:scale-[0.97]",
+              active ? "text-[var(--color-gray-900)]" : "text-[var(--color-gray-500)] hover:text-[var(--color-gray-700)]",
             )}
           >
             {option.icon}

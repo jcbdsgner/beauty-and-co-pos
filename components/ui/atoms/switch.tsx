@@ -8,10 +8,10 @@ type SwitchProps = {
 };
 
 /**
- * Pill toggle with a sliding knob — the app's one switch control (was previously duplicated ad hoc).
- * The button itself is a 44px square hit target (touch minimum); the visible w-11×h-6 track is
- * centered inside it, so the on-screen pill looks identical while the tappable area no longer
- * shrinks to the track's 24px height.
+ * Rebuilt so the button IS a 44px square hit target, not the 24px-tall track pretending to be
+ * one — the track (now h-7/w-12, a touch more confident than the old h-6/w-11) sits centered
+ * inside it, so the on-screen pill looks the same size relationship as before while the tappable
+ * area no longer shrinks to it.
  */
 export function Switch({ checked, onChange, label, className }: SwitchProps) {
   return (
@@ -25,13 +25,13 @@ export function Switch({ checked, onChange, label, className }: SwitchProps) {
     >
       <span
         className={cn(
-          "relative h-6 w-11 rounded-full transition",
+          "relative h-7 w-12 rounded-full transition-colors",
           checked ? "bg-[var(--brand-taupe-muted)]" : "bg-[var(--color-gray-300)]",
         )}
       >
         <span
           className={cn(
-            "absolute top-0.5 left-0.5 size-5 rounded-full bg-white shadow transition",
+            "absolute top-0.5 left-0.5 size-6 rounded-full bg-white shadow transition-transform",
             checked && "translate-x-5",
           )}
         />

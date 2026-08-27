@@ -1,7 +1,7 @@
 "use client";
 
 import * as AccordionPrimitive from "@radix-ui/react-accordion";
-import { ChevronDown } from "lucide-react";
+import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type AccordionItem = { value: string; title: React.ReactNode; content: React.ReactNode };
@@ -12,7 +12,11 @@ type AccordionProps = {
   className?: string;
 };
 
-/** Collapsible section list — service-catalogue subcategories, FAQ, "Entreprises & Salons" company rows. */
+/**
+ * Chevron swapped for a rotating +/× — a plus sign reads unambiguously as "there's more here to
+ * open" even glanced at from across a counter, where a small chevron's rotation is easy to miss.
+ * Trigger now presses with active:scale like every other tappable surface in the system.
+ */
 export function Accordion({ items, type = "single", className }: AccordionProps) {
   const rootProps = type === "single" ? { type: "single" as const, collapsible: true } : { type: "multiple" as const };
   return (
@@ -24,9 +28,11 @@ export function Accordion({ items, type = "single", className }: AccordionProps)
           className="overflow-hidden rounded-2xl border border-[var(--color-gray-200)] bg-white"
         >
           <AccordionPrimitive.Header>
-            <AccordionPrimitive.Trigger className="group flex w-full items-center justify-between gap-3 p-4 text-left font-semibold text-[var(--color-gray-900)]">
+            <AccordionPrimitive.Trigger className="group flex min-h-14 w-full items-center justify-between gap-3 p-4 text-left font-semibold text-[var(--color-gray-900)] transition active:bg-[var(--color-gray-50)]">
               {item.title}
-              <ChevronDown aria-hidden className="size-4 shrink-0 text-[var(--color-gray-400)] transition-transform duration-200 group-data-[state=open]:rotate-180" />
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[var(--color-gray-100)] text-[var(--color-gray-500)] transition-transform duration-200 group-data-[state=open]:rotate-45">
+                <Plus aria-hidden className="size-4" />
+              </span>
             </AccordionPrimitive.Trigger>
           </AccordionPrimitive.Header>
           <AccordionPrimitive.Content className="overflow-hidden data-[state=open]:animate-[accordion-down_200ms_ease-out] data-[state=closed]:animate-[accordion-up_200ms_ease-out]">
