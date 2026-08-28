@@ -15,19 +15,13 @@ import { useAppData } from "@/components/providers/app-data-provider";
 import { clientFullName } from "@/lib/data/clientele";
 import { serviceById } from "@/lib/data/menu";
 import { appointmentEndTime, flattenRendezVous } from "@/lib/data/planning";
-import type { AppointmentStatus, Praticienne, RendezVous, Reservation } from "@/lib/data/types";
+import type { Praticienne, RendezVous, Reservation } from "@/lib/data/types";
 
 const DAY_FMT = new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long" });
 
 function sameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
-
-const STATUS_CHIP: Record<AppointmentStatus, { value: string; tone: ChipTone }> = {
-  en_attente: { value: "En attente", tone: "act" },
-  confirme: { value: "Confirmé", tone: "now" },
-  annule: { value: "Annulé", tone: "void" },
-};
 
 type Row = { rv: RendezVous; reservation: Reservation };
 
@@ -83,7 +77,13 @@ function PlanningBoardInner({ initialGrouping }: Required<PlanningBoardProps>) {
       (staff?.unavailableToday || (second && praticiennes.find((p) => p.id === second.id)?.unavailableToday)) &&
       rv.status !== "annule";
     const hasSale = Boolean(reservation.saleId);
-    const chip = hasSale ? { value: "En cours", tone: "signal" as ChipTone } : STATUS_CHIP[rv.status];
+    // A rendez-vous carries a chip only when there's something to say: cashed-in, or cancelled.
+    const chip =
+      rv.status === "annule"
+        ? { value: "Annulé", tone: "void" as ChipTone }
+        : hasSale
+          ? { value: "En cours", tone: "signal" as ChipTone }
+          : null;
     const signal: LaneSignal = absent ? "hold" : "none";
     const siblingCount = reservation.rendezVous.filter((x) => x.status !== "annule").length - 1;
 
@@ -108,10 +108,12 @@ function PlanningBoardInner({ initialGrouping }: Required<PlanningBoardProps>) {
           </span>
         }
         chip={
-          <span className="flex items-center gap-1">
-            {second && <Users aria-hidden className="size-3.5 text-[var(--brand-taupe-muted)]" />}
-            <FlipChip value={chip.value} tone={chip.tone} />
-          </span>
+          (second || chip) && (
+            <span className="flex items-center gap-1">
+              {second && <Users aria-hidden className="size-3.5 text-[var(--brand-taupe-muted)]" />}
+              {chip && <FlipChip value={chip.value} tone={chip.tone} />}
+            </span>
+          )
         }
         struck={rv.status === "annule"}
         signal={signal}

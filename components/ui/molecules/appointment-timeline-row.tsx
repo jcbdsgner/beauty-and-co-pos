@@ -1,14 +1,6 @@
 import { Avatar } from "@/components/ui/atoms/avatar";
-import { Badge, type BadgeVariant } from "@/components/ui/atoms/badge";
+import { Badge } from "@/components/ui/atoms/badge";
 import { cn } from "@/lib/utils";
-
-type AppointmentStatus = "confirme" | "en_attente" | "annule";
-
-const STATUS: Record<AppointmentStatus, { label: string; variant: BadgeVariant }> = {
-  confirme: { label: "Confirmé", variant: "success" },
-  en_attente: { label: "En attente", variant: "warning" },
-  annule: { label: "Annulé", variant: "error" },
-};
 
 type AppointmentTimelineRowProps = {
   start: string;
@@ -17,8 +9,9 @@ type AppointmentTimelineRowProps = {
   clientInitial: string;
   service: string;
   staffName: string;
-  status: AppointmentStatus;
-  /** Swaps the trailing status badge for an independently-tappable control (Encaisser / En cours). */
+  /** A rendez-vous is only ever live or cancelled — there is no "pending / confirmed" step. */
+  cancelled?: boolean;
+  /** Swaps the trailing "Annulé" badge for an independently-tappable control (Encaisser / En cours). */
   trailing?: React.ReactNode;
   onClick?: () => void;
   className?: string;
@@ -29,9 +22,7 @@ type AppointmentTimelineRowProps = {
  * the cliente, then the service and praticienne. The row sits against a shared left rule so a
  * column of them reads as a single running timeline, not a stack of cards.
  */
-export function AppointmentTimelineRow({ start, end, clientName, clientInitial, service, staffName, status, trailing, onClick, className }: AppointmentTimelineRowProps) {
-  const { label, variant } = STATUS[status];
-
+export function AppointmentTimelineRow({ start, end, clientName, clientInitial, service, staffName, cancelled, trailing, onClick, className }: AppointmentTimelineRowProps) {
   const body = (
     <>
       <div className="w-16 shrink-0 text-right">
@@ -40,7 +31,7 @@ export function AppointmentTimelineRow({ start, end, clientName, clientInitial, 
       </div>
       <span className="relative flex w-3 shrink-0 justify-center self-stretch">
         <span className="w-px bg-border" />
-        <span className={cn("absolute top-1.5 size-2.5 rounded-full ring-4 ring-[var(--brand-cream)]", status === "annule" ? "bg-[var(--color-gray-300)]" : "bg-secondary")} />
+        <span className={cn("absolute top-1.5 size-2.5 rounded-full ring-4 ring-[var(--brand-cream)]", cancelled ? "bg-[var(--color-gray-300)]" : "bg-secondary")} />
       </span>
       <Avatar initial={clientInitial} size={40} className="mt-0.5 shrink-0 bg-accent text-sm font-semibold text-secondary" />
       <div className="min-w-0 flex-1">
@@ -52,7 +43,7 @@ export function AppointmentTimelineRow({ start, end, clientName, clientInitial, 
 
   const rowClass = cn(
     "flex items-start gap-3 rounded-2xl px-3 py-3 transition",
-    status === "annule" && "opacity-55",
+    cancelled && "opacity-55",
     className,
   );
 
@@ -75,9 +66,11 @@ export function AppointmentTimelineRow({ start, end, clientName, clientInitial, 
   return (
     <Comp type={onClick ? "button" : undefined} onClick={onClick} className={cn(rowClass, onClick && "text-left active:scale-[0.99] hover:bg-accent/40")}>
       {body}
-      <Badge variant={variant} className="mt-1 shrink-0">
-        {label}
-      </Badge>
+      {cancelled && (
+        <Badge variant="error" className="mt-1 shrink-0">
+          Annulé
+        </Badge>
+      )}
     </Comp>
   );
 }

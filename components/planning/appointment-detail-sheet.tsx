@@ -6,19 +6,13 @@ import { Dialog } from "@/components/ui/molecules/dialog";
 import { ConfirmDialog } from "@/components/ui/molecules/confirm-dialog";
 import { CloseButton } from "@/components/ui/atoms/icon-button";
 import { Button } from "@/components/ui/atoms/button";
-import { FlipChip, Legend, type ChipTone } from "@/components/ui/board";
+import { FlipChip, Legend } from "@/components/ui/board";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { clientFullName } from "@/lib/data/clientele";
 import { serviceById } from "@/lib/data/menu";
 import { appointmentEndTime, reservationForRendezVous } from "@/lib/data/planning";
 import { formatFcfa } from "@/lib/utils";
-import type { AppointmentStatus, RendezVous } from "@/lib/data/types";
-
-const STATUS: Record<AppointmentStatus, { value: string; tone: ChipTone }> = {
-  confirme: { value: "Confirmé", tone: "now" },
-  en_attente: { value: "En attente", tone: "act" },
-  annule: { value: "Annulé", tone: "void" },
-};
+import type { RendezVous } from "@/lib/data/types";
 
 type Props = {
   /** The rendez-vous the receptionist tapped — the sheet shows its whole réservation. */
@@ -27,17 +21,18 @@ type Props = {
   onEncaisser: (reservationId: string) => void;
 };
 
-/** Fiche rendez-vous — le détail de la réservation (payeuse, prestations, praticiennes), avec
- *  Confirmer / Encaisser / Annuler. Pas d'édition : la prise de rendez-vous se fait en ligne. */
+/** Fiche réservation — le détail (payeuse, prestations, praticiennes), avec Encaisser / Annuler.
+ *  Pas de confirmation ni d'édition : la prise de rendez-vous se fait en ligne, les rendez-vous
+ *  arrivent fermes. */
 export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Props) {
-  const { clients, praticiennes, reservations, confirmAppointment, cancelAppointment } = useAppData();
+  const { clients, praticiennes, reservations, cancelAppointment } = useAppData();
   const [confirmCancel, setConfirmCancel] = useState(false);
 
   if (!appointment) return null;
 
   const reservation = reservationForRendezVous(reservations, appointment.id);
   const payer = clients.find((c) => c.id === reservation?.payerClientId);
-  const status = STATUS[appointment.status];
+  const cancelled = appointment.status === "annule";
   const hasSale = Boolean(reservation?.saleId);
   const lines = reservation?.rendezVous ?? [appointment];
   const total = lines
@@ -67,7 +62,7 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
           <h2 id="rdv-detail-title" className="font-[family-name:var(--font-heading)] text-xl font-semibold">
             {payer ? clientFullName(payer) : "Cliente"}
           </h2>
-          <FlipChip value={status.value} tone={status.tone} />
+          {cancelled && <FlipChip value="Annulé" tone="void" />}
           {hasSale && <FlipChip value="En cours" tone="signal" />}
           <span className="w-full text-[0.7rem] text-white/60">
             {reservation?.source === "comptoir" ? "Notée au comptoir" : "Réservée en ligne"} · règle {lines.length > 1 ? `${lines.length} prestations` : "la prestation"}
@@ -111,17 +106,12 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
         </div>
 
         <div className="flex flex-col gap-2 p-5">
-          {appointment.status === "en_attente" && (
-            <Button variant="success" onClick={() => confirmAppointment(appointment.id)}>
-              Confirmer cette prestation
-            </Button>
-          )}
-          {reservation && appointment.status !== "annule" && (
+          {reservation && !cancelled && (
             <Button variant="dark" onClick={() => onEncaisser(reservation.id)}>
               {hasSale ? "Voir la vente en cours" : "Encaisser la réservation"}
             </Button>
           )}
-          {appointment.status !== "annule" && (
+          {!cancelled && (
             <Button variant="danger-outline" onClick={() => setConfirmCancel(true)}>
               Annuler cette prestation
             </Button>

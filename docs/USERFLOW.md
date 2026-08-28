@@ -62,7 +62,7 @@ La sidebar passe de **6 items à 5** (Accueil / Planning / Clientèle / Relances
 |---|---|---|---|
 | **Cliente** | Une personne identifiée du salon, avec son historique. | `1,1 —— 0,1 Abonnement` · `1,1 —— 0,N Vente` (rôle : cliente de) · `1,1 —— 0,N Rendez-vous` (rôle : bénéficiaire) · `1,1 —— 0,N Relance` (rôle : cible) | — (pas de cycle de vie propre ; une fiche existe ou n'existe pas) |
 | **Réservation** | La prise de rendez-vous au niveau de la **payeuse** : une cliente réserve, pour elle et éventuellement d'autres, une ou plusieurs prestations sur une ou plusieurs praticiennes. Presque toujours faite en ligne (`source`) — le parcours de réservation ne vit pas dans cette app. L'unité qu'on encaisse. | `N,1 —— 1,1 Cliente` (rôle : *payeuse*) · `1,1 —— 1,N Rendez-vous` · **`1,1 —— 0,1 Vente`** (rôle : *passage en caisse* — le lien qui déclenche le badge « En cours ») | — (pas de cycle de vie propre ; son statut effectif se déduit de ses rendez-vous) |
-| **Rendez-vous** | Une **prestation planifiée** atomique : une prestation, un·e bénéficiaire, un créneau, une praticienne — deux si la prestation est « réalisable à 2 » (`secondStaffId`, durée déjà divisée). Plusieurs peuvent partager la même heure. Ligne d'une Réservation. | `N,1 —— 1,1 Réservation` · `N,1 —— 1,1 Praticienne` (assignée) · `N,1 —— 0,1 Praticienne` (seconde) · `N,1 —— 1,1 Service` · `N,1 —— 0,1 Cliente` (bénéficiaire ; sinon `beneficiaryName` libre ; sinon la payeuse) | `en_attente → confirmé → (annulé)` — Annulé est terminal, jamais supprimé (cf. toggle « Afficher les annulés ») |
+| **Rendez-vous** | Une **prestation planifiée** atomique : une prestation, un·e bénéficiaire, un créneau, une praticienne — deux si la prestation est « réalisable à 2 » (`secondStaffId`, durée déjà divisée). Plusieurs peuvent partager la même heure. Ligne d'une Réservation. | `N,1 —— 1,1 Réservation` · `N,1 —— 1,1 Praticienne` (assignée) · `N,1 —— 0,1 Praticienne` (seconde) · `N,1 —— 1,1 Service` · `N,1 —— 0,1 Cliente` (bénéficiaire ; sinon `beneficiaryName` libre ; sinon la payeuse) | `actif → (annulé)` — **pas** de « en attente / confirmé » (les réservations arrivent fermes de la plateforme en ligne) ; Annulé est terminal, jamais supprimé (cf. toggle « Afficher les annulés ») |
 | **Vente** (panier) | Une transaction en cours de construction ou déjà encaissée, un onglet du Comptoir. | `1,1 —— 0,1 Cliente` · `1,1 —— 0,N LigneDePanier` · `0,1 —— 1,1 Réservation` (rôle inverse : *origine*, si ouverte via « Encaisser ») · `1,1 —— 0,1 CarteCadeau` (appliquée) · `1,1 —— 0,1 Remise` (accordée par la réceptionniste) | `ouverte(catalogue\|paiement) → encaissée` (terminal, produit un Reçu) **ou** `→ abandonnée` (fermée sans encaissement — nouvel état, nécessaire pour que le Récap des ventes distingue une vraie vente d'un onglet fermé vide) |
 | **Remise** | Une réduction exprimée en montant fixe **ou** en pourcentage — `{ mode, valeur }`. Le **même objet** est porté par une Vente (remise accordée au comptoir, plafond 20 % des prestations, code réceptionniste + motif) et par une Relance de reconquête (ex. −15 %, code promo, autorisée par la direction). Les *points fidélité utilisés* et la *carte cadeau* ne sont **pas** des Remise — ce sont des mécanismes distincts qui, avec la Remise, se cumulent dans le calcul du total. | `0,N —— 1,1 Vente` *ou* `0,N —— 1,1 Relance` (jamais les deux) | — (valeur figée à la création ; pour une Vente, le `motif` est renseigné après l'encaissement) |
 | **CarteCadeau** | Un instrument **prépayé** (pas une remise) : un code, un solde propre, un statut. Une Vente n'en consomme que ce qu'il faut ; le reliquat reste sur la carte. | `0,N —— 0,1 Vente` (appliquée) | `active → utilisée` (solde épuisé) · `expirée` (terminal) |
@@ -97,10 +97,8 @@ erDiagram
 
 ```mermaid
 stateDiagram-v2
-    [*] --> en_attente
-    en_attente --> confirmé
-    en_attente --> annulé
-    confirmé --> annulé
+    [*] --> actif
+    actif --> annulé
     annulé --> [*]: reste visible (toggle Afficher les annulés)
 ```
 
@@ -117,7 +115,7 @@ stateDiagram-v2
 
 ### Ce que ça change concrètement par rapport à la v2 précédente
 
-- **Réservation / Rendez-vous** (`docs/adr/0006`) : le `RendezVous` mono-valué (`{ clientId, staffId, serviceId, start, durationMin }`) est scindé. Une **Réservation** porte la payeuse et le lien Vente ; elle regroupe 1..N **Rendez-vous atomiques** (une prestation, un·e bénéficiaire, un créneau, une ou deux praticiennes). Encaisser agit sur la réservation → une Vente, un seul règlement pour toutes les prestations. Le badge « En cours » n'est **pas** un statut : c'est la présence d'une relation `Réservation → Vente ouverte`. La **prise de rendez-vous est retirée de l'app** (faite en ligne) ; ne restent que Confirmer / Annuler / Encaisser.
+- **Réservation / Rendez-vous** (`docs/adr/0006`) : le `RendezVous` mono-valué (`{ clientId, staffId, serviceId, start, durationMin }`) est scindé. Une **Réservation** porte la payeuse et le lien Vente ; elle regroupe 1..N **Rendez-vous atomiques** (une prestation, un·e bénéficiaire, un créneau, une ou deux praticiennes). Encaisser agit sur la réservation → une Vente, un seul règlement pour toutes les prestations. Le badge « En cours » n'est **pas** un statut : c'est la présence d'une relation `Réservation → Vente ouverte`. La **prise de rendez-vous est retirée de l'app** (faite en ligne) ; un rendez-vous est **actif ou annulé** (pas de « en attente / confirmé ») ; ne restent que **Annuler** et **Encaisser**.
 - **Service** gagne `twoPractitionersEligible` ; le Menu est régénéré verbatim depuis le catalogue de réservation b&co (107 prestations, 8 catégories).
 - **Remise / CarteCadeau / Points fidélité** : le « code manager » de `FEATURES.md` (n'importe quelle chaîne → 5 000 F) et la carte cadeau à montant fixe (25 000 F) disparaissent. Trois mécanismes distincts, cumulables, pouvant amener le total à 0 F — voir § Comptoir et ADR 0002–0003.
 - **Vente** gagne un état **abandonnée**, absent de la v2 précédente : sans lui, le nouveau Récap des ventes (cf. section Accueil) ne peut pas distinguer une transaction réelle d'un onglet ouvert puis refermé vide — un objet ne mérite cet état persistant que parce qu'un vrai écran (le Récap) en a besoin, pas par exhaustivité gratuite.
@@ -326,7 +324,7 @@ Accueil
 - Chronologie du jour : rendez-vous du jour groupés par praticien·ne (vue condensée, pas la grille horaire complète)
   - chaque rendez-vous → « Encaisser » → Comptoir déployé, nouvel onglet pré-rempli avec la cliente + ses prestations — LE point d'entrée d'une vente liée à un rendez-vous : la cliente a réservé en ligne, est venue, a eu sa prestation, elle passe à la caisse à la fin
   - un rendez-vous déjà pris en charge (un onglet de vente lui est déjà associé) affiche un badge « En cours » à la place du bouton « Encaisser » ; le retaper **bascule** sur l'onglet existant au lieu d'en ouvrir un doublon — répond au cas d'un double-tap ou de deux membres de l'équipe qui cliquent chacun de leur côté sur le **même** rendez-vous ; deux rendez-vous **différents** ne posent aucun conflit, chacun ouvrant son propre onglet
-  - tap sur un rendez-vous → Fiche réservation (payeuse + toutes ses prestations, « Confirmer » + « Encaisser la réservation » + « Annuler cette prestation ») ; pas d'édition — la prise de rendez-vous se fait en ligne
+  - tap sur un rendez-vous → Fiche réservation (payeuse + toutes ses prestations, « Encaisser la réservation » + « Annuler cette prestation ») ; pas d'édition ni de confirmation — la prise de rendez-vous se fait en ligne
 - Widget « Tournée du matin » (résumé) : nombre de messages prêts, CTA « Valider & envoyer » directement ici (pas besoin d'ouvrir la section Relances pour le geste le plus fréquent), lien « Voir le détail » → **section Relances** → volet Tournée du matin — le geste quotidien à haute fréquence (valider & envoyer en bloc) reste à 1 tap depuis l'écran d'atterrissage ; seul le traitement carte par carte (autoriser une remise, ignorer un cas, marquer un RDV pris) demande d'ouvrir la section Relances — un tap de plus, acceptable car ce sont des exceptions, pas le geste répété chaque matin
 - Résumé du jour : total réellement encaissé aujourd'hui (calculé depuis les ventes à l'état *encaissée* de la session), nombre de rendez-vous du jour — remplace les cartes « Revenus »/« Rendez-vous » figées ou mortes de l'ancien Accueil
   - « Voir le récap complet » → **Récap des ventes** (lieu retrouvé en confrontant les captures d'écran originales du design de référence à `FEATURES.md` : la maquette d'origine prévoyait une action rapide « Récap ventes » que ni le code actuel ni la v2 précédente de ce document ne couvraient — un vrai trou, maintenant comblé)
@@ -370,7 +368,7 @@ Planning  (un seul lieu ; le roster de l'équipe y est intégré)
 Fiche réservation  (le détail — depuis le Planning OU la Chronologie de l'Accueil)
 - en-tête : **payeuse** (la cliente qui règle) + statut du rendez-vous tapé + « réservée en ligne / notée au comptoir » + « règle N prestations »
 - corps : une ligne par prestation planifiée — prestation + prix, horaire, praticienne·s (« à 2 » le cas échéant), « pour {bénéficiaire} » si ce n'est pas la payeuse ; total des prestations
-- « Confirmer cette prestation » (si en attente) · « Encaisser la réservation » → Comptoir, onglet pré-rempli (payeuse + toutes les prestations) ; vente déjà ouverte → rebascule sur l'onglet existant · « Annuler cette prestation » → Confirmation ; statut Annulé, jamais de suppression
+- « Encaisser la réservation » → Comptoir, onglet pré-rempli (payeuse + toutes les prestations) ; vente déjà ouverte → rebascule sur l'onglet existant · « Annuler cette prestation » → Confirmation ; statut Annulé, jamais de suppression. Pas de « Confirmer » : un rendez-vous arrive ferme.
 [ « Annuler » alors qu'une vente est ouverte pour cette réservation → la Confirmation le signale ; l'annulation ne ferme pas l'onglet ]
 
 Choix de la remplaçante  (bloquant — « Encaisser » quand au moins un rendez-vous de la réservation a une praticienne absente)
@@ -378,7 +376,7 @@ Choix de la remplaçante  (bloquant — « Encaisser » quand au moins un rendez
 - aucune candidate pour une ligne → le dire, sans ouvrir le Comptoir
 ```
 
-**Décisions actées (Planning)** : la gestion de l'agenda est une section propre, Équipe y est fondue (`docs/adr/0005`) ; **la prise de rendez-vous est retirée de l'app** — création/édition faites en ligne, ne restent que Confirmer / Annuler / Encaisser (`docs/adr/0006`) ; « Encaisser » agit au niveau **réservation** (toutes les prestations, un seul règlement) ; annuler conserve un statut Annulé ; l'absence de dernière minute d'une praticienne a un geste dédié.
+**Décisions actées (Planning)** : la gestion de l'agenda est une section propre, Équipe y est fondue (`docs/adr/0005`) ; **la prise de rendez-vous est retirée de l'app** — création / édition / confirmation faites en ligne, ne restent que **Annuler** et **Encaisser** (`docs/adr/0006`) ; un rendez-vous est actif ou annulé (pas de « en attente / confirmé ») ; « Encaisser » agit au niveau **réservation** (toutes les prestations, un seul règlement) ; annuler conserve un statut Annulé ; l'absence de dernière minute d'une praticienne a un geste dédié.
 
 ### Rappel — Fonctionnalités Accueil / Récap des ventes (hors périmètre Refonte 2)
 
@@ -387,7 +385,7 @@ Choix de la remplaçante  (bloquant — « Encaisser » quand au moins un rendez
 - Chronologie du jour : rendez-vous du jour groupés par praticienne, vue condensée (pas la grille horaire complète)
   - chaque rendez-vous → « Encaisser » → Comptoir déployé, nouvel onglet pré-rempli (cliente + prestations)
   - rendez-vous déjà pris en charge → badge « En cours » à la place de « Encaisser » ; le retaper bascule sur l'onglet existant au lieu d'ouvrir un doublon
-  - tap sur un rendez-vous → Fiche réservation (Confirmer + Encaisser la réservation + Annuler cette prestation ; pas d'édition)
+  - tap sur un rendez-vous → Fiche réservation (Encaisser la réservation + Annuler cette prestation ; pas de confirmation ni d'édition)
 - Widget « Tournée du matin » : nombre de messages prêts, « Valider & envoyer » directement ici (confirmation), lien « Voir le détail » → section Relances → volet Tournée du matin
 - Résumé du jour : total réellement encaissé aujourd'hui (ventes à l'état *encaissée*), nombre de rendez-vous du jour
   - « Voir le récap complet » → Récap des ventes

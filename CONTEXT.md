@@ -25,7 +25,7 @@ La prise de rendez-vous **au niveau de la payeuse** : une cliente (celle qui rè
 _Avoid_: Panier de réservation, Commande, Dossier
 
 **Rendez-vous**:
-Une **prestation planifiée** atomique, une ligne de la Réservation : une prestation, un·e bénéficiaire, un créneau (début + durée), une praticienne — **deux** quand la prestation est « réalisable à 2 » (`secondStaffId`, durée déjà divisée). C'est ce qui occupe une lane du Planning. **Plusieurs rendez-vous à la même heure, c'est normal** : praticiennes différentes, même réservation ou non. Conceptuellement proche du Créneau b&co (voir [b&co/CONTEXT.md](../b&co/CONTEXT.md)) mais aucun lien d'id n'existe entre les deux mocks. Seuls gestes possibles ici : **Confirmer**, **Annuler**, **Encaisser** — jamais créer ni décaler (fait en ligne).
+Une **prestation planifiée** atomique, une ligne de la Réservation : une prestation, un·e bénéficiaire, un créneau (début + durée), une praticienne — **deux** quand la prestation est « réalisable à 2 » (`secondStaffId`, durée déjà divisée). C'est ce qui occupe une lane du Planning. **Plusieurs rendez-vous à la même heure, c'est normal** : praticiennes différentes, même réservation ou non. Conceptuellement proche du Créneau b&co (voir [b&co/CONTEXT.md](../b&co/CONTEXT.md)) mais aucun lien d'id n'existe entre les deux mocks. Un rendez-vous est simplement **actif ou annulé** — **pas** de « en attente / confirmé » : les réservations arrivent fermes de la plateforme en ligne, la réceptionniste ne les valide jamais. Seuls gestes possibles ici : **Annuler**, **Encaisser** — jamais créer, confirmer ni décaler.
 _Avoid_: RDV (abréviation d'affichage uniquement, pas le terme du glossaire), Créneau (réservé au vocabulaire b&co côté client)
 
 **Bénéficiaire**:

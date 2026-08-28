@@ -74,7 +74,10 @@ export type Produit = {
   importedAbroad?: boolean;
 };
 
-export type AppointmentStatus = "en_attente" | "confirme" | "annule";
+/** A rendez-vous is simply live or cancelled. There is no "pending / confirmed" step: bookings are
+ *  made on the external online platform and arrive already firm — the receptionist never validates
+ *  them, only cancels or cashes them in. */
+export type AppointmentStatus = "actif" | "annule";
 
 /** How a Réservation reached the salon. Almost always "en_ligne" — the client books herself on the
  *  external booking platform; "comptoir" is the rare walk-in a receptionist notes by hand. */

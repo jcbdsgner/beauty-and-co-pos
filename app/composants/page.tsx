@@ -470,7 +470,6 @@ export default function DesignSystemPage() {
                   clientInitial="SM"
                   service="Coloration"
                   staffName="Bineta"
-                  status="confirme"
                   onClick={() => {}}
                 />
                 <AppointmentTimelineRow
@@ -480,7 +479,7 @@ export default function DesignSystemPage() {
                   clientInitial="AN"
                   service="Manucure russe"
                   staffName="Fatou"
-                  status="en_attente"
+                  trailing={<Badge variant="warning">En cours</Badge>}
                   onClick={() => {}}
                 />
                 <AppointmentTimelineRow
@@ -490,7 +489,7 @@ export default function DesignSystemPage() {
                   clientInitial="ND"
                   service="Soin visage"
                   staffName="Gnagna"
-                  status="annule"
+                  cancelled
                 />
               </div>
             </Card>

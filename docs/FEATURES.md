@@ -125,7 +125,7 @@ Modèle : un unique arbre de composants avec une machine à états `browse → p
 
 ## 3. Planning (`/planning`)
 
-> **⚠ Section pré-Refonte 2 — largement caduque.** Depuis `docs/adr/0005` (langage « Le Tableau », Équipe fondue) et `docs/adr/0006`, le Planning est une **vue de lecture** : plus de grille horaire, plus de formulaire de création/édition, plus de `window.confirm`. La prise de rendez-vous se fait **en ligne** ; ne restent que **Confirmer**, **Annuler** (statut « annulé » conservé), **Encaisser** (au niveau réservation) et « Marquer absente ». Le modèle est désormais **Réservation → Rendez-vous atomiques** (voir `CONTEXT.md` et `docs/USERFLOW.md`). Ce qui suit décrit l'ancien écran.
+> **⚠ Section pré-Refonte 2 — largement caduque.** Depuis `docs/adr/0005` (langage « Le Tableau », Équipe fondue) et `docs/adr/0006`, le Planning est une **vue de lecture** : plus de grille horaire, plus de formulaire de création/édition, plus de `window.confirm`. La prise de rendez-vous se fait **en ligne** ; un rendez-vous est **actif ou annulé** (pas de « en attente / confirmé », pas de « Confirmer ») ; ne restent que **Annuler** (statut « annulé » conservé), **Encaisser** (au niveau réservation) et « Marquer absente ». Le modèle est désormais **Réservation → Rendez-vous atomiques** (voir `CONTEXT.md` et `docs/USERFLOW.md`). Ce qui suit décrit l'ancien écran.
 
 Toute la mutation d'état (créer/modifier/annuler un RDV) est locale à la session, indexée par **jour de la semaine (0–6)**, pas par date absolue — les mêmes RDV mock réapparaissent chaque semaine sur Lundi/Mardi ; tous les autres jours/semaines sont vides par défaut.
 

@@ -19,7 +19,9 @@ Jusqu'ici, `RendezVous` portait `{ clientId, staffId, serviceId, start, duration
 
 **Bénéficiaire = fiche cliente _ou_ nom libre.** `beneficiaryName` (« Awa (amie) », « Salématou (7 ans) ») quand la personne n'a pas de fiche ; les deux champs absents ⇒ le bénéficiaire est la payeuse.
 
-**La prise de rendez-vous est retirée du point de vente.** Plus de formulaire de création/édition (`components/journee/appointment-form-dialog.tsx` supprimé), plus de bouton « Nouveau rendez-vous », plus de « Décaler / modifier ». Le store perd `createAppointment` / `updateAppointment`. Seuls gestes sur un rendez-vous : **Confirmer**, **Annuler** (flips de statut), **Encaisser** (au niveau réservation).
+**La prise de rendez-vous est retirée du point de vente.** Plus de formulaire de création/édition (`components/journee/appointment-form-dialog.tsx` supprimé), plus de bouton « Nouveau rendez-vous », plus de « Décaler / modifier ». Le store perd `createAppointment` / `updateAppointment`. Seuls gestes sur un rendez-vous : **Annuler** et **Encaisser** (au niveau réservation).
+
+**Un rendez-vous est actif ou annulé — pas de « en attente / confirmé ».** `AppointmentStatus` passe de `"en_attente" | "confirme" | "annule"` à `"actif" | "annule"`. Le pas « en attente → confirmé » et l'action « Confirmer » n'avaient de sens que quand la réceptionniste saisissait les rendez-vous ; une réservation faite en ligne arrive ferme, elle n'a rien à valider. `confirmAppointment` retiré du store ; les jetons « Confirmé » / « En attente » retirés du Planning, de l'Accueil, de la fiche réservation et de `AppointmentTimelineRow`. Il ne reste sur une lane que « En cours » (une vente est ouverte) ou « Annulé ».
 
 ## Conséquences
 

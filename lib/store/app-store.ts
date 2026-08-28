@@ -154,9 +154,9 @@ export type AppState = {
   /** Record that a cliente's fiche was opened (called from FicheClienteView). */
   noteClientViewed: (id: string) => void;
 
-  // Rendez-vous (atomic, nested inside their Réservation). No création/édition here — the booking
-  // journey lives on the external platform; the receptionist only confirms, cancels or cashes in.
-  confirmAppointment: (rvId: string) => void;
+  // Rendez-vous (atomic, nested inside their Réservation). No création/édition/confirmation here —
+  // the booking journey lives on the external platform and bookings arrive firm; the receptionist
+  // only cancels or cashes in.
   cancelAppointment: (rvId: string) => void;
   markStaffUnavailable: (staffId: string) => void;
 
@@ -215,8 +215,6 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   noteClientViewed: (id) =>
     set((s) => ({ recentClientIds: [id, ...s.recentClientIds.filter((x) => x !== id)].slice(0, 8) })),
-
-  confirmAppointment: (rvId) => set((s) => ({ reservations: patchRendezVous(s.reservations, rvId, { status: "confirme" }) })),
 
   cancelAppointment: (rvId) => set((s) => ({ reservations: patchRendezVous(s.reservations, rvId, { status: "annule" }) })),
 

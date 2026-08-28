@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Send, ChevronRight } from "lucide-react";
+import { ArrowRight, Send, ChevronRight, Users } from "lucide-react";
 import { Avatar } from "@/components/ui/atoms/avatar";
 import { Button } from "@/components/ui/atoms/button";
 import { ConfirmDialog } from "@/components/ui/molecules/confirm-dialog";
@@ -14,7 +14,6 @@ import {
   FlipChip,
   Legend,
   BoardEmpty,
-  type ChipTone,
 } from "@/components/ui/board";
 import { AppointmentDetailSheet } from "@/components/planning/appointment-detail-sheet";
 import { useEncaissement } from "@/components/journee/use-encaissement";
@@ -23,7 +22,7 @@ import { useSession } from "@/lib/session";
 import { clientFullName, clientInitial } from "@/lib/data/clientele";
 import { serviceById } from "@/lib/data/menu";
 import { appointmentEndTime, flattenRendezVous } from "@/lib/data/planning";
-import type { AppointmentStatus, RelanceType, RendezVous } from "@/lib/data/types";
+import type { RelanceType, RendezVous } from "@/lib/data/types";
 
 const DAY_FMT = new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long" });
 
@@ -31,12 +30,6 @@ function greeting() {
   const h = new Date().getHours();
   return h < 5 ? "Bonsoir" : h < 18 ? "Bonjour" : "Bonsoir";
 }
-
-const STATUS_CHIP: Record<AppointmentStatus, { value: string; tone: ChipTone }> = {
-  en_attente: { value: "En attente", tone: "act" },
-  confirme: { value: "Confirmé", tone: "now" },
-  annule: { value: "Annulé", tone: "void" },
-};
 
 const RELANCE_TYPE_SINGULAR: Record<RelanceType, string> = {
   anniversaire: "anniversaire",
@@ -185,7 +178,6 @@ export default function AccueilPage() {
                 const absent = staff.unavailableToday;
                 const hasSale = Boolean(reservation.saleId);
                 const siblings = reservation.rendezVous.filter((x) => x.status !== "annule").length - 1;
-                const chip = hasSale ? { value: "En cours", tone: "signal" as ChipTone } : STATUS_CHIP[rv.status];
                 return (
                   <Lane
                     key={rv.id}
@@ -208,7 +200,14 @@ export default function AccueilPage() {
                       (siblings > 0 ? ` · +${siblings} sur la note` : "") +
                       (absent ? " · praticienne absente" : "")
                     }
-                    chip={<FlipChip value={chip.value} tone={chip.tone} />}
+                    chip={
+                      (hasSale || second) && (
+                        <span className="flex items-center gap-1">
+                          {second && <Users aria-hidden className="size-3.5 text-[var(--brand-taupe-muted)]" />}
+                          {hasSale && <FlipChip value="En cours" tone="signal" />}
+                        </span>
+                      )
+                    }
                     signal={absent ? "hold" : "none"}
                     onSelect={() => setDetail(rv)}
                     actions={
