@@ -1,0 +1,164 @@
+import type { Produit, ProductCategory, Service, ServiceCategory } from "@/lib/data/types";
+
+/**
+ * The Menu — the prestations and produits a receptionist can put in a panier and encaisser.
+ * Édité hors de cette app : the prestation list mirrors, verbatim (ids, libellés, prix, durées,
+ * éligibilité « à 2 »), the shared Beauty and Co booking catalogue (`b&co/lib/data/booking-services.ts`).
+ * point-de-vente ne fait que la lire.
+ */
+
+export const SERVICE_CATEGORIES: ServiceCategory[] = [
+  { id: "coiffure", name: "Coiffure" },
+  { id: "manucure-pedicure", name: "Manucure / Pédicure" },
+  { id: "onglerie", name: "Onglerie" },
+  { id: "spa", name: "Spa & Massages" },
+  { id: "soin-du-visage", name: "Soins Visage" },
+  { id: "epilation", name: "Épilation" },
+  { id: "mini-co-hair", name: "Mini&Co · Hair" },
+  { id: "mini-co-spa", name: "Mini&Co · Spa" },
+];
+
+export const SERVICES: Service[] = [
+
+  // COIFFURE
+  { id: "coiffure-defrisage-professionnel-beauty-and-co-texlax", categoryId: "coiffure", subcategory: "Défrisage", name: "DEFRISAGE PROFESSIONNEL BEAUTY AND CO / TEXLAX", price: 49000, durationMinutes: 150, twoPractitionersEligible: true, active: true },
+  { id: "coiffure-hybrid-extensions", categoryId: "coiffure", subcategory: "Luxury Extensions", name: "HYBRID EXTENSIONS", price: 99000, durationMinutes: 190, twoPractitionersEligible: true, active: true },
+  { id: "coiffure-extensions-tapes-2-paquets-de-cheveux-soit-100-g-18-pouces-coiffage", categoryId: "coiffure", subcategory: "Luxury Extensions", name: "EXTENSIONS TAPES (2 paquets de cheveux soit 100 g 18 pouces + coiffage)", price: 249000, durationMinutes: 150, twoPractitionersEligible: true, active: true },
+  { id: "coiffure-enlever-anneaux", categoryId: "coiffure", subcategory: "Luxury Extensions", name: "ENLEVER ANNEAUX", price: 7000, durationMinutes: 40, twoPractitionersEligible: true, active: true },
+  { id: "coiffure-pose-perruque", categoryId: "coiffure", subcategory: "Perruques", name: "POSE PERRUQUE", price: 39000, durationMinutes: 70, twoPractitionersEligible: false, active: true },
+  { id: "coiffure-soin-perruque", categoryId: "coiffure", subcategory: "Perruques", name: "SOIN PERRUQUE", price: 22000, durationMinutes: 120, twoPractitionersEligible: true, active: true },
+  { id: "coiffure-supplement-lisseur", categoryId: "coiffure", subcategory: "Brushing", name: "SUPPLEMENT LISSEUR", price: 5000, durationMinutes: 20, twoPractitionersEligible: false, active: true },
+  { id: "coiffure-soin-keratine", categoryId: "coiffure", subcategory: "Lissage", name: "SOIN KÉRATINE", price: 189000, durationMinutes: 210, twoPractitionersEligible: true, active: true },
+  { id: "coiffure-supplement-coupe-pointes", categoryId: "coiffure", subcategory: "Coupe", name: "SUPPLEMENT COUPE POINTES", price: 9000, durationMinutes: 25, twoPractitionersEligible: false, active: true },
+  { id: "coiffure-coupe-transformation", categoryId: "coiffure", subcategory: "Coupe", name: "COUPE TRANSFORMATION", price: 36000, durationMinutes: 40, twoPractitionersEligible: false, active: true },
+  { id: "coiffure-tresses-cheveux", categoryId: "coiffure", subcategory: "Tresses", name: "TRESSES CHEVEUX +", price: 19000, durationMinutes: 60, twoPractitionersEligible: true, active: true },
+  { id: "coiffure-shampoing-brushing-sur-extensions-tissages-shampoing-inclus-et-obligatoire", categoryId: "coiffure", subcategory: "Brushing", name: "SHAMPOING BRUSHING SUR EXTENSIONS / TISSAGES (SHAMPOING INCLUS ET OBLIGATOIRE)", price: 31000, durationMinutes: 100, twoPractitionersEligible: true, active: true },
+  { id: "coiffure-soin-croisiere", categoryId: "coiffure", subcategory: "Nos Rituels Soins", name: "SOIN CROISIÈRE", price: 36000, durationMinutes: 90, twoPractitionersEligible: true, active: true },
+  { id: "coiffure-extension-aux-fils-2-paquets", categoryId: "coiffure", subcategory: "Luxury Extensions", name: "EXTENSION AUX FILS 2 PAQUETS", price: 218000, durationMinutes: 240, twoPractitionersEligible: true, active: true },
+  { id: "coiffure-soin-botox-lissant", categoryId: "coiffure", subcategory: "Lissage", name: "SOIN BOTOX LISSANT", price: 99000, durationMinutes: 190, twoPractitionersEligible: true, active: true },
+  { id: "coiffure-tissage-ouvert", categoryId: "coiffure", subcategory: "Tissage", name: "TISSAGE OUVERT", price: 46000, durationMinutes: 140, twoPractitionersEligible: true, active: true },
+  { id: "coiffure-tissage-rajout", categoryId: "coiffure", subcategory: "Tissage", name: "TISSAGE RAJOUT", price: 39000, durationMinutes: 75, twoPractitionersEligible: true, active: true },
+  { id: "coiffure-half-up-half-down", categoryId: "coiffure", subcategory: "Coiffure", name: "HALF UP HALF DOWN", price: 49000, durationMinutes: 120, twoPractitionersEligible: false, active: true },
+  { id: "coiffure-shampoing-brushing-shampoing-inclus-et-obligatoire", categoryId: "coiffure", subcategory: "Brushing", name: "SHAMPOING BRUSHING (SHAMPOING INCLUS ET OBLIGATOIRE)", price: 23000, durationMinutes: 60, twoPractitionersEligible: false, active: true },
+  { id: "coiffure-extensions-aux-fils-1-paquet", categoryId: "coiffure", subcategory: "Luxury Extensions", name: "EXTENSIONS AUX FILS 1 PAQUET", price: 129000, durationMinutes: 240, twoPractitionersEligible: true, active: true },
+  { id: "coiffure-head-spa-ultimate-deep-relaxation", categoryId: "coiffure", subcategory: "Head Spa", name: "HEAD SPA ULTIMATE DEEP RELAXATION", price: 179000, durationMinutes: 240, twoPractitionersEligible: true, active: true },
+  { id: "coiffure-extensions-tapes-3-paquets-de-cheveux-soit-150g-18-pouces-coiffage", categoryId: "coiffure", subcategory: "Luxury Extensions", name: "EXTENSIONS TAPES (3 PAQUETS DE CHEVEUX SOIT 150G 18 POUCES + COIFFAGE)", price: 349000, durationMinutes: 180, twoPractitionersEligible: true, active: true },
+  { id: "coiffure-defrisage-professionnel-soin-fortifiant-anti-casse", categoryId: "coiffure", subcategory: "Défrisage", name: "DEFRISAGE PROFESSIONNEL + SOIN FORTIFIANT ANTI CASSE", price: 59000, durationMinutes: 150, twoPractitionersEligible: true, active: true },
+  { id: "coiffure-soin-complet", categoryId: "coiffure", subcategory: "Nos Rituels Soins", name: "SOIN COMPLET", price: 46000, durationMinutes: 130, twoPractitionersEligible: true, active: true },
+  { id: "coiffure-soin-detox", categoryId: "coiffure", subcategory: "Nos Rituels Soins", name: "SOIN DETOX", price: 46000, durationMinutes: 140, twoPractitionersEligible: true, active: true },
+  { id: "coiffure-soin-botox-reparateur-non-lissant", categoryId: "coiffure", subcategory: "Nos Rituels Soins", name: "SOIN BOTOX REPARATEUR(NON LISSANT)", price: 86000, durationMinutes: 150, twoPractitionersEligible: true, active: true },
+  { id: "coiffure-soin-lissant-tanin", categoryId: "coiffure", subcategory: "Lissage", name: "SOIN LISSANT TANIN", price: 189000, durationMinutes: 190, twoPractitionersEligible: true, active: true },
+  { id: "coiffure-silk-press", categoryId: "coiffure", subcategory: "Brushing", name: "SILK PRESS", price: 79000, durationMinutes: 180, twoPractitionersEligible: true, active: true },
+  { id: "coiffure-extensions-anneaux-haute-couture-2-paquets", categoryId: "coiffure", subcategory: "Luxury Extensions", name: "EXTENSIONS ANNEAUX HAUTE COUTURE 2 PAQUETS", price: 80000, durationMinutes: 170, twoPractitionersEligible: true, active: true },
+  { id: "coiffure-pose-clips", categoryId: "coiffure", subcategory: "Luxury Extensions", name: "POSE CLIPS", price: 37000, durationMinutes: 60, twoPractitionersEligible: true, active: true },
+  { id: "coiffure-ponytail", categoryId: "coiffure", subcategory: "Coiffure", name: "PONYTAIL", price: 41000, durationMinutes: 90, twoPractitionersEligible: false, active: true },
+  { id: "coiffure-supplement-hand-feet-massage-massage-pieds-mains", categoryId: "coiffure", subcategory: "Head Spa", name: "SUPPLÉMENT HAND FEET MASSAGE/ MASSAGE PIEDS-MAINS", price: 19000, durationMinutes: 15, twoPractitionersEligible: true, active: true },
+  { id: "coiffure-soin-croisiere-head-spa", categoryId: "coiffure", subcategory: "Head Spa", name: "SOIN CROISIERE HEAD SPA", price: 84000, durationMinutes: 120, twoPractitionersEligible: true, active: true },
+  { id: "coiffure-pose-u-part-wig", categoryId: "coiffure", subcategory: "Perruques", name: "POSE U-PART WIG", price: 37000, durationMinutes: 70, twoPractitionersEligible: false, active: true },
+  { id: "coiffure-tissage-versatile", categoryId: "coiffure", subcategory: "Tissage", name: "TISSAGE VERSATILE", price: 56000, durationMinutes: 120, twoPractitionersEligible: true, active: true },
+  { id: "coiffure-shampoing-sechage", categoryId: "coiffure", subcategory: "Brushing", name: "SHAMPOING SÉCHAGE", price: 17000, durationMinutes: 60, twoPractitionersEligible: false, active: true },
+  { id: "coiffure-flip-over-sew-in-tissage-ferme", categoryId: "coiffure", subcategory: "Tissage", name: "FLIP OVER SEW IN (TISSAGE FERMÉ)", price: 59000, durationMinutes: 150, twoPractitionersEligible: true, active: true },
+  { id: "coiffure-tissage-closure-behind-the-hair-line-new", categoryId: "coiffure", subcategory: "Tissage", name: "TISSAGE CLOSURE BEHIND THE HAIR LINE (NEW)", price: 74900, durationMinutes: 190, twoPractitionersEligible: true, active: true },
+  { id: "coiffure-supplement-express-floral-facial-soin-du-visage-relaxant", categoryId: "coiffure", subcategory: "Nos Rituels Soins", name: "SUPPLÉMENT EXPRESS FLORAL FACIAL/ SOIN DU VISAGE RELAXANT", price: 34000, durationMinutes: 35, twoPractitionersEligible: false, active: true },
+  { id: "coiffure-soin-vip", categoryId: "coiffure", subcategory: "Nos Rituels Soins", name: "SOIN VIP", price: 49000, durationMinutes: 160, twoPractitionersEligible: true, active: true },
+  { id: "coiffure-soin-reparateur-olapex-new-in", categoryId: "coiffure", subcategory: "Nos Rituels Soins", name: "SOIN RÉPARATEUR OLAPEX (NEW IN)", price: 69000, durationMinutes: 120, twoPractitionersEligible: true, active: true },
+
+  // MANUCURE PEDICURE
+  { id: "manucure-pedicure-gel-sur-ongle-naturel-gainage", categoryId: "manucure-pedicure", name: "GEL SUR ONGLE NATUREL(GAINAGE)", price: 33000, durationMinutes: 70, twoPractitionersEligible: true, active: true },
+  { id: "manucure-pedicure-supplement-decoration-chrome-cat-eye-baby-boomer", categoryId: "manucure-pedicure", name: "SUPPLÉMENT DÉCORATION (Chrome, Cat Eye, Baby Boomer)", price: 7500, durationMinutes: 20, twoPractitionersEligible: true, active: true },
+  { id: "manucure-pedicure-manucure-permanent", categoryId: "manucure-pedicure", name: "MANUCURE + PERMANENT", price: 32000, durationMinutes: 80, twoPractitionersEligible: true, active: true },
+  { id: "manucure-pedicure-jelly-pedicure", categoryId: "manucure-pedicure", name: "JELLY PÉDICURE", price: 29000, durationMinutes: 65, twoPractitionersEligible: true, active: true },
+  { id: "manucure-pedicure-smooth-pedicure", categoryId: "manucure-pedicure", name: "SMOOTH PÉDICURE", price: 36000, durationMinutes: 80, twoPractitionersEligible: true, active: true },
+  { id: "manucure-pedicure-perfect-manucure-russe-gel-sur-ongles-naturels-gainage", categoryId: "manucure-pedicure", name: "PERFECT MANUCURE RUSSE+ GEL SUR ONGLES NATURELS (GAINAGE)", price: 43000, durationMinutes: 90, twoPractitionersEligible: true, active: true },
+  { id: "manucure-pedicure-manucure-russe-sans-vernis-sans-gel", categoryId: "manucure-pedicure", name: "MANUCURE RUSSE(sans vernis/sans gel)", price: 13000, durationMinutes: 30, twoPractitionersEligible: true, active: true },
+  { id: "manucure-pedicure-vernis-simple-mains-classique-et-halal", categoryId: "manucure-pedicure", name: "VERNIS SIMPLE MAINS (CLASSIQUE ET HALAL)", price: 9000, durationMinutes: 30, twoPractitionersEligible: true, active: true },
+  { id: "manucure-pedicure-pedicure-me-spa", categoryId: "manucure-pedicure", name: "PÉDICURE ME SPA", price: 26000, durationMinutes: 60, twoPractitionersEligible: true, active: true },
+  { id: "manucure-pedicure-manucure-spa-express", categoryId: "manucure-pedicure", name: "MANUCURE SPA EXPRESS", price: 16000, durationMinutes: 45, twoPractitionersEligible: true, active: true },
+  { id: "manucure-pedicure-pedicure-permanent", categoryId: "manucure-pedicure", name: "PÉDICURE PERMANENT", price: 36000, durationMinutes: 80, twoPractitionersEligible: true, active: true },
+  { id: "manucure-pedicure-perfect-pedicure-russe-permanent", categoryId: "manucure-pedicure", name: "PERFECT PÉDICURE RUSSE + PERMANENT", price: 39000, durationMinutes: 80, twoPractitionersEligible: true, active: true },
+  { id: "manucure-pedicure-luxury-perfect-pedicure", categoryId: "manucure-pedicure", name: "LUXURY PERFECT PÉDICURE", price: 39000, durationMinutes: 90, twoPractitionersEligible: true, active: true },
+  { id: "manucure-pedicure-luxury-perfect-manucure-spa", categoryId: "manucure-pedicure", name: "LUXURY PERFECT MANUCURE SPA", price: 32000, durationMinutes: 70, twoPractitionersEligible: true, active: true },
+
+  // ONGLERIE
+  { id: "onglerie-vernis-permanent-pieds", categoryId: "onglerie", name: "VERNIS PERMANENT PIEDS", price: 13000, durationMinutes: 30, twoPractitionersEligible: true, active: true },
+  { id: "onglerie-polygel-extensions", categoryId: "onglerie", name: "POLYGEL EXTENSIONS", price: 45000, durationMinutes: 120, twoPractitionersEligible: true, active: true },
+  { id: "onglerie-reparation-ongle-1-doigt", categoryId: "onglerie", name: "Réparation Ongle (1 Doigt)", price: 3500, durationMinutes: 20, twoPractitionersEligible: false, active: true },
+  { id: "onglerie-depose-gel-gel-a-enlever", categoryId: "onglerie", name: "DÉPOSE GEL(gel à enlever)", price: 8000, durationMinutes: 30, twoPractitionersEligible: true, active: true },
+  { id: "onglerie-gel-x", categoryId: "onglerie", name: "GEL X", price: 36000, durationMinutes: 80, twoPractitionersEligible: true, active: true },
+  { id: "onglerie-capsules-permanents-mains", categoryId: "onglerie", name: "CAPSULES PERMANENTS MAINS", price: 21000, durationMinutes: 50, twoPractitionersEligible: true, active: true },
+  { id: "onglerie-capsules-gel-pieds", categoryId: "onglerie", name: "CAPSULES GEL PIEDS", price: 23000, durationMinutes: 60, twoPractitionersEligible: true, active: true },
+  { id: "onglerie-vernis-permanent-mains", categoryId: "onglerie", name: "VERNIS PERMANENT MAINS", price: 17000, durationMinutes: 30, twoPractitionersEligible: true, active: true },
+  { id: "onglerie-remplissage-gel", categoryId: "onglerie", name: "REMPLISSAGE GEL", price: 27000, durationMinutes: 30, twoPractitionersEligible: true, active: true },
+  { id: "onglerie-supplement-french", categoryId: "onglerie", name: "SUPPLÉMENT FRENCH", price: 7500, durationMinutes: 30, twoPractitionersEligible: true, active: true },
+  { id: "onglerie-supplement-decoration-chrome-cat-eye-baby-boomer", categoryId: "onglerie", name: "SUPPLÉMENT DÉCORATION (Chrome, Cat Eye, Baby Boomer)", price: 10000, durationMinutes: 30, twoPractitionersEligible: true, active: true },
+
+  // SPA
+  { id: "spa-soin-du-dos", categoryId: "spa", name: "SOIN DU DOS", price: 65000, durationMinutes: 90, twoPractitionersEligible: true, active: true },
+  { id: "spa-hot-stone-pierres-chaudes", categoryId: "spa", name: "HOT STONE - PIERRES CHAUDES", price: 59000, durationMinutes: 60, twoPractitionersEligible: true, active: true },
+  { id: "spa-reflexology", categoryId: "spa", name: "REFLEXOLOGY", price: 49000, durationMinutes: 60, twoPractitionersEligible: true, active: true },
+  { id: "spa-relax-me-time", categoryId: "spa", name: "RELAX ME TIME", price: 60000, durationMinutes: 80, twoPractitionersEligible: true, active: true },
+  { id: "spa-energissant-sportif", categoryId: "spa", name: "ENERGISSANT SPORTIF", price: 49000, durationMinutes: 60, twoPractitionersEligible: true, active: true },
+  { id: "spa-black-relief-dos", categoryId: "spa", name: "BLACK RELIEF DOS", price: 29000, durationMinutes: 30, twoPractitionersEligible: true, active: true },
+  { id: "spa-de-stress-relaxant", categoryId: "spa", name: "DE STRESS RELAXANT", price: 45000, durationMinutes: 55, twoPractitionersEligible: true, active: true },
+  { id: "spa-deep-tonique", categoryId: "spa", name: "DEEP TONIQUE", price: 49000, durationMinutes: 60, twoPractitionersEligible: true, active: true },
+  { id: "spa-steam-time", categoryId: "spa", name: "STEAM TIME", price: 40000, durationMinutes: 50, twoPractitionersEligible: false, active: true },
+  { id: "spa-express-head-neck-shoulder", categoryId: "spa", name: "EXPRESS HEAD NECK SHOULDER", price: 29000, durationMinutes: 30, twoPractitionersEligible: true, active: true },
+  { id: "spa-magic-vip-rituel-repair-and-reset", categoryId: "spa", name: "MAGIC VIP RITUEL REPAIR AND RESET", price: 140000, durationMinutes: 190, twoPractitionersEligible: true, active: true },
+  { id: "spa-pure-delice", categoryId: "spa", name: "PURE DELICE", price: 90000, durationMinutes: 130, twoPractitionersEligible: true, active: true },
+
+  // SOIN DU VISAGE
+  { id: "soin-du-visage-golden-vip-facial", categoryId: "soin-du-visage", name: "GOLDEN VIP FACIAL", price: 80000, durationMinutes: 90, twoPractitionersEligible: false, active: true },
+  { id: "soin-du-visage-face-lift-and-glow-raffermissant-lift-et-glow", categoryId: "soin-du-visage", name: "FACE LIFT AND GLOW - RAFFERMISSANT LIFT ET GLOW", price: 59000, durationMinutes: 70, twoPractitionersEligible: false, active: true },
+  { id: "soin-du-visage-glow-me-facial", categoryId: "soin-du-visage", name: "GLOW ME FACIAL", price: 49000, durationMinutes: 60, twoPractitionersEligible: false, active: true },
+  { id: "soin-du-visage-acne-treatment", categoryId: "soin-du-visage", name: "ACNE TREATMENT", price: 49000, durationMinutes: 60, twoPractitionersEligible: false, active: true },
+  { id: "soin-du-visage-hydrate-me-and-restore", categoryId: "soin-du-visage", name: "HYDRATE ME AND RESTORE", price: 54000, durationMinutes: 60, twoPractitionersEligible: false, active: true },
+  { id: "soin-du-visage-hydrafacial-deep-clean", categoryId: "soin-du-visage", name: "HYDRAFACIAL DEEP CLEAN", price: 55000, durationMinutes: 75, twoPractitionersEligible: false, active: true },
+  { id: "soin-du-visage-detox-me-facial", categoryId: "soin-du-visage", name: "DETOX ME FACIAL", price: 45000, durationMinutes: 60, twoPractitionersEligible: false, active: true },
+
+  // ÉPILATION
+  { id: "epilation-epilation-menton", categoryId: "epilation", name: "ÉPILATION MENTON", price: 6000, durationMinutes: 25, twoPractitionersEligible: false, active: true },
+  { id: "epilation-pack-epilations-completes", categoryId: "epilation", name: "PACK ÉPILATIONS COMPLÈTES", price: 45000, durationMinutes: 60, twoPractitionersEligible: true, active: true },
+  { id: "epilation-epilation-bras", categoryId: "epilation", name: "ÉPILATION BRAS", price: 9000, durationMinutes: 25, twoPractitionersEligible: true, active: true },
+  { id: "epilation-epilation-jambes-completes", categoryId: "epilation", name: "ÉPILATION JAMBES COMPLÈTES", price: 14000, durationMinutes: 45, twoPractitionersEligible: true, active: true },
+  { id: "epilation-epilation-maillot-integral", categoryId: "epilation", name: "ÉPILATION MAILLOT INTÉGRAL", price: 17000, durationMinutes: 45, twoPractitionersEligible: false, active: true },
+  { id: "epilation-epilation-demi-jambes", categoryId: "epilation", name: "ÉPILATION DEMI - JAMBES", price: 11000, durationMinutes: 25, twoPractitionersEligible: true, active: true },
+  { id: "epilation-epilation-duvet-ventre", categoryId: "epilation", name: "ÉPILATION DUVET/VENTRE", price: 7000, durationMinutes: 25, twoPractitionersEligible: false, active: true },
+  { id: "epilation-epilation-maillot-bresilien", categoryId: "epilation", name: "ÉPILATION MAILLOT BRÉSILIEN", price: 12000, durationMinutes: 25, twoPractitionersEligible: false, active: true },
+  { id: "epilation-epilation-aisselles", categoryId: "epilation", name: "ÉPILATION AISSELLES", price: 7000, durationMinutes: 25, twoPractitionersEligible: true, active: true },
+  { id: "epilation-epilation-sourcils", categoryId: "epilation", name: "ÉPILATION SOURCILS", price: 7000, durationMinutes: 15, twoPractitionersEligible: false, active: true },
+  { id: "epilation-soin-vagifacial", categoryId: "epilation", name: "SOIN VAGIFACIAL", price: 34000, durationMinutes: 35, twoPractitionersEligible: false, active: true },
+  { id: "epilation-soin-vagifacial-maillot-integral", categoryId: "epilation", name: "SOIN VAGIFACIAL+ MAILLOT INTEGRAL", price: 49000, durationMinutes: 60, twoPractitionersEligible: false, active: true },
+
+  // HAIR
+  { id: "mini-co-mini-hair-treat-mini-co", categoryId: "mini-co-hair", name: "MINI HAIR TREAT (Mini&co)", price: 28000, durationMinutes: 90, twoPractitionersEligible: true, active: true },
+  { id: "mini-co-mini-hair-treat-braids-mini-co", categoryId: "mini-co-hair", name: "MINI HAIR TREAT+ BRAIDS (Mini&co)", price: 46000, durationMinutes: 180, twoPractitionersEligible: true, active: true },
+  { id: "mini-co-supplement-coiffure-enfant", categoryId: "mini-co-hair", name: "SUPPLEMENT COIFFURE ENFANT", price: 10000, durationMinutes: 50, twoPractitionersEligible: false, active: true },
+  { id: "mini-co-definition-boucles-enfant", categoryId: "mini-co-hair", name: "DEFINITION BOUCLES ENFANT", price: 9000, durationMinutes: 30, twoPractitionersEligible: false, active: true },
+  { id: "mini-co-defaire-tresses-enfant", categoryId: "mini-co-hair", name: "DEFAIRE TRESSES ENFANT", price: 5000, durationMinutes: 45, twoPractitionersEligible: true, active: true },
+  { id: "mini-co-coupe-pointes-enfants-mini-co", categoryId: "mini-co-hair", name: "COUPE POINTES ENFANTS (Mini&co)", price: 9000, durationMinutes: 25, twoPractitionersEligible: false, active: true },
+  { id: "mini-co-supplement-brushing-enfant", categoryId: "mini-co-hair", name: "SUPPLEMENT BRUSHING ENFANT", price: 9000, durationMinutes: 60, twoPractitionersEligible: false, active: true },
+  { id: "mini-co-supplements-tresses-enfants-mini-and-co", categoryId: "mini-co-hair", name: "SUPPLÉMENTS TRESSES ENFANTS MINI AND CO", price: 19000, durationMinutes: 60, twoPractitionersEligible: true, active: true },
+
+  // MINI SPA
+  { id: "mini-co-mini-jely-manucure", categoryId: "mini-co-spa", name: "MINI JELLY MANUCURE", price: 12000, durationMinutes: 30, twoPractitionersEligible: true, active: true },
+  { id: "mini-co-mini-cutie-pedicure", categoryId: "mini-co-spa", name: "MINI CUTIE PÉDICURE", price: 15000, durationMinutes: 35, twoPractitionersEligible: true, active: true },
+];
+
+export function serviceById(id: string) {
+  return SERVICES.find((s) => s.id === id);
+}
+
+export const PRODUCT_CATEGORIES: ProductCategory[] = [
+  { id: "capillaire", name: "Capillaire" },
+  { id: "soins-corps", name: "Soins Corps" },
+  { id: "ongles", name: "Ongles" },
+  { id: "maquillage", name: "Maquillage" },
+];
+
+export const PRODUITS: Produit[] = [
+  { id: "prd-1", categoryId: "capillaire", name: "Shampoing Kérastase 300ml", price: 20000, stock: 52, active: true },
+  { id: "prd-2", categoryId: "capillaire", name: "Après-shampoing hydratant", price: 18000, stock: 34, active: true },
+  { id: "prd-3", categoryId: "ongles", name: "Vernis Rouge Classique", price: 6000, stock: 8, active: true },
+  { id: "prd-4", categoryId: "soins-corps", name: "Crème Hydratante Visage", price: 15500, stock: 0, active: true },
+  { id: "prd-5", categoryId: "maquillage", name: "Rouge à lèvres mat", price: 9500, stock: 21, active: true },
+];

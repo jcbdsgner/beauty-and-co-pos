@@ -38,14 +38,14 @@ export function ScannerDialog({ open, title, onClose, onDetect, demoValue }: Sca
   return (
     <Dialog open={open} labelledBy="scanner-title" className="max-w-sm rounded-3xl p-6">
       <CloseButton onClick={onClose} />
-      <h2 id="scanner-title" className="font-[var(--font-heading)] text-xl text-[var(--color-gray-900)]">
+      <h2 id="scanner-title" className="font-[family-name:var(--font-heading)] font-semibold text-xl text-[var(--color-gray-900)]">
         {title}
       </h2>
 
       <div className="relative mt-4 flex aspect-square items-center justify-center overflow-hidden rounded-2xl bg-[var(--color-gray-900)]">
         <video ref={videoRef} autoPlay muted playsInline className="absolute inset-0 size-full object-cover opacity-80" />
-        <svg viewBox="0 0 200 200" className="relative size-2/3 text-white/90">
-          <path d="M20 20 L20 50 M20 20 L50 20 M180 20 L150 20 M180 20 L180 50 M20 180 L20 150 M20 180 L50 180 M180 180 L180 150 M180 180 L150 180" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
+        <svg viewBox="0 0 200 200" className="relative size-3/4 text-[var(--core-brand-color)]">
+          <path d="M16 16 L16 56 M16 16 L56 16 M184 16 L144 16 M184 16 L184 56 M16 184 L16 144 M16 184 L56 184 M184 184 L184 144 M184 184 L144 184" stroke="currentColor" strokeWidth="6" fill="none" strokeLinecap="round" />
         </svg>
       </div>
 

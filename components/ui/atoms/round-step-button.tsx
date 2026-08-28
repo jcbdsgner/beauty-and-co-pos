@@ -8,12 +8,13 @@ type RoundStepButtonProps = {
   onClick: () => void;
   disabled?: boolean;
   ariaLabel: string;
-  /** `md` (44px, the default tap target) for a standalone counter; `sm` (36px) for a counter that sits inline next to other controls. */
+  /** `md` (56px, the counter tap target) for a standalone stepper; `sm` (44px) for a stepper
+   *  packed inline next to other controls (e.g. loyalty-points row). */
   size?: "sm" | "md";
   className?: string;
 };
 
-const SIZE_CLASS = { sm: "size-9", md: "size-11" };
+const SIZE_CLASS = { sm: "size-11", md: "size-14" };
 const ICON_SIZE = { sm: "size-4", md: "size-5" };
 
 /** The circular +/- button shared by every counter in the app (Stepper, cart line qty, loyalty points). */
@@ -26,8 +27,9 @@ export function RoundStepButton({ direction, onClick, disabled, ariaLabel, size 
       disabled={disabled}
       aria-label={ariaLabel}
       className={cn(
-        "flex shrink-0 items-center justify-center rounded-full border-2 border-[var(--brand-taupe-muted)]/40 text-[var(--brand-taupe-muted)] transition active:scale-[0.94]",
-        "disabled:cursor-not-allowed disabled:opacity-30 enabled:hover:border-[var(--brand-taupe-muted)] enabled:hover:bg-[var(--brand-rose-soft)]",
+        "flex shrink-0 items-center justify-center rounded-full border-2 border-secondary/40 text-secondary transition active:scale-[0.94]",
+        "outline-none focus-visible:ring-4 focus-visible:ring-ring/25",
+        "disabled:cursor-not-allowed disabled:opacity-30 enabled:hover:border-secondary enabled:hover:bg-accent",
         SIZE_CLASS[size],
         className,
       )}

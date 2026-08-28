@@ -1,7 +1,6 @@
 import { Avatar } from "@/components/ui/atoms/avatar";
 import { Badge, type BadgeVariant } from "@/components/ui/atoms/badge";
 import { Button, type ButtonVariant } from "@/components/ui/atoms/button";
-import { Card } from "@/components/ui/atoms/card";
 import { cn } from "@/lib/utils";
 
 export type RelanceAction = {
@@ -24,20 +23,19 @@ type RelanceCardProps = {
 };
 
 /**
- * Client follow-up/reminder card (anniversaire, relance fidélité, rappel rendez-vous) — identity
- * + context on top, the actual outgoing message as a quoted block, a row of equal-weight
- * channel actions (WhatsApp/Email/RDV…) below. `actions` stays open-ended rather than hardcoding
- * channels, since which ones apply varies per reminder type.
+ * A follow-up card — cliente identity + why they're on the list, the outgoing message quoted, and
+ * a row of equal-weight channel actions below. The quote block is the visual centre of gravity:
+ * it's what the receptionist is about to send.
  */
 export function RelanceCard({ initial, name, context, message, statusLabel, statusVariant = "warning", tierBadge, actions, className }: RelanceCardProps) {
   return (
-    <Card className={cn("flex flex-col gap-4 p-5", className)}>
+    <div className={cn("flex flex-col gap-4 rounded-2xl border border-border bg-white p-5", className)}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <Avatar initial={initial} size={44} className="bg-[var(--brand-rose-soft)] font-semibold text-[var(--brand-taupe-muted)]" />
+          <Avatar initial={initial} size={44} className="bg-accent font-semibold text-secondary" />
           <div>
             <span className="flex items-center gap-2">
-              <span className="font-semibold text-[var(--color-gray-900)]">{name}</span>
+              <span className="font-[family-name:var(--font-heading)] font-semibold text-[15px] text-[var(--color-gray-900)]">{name}</span>
               {tierBadge && <Badge variant={tierBadge.variant}>{tierBadge.label}</Badge>}
             </span>
             <p className="text-sm text-[var(--color-gray-500)]">{context}</p>
@@ -46,15 +44,19 @@ export function RelanceCard({ initial, name, context, message, statusLabel, stat
         {statusLabel && <Badge variant={statusVariant}>{statusLabel}</Badge>}
       </div>
 
-      <p className="rounded-2xl bg-[var(--color-gray-50)] p-3 text-sm text-[var(--color-gray-700)]">{message}</p>
+      <blockquote className="rounded-2xl border-l-2 border-secondary/40 bg-[var(--color-gray-50)] px-4 py-3 text-sm text-[var(--color-gray-700)]">
+        {message}
+      </blockquote>
 
-      <div className="flex flex-wrap gap-2">
-        {actions.map((action) => (
-          <Button key={action.label} type="button" variant={action.variant ?? "outline"} icon={action.icon} onClick={action.onClick} className="flex-1">
-            {action.label}
-          </Button>
-        ))}
-      </div>
-    </Card>
+      {actions.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {actions.map((action) => (
+            <Button key={action.label} type="button" size="sm" variant={action.variant ?? "outline"} icon={action.icon} onClick={action.onClick} className="flex-1">
+              {action.label}
+            </Button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

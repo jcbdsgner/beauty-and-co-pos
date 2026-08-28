@@ -6,6 +6,7 @@ export const PRATICIENNES: Praticienne[] = [
   { id: "gnagna", name: "Gnagna", role: "estheticienne", initial: "G", workingToday: true },
   { id: "henry", name: "Henry", role: "coiffeuse", initial: "H", workingToday: false },
   { id: "marie-dominique", name: "Marie Dominique", role: "estheticienne", initial: "MD", workingToday: true },
+  { id: "adja", name: "Adja", role: "estheticienne", initial: "A", workingToday: true },
   { id: "michelle", name: "Michelle", role: "coiffeuse", initial: "M", workingToday: true },
   { id: "ndiole", name: "Ndiole", role: "accueil", initial: "N", workingToday: true },
 ];

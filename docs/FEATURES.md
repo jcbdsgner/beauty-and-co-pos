@@ -1,5 +1,13 @@
 # Inventaire exhaustif des fonctionnalités — Point de vente (Beauty and Co)
 
+> **⚠️ Document historique (pré-refonte).** Cet inventaire décrit le code au 26/08/2026, avant la
+> refonte de navigation. Il ne correspond plus à l'app actuelle : `/vente`→Comptoir, `/clients`→
+> `/clientele`, `/suivi` fusionné dans Clientèle, `/lookbook`→`/catalogue`, **`/parametres` supprimé**
+> (persona unique — voir [`adr/0001-persona-unique-poste-de-comptoir.md`](adr/0001-persona-unique-poste-de-comptoir.md)),
+> Profil/Sécurité → `/compte`. La référence à jour du parcours cible est [`USERFLOW.md`](USERFLOW.md) ;
+> le glossaire est [`../CONTEXT.md`](../CONTEXT.md). Ce fichier est conservé comme trace de l'existant
+> d'origine, pas mis à jour écran par écran.
+>
 > Source : lecture intégrale du code au 26/08/2026 (routes `app/(app)/*`, tous les composants associés, `lib/data/*`). Le **Stock** est volontairement exclu de ce document (fonctionnalité vouée à être retirée du produit) — seules les rares surfaces où il apparaît comme point de couplage (nav, carte de settings, sélecteurs dépôt) sont mentionnées pour mémoire, sans détail.
 >
 > Chaque affordance est taguée :
@@ -116,6 +124,8 @@ Modèle : un unique arbre de composants avec une machine à états `browse → p
 ---
 
 ## 3. Planning (`/planning`)
+
+> **⚠ Section pré-Refonte 2 — largement caduque.** Depuis `docs/adr/0005` (langage « Le Tableau », Équipe fondue) et `docs/adr/0006`, le Planning est une **vue de lecture** : plus de grille horaire, plus de formulaire de création/édition, plus de `window.confirm`. La prise de rendez-vous se fait **en ligne** ; ne restent que **Confirmer**, **Annuler** (statut « annulé » conservé), **Encaisser** (au niveau réservation) et « Marquer absente ». Le modèle est désormais **Réservation → Rendez-vous atomiques** (voir `CONTEXT.md` et `docs/USERFLOW.md`). Ce qui suit décrit l'ancien écran.
 
 Toute la mutation d'état (créer/modifier/annuler un RDV) est locale à la session, indexée par **jour de la semaine (0–6)**, pas par date absolue — les mêmes RDV mock réapparaissent chaque semaine sur Lundi/Mardi ; tous les autres jours/semaines sont vides par défaut.
 
@@ -254,7 +264,7 @@ Catalogue de présentation **entièrement en lecture seule**, aucun CRUD.
 - **Cycles & conseils par service** : recherche, badge délai `J+N` par service, **crayon** → modale édition délai + texte de relance **[OK]**. Délai vide = relance désactivée (« — »).
 
 ### 7.3 Entreprises & Salons (`/parametres/entreprises`)
-- Accordéon 2 entreprises (Beauty and Co déplié par défaut, Michele Ka replié) **[OK, expand/collapse uniquement]**.
+- Accordéon entreprise unique (Beauty and Co, ses salons Almadies + Sea Plaza) **[OK, expand/collapse uniquement]**.
 - Salons en lecture seule (nom, adresse, statut actif/inactif) — **aucune action d'ajout/édition/suppression** d'entreprise ou de salon nulle part.
 
 ### 7.4 Photos de référence (`/parametres/photos-reference`)

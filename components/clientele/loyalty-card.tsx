@@ -18,7 +18,7 @@ type LoyaltyCardProps = {
 
 /**
  * Dedicated "credit card" visual for a cliente's carte de fidélité — deliberately not a generic
- * `Card`: a flat taupe-to-rose duotone plate, pill-shaped chip motif, serif points figure, and a
+ * `Card`: a flat taupe-to-rose duotone plate, pill-shaped chip motif, bold points figure, and a
  * demo QR pattern deterministically derived from the client id (so it varies between clientes
  * without pretending to encode real scan data — cf. USERFLOW.md's "motif démo" note).
  */
@@ -53,7 +53,7 @@ export function LoyaltyCard({ name, tier, points, clientId, className }: Loyalty
         <div className="flex items-end justify-between gap-4">
           <div>
             <p className="truncate text-lg font-semibold">{name}</p>
-            <p className="font-[var(--font-heading)] text-4xl leading-none">{points}</p>
+            <p className="font-[family-name:var(--font-heading)] font-semibold text-4xl leading-none">{points}</p>
             <p className="mt-1 text-xs text-white/60">points fidélité</p>
           </div>
 

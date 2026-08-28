@@ -18,83 +18,64 @@ type AppointmentTimelineRowProps = {
   service: string;
   staffName: string;
   status: AppointmentStatus;
-  /** Overrides the built-in status Badge in the trailing slot — used by Journée's Chronologie
-   *  to swap in an "Accueillir" button / "En cours" badge instead (cf. USERFLOW.md § Journée). */
+  /** Swaps the trailing status badge for an independently-tappable control (Encaisser / En cours). */
   trailing?: React.ReactNode;
   onClick?: () => void;
   className?: string;
 };
 
 /**
- * One row of a day's schedule (planning) — time range, client, service, praticien·ne and status
- * at a glance. Status lives entirely in the trailing Badge (no colored border-left accent) so
- * it reads the same status language as everywhere else in the app.
- *
- * The trailing slot can be swapped out (see `trailing`) for an independently-tappable action —
- * in that case the row itself stops being one giant button (nesting a button in a button is
- * invalid HTML) and only the time/avatar/text portion is tappable, leaving `trailing` as its own
- * sibling tap target.
+ * One appointment on the day's timeline — a time-anchored row: the hour reads first, bold, then
+ * the cliente, then the service and praticienne. The row sits against a shared left rule so a
+ * column of them reads as a single running timeline, not a stack of cards.
  */
 export function AppointmentTimelineRow({ start, end, clientName, clientInitial, service, staffName, status, trailing, onClick, className }: AppointmentTimelineRowProps) {
   const { label, variant } = STATUS[status];
-  const content = (
+
+  const body = (
     <>
-      <div className="w-16 shrink-0 text-center">
-        <p className="text-sm font-bold text-[var(--color-gray-900)]">{start}</p>
-        <p className="text-xs text-[var(--color-gray-400)]">{end}</p>
+      <div className="w-16 shrink-0 text-right">
+        <p className="font-[family-name:var(--font-heading)] font-semibold text-lg leading-none text-[var(--color-gray-900)] tabular-nums">{start}</p>
+        <p className="mt-1 text-xs text-[var(--color-gray-400)] tabular-nums">{end}</p>
       </div>
-
-      <Avatar initial={clientInitial} size={36} className="shrink-0 bg-[var(--brand-rose-soft)] text-sm font-semibold text-[var(--brand-taupe-muted)]" />
-
+      <span className="relative flex w-3 shrink-0 justify-center self-stretch">
+        <span className="w-px bg-border" />
+        <span className={cn("absolute top-1.5 size-2.5 rounded-full ring-4 ring-[var(--brand-cream)]", status === "annule" ? "bg-[var(--color-gray-300)]" : "bg-secondary")} />
+      </span>
+      <Avatar initial={clientInitial} size={40} className="mt-0.5 shrink-0 bg-accent text-sm font-semibold text-secondary" />
       <div className="min-w-0 flex-1">
-        <p className="truncate font-semibold text-[var(--color-gray-900)]">{clientName}</p>
-        <p className="truncate text-sm text-[var(--color-gray-500)]">
-          {service} · {staffName}
-        </p>
+        <p className="truncate font-[family-name:var(--font-heading)] font-semibold text-[15px] text-[var(--color-gray-900)]">{clientName}</p>
+        <p className="truncate text-sm text-[var(--color-gray-500)]">{service} · {staffName}</p>
       </div>
     </>
   );
 
+  const rowClass = cn(
+    "flex items-start gap-3 rounded-2xl px-3 py-3 transition",
+    status === "annule" && "opacity-55",
+    className,
+  );
+
   if (trailing) {
     return (
-      <div
-        className={cn(
-          "flex w-full items-center gap-4 rounded-2xl border border-[var(--color-gray-200)] bg-white p-4",
-          status === "annule" && "opacity-60",
-          className,
-        )}
-      >
+      <div className={rowClass}>
         {onClick ? (
-          <button
-            type="button"
-            onClick={onClick}
-            className="flex min-w-0 flex-1 items-center gap-4 rounded-xl text-left transition active:scale-[0.99]"
-          >
-            {content}
+          <button type="button" onClick={onClick} className="flex min-w-0 flex-1 items-start gap-3 rounded-xl text-left transition active:scale-[0.99] hover:bg-accent/40">
+            {body}
           </button>
         ) : (
-          <div className="flex min-w-0 flex-1 items-center gap-4">{content}</div>
+          <div className="flex min-w-0 flex-1 items-start gap-3">{body}</div>
         )}
-        {trailing}
+        <div className="mt-0.5 shrink-0">{trailing}</div>
       </div>
     );
   }
 
   const Comp = onClick ? "button" : "div";
-
   return (
-    <Comp
-      type={onClick ? "button" : undefined}
-      onClick={onClick}
-      className={cn(
-        "flex w-full items-center gap-4 rounded-2xl border border-[var(--color-gray-200)] bg-white p-4 text-left transition",
-        status === "annule" && "opacity-60",
-        onClick && "active:scale-[0.98] hover:border-[var(--brand-taupe-muted)]",
-        className,
-      )}
-    >
-      {content}
-      <Badge variant={variant} className="shrink-0">
+    <Comp type={onClick ? "button" : undefined} onClick={onClick} className={cn(rowClass, onClick && "text-left active:scale-[0.99] hover:bg-accent/40")}>
+      {body}
+      <Badge variant={variant} className="mt-1 shrink-0">
         {label}
       </Badge>
     </Comp>

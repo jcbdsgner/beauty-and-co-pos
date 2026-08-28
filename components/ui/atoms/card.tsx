@@ -10,5 +10,5 @@ type CardProps = React.HTMLAttributes<HTMLDivElement>;
  * the two no longer read as the same box at two shadow opacities.
  */
 export function Card({ className, ...rest }: CardProps) {
-  return <div className={cn("rounded-2xl border border-[var(--color-gray-200)] bg-white", className)} {...rest} />;
+  return <div className={cn("rounded-2xl border border-border bg-card text-card-foreground", className)} {...rest} />;
 }

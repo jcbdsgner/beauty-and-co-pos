@@ -31,7 +31,10 @@ function isSameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
-/** Popover-anchored month calendar — for a rendez-vous date, a client birthday, a report range boundary. No external date library: plain Date math, fr-FR month labels. */
+/** Popover-anchored month calendar — for a rendez-vous date, a client birthday, a report range
+ *  boundary. Kept dependency-free (plain Date math, fr-FR labels, Monday-first, 48px cells) rather
+ *  than pulled onto react-day-picker: it already does everything a themed calendar lib would, at a
+ *  fraction of the CSS surface, and stays fully inside the flat brand language. */
 export function DatePicker({ value, onChange, placeholder = "Choisir une date", className }: DatePickerProps) {
   const [open, setOpen] = useState(false);
   const [visibleMonth, setVisibleMonth] = useState(() => startOfMonth(value ?? new Date()));
@@ -51,7 +54,7 @@ export function DatePicker({ value, onChange, placeholder = "Choisir une date", 
         <button
           type="button"
           className={cn(
-            "flex w-full items-center gap-2 rounded-xl border border-[var(--color-gray-200)] bg-white px-4 py-3 text-left text-[15px] focus:border-[var(--brand-taupe-muted)] focus:outline-none",
+            "flex h-14 w-full items-center gap-2 rounded-xl border border-border bg-white px-4 text-left text-[15px] transition focus:border-ring focus:ring-4 focus:ring-ring/15 focus:outline-none",
             value ? "text-[var(--color-gray-900)]" : "text-[var(--color-gray-400)]",
             className,
           )}
@@ -73,7 +76,7 @@ export function DatePicker({ value, onChange, placeholder = "Choisir une date", 
               type="button"
               aria-label="Mois précédent"
               onClick={() => setVisibleMonth(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() - 1, 1))}
-              className="flex size-11 items-center justify-center rounded-full text-[var(--color-gray-500)] transition active:scale-90 active:bg-[var(--color-gray-100)] hover:bg-[var(--color-gray-100)]"
+              className="flex size-12 items-center justify-center rounded-full text-[var(--color-gray-500)] transition active:scale-90 active:bg-muted hover:bg-muted"
             >
               <ChevronLeft aria-hidden className="size-4" />
             </button>
@@ -82,7 +85,7 @@ export function DatePicker({ value, onChange, placeholder = "Choisir une date", 
               type="button"
               aria-label="Mois suivant"
               onClick={() => setVisibleMonth(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1))}
-              className="flex size-11 items-center justify-center rounded-full text-[var(--color-gray-500)] transition active:scale-90 active:bg-[var(--color-gray-100)] hover:bg-[var(--color-gray-100)]"
+              className="flex size-12 items-center justify-center rounded-full text-[var(--color-gray-500)] transition active:scale-90 active:bg-muted hover:bg-muted"
             >
               <ChevronRight aria-hidden className="size-4" />
             </button>
@@ -111,12 +114,12 @@ export function DatePicker({ value, onChange, placeholder = "Choisir une date", 
                     setOpen(false);
                   }}
                   className={cn(
-                    "flex size-11 items-center justify-center rounded-full text-sm transition active:scale-90",
+                    "flex size-12 items-center justify-center rounded-full text-sm transition active:scale-90",
                     selected
-                      ? "bg-[var(--core-brand-color)] font-semibold text-black"
+                      ? "bg-primary font-semibold text-primary-foreground"
                       : isToday
-                        ? "font-semibold text-[var(--brand-taupe-muted)]"
-                        : "text-[var(--color-gray-700)] active:bg-[var(--brand-rose-soft)] hover:bg-[var(--brand-rose-soft)]",
+                        ? "font-semibold text-secondary"
+                        : "text-[var(--color-gray-700)] active:bg-accent hover:bg-accent",
                   )}
                 >
                   {day}

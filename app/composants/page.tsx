@@ -63,7 +63,7 @@ const SECTIONS: Section[] = [
   { id: "organisms", label: "Organismes" },
 ];
 
-const COMPONENT_COUNT = 48;
+const COMPONENT_COUNT = 50;
 
 function Swatch({ name, varName, fg = "#171717" }: { name: string; varName: string; fg?: string }) {
   return (
@@ -88,7 +88,7 @@ function Specimen({ label, sample, className }: { label: string; sample: string;
 }
 
 function SubHeading({ children }: { children: React.ReactNode }) {
-  return <h3 className="font-[var(--font-heading)] text-lg text-[var(--color-gray-900)]">{children}</h3>;
+  return <h3 className="font-[family-name:var(--font-heading)] font-bold text-lg text-[var(--color-gray-900)]">{children}</h3>;
 }
 
 type Row = { id: string; name: string; category: string; stock: number; price: string };
@@ -133,7 +133,7 @@ export default function DesignSystemPage() {
           <PageHeader
             title="Composants"
             subtitle="Système de design Beauty and Co — atomes, molécules, organismes."
-            action={<Badge variant="dark">v1 · {COMPONENT_COUNT} composants</Badge>}
+            action={<Badge variant="dark">v3 · base shadcn · {COMPONENT_COUNT} composants</Badge>}
           />
 
           <nav className="sticky top-0 z-10 -mx-8 flex gap-2 border-b border-[var(--color-gray-200)] bg-[var(--brand-cream)]/95 px-8 py-3 backdrop-blur-sm">
@@ -174,9 +174,9 @@ export default function DesignSystemPage() {
             <Card className="p-6">
               <FieldLabel className="mb-4">Typographie</FieldLabel>
               <div className="flex flex-col gap-4">
-                <Specimen label="Display · Prata" sample="Bonjour, Propriétaire" className="font-[var(--font-heading)] text-3xl text-[var(--color-gray-900)]" />
-                <Specimen label="Accent · Benedict" sample="privé" className="font-[var(--font-display)] text-2xl text-[var(--brand-taupe-muted)]" />
-                <Specimen label="Titre · Cabinet Grotesk 600" sample="Gestion Produits" className="text-xl font-semibold text-[var(--color-gray-900)]" />
+                <Specimen label="Titre écran · Cabinet Grotesk 700" sample="Bonjour, Propriétaire" className="font-[family-name:var(--font-heading)] font-bold text-3xl text-[var(--color-gray-900)]" />
+                <Specimen label="Accent · Benedict" sample="privé" className="font-[family-name:var(--font-display)] text-2xl text-[var(--brand-taupe-muted)]" />
+                <Specimen label="Titre section · Cabinet Grotesk 600" sample="Gestion Produits" className="text-xl font-semibold text-[var(--color-gray-900)]" />
                 <Specimen label="Corps · Cabinet Grotesk 450" sample="Trouvez un client existant ou ajoutez un nouveau profil." className="text-[15px] text-[var(--color-gray-700)]" />
                 <Specimen label="Label · uppercase tracked" sample="REVENUS DU JOUR" className="text-xs font-semibold tracking-wide text-[var(--color-gray-500)] uppercase" />
               </div>
@@ -357,7 +357,7 @@ export default function DesignSystemPage() {
               <Accordion
                 items={[
                   { value: "a", title: "Beauty and Co", content: "Almadies · Sea Plaza" },
-                  { value: "b", title: "Michele Ka", content: "Sea Plaza" },
+                  { value: "b", title: "Horaires", content: "Lun – Sam · 9h – 19h" },
                 ]}
               />
             </Card>
@@ -537,7 +537,7 @@ export default function DesignSystemPage() {
                     <>
                       <div className="mb-3 flex items-end justify-between">
                         <span className="text-xs font-semibold tracking-wide text-[var(--color-gray-500)] uppercase">Total</span>
-                        <span className="font-[var(--font-heading)] text-2xl text-[var(--color-gray-900)]">45 000 F</span>
+                        <span className="font-[family-name:var(--font-heading)] font-semibold text-2xl text-[var(--color-gray-900)]">45 000 F</span>
                       </div>
                       <Button variant="brand" className="w-full">
                         Encaisser
@@ -604,7 +604,7 @@ export default function DesignSystemPage() {
       </div>
 
       <Dialog open={dialogOpen} labelledBy="showcase-dialog-title" className="max-w-md rounded-3xl p-6">
-        <h2 id="showcase-dialog-title" className="font-[var(--font-heading)] text-xl text-[var(--color-gray-900)]">
+        <h2 id="showcase-dialog-title" className="font-[family-name:var(--font-heading)] font-semibold text-xl text-[var(--color-gray-900)]">
           Dialog
         </h2>
         <p className="mt-2 text-sm text-[var(--color-gray-600)]">

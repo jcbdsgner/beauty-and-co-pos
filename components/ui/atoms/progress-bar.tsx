@@ -6,10 +6,10 @@ import { cn } from "@/lib/utils";
 type Tone = "brand" | "success" | "warning" | "error";
 
 const TONE_CLASS: Record<Tone, string> = {
-  brand: "bg-[var(--core-brand-color)]",
+  brand: "bg-primary",
   success: "bg-[var(--color-success)]",
   warning: "bg-[var(--color-warning)]",
-  error: "bg-[var(--color-error)]",
+  error: "bg-destructive",
 };
 
 type ProgressBarProps = {
@@ -28,7 +28,7 @@ export function ProgressBar({ value, max = 100, tone = "brand", className, label
       value={value}
       max={max}
       aria-label={label}
-      className={cn("h-2 w-full overflow-hidden rounded-full bg-[var(--color-gray-100)]", className)}
+      className={cn("h-2 w-full overflow-hidden rounded-full bg-muted", className)}
     >
       <ProgressPrimitive.Indicator
         className={cn("h-full rounded-full transition-[width] duration-300 ease-out", TONE_CLASS[tone])}

@@ -1,23 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowDownToLine, Plus } from "lucide-react";
-import { IconButton } from "@/components/ui/atoms/icon-button";
+import { ChevronDown, Plus } from "lucide-react";
 import { Button } from "@/components/ui/atoms/button";
-import { EmptyState } from "@/components/ui/molecules/empty-state";
 import { SaleTabsBar } from "@/components/comptoir/sale-tabs-bar";
-import { CataloguePanel } from "@/components/comptoir/catalogue-panel";
+import { MenuPanel } from "@/components/comptoir/menu-panel";
 import { SaleCartPanel } from "@/components/comptoir/sale-cart-panel";
 import { PaymentStep } from "@/components/comptoir/payment-step";
 import { ReceiptStep } from "@/components/comptoir/receipt-step";
 import { ScannerDialog } from "@/components/comptoir/scanner-dialog";
+import { BrandMark } from "@/components/ui/atoms/brand-mark";
 import { useAppData } from "@/components/providers/app-data-provider";
 
 /**
- * The Comptoir, deployed — a `fixed inset-0` mode change, not a `Dialog` interruption, per
- * USERFLOW.md: "doit occuper tout le viewport comme un changement de mode". Rendered once from
- * the root layout, shown/hidden by `comptoirDeployed` so collapsing never unmounts (and never
- * resets) the sale tabs underneath.
+ * The Comptoir, deployed — a `fixed inset-0` mode change (not a Dialog): a warm taupe desk with a
+ * cream working sheet on it. Rendered once from the root layout, shown/hidden by
+ * `comptoirDeployed` so collapsing never unmounts (or resets) the sale tabs underneath. Three
+ * stations live on the sheet: the counter (menu + ticket), payment, and the receipt.
  */
 export function ComptoirPanel() {
   const { comptoirDeployed, collapseComptoir, sales, activeSaleId, openNewTab, updateSale, clients } = useAppData();
@@ -26,40 +25,50 @@ export function ComptoirPanel() {
   if (!comptoirDeployed) return null;
 
   const activeSale = sales.find((s) => s.id === activeSaleId);
+  const step = activeSale?.step ?? "vente";
 
   return (
     <div className="fixed inset-0 z-40 flex flex-col bg-[var(--pos-accent-dark)]">
-      <div className="flex shrink-0 items-center justify-between gap-3 px-6 pt-4">
+      {/* Taupe desk strip */}
+      <div className="flex shrink-0 items-end justify-between gap-4 px-5 pt-3">
         <SaleTabsBar />
-        <IconButton
-          aria-label="Replier le Comptoir"
+        <button
+          type="button"
           onClick={collapseComptoir}
-          className="mb-1 flex size-11 shrink-0 items-center justify-center rounded-full bg-white/10 text-white transition active:scale-90 hover:bg-white/20"
+          className="mb-2 flex h-11 shrink-0 items-center gap-2 rounded-full bg-white/10 px-4 text-sm font-medium text-white transition active:scale-[0.97] hover:bg-white/20"
         >
-          <ArrowDownToLine aria-hidden className="size-5" />
-        </IconButton>
+          <ChevronDown aria-hidden className="size-4" />
+          Replier
+        </button>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto rounded-t-3xl bg-[var(--brand-cream)] p-6">
+      {/* Cream working sheet */}
+      <div className="min-h-0 flex-1 overflow-hidden rounded-t-[32px] bg-[var(--brand-cream)]">
         {!activeSale ? (
-          <EmptyState
-            icon={<Plus className="size-12" />}
-            title="Aucune vente ouverte"
-            subtitle="Ouvrez une nouvelle vente pour commencer à encaisser."
-            action={
-              <Button variant="brand" onClick={() => openNewTab()}>
-                Nouvelle vente
-              </Button>
-            }
-          />
-        ) : activeSale.step === "paiement" ? (
-          <PaymentStep sale={activeSale} />
-        ) : activeSale.step === "recu" ? (
-          <ReceiptStep sale={activeSale} />
+          <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
+            <BrandMark className="size-12 text-border" />
+            <p className="font-[family-name:var(--font-heading)] font-semibold text-xl text-[var(--color-gray-900)]">Aucune vente ouverte</p>
+            <p className="text-sm text-[var(--color-gray-500)]">Ouvrez une vente pour commencer à encaisser.</p>
+            <Button variant="brand" size="default" icon={<Plus className="size-4" />} onClick={() => openNewTab()} className="mt-1">
+              Nouvelle vente
+            </Button>
+          </div>
         ) : (
-          <div className="mx-auto grid max-w-6xl grid-cols-[1fr_380px] gap-6">
-            <CataloguePanel saleId={activeSale.id} />
-            <SaleCartPanel sale={activeSale} onScanClient={() => setScanTarget("client")} onScanGiftCard={() => setScanTarget("gift-card")} />
+          <div key={step} className="h-full animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
+            {step === "paiement" ? (
+              <PaymentStep sale={activeSale} />
+            ) : step === "recu" ? (
+              <ReceiptStep sale={activeSale} />
+            ) : (
+              <div className="grid h-full grid-cols-[1fr_440px] gap-5 p-5">
+                <MenuPanel saleId={activeSale.id} />
+                <SaleCartPanel
+                  sale={activeSale}
+                  onScanClient={() => setScanTarget("client")}
+                  onScanGiftCard={() => setScanTarget("gift-card")}
+                />
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
 :root {
   --background: #f8f6f9;
@@ -53,6 +54,19 @@
   --color-gray-100: #f2f4f7;
   --color-gray-50: #f9fafb;
 
+  /* ─────────────────────────────────────────────────────────────────────────
+     « Le Tableau » — board world (DESIGN.md / docs/adr/0005). Planning /
+     Clientèle / Relances / Catalogue only for now; the rest migrates next.
+     ───────────────────────────────────────────────────────────────────────── */
+  --board-slate: #2a2320;            /* the one standing board header per screen */
+  --board-slate-line: #4a3f3a;       /* routed groove on the slate header */
+  --board-groove: #e4e0e2;           /* the routed double-hairline that frames every plaque */
+  --board-amber: #b5590a;            /* THE signal — changed / now / needs a decision */
+  --board-amber-soft: #fdf0e3;
+  --board-rose-plaque: #fef0ee;      /* an "act" plaque fill (rose-soft) */
+  --board-taupe-plaque: rgba(136, 102, 102, 0.09); /* a "now" plaque fill (taupe tint) */
+  --board-lane-h: 3.5rem;            /* 56px — a lane is a real touch row */
+
   /* Misc reused colors */
   --color-error: #b42318;
   --color-text-tertiary: #374151;
@@ -65,15 +79,77 @@
   --color-ink: #020817;
   --color-near-black: #303030;
   --color-black: #000;
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     shadcn/ui semantic roles — mapped onto the Beauty and Co brand tokens
+     above, never new colors. Two-hue rule (DESIGN.md): primary = rose (light
+     actions, prices), secondary = taupe (dark/emphasis). Flat only: focus is a
+     taupe border, never a glow ring. No dark-mode block by decision
+     (desktop-only counter, constant indoor light).
+     ───────────────────────────────────────────────────────────────────────── */
+  --radius: 0.75rem; /* cards, inputs, menus — pill controls opt in via rounded-full */
+
+  --background-role: var(--brand-cream);
+  --foreground-role: var(--color-gray-900);
+  --card-role: #ffffff;
+  --card-foreground-role: var(--color-gray-900);
+  --popover-role: #ffffff;
+  --popover-foreground-role: var(--color-gray-900);
+  --primary-role: var(--core-brand-color);
+  --primary-foreground-role: var(--on-core-brand-color);
+  --secondary-role: var(--brand-taupe-muted);
+  --secondary-foreground-role: #ffffff;
+  --muted-role: var(--color-gray-100);
+  --muted-foreground-role: var(--color-gray-500);
+  --accent-role: var(--brand-rose-soft);
+  --accent-foreground-role: var(--brand-taupe-muted);
+  --destructive-role: var(--color-error);
+  --destructive-foreground-role: #ffffff;
+  --border-role: var(--color-gray-200);
+  --input-role: var(--color-gray-200);
+  --ring-role: var(--brand-taupe-muted);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-cabinet-grotesk);
-  --font-heading: var(--font-prata);
+  /* Headings use Cabinet Grotesk too (Prata retired) — hierarchy carried by weight,
+     not by a serif contrast: see the font-bold / font-semibold classes at call sites. */
+  --font-heading: var(--font-cabinet-grotesk);
   --font-nav: var(--font-cabinet-grotesk);
   --font-display: var(--font-benedict);
+
+  /* shadcn/ui utility surface — `bg-primary`, `text-muted-foreground`,
+     `border-border`, `ring-ring`, … resolve to the brand-mapped roles above. */
+  --color-card: var(--card-role);
+  --color-card-foreground: var(--card-foreground-role);
+  --color-popover: var(--popover-role);
+  --color-popover-foreground: var(--popover-foreground-role);
+  --color-primary: var(--primary-role);
+  --color-primary-foreground: var(--primary-foreground-role);
+  --color-secondary: var(--secondary-role);
+  --color-secondary-foreground: var(--secondary-foreground-role);
+  --color-muted: var(--muted-role);
+  --color-muted-foreground: var(--muted-foreground-role);
+  --color-accent: var(--accent-role);
+  --color-accent-foreground: var(--accent-foreground-role);
+  --color-destructive: var(--destructive-role);
+  --color-destructive-foreground: var(--destructive-foreground-role);
+  --color-border: var(--border-role);
+  --color-input: var(--input-role);
+  --color-ring: var(--ring-role);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-card: 16px;
+
+  /* Touch-first counter station: primary controls are XL tap targets
+     (DESIGN.md → 56px min, 60px ideal), not mouse-sized. */
+  --spacing-tap: 3.5rem;   /* 56px */
+  --spacing-tap-lg: 3.75rem; /* 60px */
 }
 
 body {
@@ -100,6 +176,51 @@ body {
   to {
     height: 0;
   }
+}
+
+/* Comptoir — the running total gives a quick scale-pulse each time it recomputes, so a
+   prestation landing in the ticket is felt, not just seen. */
+@keyframes total-pulse {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.045); }
+  100% { transform: scale(1); }
+}
+.animate-total-pulse { animation: total-pulse 220ms ease-out; }
+
+/* A cart line arrives from the catalogue side. */
+@keyframes line-in {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.animate-line-in { animation: line-in 200ms ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-total-pulse, .animate-line-in { animation: none; }
+}
+
+/* « Le Tableau » — the form's native motion: a status tile flips, a lane holds its
+   change until noticed, a board fills rather than fades. */
+@keyframes chip-flip {
+  0% { transform: perspective(200px) rotateX(0deg); }
+  50% { transform: perspective(200px) rotateX(-90deg); }
+  100% { transform: perspective(200px) rotateX(0deg); }
+}
+.animate-chip-flip { animation: chip-flip 220ms ease-in-out; }
+
+@keyframes lane-pulse {
+  0% { background-color: var(--board-amber-soft); }
+  100% { background-color: transparent; }
+}
+.animate-lane-pulse { animation: lane-pulse 900ms ease-out; }
+
+@keyframes lane-fill {
+  from { opacity: 0; transform: translateX(6px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.animate-lane-fill { animation: lane-fill 180ms ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-chip-flip, .animate-lane-pulse, .animate-lane-fill { animation: none; }
 }
 
 /* Browsers paint autofilled inputs with their own blue/yellow tint that ignores

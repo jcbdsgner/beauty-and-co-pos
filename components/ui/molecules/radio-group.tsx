@@ -27,17 +27,17 @@ export function RadioGroup({ options, value, onChange, className }: RadioGroupPr
           <label
             key={option.value}
             className={cn(
-              "flex min-h-11 cursor-pointer items-center gap-3 rounded-2xl border p-4 transition active:scale-[0.99]",
+              "flex min-h-14 cursor-pointer items-center gap-3 rounded-2xl border p-4 transition active:scale-[0.99]",
               active
-                ? "border-[var(--brand-taupe-muted)] bg-[var(--brand-rose-soft)]"
-                : "border-[var(--color-gray-200)] bg-white",
+                ? "border-secondary bg-accent"
+                : "border-border bg-white",
             )}
           >
             <RadioGroupPrimitive.Item
               value={option.value}
-              className="flex size-6 shrink-0 items-center justify-center rounded-full border-2 border-[var(--color-gray-300)] transition data-[state=checked]:border-[var(--brand-taupe-muted)]"
+              className="flex size-7 shrink-0 items-center justify-center rounded-full border-2 border-[var(--color-gray-300)] transition data-[state=checked]:border-secondary outline-none focus-visible:ring-4 focus-visible:ring-ring/25"
             >
-              <RadioGroupPrimitive.Indicator className="size-3 rounded-full bg-[var(--brand-taupe-muted)]" />
+              <RadioGroupPrimitive.Indicator className="size-3 rounded-full bg-secondary" />
             </RadioGroupPrimitive.Item>
             <span className="min-w-0 flex-1">
               <span className="block text-sm font-semibold text-[var(--color-gray-900)]">{option.label}</span>

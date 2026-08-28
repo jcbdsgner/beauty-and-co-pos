@@ -46,7 +46,7 @@ export function ConfirmDialog({
         <span className={cn("flex size-12 items-center justify-center rounded-full", iconClass)}>
           <Icon aria-hidden className="size-6" />
         </span>
-        <h2 id="confirm-dialog-title" className="font-[var(--font-heading)] text-lg text-[var(--color-gray-900)]">
+        <h2 id="confirm-dialog-title" className="font-[family-name:var(--font-heading)] font-semibold text-lg text-[var(--color-gray-900)]">
           {title}
         </h2>
         {description && <p className="text-sm text-[var(--color-gray-500)]">{description}</p>}

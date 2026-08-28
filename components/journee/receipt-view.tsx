@@ -2,6 +2,7 @@ import { CheckCircle2 } from "lucide-react";
 import { HeroNumber } from "@/components/ui/atoms/hero-number";
 import { StatTile, StatTileRow } from "@/components/ui/molecules/stat-tile";
 import { computeTotals, useAppData } from "@/components/providers/app-data-provider";
+import { DiscountBreakdown } from "@/components/comptoir/discount-breakdown";
 import { clientFullName } from "@/lib/data/clientele";
 import { formatFcfa } from "@/lib/utils";
 import type { Sale } from "@/lib/data/types";
@@ -33,10 +34,24 @@ export function ReceiptView({ sale }: { sale: Sale }) {
           <div key={line.id} className="flex items-center justify-between text-[var(--color-gray-700)]">
             <span>
               {line.name} × {line.qty}
+              {line.beneficiary && <span className="text-[var(--color-gray-400)]"> · {line.beneficiary}</span>}
             </span>
             <span>{formatFcfa(line.unitPrice * line.qty)}</span>
           </div>
         ))}
+        {totals.totalDiscount > 0 && (
+          <>
+            <div className="mt-2 flex items-center justify-between border-t border-[var(--color-gray-200)] pt-2 text-[var(--color-gray-500)]">
+              <span>Sous-total</span>
+              <span className="tabular-nums">{formatFcfa(totals.subtotal)}</span>
+            </div>
+            <DiscountBreakdown sale={sale} />
+            <div className="flex items-center justify-between font-semibold text-[var(--color-gray-900)]">
+              <span>Total</span>
+              <span className="tabular-nums">{formatFcfa(totals.total)}</span>
+            </div>
+          </>
+        )}
         {sale.payment && (
           <p className="mt-2 border-t border-[var(--color-gray-200)] pt-2 text-xs text-[var(--color-gray-500)]">
             {sale.payment.modes.map((m) => `${MODE_LABEL[m.mode]} · ${formatFcfa(m.amount)}`).join(" + ")}

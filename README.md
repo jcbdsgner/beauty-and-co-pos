@@ -12,7 +12,8 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 ## Structure
 
 - `app/` — routes (App Router)
-- `components/ui/` — shared design-system primitives, imported from b&co (button, dialog, switch, avatar, stepper, logo…)
+- `components/ui/` — shared design-system primitives on a shadcn/ui base (Radix + Tailwind v4), repainted to the b&co brand; atoms / molecules / organisms. See `DESIGN.md` § Component base.
+- `lib/store/` — Zustand session store (`app-store.ts`); `useAppData()` in `components/providers/` is a compat facade over it
 - `components/layout/` — page chrome (header, footer, nav) — to be built for this app
 - `lib/` — utilities and domain logic
 - `public/images/brand/` — Beauty and Co logo assets

@@ -19,14 +19,14 @@ type DockedPanelProps = {
 export function DockedPanel({ icon, title, children, footer, className }: DockedPanelProps) {
   return (
     <Card className={cn("sticky top-6 flex max-h-[calc(100vh-3rem)] flex-col overflow-hidden", className)}>
-      <div className="flex shrink-0 items-center gap-2 border-b border-[var(--color-gray-200)] p-5">
-        {icon && <span className="text-[var(--brand-taupe-muted)]">{icon}</span>}
-        <h2 className="font-[var(--font-heading)] text-lg text-[var(--color-gray-900)]">{title}</h2>
+      <div className="flex shrink-0 items-center gap-2 border-b border-border p-5">
+        {icon && <span className="text-secondary">{icon}</span>}
+        <h2 className="font-[family-name:var(--font-heading)] font-bold text-lg text-[var(--color-gray-900)]">{title}</h2>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto p-5">{children}</div>
 
-      {footer && <div className="shrink-0 border-t border-[var(--color-gray-200)] p-5">{footer}</div>}
+      {footer && <div className="shrink-0 border-t border-border p-5">{footer}</div>}
     </Card>
   );
 }

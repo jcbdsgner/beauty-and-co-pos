@@ -20,7 +20,7 @@ export function EmptyState({ icon, title, subtitle, action, className }: EmptySt
         {icon}
       </div>
       <div className="flex flex-col gap-1">
-        <p className="font-[var(--font-heading)] text-lg text-[var(--color-gray-700)]">{title}</p>
+        <p className="font-[family-name:var(--font-heading)] font-semibold text-lg text-[var(--color-gray-700)]">{title}</p>
         {subtitle && <p className="text-sm text-[var(--color-gray-500)]">{subtitle}</p>}
       </div>
       {action && <div className="mt-2">{action}</div>}

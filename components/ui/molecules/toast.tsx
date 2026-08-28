@@ -37,7 +37,7 @@ export function Toast({ message, onDismiss, action }: ToastProps) {
       )}
     >
       {message && (
-        <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-[var(--color-gray-900)] py-2 pr-2 pl-5 text-sm font-medium text-white shadow-[0px_12px_32px_-8px_rgba(0,0,0,0.4)]">
+        <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-[var(--color-gray-900)] py-2 pr-2 pl-5 text-[15px] font-medium text-white shadow-[0px_12px_32px_-8px_rgba(0,0,0,0.4)]">
           <span>{message}</span>
           {action && (
             <button
@@ -46,7 +46,7 @@ export function Toast({ message, onDismiss, action }: ToastProps) {
                 action.onClick();
                 onDismiss();
               }}
-              className="min-h-11 rounded-full bg-white/10 px-4 font-semibold text-[var(--core-brand-color)] transition active:scale-95 active:bg-white/20 hover:bg-white/20"
+              className="min-h-12 rounded-full bg-white/10 px-4 font-semibold text-primary transition active:scale-95 active:bg-white/20 hover:bg-white/20"
             >
               {action.label}
             </button>

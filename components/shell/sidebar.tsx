@@ -1,20 +1,36 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Logo } from "@/components/ui/atoms/logo";
-import { HomeIcon, PeopleIcon, GearIcon } from "@/components/ui/atoms/icons";
+import { Avatar } from "@/components/ui/atoms/avatar";
+import { DropdownMenu } from "@/components/ui/molecules/dropdown-menu";
+import { ConfirmDialog } from "@/components/ui/molecules/confirm-dialog";
+import { SwitchUserDialog } from "@/components/compte/switch-user-dialog";
+import { useSession } from "@/lib/session";
+import { ROLE_LABEL } from "@/lib/data/utilisateurs";
+import { HomeIcon, CalendarIcon, PeopleIcon, HeartPulseIcon, GearIcon, LogoutIcon } from "@/components/ui/atoms/icons";
+import { Sparkles, ArrowLeftRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { href: "/", label: "Journée", icon: HomeIcon, match: (p: string) => p === "/" || p.startsWith("/planning") || p.startsWith("/equipe") || p.startsWith("/recap-ventes") },
+  { href: "/", label: "Accueil", icon: HomeIcon, match: (p: string) => p === "/" || p.startsWith("/recap-ventes") },
+  { href: "/planning", label: "Planning", icon: CalendarIcon, match: (p: string) => p.startsWith("/planning") || p.startsWith("/equipe") },
   { href: "/clientele", label: "Clientèle", icon: PeopleIcon, match: (p: string) => p.startsWith("/clientele") },
-  { href: "/reglages", label: "Réglages", icon: GearIcon, match: (p: string) => p.startsWith("/reglages") },
+  { href: "/relances", label: "Relances", icon: HeartPulseIcon, match: (p: string) => p.startsWith("/relances") },
+  { href: "/catalogue", label: "Catalogue", icon: Sparkles, match: (p: string) => p.startsWith("/catalogue") },
 ];
 
-/** 3-item sidebar (Journée / Clientèle / Réglages) — down from the old app's 6 flat modules, per USERFLOW.md's "organiser par rythme d'usage" rework. Identity/déconnexion moved to the header (see Header). */
+/** Sidebar: brand + nav (Accueil / Planning / Clientèle / Relances / Catalogue) + the identity menu at the foot.
+ *  There is no Réglages section — point-de-vente has a single persona (see ADR 0001); the only
+ *  "moi" screens (Profil, Sécurité) hang off this identity menu. */
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { currentUser } = useSession();
+  const [confirmLogout, setConfirmLogout] = useState(false);
+  const [switchOpen, setSwitchOpen] = useState(false);
 
   return (
     <aside className="flex h-screen w-[260px] shrink-0 flex-col border-r border-[var(--color-gray-200)] bg-white">
@@ -43,9 +59,40 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="mt-auto px-6 py-5">
-        <p className="text-center text-[11px] text-[var(--color-gray-300)]">Point de vente v2.0</p>
+      <div className="mt-auto flex flex-col gap-3 px-4 py-5">
+        <DropdownMenu
+          align="start"
+          trigger={
+            <button
+              type="button"
+              className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition hover:bg-[var(--color-gray-50)] active:scale-[0.98]"
+            >
+              <Avatar initial={currentUser.initial} size={36} className="bg-accent font-semibold text-secondary" />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-semibold text-[var(--color-gray-900)]">{currentUser.name}</span>
+                <span className="block text-xs text-[var(--color-gray-500)]">{ROLE_LABEL[currentUser.role]}</span>
+              </span>
+            </button>
+          }
+          items={[
+            { label: "Mon compte", icon: <GearIcon className="size-4" />, onSelect: () => router.push("/compte") },
+            { label: "Changer d'utilisateur", icon: <ArrowLeftRight className="size-4" />, onSelect: () => setSwitchOpen(true) },
+            { type: "separator" },
+            { label: "Déconnexion", icon: <LogoutIcon className="size-4" />, tone: "danger", onSelect: () => setConfirmLogout(true) },
+          ]}
+        />
       </div>
+
+      <SwitchUserDialog open={switchOpen} onClose={() => setSwitchOpen(false)} />
+
+      <ConfirmDialog
+        open={confirmLogout}
+        title="Se déconnecter ?"
+        description="Vous devrez vous reconnecter pour accéder au poste."
+        confirmLabel="Se déconnecter"
+        onCancel={() => setConfirmLogout(false)}
+        onConfirm={() => setConfirmLogout(false)}
+      />
     </aside>
   );
 }

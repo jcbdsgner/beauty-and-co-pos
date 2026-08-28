@@ -1,161 +1,284 @@
 "use client";
 
-import { useState } from "react";
-import { CalendarClock } from "lucide-react";
-import { PageHeader } from "@/components/ui/organisms/page-header";
+import { useMemo, useState } from "react";
+import Link from "next/link";
+import { ArrowRight, Send, ChevronRight } from "lucide-react";
+import { Avatar } from "@/components/ui/atoms/avatar";
 import { Button } from "@/components/ui/atoms/button";
-import { FieldLabel } from "@/components/ui/atoms/field-label";
-import { Badge } from "@/components/ui/atoms/badge";
-import { EmptyState } from "@/components/ui/molecules/empty-state";
-import { StatTile, StatTileRow } from "@/components/ui/molecules/stat-tile";
-import { AppointmentTimelineRow } from "@/components/ui/molecules/appointment-timeline-row";
-import { MorningRoundCard } from "@/components/journee/morning-round-card";
-import { AppointmentDetailDialog } from "@/components/journee/appointment-detail-dialog";
-import { AppointmentFormDialog } from "@/components/journee/appointment-form-dialog";
-import { useAccueil } from "@/components/journee/use-accueil";
+import { ConfirmDialog } from "@/components/ui/molecules/confirm-dialog";
+import { Toast } from "@/components/ui/molecules/toast";
+import {
+  BoardHeader,
+  Board,
+  Lane,
+  FlipChip,
+  Legend,
+  BoardEmpty,
+  type ChipTone,
+} from "@/components/ui/board";
+import { AppointmentDetailSheet } from "@/components/planning/appointment-detail-sheet";
+import { useEncaissement } from "@/components/journee/use-encaissement";
 import { computeTotals, useAppData } from "@/components/providers/app-data-provider";
+import { useSession } from "@/lib/session";
 import { clientFullName, clientInitial } from "@/lib/data/clientele";
-import { serviceById } from "@/lib/data/catalogue";
-import { appointmentEndTime } from "@/lib/data/planning";
-import { formatFcfa } from "@/lib/utils";
-import type { RendezVous } from "@/lib/data/types";
+import { serviceById } from "@/lib/data/menu";
+import { appointmentEndTime, flattenRendezVous } from "@/lib/data/planning";
+import type { AppointmentStatus, RelanceType, RendezVous } from "@/lib/data/types";
 
-export default function JourneePage() {
-  const { appointments, praticiennes, clients, sales } = useAppData();
-  const { requestAccueil, accueilDialog } = useAccueil();
+const DAY_FMT = new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long" });
 
-  const [detailAppointment, setDetailAppointment] = useState<RendezVous | null>(null);
-  const [formOpen, setFormOpen] = useState(false);
-  const [formAppointment, setFormAppointment] = useState<RendezVous | null>(null);
+function greeting() {
+  const h = new Date().getHours();
+  return h < 5 ? "Bonsoir" : h < 18 ? "Bonjour" : "Bonsoir";
+}
+
+const STATUS_CHIP: Record<AppointmentStatus, { value: string; tone: ChipTone }> = {
+  en_attente: { value: "En attente", tone: "act" },
+  confirme: { value: "Confirmé", tone: "now" },
+  annule: { value: "Annulé", tone: "void" },
+};
+
+const RELANCE_TYPE_SINGULAR: Record<RelanceType, string> = {
+  anniversaire: "anniversaire",
+  soins: "soin",
+  fidelite: "fidélité",
+  reconquete: "reconquête",
+  recommandation: "reco",
+};
+
+/**
+ * Accueil — l'écran d'atterrissage, refait dans le langage « Le Tableau » (docs/adr/0005) pour
+ * ne plus être le seul écran de l'app à parler l'ancien langage. Un point du jour calme (pas de
+ * hero-metrics), la tournée du matin branchée sur le vrai state du store, et le jour en tableau
+ * de lignes — mêmes lignes, mêmes jetons que le Planning.
+ */
+export default function AccueilPage() {
+  const { reservations, praticiennes, clients, sales, relances, sendTourneeBatch, revertTourneeBatch } = useAppData();
+  const dayRows = useMemo(
+    () => flattenRendezVous(reservations).filter((r) => r.rv.status !== "annule"),
+    [reservations],
+  );
+  const { requestEncaissement, encaissementDialog } = useEncaissement();
+  const { currentUser } = useSession();
+
+  const [detail, setDetail] = useState<RendezVous | null>(null);
+  const [confirmSend, setConfirmSend] = useState(false);
+  const [toast, setToast] = useState<{ message: string; action?: { label: string; onClick: () => void } } | null>(null);
+
+  const encaisseAujourdhui = sales
+    .filter((s) => s.status === "encaissee")
+    .reduce((sum, s) => sum + computeTotals(s).total, 0);
+
+  const roundReady = useMemo(
+    () => relances.filter((r) => r.status === "en_attente" || r.status === "autorisee"),
+    [relances],
+  );
+  const roundBreakdown = useMemo(() => {
+    const counts: Partial<Record<RelanceType, number>> = {};
+    for (const r of roundReady) counts[r.type] = (counts[r.type] ?? 0) + 1;
+    return Object.entries(counts)
+      .map(([t, n]) => `${n} ${RELANCE_TYPE_SINGULAR[t as RelanceType]}${n > 1 && t !== "fidelite" && t !== "reconquete" ? "s" : ""}`)
+      .join(" · ");
+  }, [roundReady]);
 
   const groups = praticiennes
     .map((staff) => ({
       staff,
-      items: appointments.filter((a) => a.staffId === staff.id).sort((a, b) => a.start.localeCompare(b.start)),
+      items: dayRows
+        .filter((r) => r.rv.staffId === staff.id || r.rv.secondStaffId === staff.id)
+        .sort((a, b) => a.rv.start.localeCompare(b.rv.start)),
     }))
     .filter((g) => g.items.length > 0);
 
-  const encaisseAujourdhui = sales.filter((s) => s.status === "encaissee").reduce((sum, s) => sum + computeTotals(s).total, 0);
+  const liveCount = new Set(dayRows.map((r) => r.rv.id)).size;
+
+  function handleSendRound() {
+    const ids = roundReady.map((r) => r.id);
+    const { batchId } = sendTourneeBatch(ids);
+    setConfirmSend(false);
+    setToast({
+      message: `Tournée envoyée à ${ids.length} cliente${ids.length > 1 ? "s" : ""}.`,
+      action: { label: "Annuler", onClick: () => revertTourneeBatch(batchId, ids) },
+    });
+  }
 
   return (
-    <div className="flex flex-col gap-8">
-      <PageHeader title="Journée" subtitle="Chronologie, tournée du matin et résumé du jour en un coup d'œil." />
+    <div className="flex flex-col gap-6">
+      <BoardHeader
+        section="Accueil"
+        context={
+          <span>
+            {greeting()} {currentUser.name.split(" ")[0]}.{" "}
+            <span className="capitalize">{DAY_FMT.format(new Date())}</span>.
+          </span>
+        }
+      />
 
-      <section className="flex flex-col gap-4">
-        <FieldLabel>Chronologie du jour</FieldLabel>
-        {appointments.length === 0 ? (
-          <EmptyState
-            icon={<CalendarClock />}
-            title="Aucun rendez-vous aujourd'hui"
-            subtitle="La journée est libre pour l'instant."
+      {/* Le point du jour — deux repères, pas trois hero-metrics */}
+      <Board legend="Le point du jour" tone="now">
+        <div className="flex divide-x divide-[var(--board-groove)]">
+          <PointCell
+            href="/recap-ventes"
+            label="Encaissé aujourd'hui"
+            value={encaisseAujourdhui > 0 ? `${encaisseAujourdhui.toLocaleString("fr-FR")} F` : "Rien encore"}
+            hint="Voir le récap complet"
+            muted={encaisseAujourdhui === 0}
+          />
+          <PointCell href="/planning" label="Rendez-vous du jour" value={String(liveCount)} hint="Ouvrir le planning" />
+        </div>
+      </Board>
+
+      {/* Tournée du matin — branchée sur le store partagé avec la section Relances */}
+      <Board legend="Tournée du matin" tone={roundReady.length > 0 ? "act" : "plain"}>
+        <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-4">
+          <div className="min-w-0">
+            <p className="font-[family-name:var(--font-heading)] text-[15px] font-semibold text-[var(--color-gray-900)]">
+              {roundReady.length === 0
+                ? "Tournée à jour."
+                : `${roundReady.length} message${roundReady.length > 1 ? "s" : ""} de relance prêt${roundReady.length > 1 ? "s" : ""} à envoyer.`}
+            </p>
+            {roundBreakdown && <p className="mt-0.5 text-sm text-[var(--color-gray-500)]">{roundBreakdown}</p>}
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <Button variant="outline" size="sm" href="/relances" icon={<ArrowRight className="size-4" />}>
+              Ouvrir les relances
+            </Button>
+            <Button
+              variant="dark"
+              size="sm"
+              icon={<Send className="size-4" />}
+              disabled={roundReady.length === 0}
+              onClick={() => setConfirmSend(true)}
+            >
+              Valider &amp; envoyer
+            </Button>
+          </div>
+        </div>
+      </Board>
+
+      {/* Le jour — mêmes lignes, mêmes jetons que le Planning */}
+      <Board legend={`Le jour · ${liveCount} rendez-vous`}>
+        {groups.length === 0 ? (
+          <BoardEmpty
+            title="Journée libre"
+            hint="Aucun rendez-vous aujourd'hui."
             action={
-              <Button
-                variant="dark"
-                onClick={() => {
-                  setFormAppointment(null);
-                  setFormOpen(true);
-                }}
-              >
-                Nouveau rendez-vous
+              <Button href="/planning" variant="outline">
+                Ouvrir le planning
               </Button>
             }
           />
         ) : (
-          <div className="flex flex-col gap-6">
-            {groups.map(({ staff, items }) => (
-              <div key={staff.id} className="flex flex-col gap-2">
-                <FieldLabel className="px-1">
-                  {staff.name}
-                  {staff.unavailableToday && (
-                    <Badge variant="warning" className="ml-2 normal-case">
-                      Absente aujourd&apos;hui
-                    </Badge>
-                  )}
-                </FieldLabel>
-                <div className="flex flex-col gap-2">
-                  {items.map((appt) => {
-                    const client = clients.find((c) => c.id === appt.clientId);
-                    const service = serviceById(appt.serviceId);
-                    return (
-                      <AppointmentTimelineRow
-                        key={appt.id}
-                        start={appt.start}
-                        end={appointmentEndTime(appt)}
-                        clientName={client ? clientFullName(client) : "Cliente"}
-                        clientInitial={client ? clientInitial(client) : "?"}
-                        service={service?.name ?? "Prestation"}
-                        staffName={staff.name}
-                        status={appt.status}
-                        onClick={() => setDetailAppointment(appt)}
-                        trailing={
-                          appt.status === "annule" ? undefined : appt.saleId ? (
-                            <button
-                              type="button"
-                              onClick={() => requestAccueil(appt.id)}
-                              className="shrink-0 rounded-full transition active:scale-95"
-                            >
-                              <Badge variant="dark">En cours</Badge>
-                            </button>
-                          ) : (
-                            <Button variant="dark" onClick={() => requestAccueil(appt.id)} className="shrink-0 px-4 py-2.5 text-sm">
-                              Accueillir
-                            </Button>
-                          )
-                        }
-                      />
-                    );
-                  })}
-                </div>
+          groups.map(({ staff, items }) => (
+            <div key={staff.id}>
+              <div className="flex items-center gap-2 border-b border-[var(--board-groove)] bg-black/[0.02] px-4 py-2">
+                <Legend>{staff.name} · {items.length}</Legend>
+                {staff.unavailableToday && <FlipChip value="Absente" tone="signal" className="min-w-0 px-1.5 py-0.5 text-[0.5rem]" />}
               </div>
-            ))}
-          </div>
+              {items.map(({ rv, reservation }) => {
+                const client = clients.find((c) => c.id === reservation.payerClientId);
+                const service = serviceById(rv.serviceId);
+                const second = rv.secondStaffId ? praticiennes.find((p) => p.id === rv.secondStaffId) : null;
+                const benef = rv.beneficiaryClientId
+                  ? clients.find((c) => c.id === rv.beneficiaryClientId)?.lastName
+                  : rv.beneficiaryName;
+                const absent = staff.unavailableToday;
+                const hasSale = Boolean(reservation.saleId);
+                const siblings = reservation.rendezVous.filter((x) => x.status !== "annule").length - 1;
+                const chip = hasSale ? { value: "En cours", tone: "signal" as ChipTone } : STATUS_CHIP[rv.status];
+                return (
+                  <Lane
+                    key={rv.id}
+                    leading={
+                      <span className="flex flex-col leading-tight">
+                        <span>{rv.start}</span>
+                        <span className="text-[0.7rem] font-normal text-[var(--color-gray-400)]">{appointmentEndTime(rv)}</span>
+                      </span>
+                    }
+                    title={
+                      <span className="flex items-center gap-2">
+                        <Avatar initial={client ? clientInitial(client) : "?"} size={26} className="bg-accent text-[0.65rem] font-semibold text-secondary" />
+                        {client ? clientFullName(client) : "Cliente"}
+                      </span>
+                    }
+                    meta={
+                      `${service?.name ?? "Prestation"}` +
+                      (benef ? ` · pour ${benef}` : "") +
+                      (second ? ` · à 2 (${second.name})` : "") +
+                      (siblings > 0 ? ` · +${siblings} sur la note` : "") +
+                      (absent ? " · praticienne absente" : "")
+                    }
+                    chip={<FlipChip value={chip.value} tone={chip.tone} />}
+                    signal={absent ? "hold" : "none"}
+                    onSelect={() => setDetail(rv)}
+                    actions={
+                      <Button size="sm" variant={hasSale ? "outline" : "dark"} onClick={() => requestEncaissement(reservation.id)}>
+                        {hasSale ? "Voir la vente" : "Encaisser"}
+                      </Button>
+                    }
+                  />
+                );
+              })}
+            </div>
+          ))
         )}
-      </section>
+      </Board>
 
-      <MorningRoundCard />
-
-      <section className="flex flex-col gap-3">
-        <FieldLabel>Résumé du jour</FieldLabel>
-        <StatTileRow>
-          <StatTile value={formatFcfa(encaisseAujourdhui)} label="Encaissé aujourd'hui" tone="success" />
-          <StatTile value={appointments.length} label="Rendez-vous du jour" />
-        </StatTileRow>
-        <Button variant="outline" href="/recap-ventes" className="self-start px-4 py-2 text-sm">
-          Voir le récap complet
-        </Button>
-      </section>
-
-      <div className="flex justify-center border-t border-[var(--color-gray-200)] pt-6">
-        <Button variant="outline" href="/planning">
-          Planning complet
-        </Button>
-      </div>
-
-      <AppointmentDetailDialog
-        open={detailAppointment !== null}
-        appointment={detailAppointment}
-        onClose={() => setDetailAppointment(null)}
-        onEdit={(appt) => {
-          setDetailAppointment(null);
-          setFormAppointment(appt);
-          setFormOpen(true);
-        }}
-        onAccueil={(id) => {
-          setDetailAppointment(null);
-          requestAccueil(id);
+      <AppointmentDetailSheet
+        appointment={detail}
+        onClose={() => setDetail(null)}
+        onEncaisser={(id) => {
+          setDetail(null);
+          requestEncaissement(id);
         }}
       />
 
-      <AppointmentFormDialog
-        open={formOpen}
-        appointment={formAppointment}
-        onClose={() => {
-          setFormOpen(false);
-          setFormAppointment(null);
-        }}
+      <ConfirmDialog
+        open={confirmSend}
+        title={`Envoyer ${roundReady.length} message${roundReady.length > 1 ? "s" : ""} ?`}
+        description="Chaque cliente reçoit son message de relance personnalisé maintenant."
+        confirmLabel="Valider & envoyer"
+        confirmVariant="dark"
+        onCancel={() => setConfirmSend(false)}
+        onConfirm={handleSendRound}
       />
-
-      {accueilDialog}
+      <Toast message={toast?.message ?? null} action={toast?.action} onDismiss={() => setToast(null)} />
+      {encaissementDialog}
     </div>
+  );
+}
+
+function PointCell({
+  href,
+  label,
+  value,
+  hint,
+  muted,
+}: {
+  href: string;
+  label: string;
+  value: string;
+  hint: string;
+  muted?: boolean;
+}) {
+  return (
+    <Link href={href} className="group flex flex-1 items-center justify-between gap-3 px-5 py-4 transition hover:bg-black/[0.02]">
+      <span className="min-w-0">
+        <Legend>{label}</Legend>
+        <span
+          className={
+            muted
+              ? "mt-1 block font-[family-name:var(--font-heading)] text-lg font-semibold text-[var(--color-gray-400)]"
+              : "mt-1 block font-[family-name:var(--font-heading)] text-2xl font-semibold tabular-nums text-[var(--color-gray-900)]"
+          }
+        >
+          {value}
+        </span>
+      </span>
+      <span className="flex shrink-0 items-center gap-1 text-xs font-semibold uppercase tracking-[0.1em] text-[var(--brand-taupe-muted)]">
+        {hint}
+        <ChevronRight className="size-3.5 transition group-hover:translate-x-0.5" />
+      </span>
+    </Link>
   );
 }

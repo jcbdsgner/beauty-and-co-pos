@@ -28,7 +28,7 @@ export function SegmentedToggle({ options, value, onChange, className }: Segment
 
   return (
     <div
-      className={cn("relative grid rounded-full bg-[var(--color-gray-100)] p-1", className)}
+      className={cn("relative grid rounded-full bg-muted p-1", className)}
       style={{ gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))` }}
     >
       <span
@@ -45,7 +45,7 @@ export function SegmentedToggle({ options, value, onChange, className }: Segment
             onClick={() => onChange(option.value)}
             aria-pressed={active}
             className={cn(
-              "relative z-10 flex items-center justify-center gap-1.5 rounded-full px-5 py-3 text-sm font-semibold transition active:scale-[0.97]",
+              "relative z-10 flex h-12 items-center justify-center gap-1.5 rounded-full px-5 text-[15px] font-semibold transition active:scale-[0.97] outline-none",
               active ? "text-[var(--color-gray-900)]" : "text-[var(--color-gray-500)] hover:text-[var(--color-gray-700)]",
             )}
           >

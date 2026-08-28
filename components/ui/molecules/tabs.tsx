@@ -22,16 +22,16 @@ type TabsProps = {
 export function Tabs({ items, value, onChange, className }: TabsProps) {
   return (
     <TabsPrimitive.Root value={value} onValueChange={onChange} className={cn("flex flex-col gap-5", className)}>
-      <TabsPrimitive.List className="flex items-center gap-6 overflow-x-auto border-b border-[var(--color-gray-200)]">
+      <TabsPrimitive.List className="flex items-center gap-6 overflow-x-auto border-b border-border">
         {items.map((item) => (
           <TabsPrimitive.Trigger
             key={item.value}
             value={item.value}
             className={cn(
-              "relative flex min-h-11 shrink-0 items-center px-1 pb-3 text-[15px] font-semibold whitespace-nowrap text-[var(--color-gray-500)] transition",
+              "relative flex min-h-14 shrink-0 items-center px-1 pb-3 text-[15px] font-semibold whitespace-nowrap text-[var(--color-gray-500)] transition",
               "after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:rounded-full after:bg-transparent after:transition-colors",
-              "data-[state=active]:text-[var(--color-gray-900)] data-[state=active]:after:bg-[var(--brand-taupe-muted)]",
-              "active:opacity-70",
+              "data-[state=active]:text-[var(--color-gray-900)] data-[state=active]:after:bg-secondary",
+              "active:opacity-70 outline-none focus-visible:text-[var(--color-gray-900)]",
             )}
           >
             {item.label}

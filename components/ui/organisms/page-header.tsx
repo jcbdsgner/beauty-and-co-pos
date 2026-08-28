@@ -1,40 +1,50 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
+import { BrandMark } from "@/components/ui/atoms/brand-mark";
 import { cn } from "@/lib/utils";
 
 type PageHeaderProps = {
   title: string;
   subtitle?: string;
+  /** Small kicker above the title (e.g. a date, a count). The diamond glyph sits before it. */
+  eyebrow?: string;
   backHref?: string;
   align?: "left" | "center";
   action?: React.ReactNode;
   className?: string;
 };
 
-/** Back arrow + serif title (+ optional subtitle / right-aligned action) — the header pattern reused at the top of every sub-page. */
-export function PageHeader({ title, subtitle, backHref, align = "left", action, className }: PageHeaderProps) {
+/**
+ * The back-office masthead — an editorial band, not a compact toolbar. Title in Cabinet Grotesk bold at display
+ * scale, an optional kicker carried by the diamond glyph, the section's primary action on the
+ * right. Used at the top of every section and sub-page.
+ */
+export function PageHeader({ title, subtitle, eyebrow, backHref, align = "left", action, className }: PageHeaderProps) {
   return (
-    <div className={cn("flex items-start justify-between gap-4", className)}>
-      <div className={cn("flex items-start gap-3", align === "center" && "w-full justify-center text-center")}>
+    <div className={cn("flex items-start justify-between gap-4 border-b border-border pb-5", className)}>
+      <div className={cn("flex min-w-0 items-start gap-4", align === "center" && "w-full justify-center text-center")}>
         {backHref && (
-          // DESIGN.md is explicit: back navigation is "a real button (icon + label, bordered,
-          // ≥44px tall) — never a bare text link with an inline chevron." A bare size-8 (32px)
-          // circular chevron was exactly that anti-pattern.
           <Link
             href={backHref}
             aria-label="Retour"
-            className="flex h-11 shrink-0 items-center gap-1.5 rounded-full border border-[var(--color-gray-200)] bg-white px-4 text-sm font-medium text-[var(--color-gray-600)] transition active:scale-[0.97] hover:bg-[var(--color-gray-50)]"
+            className="mt-1 flex h-12 shrink-0 items-center gap-1.5 rounded-full border border-border bg-white px-4 text-[15px] font-medium text-[var(--color-gray-600)] transition active:scale-[0.97] hover:bg-[var(--color-gray-50)] outline-none focus-visible:ring-4 focus-visible:ring-ring/20"
           >
             <ChevronLeft aria-hidden className="size-4" />
             Retour
           </Link>
         )}
-        <div>
-          <h1 className="font-[var(--font-heading)] text-2xl text-[var(--color-gray-900)]">{title}</h1>
-          {subtitle && <p className="mt-1 text-sm text-[var(--color-gray-500)]">{subtitle}</p>}
+        <div className="min-w-0">
+          {eyebrow && (
+            <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold tracking-wide text-secondary uppercase">
+              <BrandMark className="size-3" />
+              {eyebrow}
+            </p>
+          )}
+          <h1 className="font-[family-name:var(--font-heading)] font-bold text-[2.25rem] leading-[1.1] text-[var(--color-gray-900)]">{title}</h1>
+          {subtitle && <p className="mt-2 text-[15px] text-[var(--color-gray-500)]">{subtitle}</p>}
         </div>
       </div>
-      {action && <div className="shrink-0">{action}</div>}
+      {action && <div className="shrink-0 pt-1">{action}</div>}
     </div>
   );
 }

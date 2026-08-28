@@ -46,7 +46,7 @@ function EditPreferencesForm({ client, onClose }: { client: Cliente; onClose: ()
   return (
     <>
       <CloseButton onClick={onClose} />
-      <h2 id="edit-preferences-title" className="font-[var(--font-heading)] text-xl text-[var(--color-gray-900)]">
+      <h2 id="edit-preferences-title" className="font-[family-name:var(--font-heading)] font-semibold text-xl text-[var(--color-gray-900)]">
         Modifier les préférences beauté
       </h2>
       <form onSubmit={handleSubmit} className="mt-5 flex flex-col gap-4">

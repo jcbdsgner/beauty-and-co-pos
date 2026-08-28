@@ -7,7 +7,7 @@ import { formatFcfa } from "@/lib/utils";
 
 /**
  * The Comptoir, collapsed — a full-width dock at the foot of the working area, present on every
- * section (Journée / Planning / Clientèle / Catalogue). This is the counter's single most
+ * section (Accueil / Planning / Clientèle / Relances / Catalogue). This is the counter's single most
  * important affordance, so it is a real bar, not a corner pill:
  *
  * - no open sale → a rose bar, "+ Nouvelle vente", one tap opens a fresh tab in the deployed

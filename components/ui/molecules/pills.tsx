@@ -34,16 +34,16 @@ export function Pills({ options, value, onChange, className }: PillsProps) {
             onClick={() => onChange(option.value)}
             aria-pressed={active}
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-full px-4 py-3 text-sm font-medium transition active:scale-[0.97]",
+              "inline-flex h-14 items-center gap-1.5 rounded-full px-5 text-[15px] font-medium transition active:scale-[0.97] outline-none focus-visible:ring-4 focus-visible:ring-ring/20",
               active
-                ? "bg-[var(--core-brand-color)] text-black"
-                : "border border-[var(--color-gray-200)] bg-white text-[var(--color-gray-600)] hover:bg-[var(--color-gray-50)]",
+                ? "bg-primary text-primary-foreground"
+                : "border border-border bg-white text-[var(--color-gray-600)] hover:bg-[var(--color-gray-50)]",
             )}
           >
             {active ? <Check aria-hidden className="size-3.5 shrink-0" strokeWidth={3} /> : option.icon}
             {option.label}
             {typeof option.count === "number" && (
-              <span className={cn("text-xs", active ? "text-black/60" : "text-[var(--color-gray-400)]")}>
+              <span className={cn("text-xs", active ? "text-primary-foreground/60" : "text-[var(--color-gray-400)]")}>
                 {option.count}
               </span>
             )}

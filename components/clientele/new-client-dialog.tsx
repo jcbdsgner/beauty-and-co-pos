@@ -22,6 +22,8 @@ type NewClientDialogProps = {
   onClose: () => void;
   /** When provided, called with the new client's id instead of this dialog navigating itself — lets a caller (e.g. Comptoir) decide what happens next. Left unset, the dialog navigates to the new Fiche cliente itself. */
   onCreated?: (clientId: string) => void;
+  /** Pre-fill fields from what the caller already knows — e.g. the text typed into "Chercher une cliente" before the search came up empty. */
+  initialValues?: Partial<typeof emptyForm>;
 };
 
 const emptyForm = {
@@ -43,13 +45,15 @@ const emptyForm = {
  * from the Comptoir later (per USERFLOW.md), hence the optional `onCreated` escape hatch instead
  * of a hardcoded redirect.
  */
-export function NewClientDialog({ open, onClose, onCreated }: NewClientDialogProps) {
+export function NewClientDialog({ open, onClose, onCreated, initialValues }: NewClientDialogProps) {
   const router = useRouter();
   const { addClient, findDuplicatePhone } = useAppData();
 
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState<typeof emptyForm>(() => ({ ...emptyForm, ...initialValues }));
   const [birthday, setBirthday] = useState<Date | null>(null);
-  const [duplicate, setDuplicate] = useState<Cliente | undefined>(undefined);
+  const [duplicate, setDuplicate] = useState<Cliente | undefined>(() =>
+    initialValues?.phone?.trim() ? findDuplicatePhone(initialValues.phone) : undefined,
+  );
   const [attempted, setAttempted] = useState(false);
 
   function set<K extends keyof typeof emptyForm>(key: K, value: string) {
@@ -108,7 +112,7 @@ export function NewClientDialog({ open, onClose, onCreated }: NewClientDialogPro
       className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl p-6"
     >
       <CloseButton onClick={handleClose} />
-      <h2 id="new-client-title" className="font-[var(--font-heading)] text-2xl text-[var(--color-gray-900)]">
+      <h2 id="new-client-title" className="font-[family-name:var(--font-heading)] font-semibold text-2xl text-[var(--color-gray-900)]">
         Nouvelle cliente
       </h2>
 

@@ -2,10 +2,8 @@
 
 import { useRef } from "react";
 import { MessageCircle, Mail, Download, Printer } from "lucide-react";
-import { PageHeader } from "@/components/ui/organisms/page-header";
+import { BoardHeader, Board, BoardEmpty } from "@/components/ui/board";
 import { Button } from "@/components/ui/atoms/button";
-import { FieldLabel } from "@/components/ui/atoms/field-label";
-import { EmptyState } from "@/components/ui/molecules/empty-state";
 import { LoyaltyCard, qrCells } from "@/components/clientele/loyalty-card";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { clientFullName } from "@/lib/data/clientele";
@@ -21,16 +19,17 @@ export function FideliteView({ clientId }: FideliteViewProps) {
 
   if (!client) {
     return (
-      <EmptyState
-        icon={<Download />}
-        title="Cette cliente est introuvable"
-        subtitle="Impossible d'afficher une carte de fidélité pour cette fiche."
-        action={
-          <Button href="/clientele" variant="outline">
-            Retour au répertoire
-          </Button>
-        }
-      />
+      <Board legend="Carte introuvable">
+        <BoardEmpty
+          title="Cette cliente est introuvable"
+          hint="Impossible d'afficher une carte de fidélité pour cette fiche."
+          action={
+            <Button href="/clientele" variant="outline">
+              Retour au répertoire
+            </Button>
+          }
+        />
+      </Board>
     );
   }
 
@@ -115,14 +114,17 @@ export function FideliteView({ clientId }: FideliteViewProps) {
   return (
     <div className="flex flex-col gap-6">
       <div className="print:hidden">
-        <PageHeader title="Carte de fidélité" backHref={`/clientele/${client.id}`} subtitle={clientFullName(client)} />
+        <BoardHeader section="Carte de fidélité" context={clientFullName(client)} backHref={`/clientele/${client.id}`} />
       </div>
 
-      <div className="mx-auto flex w-full max-w-lg flex-col gap-6">
-        <div className="grid grid-cols-4 gap-3 print:hidden">
-          <div className="col-span-1">
+      <div className="mx-auto flex w-full max-w-lg flex-col gap-4">
+        <LoyaltyCard name={clientFullName(client)} tier={client.tier} points={client.points} clientId={client.id} />
+
+        <div className="grid grid-cols-2 gap-3 print:hidden sm:grid-cols-4">
+          <div>
             <Button
               variant={client.whatsapp ? "success" : "outline"}
+              size="sm"
               disabled={!client.whatsapp}
               icon={<MessageCircle className="size-4" />}
               onClick={() => client.whatsapp && window.open(`https://wa.me/${client.whatsapp.replace(/\D/g, "")}`, "_blank")}
@@ -130,11 +132,12 @@ export function FideliteView({ clientId }: FideliteViewProps) {
             >
               WhatsApp
             </Button>
-            {!client.whatsapp && <FieldLabel variant="plain" className="mt-1 text-center font-normal">Pas de WhatsApp</FieldLabel>}
+            {!client.whatsapp && <p className="mt-1 text-center text-xs text-[var(--color-gray-400)]">Pas de WhatsApp</p>}
           </div>
-          <div className="col-span-1">
+          <div>
             <Button
               variant={client.email ? "info" : "outline"}
+              size="sm"
               disabled={!client.email}
               icon={<Mail className="size-4" />}
               onClick={() => client.email && window.open(`mailto:${client.email}`, "_blank")}
@@ -142,17 +145,15 @@ export function FideliteView({ clientId }: FideliteViewProps) {
             >
               Email
             </Button>
-            {!client.email && <FieldLabel variant="plain" className="mt-1 text-center font-normal">Pas d&rsquo;email</FieldLabel>}
+            {!client.email && <p className="mt-1 text-center text-xs text-[var(--color-gray-400)]">Pas d&rsquo;email</p>}
           </div>
-          <Button variant="dark" icon={<Download className="size-4" />} onClick={handleDownload} className="col-span-1">
+          <Button variant="dark" size="sm" icon={<Download className="size-4" />} onClick={handleDownload} className="w-full">
             Télécharger
           </Button>
-          <Button variant="outline" icon={<Printer className="size-4" />} onClick={() => window.print()} className="col-span-1">
+          <Button variant="outline" size="sm" icon={<Printer className="size-4" />} onClick={() => window.print()} className="w-full">
             Imprimer
           </Button>
         </div>
-
-        <LoyaltyCard name={clientFullName(client)} tier={client.tier} points={client.points} clientId={client.id} />
       </div>
     </div>
   );

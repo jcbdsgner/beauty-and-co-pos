@@ -1,160 +1,221 @@
 ---
 name: Point de vente — Beauty and Co
-description: Desktop POS / back-office for a Dakar beauty salon, sharing the b&co showcase site's brand identity.
+description: Desktop touch POS for a Dakar beauty salon. Visual world "Le Tableau" — a self-ranking day board, not a scroll of cards. Brand palette, Cabinet Grotesk and logo carried over from the b&co showcase site.
 colors:
-  rose-primary: "#fdcfca"
-  rose-primary-2: "#eddcda"
-  on-rose-primary: "#2d2d2d"
-  taupe-emphasis: "#886666"
-  rose-soft: "#fef0ee"
-  lilac-tier: "#e4c8ff"
-  cream-bg: "#f8f6f9"
+  rose: "#fdcfca"          # the actionable plaque, filled primary actions, price emphasis
+  taupe: "#886666"         # the current / emphasis plaque, active nav, dark CTA
+  cream: "#f8f6f9"         # app ground (the wall the boards hang on)
+  slate: "#2a2320"         # the standing board header (warm near-black, derived from taupe)
+  slate-line: "#4a3f3a"    # routed-groove hairline on the slate header
+  amber: "#b5590a"         # THE one signal — changed / now / needs a decision. Nothing else uses it.
+  amber-soft: "#fdf0e3"
+  rose-soft: "#fef0ee"     # secondary plaque fill, chip wells
+  lilac: "#e4c8ff"         # VIP/premium tier flag only — kept rare
   ink-900: "#101828"
   ink-600: "#475467"
   ink-500: "#667085"
   ink-400: "#98a2b3"
-  border-200: "#eaecf0"
-  surface-100: "#f2f4f7"
+  groove: "#e4e0e2"        # the routed double-hairline that frames every plaque
   success: "#12805c"
   warning: "#b5590a"
   info: "#2662d9"
   error: "#b42318"
 typography:
-  display:
-    fontFamily: "Prata, Georgia, serif"
-    fontWeight: 400
-  accent:
-    fontFamily: "Benedict, cursive"
-  body:
-    fontFamily: "Cabinet Grotesk, Arial, Helvetica, sans-serif"
-    fontWeight: 450
+  face: "Cabinet Grotesk, Arial, Helvetica, sans-serif"  # the whole app — display and body
+  accent: "Benedict, cursive"                            # the wordmark tagline only
+  legend: "Cabinet Grotesk — 700, uppercase, tracking 0.12em"  # every board legend / lane label
+  figure: "Cabinet Grotesk — 600, tabular-nums"               # every time, count, total, points
 rounded:
-  control: "9999px"
-  card: "16px"
-  tile: "16px"
+  plaque: "14px"   # boards and lanes — squarer than the old 16–24px, a board is not a pillow
+  chip: "6px"      # the flip-tile status token — a mechanical tile, never a pill
+  control: "9999px" # buttons and filter pills stay pills — they are things you press
 spacing:
-  tap-target-min: "44px"
-components:
-  button-brand:
-    backgroundColor: "{colors.rose-primary}"
-    textColor: "#000000"
-    rounded: "{rounded.control}"
-    padding: "12px 16px"
-  button-dark:
-    backgroundColor: "{colors.taupe-emphasis}"
-    textColor: "#ffffff"
-    rounded: "{rounded.control}"
-    padding: "12px 16px"
+  tap-target-min: "56px"
+  tap-target-ideal: "60px"
+  lane-height: "56px"      # a lane is a real touch row
 ---
 
-# Design System: Point de vente — Beauty and Co
+# Design System — Point de vente · « Le Tableau »
 
-## Overview
+## Direction contract
 
-**Creative North Star: "The Salon Counter"**
+**THESIS.** A salon counter answers one question all day — *qui, quand, quoi ensuite*. So every
+section is **a board that ranks itself by time and holds each row until it has been dealt with**,
+not a scroll of soft cards. This refuses the two defaults this kind of app always ships: the warm
+cream-ground / rounded-card / one-accent consumer app, and the dark dashboard with a neon accent.
 
-A warm, flat, rose-and-taupe visual language borrowed wholesale from the b&co showcase site — this is back-office/operate software, not a marketing surface, so the brand shows up in precise, quiet details (a rose fill on the one action that matters, a taupe emphasis on the current state) rather than in expressive composition. Everything reads at a glance from across a counter, on a touchscreen, under normal indoor light, often mid-conversation with a client.
+**OWN-WORLD.** Painted directory-board plaques hung on the cream wall. Each content region is a
+flat plaque — **rose** when it holds something to act on, **taupe** when it holds the current
+state, **slate** (`#2a2320`) for the one standing board header per screen — framed by a *routed
+groove* (a `groove`-colour double hairline with 1px of inset, drawn with `box-shadow`, never a
+raised shadow). Down the left of every board runs a **legend rail**: hours, letters, or names set
+in `legend` type (700, uppercase, `0.12em` tracking). Rows are **lanes** on hairline rules,
+`lane-height` tall. State is a **flip-chip** — a small `chip`-radius tabular tile (`PRÊT`,
+`ENVOYÉ`, `EN COURS`, `CONFIRMÉ`, `ANNULÉ`, `ABSENTE`, `TENDANCE`) that does one 140ms mechanical
+half-flip on change; it never relies on colour alone. **One signal colour: `amber`.** It marks
+*changed / now / needs you* — the lane pulses amber once, then holds a 3px amber left-edge until
+acknowledged. Figures (time, count, total, points) are always `figure` type with `tabular-nums`
+so columns align as the eye sweeps. Cabinet Grotesk everywhere; the board feel comes from the
+tracked legends, the big tabular figures and the flip-chips, not from a second face. Benedict
+only under the wordmark.
 
-No gradients, no glass, no decorative depth — surfaces are flat fills at rest, only pill-shaped rounding softens the geometry. The one recurring signature motif is the sidebar's diamond glyph, used sparingly as a faint oversized watermark, never as a repeated icon.
+**STORY.** The receptionist glances at any section and reads the queue instantly: what's next,
+what changed since she last looked, what still needs a decision. She acts on the lane itself; the
+board reflows in place; the chip flips; the amber edge clears.
 
-**Key Characteristics:**
-- Flat brand fills only — rose for primary/light actions, taupe for dark/emphasis states, no gradients anywhere.
-- Fully rounded (pill) controls: buttons, pills, chips, avatars, category chips.
-- Prata serif for every heading and hero number; Cabinet Grotesk for everything else.
-- Real, varying-length French content (service names, prices, durations) — layouts must hold under real data, not placeholder-length text.
-- Every primary interactive target sized and spaced for a touchscreen, not a mouse-only desktop app (44px minimum).
+**FIRST VIEWPORT (Planning).** The standing slate board header — section name, live day in full,
+`AUJOURD'HUI` reset. No create button: bookings are made online (ADR 0006); the board is read +
+counter gestures (Confirmer / Annuler / Encaisser). Under it the week strip of day tiles. Then the
+day board: a roster rail on the left, practitioner lanes, one lane per *rendez-vous* (an atomic
+planned prestation — a two-practitioner one shows on both lanes), each carrying its flip-chip.
+Nothing bleeds to the window edge — the board always has its frame.
 
-## Colors
+**FORM.** Departures / peg-board directory board, fused with the gate-board grammar "a row
+reranks in place and holds its change state until noticed." concept-seed key `5a6bc1b7`, mode
+operate, assigned grounded direction #7 (the least-nostalgic of the salon-world set — chosen over
+the appointment-ledger and the index-card file precisely because a board reads as *infrastructure*,
+which is what an interruption-prone till needs). Image-generation step skipped under the size of
+this refonte (4 sections, full re-implementation); the build is the proof.
 
-Two brand hues carry every screen: a soft rose for primary/light actions and prices, a muted taupe for dark/emphasis states — never mixed as a gradient, always a flat fill.
+## Migration status
 
-### Primary
-- **Rose Primary** (`#fdcfca`): filled CTAs, selected pills/tabs, price emphasis (paired with the darker `button-2-color` `#a27576` text tone for price figures specifically).
+The world is established on **Planning, Clientèle, Relances, Catalogue** and their sub-screens
+(Équipe, Fiche cliente, Carte de fidélité, Détail planche) plus the board primitives in
+`components/ui/board.tsx`. `Accueil`, the `Comptoir` layer, `/compte` and `Récap des ventes`
+still wear the previous flat-card language and migrate next. Shared atoms (`Button`, `Field`,
+`Dialog`, `Toast`, `ConfirmDialog`, `EmptyState`, form inputs) are used by both worlds and were
+kept working; where the board world needed its own shape it got a board primitive rather than a
+destructive edit to a shared atom.
 
-### Secondary
-- **Taupe Emphasis** (`#886666`): dark CTA banners (e.g. "Nouvelle Vente"), active nav item, active category back-button, icon accents, borders on focus.
+## Colours
 
-### Tertiary
-- **Lilac Tier** (`#e4c8ff`): reserved for the VIP/premium tier badge and one quick-action tile — kept rare so it stays legible as "special."
+**Two brand hues carry structure, one signal colour carries attention, everything else is ink.**
 
-### Neutral
-- **Cream** (`#f8f6f9`): page/app background.
-- **Rose Soft** (`#fef0ee`): secondary surface fill (secondary CTA, icon chip backgrounds).
-- **Ink 900 → Ink 400** (`#101828` → `#98a2b3`): text hierarchy, darkest for headings/prices down to lightest for placeholder/disabled text.
-- **Border 200** (`#eaecf0`): every card/input/divider border.
+- **Rose `#fdcfca`** — the *actionable* plaque background at low tint (`rose-soft` for the fill,
+  rose at full for a filled primary button and for price figures with the `#a27576` price tone).
+  A rose plaque means "there is something to do here".
+- **Taupe `#886666`** — the *current-state* plaque, the active nav item, the one dark CTA per
+  screen, legend-rail text on light, icon accents. A taupe plaque means "this is where things
+  stand".
+- **Slate `#2a2320`** — the standing board header only. One per screen. White text, `slate-line`
+  groove. It is the board's own frame, not a hero banner.
+- **Amber `#b5590a`** — **the** signal. Changed row, "now" marker, a decision still owed
+  (unauthorised reconquête, absent practitioner, a just-created follow-up). Pulse once, then hold
+  a 3px left-edge on the lane. Never used decoratively, never as a third structural hue. Semantic
+  `warning` happens to be the same value — that is deliberate: on this board, "warning" and
+  "needs you" are the same idea.
+- **Lilac `#e4c8ff`** — VIP/gold tier flag only.
+- **Ink 900 → 400** — text hierarchy. `groove #e4e0e2` — every plaque frame and lane rule.
+- Semantic `success / info / error` stay conventional and never double as a structural hue.
 
-### Named Rules
-**The Two-Hue Rule.** Every "emphasis" role on screen is either rose or taupe — never a third brand color. Semantic color (success/warning/info/error) is separate and never doubles as the accent.
-**The Disabled-Is-Not-Invisible Rule.** A disabled control (the "Encaisser" CTA before a client is picked, an unfilled "OK") must stay legible — a muted solid fill with readable text, not a translucent wash over the brand color that erodes contrast to near-nothing.
+### Named rules
+
+- **The Board-Not-Card rule.** A content region is a *plaque with a routed groove and a legend*,
+  not a rounded white card floating on shadow. `rounded-plaque` (14px), `box-shadow` groove
+  (inset hairline), no ambient lift. If it would read as a Material card, it is wrong.
+- **The One-Signal rule.** Only amber says "attention". If a second colour starts meaning
+  "look here", the board has lost its single channel and the receptionist has to decode a legend.
+- **The Chip-Flips rule.** Every status change animates one 140ms half-flip on the flip-chip and,
+  if it is a change the receptionist should notice, an amber pulse + held edge on the lane.
+  `prefers-reduced-motion` → instant swap, edge still held.
+- **The Disabled-Is-Not-Invisible rule** (carried over). A disabled control is a legible muted
+  solid fill with readable text, never an opacity wash on a brand colour.
 
 ## Typography
 
-**Display Font:** Prata (serif, with Georgia fallback)
-**Body Font:** Cabinet Grotesk (with Arial/Helvetica fallback)
-**Accent Font:** Benedict (script, used only for the single "privé" tagline under the wordmark)
+Cabinet Grotesk (variable 100–900, Arial/Helvetica fallback) for the whole app. Benedict only for
+the wordmark tagline. Hierarchy is weight + role, never a second face.
 
-**Character:** A confident, slightly editorial serif for anything that announces itself (page titles, hero prices, greetings) against a plain, workmanlike grotesk for everything operational — the pairing reads as "boutique brand, efficient tool."
+| Role | Spec | Where |
+|---|---|---|
+| Board header | 700, `text-[1.9rem]`–`text-3xl`, tight leading | the one slate header per screen |
+| Legend / lane label | **700, uppercase, `tracking-[0.12em]`, `text-xs`** | legend rail, plaque titles, chip text |
+| Figure | 600, `tabular-nums` | every time, count, total, points, price |
+| Name / dialog title | 600 | client names, appointment client, dialog `<h2>` |
+| Body | 450, `text-sm`–`text-[15px]` | descriptions, message quotes, field content |
 
-### Hierarchy
-- **Display** (400, `text-2xl`–`text-3xl`, Prata): page titles, "Bonjour, Propriétaire", hero totals.
-- **Title** (600, `text-lg`–`text-xl`, Cabinet Grotesk): section headers, card titles, cart item names.
-- **Body** (450, `text-sm`–`text-[15px]`): everything operational — labels, descriptions, list content.
-- **Label** (600–700, `text-xs`, uppercase, tracked): eyebrow captions ("REVENUS", "ADMIN"), stat headers.
-
-### Named Rules
-**The One Serif Rule.** Prata appears only at moments that deserve weight (titles, hero numbers) — never in body copy, buttons, or dense lists, where it would slow scanning.
+**The Legend rule.** A board region's title is set as a legend (tracked uppercase `text-xs`), not
+as a `text-lg` heading — a board is labelled like a schedule, not titled like an article.
 
 ## Layout
 
-Desktop-only, no responsive/mobile variant. A fixed 260px sidebar (global nav + identity) plus a fluid content area, `max-w-6xl` centered, `px-8 py-8`. Density stays generous — this is a touch-first counter tool, not a data-dense dashboard: `gap-4`–`gap-6` between siblings, `p-5`–`p-8` internal card padding, never sub-8px gaps between distinct tappable elements.
+Fixed 260px sidebar + fluid content, `max-w-6xl`, `px-8 py-8` (unchanged). Inside a section:
 
-## Elevation & Depth
+- **The slate board header** spans the content width, `rounded-plaque`, `slate` fill, white text,
+  section name + context + primary action. One per screen.
+- **Boards** are plaques: `rounded-plaque`, white or `rose-soft`/`taupe`-tint fill, routed-groove
+  frame, an internal **legend rail** (`w-14` to `w-24` depending on content) and a lane column.
+- **Lanes** are `lane-height` rows separated by `groove` hairlines, full-width tap targets, their
+  own actions on the right, an amber left-edge slot always reserved (transparent until it holds).
+- **Nothing bleeds to the viewport edge** — the outer `px-8` gutter is the board's mounting wall.
+- Density is calm: `gap-4`–`gap-6` between boards, lanes touch (the hairline is the separation),
+  `p-5`–`p-6` inside a plaque.
 
-Flat by default. The only shadow in the system is a barely-there ambient lift on cards and buttons (`0px 1px 3px rgba(0,0,0,0.06–0.1)`) — depth is conveyed through flat color fields and borders, not layered shadows.
+## Motion
 
-### Named Rules
-**The Flat-Fill Rule.** No gradients, no glass, no glow — a filled shape is one flat color, full stop.
+The form's native motion is *a row reranking on a board and a tile flipping*. Give the page that
+motion, orchestrated, once — not scattered hover effects.
 
-## Shapes
-
-Everything rounds toward a pill. Buttons, pills, chips, avatars, category chips: `rounded-full`. Cards and catalogue tiles: large soft corners (`rounded-2xl`/`16px`, some `rounded-3xl`/`24px` for hero-scale CTAs). Borders are a single hairline (`border border-[--color-gray-200]`), never doubled or dashed except the one deliberate "required field" dashed-border affordance (client picker).
+- **Flip-chip:** `rotateX` 0→90° (110ms, ease-in) swap text, 90°→0° (110ms, ease-out).
+- **Lane rerank:** FLIP transform, 220ms ease-out, on the list container when order changes.
+- **Amber pulse:** left-edge `0→3px` + `amber` background flash on the lane, 1 cycle, 500ms, then
+  the 3px edge holds at `amber` until the lane is acted on or the view is left.
+- **Board entry:** lanes stagger in from a 6px right offset, 30ms apart, 180ms each — a board
+  *fills*, it doesn't fade.
+- `prefers-reduced-motion`: no flip, no stagger, no pulse animation — the held amber edge and the
+  final positions still apply.
 
 ## Components
 
-### Buttons
-- **Shape:** fully rounded (`rounded-full`), `px-4 py-3`, `text-[17px]` — a real touch target, not a compact desktop button.
-- **Primary (`brand`):** rose fill, black text.
-- **Dark (`dark`):** taupe fill, white text — used for the single most-frequent action on a screen (e.g. "Nouvelle Vente").
-- **Disabled:** per the Disabled-Is-Not-Invisible Rule — do not ship the default `opacity-40` wash on a light fill without checking contrast; prefer a muted neutral fill for light-variant buttons when disabled.
+### `BoardHeader`
+The standing slate header. Props: `section`, `context` (live day, count, subtitle), `action`,
+optional `reset` (the "Aujourd'hui"-style control shown only when relevant), optional `backHref`
+(a real 56px bordered button on the slate, never a bare chevron link).
 
-### Chips / Pills
-- **Style:** rounded-full, active = rose fill + black text, inactive = white + thin border + gray text.
-- **State:** exclusive-choice segmented toggles (Services/Produits) and filter pills (subcategories) share this one visual language.
+### `Board`
+A plaque region. Props: `legend` (the tracked-uppercase label sitting on the routed frame),
+`rail` (the legend-rail content — hours, a letter index, or null), `children` (the lanes),
+`tone` (`plain` white / `act` rose-soft / `now` taupe-tint). Routed groove via `box-shadow`.
 
-### Cards / Tiles
-- **Corner style:** `16px` (`rounded-2xl`).
-- **Background:** white on the cream page ground.
-- **Border:** single hairline `--color-gray-200`.
-- **Tap feedback:** every tappable card/tile gets `active:scale-[0.94–0.97]` — a touchscreen needs to feel a press register, hover alone is not enough.
+### `Lane`
+One row. Props: `leading` (time / avatar / index), `title`, `meta`, `chip` (a `FlipChip`),
+`actions`, `signal` (`none` | `pulse` | `hold` — drives the amber left-edge), `onSelect`.
+`lane-height` min, full-width press target, actions are `sm` buttons on the right.
 
-### Inputs / Fields
-- **Style:** white fill, hairline border, `rounded-lg`–`rounded-full` depending on context (form fields vs. search/select).
-- **Focus:** border shifts to taupe emphasis, no glow/ring.
+### `FlipChip`
+The status tile. Props: `value` (the label), `tone` (`neutral` / `act` rose / `now` taupe /
+`done` success / `void` ink-400 / `signal` amber). `rounded-chip`, uppercase `legend` text,
+`tabular` width so a flip doesn't reflow the lane. Animates the half-flip when `value` changes.
 
-### Navigation
-- **Sidebar:** fixed, white, active item = taupe-tinted pill fill + taupe text, inactive = gray text.
-- **Back navigation:** a real button (icon + label, bordered, ≥44px tall) — never a bare text link with an inline chevron; that reads as decoration, not as a control, on a touchscreen.
+### `WeekStrip`
+◀ / ▶ + 7 day tiles. Day tile: two lines (`LUN` / `14`), active = rose fill, today (not active)
+= taupe ring. Squarer corners (`rounded-plaque`), not the old `rounded-2xl`.
 
-## Do's and Don'ts
+### `PlateIndex` / `Plate` (Catalogue)
+A strict grid of numbered plates — plate number in the corner as a legend, visual, name, price,
+optional `TENDANCE` flip-flag. Tap → `Détail planche` dialog.
 
-### Do:
-- **Do** keep every primary/frequent tap target at 44px or larger, with visible press feedback (`active:scale`).
-- **Do** let the cart/ticket total stay reachable at all times, however long the catalogue scroll gets.
-- **Do** clamp long real-data text (service names) to a fixed number of lines rather than letting grid rows stretch unevenly.
-- **Do** reuse the rose/taupe two-hue system for every new emphasis need before reaching for a third color.
+### Buttons, pills, fields, dialogs
+`Button` (rose/taupe/outline pills, 56–60px), `Pills` (filter chips), `Field`, `Dialog`,
+`ConfirmDialog`, `Toast` — carried over. In the board world:
+- filter pills sit **on the board's legend line**, right-aligned, never in a separate toolbar row;
+- a destructive confirm is still the one `ConfirmDialog`;
+- an immediate, reversible action still raises the one `Toast` with an "Annuler" — and the toast
+  is **amber-keyed** in this world (it is a "this just changed" message).
 
-### Don't:
-- **Don't** introduce a gradient, drop shadow beyond the ambient lift, or glass/blur effect anywhere.
-- **Don't** ship a disabled primary action at low enough contrast that it reads as broken rather than "not yet available."
-- **Don't** rely on hover-only affordances — this is a touchscreen counter, not a mouse-driven desktop.
-- **Don't** invent a new accent color for a single feature; VIP/premium is the only sanctioned use of lilac.
+## Do / Don't
+
+**Do**
+- Frame every region as a plaque with a routed groove and a tracked legend.
+- Reserve the amber left-edge slot on every lane even when empty — the board's alignment depends on it.
+- Keep figures in `tabular-nums`; keep chips `tabular`-width so a flip never reflows a lane.
+- Let a board *fill* on entry (staggered lanes) and *rerank in place* on change (FLIP).
+- Keep every lane and primary control ≥ 56px.
+
+**Don't**
+- Ship a rounded white card on an ambient shadow — that is the world this refonte replaces.
+- Give a second colour an "attention" meaning. Amber is the only signal.
+- Title a board region with a `text-lg` heading — it is *labelled*, in tracked uppercase.
+- Animate a status change without the flip; animate anything with a gradient, glow or glass.
+- Reintroduce Entreprise/Salon selectors, per-line practitioner assignment, or a cart link in
+  the Catalogue — all removed by decision.

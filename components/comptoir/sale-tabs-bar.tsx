@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { Plus, X } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/molecules/confirm-dialog";
-import { useAppData } from "@/components/providers/app-data-provider";
-import { cn } from "@/lib/utils";
+import { useAppData, computeTotals } from "@/components/providers/app-data-provider";
+import { cn, formatFcfa } from "@/lib/utils";
 
 /**
- * Browser-tab shaped row of open sales — deliberately not `Pills` (a filter chip has no close
- * affordance and no "+" to open a new one; this is closer to a document tab strip), per
- * USERFLOW.md's explicit call to keep this shape distinct.
+ * A document-tab strip (not Pills — a filter chip has no close affordance). The active tab drops
+ * its bottom edge and takes the cream sheet's colour so it reads as physically attached to the
+ * sheet below. Each inactive tab shows its running total so a receptionist juggling several
+ * clientes sees where each basket stands without switching.
  */
 export function SaleTabsBar() {
   const { sales, openTabIds, activeSaleId, switchTab, closeTab, openNewTab } = useAppData();
@@ -19,38 +20,41 @@ export function SaleTabsBar() {
 
   function handleCloseRequest(id: string) {
     const sale = sales.find((s) => s.id === id);
-    if (sale && sale.cart.length > 0) {
-      setPendingCloseId(id);
-    } else {
-      closeTab(id);
-    }
+    if (sale && sale.cart.length > 0) setPendingCloseId(id);
+    else closeTab(id);
   }
 
   return (
     <>
-      <div className="flex items-center gap-1 overflow-x-auto">
+      <div className="flex items-end gap-1 overflow-x-auto">
         {tabs.map((tab) => {
           const active = tab.id === activeSaleId;
+          const { total } = computeTotals(tab);
           return (
             <div
               key={tab.id}
               className={cn(
-                "flex shrink-0 items-center gap-2 rounded-t-2xl border border-b-0 px-4 py-3 text-sm font-semibold transition",
+                "group flex h-12 shrink-0 items-center gap-2 rounded-t-2xl px-4 text-sm font-semibold transition",
                 active
-                  ? "border-[var(--color-gray-200)] bg-white text-[var(--color-gray-900)]"
-                  : "border-transparent bg-transparent text-white/70 hover:text-white",
+                  ? "bg-[var(--brand-cream)] text-[var(--color-gray-900)]"
+                  : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white",
               )}
             >
-              <button type="button" onClick={() => switchTab(tab.id)} className="active:scale-[0.97]">
-                {tab.label}
+              <button type="button" onClick={() => switchTab(tab.id)} className="flex flex-col items-start leading-tight active:scale-[0.97]">
+                <span>{tab.label}</span>
+                <span className={cn("text-[11px] font-medium tabular-nums", active ? "text-[var(--color-gray-500)]" : "text-white/50")}>
+                  {total > 0 ? formatFcfa(total) : "—"}
+                </span>
               </button>
               <button
                 type="button"
                 onClick={() => handleCloseRequest(tab.id)}
                 aria-label={`Fermer ${tab.label}`}
                 className={cn(
-                  "-m-2 flex size-8 items-center justify-center rounded-full transition active:scale-90",
-                  active ? "text-[var(--color-gray-400)] hover:bg-[var(--color-error-soft)] hover:text-[var(--color-error)]" : "text-white/60 hover:bg-white/10",
+                  "flex size-8 items-center justify-center rounded-full transition active:scale-90",
+                  active
+                    ? "text-[var(--color-gray-400)] hover:bg-[var(--color-error-soft)] hover:text-destructive"
+                    : "text-white/50 opacity-0 group-hover:opacity-100 hover:bg-white/10",
                 )}
               >
                 <X aria-hidden className="size-3.5" />
@@ -62,7 +66,7 @@ export function SaleTabsBar() {
           type="button"
           onClick={() => openNewTab()}
           aria-label="Nouvelle vente"
-          className="flex size-11 shrink-0 items-center justify-center rounded-full text-white/80 transition active:scale-90 hover:bg-white/10"
+          className="mb-1 flex size-11 shrink-0 items-center justify-center rounded-full text-white/80 transition active:scale-90 hover:bg-white/10"
         >
           <Plus aria-hidden className="size-5" />
         </button>

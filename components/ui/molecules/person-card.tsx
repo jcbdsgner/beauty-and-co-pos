@@ -14,10 +14,9 @@ type PersonCardProps = {
 };
 
 /**
- * A person is an identity, so the avatar leads at a size that actually reads as a face-stand-in
- * (48px, up from 44) with any tier badge as a small corner flag on the avatar itself — not
- * squeezed inline next to the name, competing with it for the same line. Name stays the one
- * unambiguous headline of the row.
+ * A person, at a glance — the avatar leads at face-stand-in scale with any tier flag as a corner
+ * badge on it, the name is the row's bold headline, meta is the one supporting line. Used in the
+ * répertoire grid, the équipe annuaire, and the cliente search results.
  */
 export function PersonCard({ initial, name, meta, badge, trailing, online, onClick, className }: PersonCardProps) {
   const Comp = onClick ? "button" : "div";
@@ -26,18 +25,16 @@ export function PersonCard({ initial, name, meta, badge, trailing, online, onCli
       type={onClick ? "button" : undefined}
       onClick={onClick}
       className={cn(
-        "flex w-full items-center gap-3.5 rounded-2xl border border-[var(--color-gray-200)] bg-white p-4 text-left transition",
-        onClick && "active:scale-[0.97] active:border-[var(--brand-taupe-muted)] hover:border-[var(--brand-taupe-muted)]",
+        "flex w-full items-center gap-4 rounded-2xl border border-border bg-white p-4 text-left transition",
+        onClick && "active:scale-[0.98] hover:border-secondary hover:bg-accent/30 outline-none focus-visible:border-secondary",
         className,
       )}
     >
       <span className="relative shrink-0">
-        <Avatar initial={initial} size={48} className="bg-[var(--brand-rose-soft)] font-semibold text-[var(--brand-taupe-muted)]" />
-        {online && (
-          <span className="absolute right-0 bottom-0 size-3 rounded-full border-2 border-white bg-[var(--color-success)]" />
-        )}
+        <Avatar initial={initial} size={52} className="bg-accent text-lg font-semibold text-secondary" />
+        {online && <span className="absolute right-0 bottom-0 size-3.5 rounded-full border-2 border-white bg-[var(--color-success)]" />}
         {badge && (
-          <span className="absolute -top-1 -left-1">
+          <span className="absolute -top-1.5 -left-1.5">
             <Badge variant={badge.variant} className="px-1.5 py-0.5 text-[10px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.15)]">
               {badge.label}
             </Badge>
@@ -45,10 +42,10 @@ export function PersonCard({ initial, name, meta, badge, trailing, online, onCli
         )}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate font-semibold text-[var(--color-gray-900)]">{name}</span>
-        {meta && <span className="block truncate text-sm text-[var(--color-gray-500)]">{meta}</span>}
+        <span className="block truncate font-[family-name:var(--font-heading)] font-semibold text-[15px] text-[var(--color-gray-900)]">{name}</span>
+        {meta && <span className="mt-0.5 block truncate text-sm text-[var(--color-gray-500)]">{meta}</span>}
       </span>
-      {trailing && <span className="shrink-0 text-xs text-[var(--color-gray-400)]">{trailing}</span>}
+      {trailing && <span className="shrink-0 text-xs font-medium text-[var(--color-gray-400)] tabular-nums">{trailing}</span>}
     </Comp>
   );
 }

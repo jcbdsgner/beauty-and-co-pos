@@ -15,17 +15,16 @@ type CheckboxProps = {
 };
 
 /**
- * Rebuilt so the tap target is real by construction, not a hit-area patch on top of a 20px box:
- * the whole row is always the control (min-h-11, padded, presses with active:bg) whether or not
- * a visible label is passed — an unlabeled checkbox still needs a real aria-label, not a bare
- * 20px square with nothing said about what it checks.
+ * The whole row is the control (min-h-14, padded, presses with active:bg) whether or not a
+ * visible label is passed — no bare 20px square to miss on a touchscreen. An unlabeled checkbox
+ * still requires a real aria-label.
  */
 export function Checkbox({ checked, onChange, label, "aria-label": ariaLabel, id, disabled, className }: CheckboxProps) {
   return (
     <label
       htmlFor={id}
       className={cn(
-        "flex min-h-11 items-center gap-3 rounded-xl px-1 text-sm text-[var(--color-gray-700)] transition",
+        "flex min-h-14 items-center gap-3 rounded-xl px-1 text-[15px] text-[var(--color-gray-700)] transition",
         disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer active:bg-[var(--color-gray-50)]",
         className,
       )}
@@ -37,13 +36,13 @@ export function Checkbox({ checked, onChange, label, "aria-label": ariaLabel, id
         disabled={disabled}
         aria-label={label ? undefined : ariaLabel}
         className={cn(
-          "flex size-6 shrink-0 items-center justify-center rounded-lg border-2 border-[var(--color-gray-300)] bg-white transition",
-          "data-[state=checked]:border-[var(--core-brand-color)] data-[state=checked]:bg-[var(--core-brand-color)]",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-taupe-muted)] focus-visible:ring-offset-2",
+          "flex size-7 shrink-0 items-center justify-center rounded-lg border-2 border-[var(--color-gray-300)] bg-white transition",
+          "data-[state=checked]:border-primary data-[state=checked]:bg-primary",
+          "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/25",
         )}
       >
         <CheckboxPrimitive.Indicator>
-          <Check aria-hidden className="size-4 text-black" strokeWidth={3} />
+          <Check aria-hidden className="size-4 text-primary-foreground" strokeWidth={3} />
         </CheckboxPrimitive.Indicator>
       </CheckboxPrimitive.Root>
       {label}
