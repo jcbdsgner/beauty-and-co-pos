@@ -44,7 +44,7 @@ export function GiftCardQueue() {
         </Board>
       ) : (
         <Board legend={`File · ${open.length}`}>
-          <div className="flex flex-col gap-2 p-3">
+          <div className="flex flex-col gap-1.5 p-2.5">
             {open.map((order) => (
               <GiftCardQueueRow key={order.id} order={order} />
             ))}
@@ -70,7 +70,7 @@ function GiftCardQueueRow({ order }: { order: GiftCardOrder }) {
   const isLivraison = order.fulfillment === "livraison";
 
   return (
-    <div className="rounded-[10px] border border-[var(--board-groove)] px-4 py-3">
+    <div className="rounded-[10px] border border-[var(--board-groove)] px-4 py-2.5">
       {/* Off-screen print target — react-to-print reads the live DOM, so keep it mounted. */}
       <div aria-hidden className="pointer-events-none fixed -left-[9999px] top-0">
         <div ref={cardRef}>
@@ -81,26 +81,24 @@ function GiftCardQueueRow({ order }: { order: GiftCardOrder }) {
       <div className="flex items-center gap-3">
         <Avatar
           initial={buyer ? clientInitial(buyer) : "?"}
-          size={40}
+          size={38}
           className="bg-accent font-semibold text-secondary"
         />
-        <span className="min-w-0 flex-1">
-          <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="truncate font-[family-name:var(--font-heading)] text-[15px] font-semibold text-[var(--color-gray-900)]">
-              {buyer ? clientFullName(buyer) : "Cliente inconnue"}
-            </span>
-            <span className="font-[family-name:var(--font-heading)] text-[15px] font-semibold tabular-nums text-[var(--button-2-color)]">
-              {formatFcfa(order.amount)}
-            </span>
-            <Badge variant={isLivraison ? "info" : "neutral"}>{isLivraison ? "Livraison" : "Retrait"}</Badge>
+        <span className="flex min-w-0 flex-1 items-center gap-x-2">
+          <span className="truncate font-[family-name:var(--font-heading)] text-[15px] font-semibold text-[var(--color-gray-900)]">
+            {buyer ? clientFullName(buyer) : "Cliente inconnue"}
           </span>
+          <span className="shrink-0 font-[family-name:var(--font-heading)] text-[15px] font-semibold tabular-nums text-[var(--button-2-color)]">
+            {formatFcfa(order.amount)}
+          </span>
+          <Badge variant={isLivraison ? "info" : "neutral"}>{isLivraison ? "Livraison" : "Retrait"}</Badge>
         </span>
-        <FlipChip
-          value={printed ? "Imprimée" : "À imprimer"}
-          tone={printed ? "neutral" : "signal"}
-          className="min-w-0 px-2"
-        />
-        <span className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2.5">
+          <FlipChip
+            value={printed ? "Imprimée" : "À imprimer"}
+            tone={printed ? "neutral" : "signal"}
+            className="min-w-0 px-2"
+          />
           {printed ? (
             <>
               <IconButton
@@ -127,14 +125,12 @@ function GiftCardQueueRow({ order }: { order: GiftCardOrder }) {
               Imprimer
             </Button>
           )}
-        </span>
+        </div>
       </div>
 
       {isLivraison && (
-        <p className="mt-2 pl-[52px] text-xs text-[var(--color-gray-500)]">
-          {order.recipientName} · {order.recipientPhone}
-          <br />
-          {order.deliveryAddress}
+        <p className="mt-1 pl-[50px] text-xs leading-snug text-[var(--color-gray-500)]">
+          {order.recipientName} · {order.recipientPhone} · {order.deliveryAddress}
         </p>
       )}
     </div>
