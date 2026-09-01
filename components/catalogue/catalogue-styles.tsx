@@ -30,7 +30,7 @@ export function CatalogueStyles() {
     <div className="flex flex-col gap-6">
       <Board
         legend={`${filtered.length} planche${filtered.length > 1 ? "s" : ""}`}
-        legendRight={<ChipFilter options={FILTERS} value={filter} onChange={setFilter} />}
+        legendRight={<ChipFilter options={FILTERS} value={filter} onChange={setFilter} wrap={false} className="max-w-full sm:max-w-[70%]" />}
         tone="plain"
       >
         {filtered.length === 0 ? (

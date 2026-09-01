@@ -44,7 +44,8 @@ export function MenuPanel({ saleId }: { saleId: string }) {
 
   const railTiles = useMemo(
     () => [
-      { id: "toutes", name: "Toutes", count: items.filter((i) => i.active).length },
+      // Le Bar (« boissons ») a sa propre tuile : on ne le fond pas dans le « Toutes » de la revente.
+      { id: "toutes", name: "Toutes", count: items.filter((i) => i.active && i.categoryId !== "boissons").length },
       ...categories.map((c) => ({ id: c.id, name: c.name, count: items.filter((i) => i.categoryId === c.id).length })),
     ],
     [categories, items],
@@ -61,7 +62,8 @@ export function MenuPanel({ saleId }: { saleId: string }) {
   const filtered = items.filter((item) => {
     const q = query.trim().toLowerCase();
     const matchesQuery = !q || item.name.toLowerCase().includes(q);
-    const matchesCategory = categoryId === "toutes" || item.categoryId === categoryId;
+    const matchesCategory =
+      categoryId === "toutes" ? item.categoryId !== "boissons" : item.categoryId === categoryId;
     const matchesSub = !subcategory || ("subcategory" in item && item.subcategory === subcategory);
     return matchesQuery && matchesCategory && matchesSub && item.active;
   });
@@ -161,7 +163,9 @@ export function MenuPanel({ saleId }: { saleId: string }) {
               {filtered.map((item) => {
                 const inCart = countByRef[item.id] ?? 0;
                 const isProduit = !("durationMinutes" in item);
-                const remaining = "stock" in item ? item.stock - inCart : null;
+                // Les boissons du Bar ne portent pas de stock affiché (un bar ne compte pas au verre).
+                const tracksStock = "stock" in item && item.categoryId !== "boissons";
+                const remaining = tracksStock ? item.stock - inCart : null;
                 const soldOut = remaining !== null && remaining <= 0;
                 return (
                   <button

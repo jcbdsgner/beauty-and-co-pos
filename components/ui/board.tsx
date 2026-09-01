@@ -327,14 +327,23 @@ export function ChipFilter({
   onChange,
   options,
   className,
+  wrap = true,
 }: {
   value: string;
   onChange: (v: string) => void;
   options: { value: string; label: string; count?: number }[];
   className?: string;
+  /** false → one non-wrapping row that scrolls horizontally (for long category lists). */
+  wrap?: boolean;
 }) {
   return (
-    <div className={cn("flex flex-wrap items-center gap-1.5", className)}>
+    <div
+      className={cn(
+        "flex items-center gap-1.5",
+        wrap ? "flex-wrap" : "min-w-0 flex-nowrap overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+        className,
+      )}
+    >
       {options.map((o) => {
         const active = o.value === value;
         return (
@@ -344,7 +353,7 @@ export function ChipFilter({
             onClick={() => onChange(o.value)}
             aria-pressed={active}
             className={cn(
-              "inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[0.8rem] font-semibold transition active:scale-[0.97]",
+              "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[0.8rem] font-semibold transition active:scale-[0.97]",
               active
                 ? "bg-[var(--brand-taupe-muted)] text-white"
                 : "border border-[var(--board-groove)] bg-white text-[var(--color-gray-500)] hover:bg-[var(--color-gray-50)]",

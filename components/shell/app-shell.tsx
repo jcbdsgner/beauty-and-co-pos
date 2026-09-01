@@ -15,7 +15,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <Header />
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="min-h-0 flex-1 overflow-y-auto scroll-pt-24">
           <div className="mx-auto max-w-6xl px-8 py-8">{children}</div>
         </div>
         <ComptoirBar />

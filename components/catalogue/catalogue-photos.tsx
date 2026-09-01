@@ -60,7 +60,7 @@ export function CataloguePhotos() {
   return (
     <Board
       legend={`${filled} / ${SLOT_COUNT} emplacements`}
-      legendRight={<ChipFilter options={PHOTO_CATEGORIES} value={category} onChange={setCategory} />}
+      legendRight={<ChipFilter options={PHOTO_CATEGORIES} value={category} onChange={setCategory} wrap={false} className="max-w-full sm:max-w-[70%]" />}
     >
       <div className="grid grid-cols-2 gap-px bg-[var(--board-groove)] md:grid-cols-3">
         {currentSlots.map((slot, index) => (

@@ -119,7 +119,7 @@ export default function AccueilPage() {
             </p>
             {roundBreakdown && <p className="mt-0.5 text-sm text-[var(--color-gray-500)]">{roundBreakdown}</p>}
           </div>
-          <Button variant="outline" size="sm" href="/relances" icon={<ArrowRight className="size-4" />} className="shrink-0">
+          <Button variant="dark" size="sm" href="/relances" icon={<ArrowRight className="size-4" />} className="shrink-0">
             Ouvrir les relances
           </Button>
         </div>
@@ -148,6 +148,11 @@ export default function AccueilPage() {
                 const client = clients.find((c) => c.id === reservation.payerClientId);
                 const service = serviceById(rv.serviceId);
                 const second = rv.secondStaffId ? praticiennes.find((p) => p.id === rv.secondStaffId) : null;
+                const primaryStaff = praticiennes.find((p) => p.id === rv.staffId);
+                // A two-practitioner rendez-vous appears on both lanes; the encaissement lives on the
+                // primary lane only, so the second lane is read-only.
+                const isSecondLane = Boolean(second && staff.id === rv.secondStaffId && staff.id !== rv.staffId);
+                const partnerName = isSecondLane ? primaryStaff?.name : second?.name;
                 const benef = rv.beneficiaryClientId
                   ? clients.find((c) => c.id === rv.beneficiaryClientId)?.lastName
                   : rv.beneficiaryName;
@@ -172,7 +177,7 @@ export default function AccueilPage() {
                     meta={
                       `${service?.name ?? "Prestation"}` +
                       (benef ? ` · pour ${benef}` : "") +
-                      (second ? ` · à 2 (${second.name})` : "") +
+                      (partnerName ? ` · à 2 avec ${partnerName}` : "") +
                       (siblings > 0 ? ` · +${siblings} sur la note` : "") +
                       (absent ? " · praticienne absente" : "")
                     }
@@ -187,9 +192,15 @@ export default function AccueilPage() {
                     signal={absent ? "hold" : "none"}
                     onSelect={() => setDetail(rv)}
                     actions={
-                      <Button size="sm" variant={hasSale ? "outline" : "dark"} onClick={() => requestEncaissement(reservation.id)}>
-                        {hasSale ? "Voir la vente" : "Encaisser"}
-                      </Button>
+                      isSecondLane ? (
+                        <span className="text-xs font-medium tracking-[0.06em] text-[var(--color-gray-400)] uppercase">
+                          {hasSale ? "En cours" : "Sur la note"}
+                        </span>
+                      ) : (
+                        <Button size="sm" variant={hasSale ? "outline" : "dark"} onClick={() => requestEncaissement(reservation.id)}>
+                          {hasSale ? "Voir la vente" : "Encaisser"}
+                        </Button>
+                      )
                     }
                   />
                 );

@@ -91,8 +91,8 @@ export default function RelancesPage() {
   const total = relances.filter((r) => r.status === "a_venir").length;
   const context =
     total > 0
-      ? `${total} relance${total > 1 ? "s" : ""} à venir. Envoi automatique — cet écran est en lecture seule.`
-      : "Aucune relance à venir. Envoi automatique — cet écran est en lecture seule.";
+      ? `${total} relance${total > 1 ? "s" : ""} programmée${total > 1 ? "s" : ""}. Tout part automatiquement.`
+      : "Aucune relance programmée. Tout part automatiquement.";
 
   function relanceLane(r: Relance) {
     const client = clientFor(r.clientId);
@@ -123,21 +123,19 @@ export default function RelancesPage() {
     <div className="flex flex-col gap-6">
       <BoardHeader section="Relances" context={context} />
 
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="w-full max-w-sm">
-            <ClientSearchField
-              selectedClientId={clientFilter}
-              onSelect={setClientFilter}
-              placeholder="Filtrer par cliente…"
-            />
-          </div>
-          {clientFilter && (
-            <Button variant="outline" size="sm" onClick={() => setClientFilter(null)}>
-              Toutes les clientes
-            </Button>
-          )}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <div className="w-full max-w-[240px]">
+          <ClientSearchField
+            selectedClientId={clientFilter}
+            onSelect={setClientFilter}
+            placeholder="Filtrer par cliente…"
+          />
         </div>
+        {clientFilter && (
+          <Button variant="outline" size="sm" onClick={() => setClientFilter(null)}>
+            Toutes les clientes
+          </Button>
+        )}
         <ChipFilter value={typeFilter} onChange={setTypeFilter} options={TYPE_OPTIONS} />
         <ChipFilter value={channelFilter} onChange={setChannelFilter} options={CHANNEL_OPTIONS} />
       </div>

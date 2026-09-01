@@ -230,7 +230,7 @@ export function PaymentStep({ sale }: { sale: Sale }) {
         </div>
 
         {/* Right — the ticket, then the mode-specific step */}
-        <div className="flex flex-col justify-center gap-4">
+        <div className={cn("flex flex-col gap-4", primaryMode && !involvesCash ? "justify-center" : "justify-start")}>
           {!primaryMode ? (
             ticketRecap
           ) : involvesCash ? (

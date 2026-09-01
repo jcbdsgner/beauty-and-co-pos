@@ -13,6 +13,7 @@ import { AppointmentDetailSheet } from "@/components/planning/appointment-detail
 import { useEncaissement } from "@/components/journee/use-encaissement";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { clientFullName } from "@/lib/data/clientele";
+import { cn } from "@/lib/utils";
 import { serviceById } from "@/lib/data/menu";
 import { appointmentEndTime, flattenRendezVous } from "@/lib/data/planning";
 import type { Praticienne, RendezVous, Reservation } from "@/lib/data/types";
@@ -124,11 +125,16 @@ function PlanningBoardInner({ initialGrouping }: Required<PlanningBoardProps>) {
         signal={signal}
         onSelect={() => setDetail(rv)}
         actions={
-          rv.status !== "annule" && (
+          rv.status !== "annule" &&
+          (isSecondLane ? (
+            <span className="text-xs font-medium tracking-[0.06em] text-[var(--color-gray-400)] uppercase">
+              {hasSale ? "En cours" : "Sur la note"}
+            </span>
+          ) : (
             <Button size="sm" variant={hasSale ? "outline" : "dark"} onClick={() => requestEncaissement(reservation.id)}>
               {hasSale ? "Voir la vente" : "Encaisser"}
             </Button>
-          )
+          ))
         }
       />
     );
@@ -175,7 +181,7 @@ function PlanningBoardInner({ initialGrouping }: Required<PlanningBoardProps>) {
             <div className="border-b border-[var(--board-groove)] bg-black/[0.02] px-4 py-2">
               <Legend>{p.name} · {items.length}</Legend>
             </div>
-            {items.map((r) => apptLane(r, false))}
+            {items.map((r) => apptLane(r, false, p.id))}
           </div>
         );
       })
@@ -293,12 +299,17 @@ function RosterRail({
             : hours
               ? `${hours} · ${count} rdv`
               : `${count} rdv`;
+        const off = !working;
         return (
           <div key={p.id} className={cnRail(staffFilter === p.id)}>
             <button type="button" onClick={() => onFilter(staffFilter === p.id ? null : p.id)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
-              <Avatar initial={p.initial} size={28} className="bg-accent text-[0.7rem] font-semibold text-secondary" />
+              <Avatar
+                initial={p.initial}
+                size={28}
+                className={cnAvatar(off)}
+              />
               <span className="min-w-0">
-                <span className="block truncate text-sm font-semibold text-[var(--color-gray-900)]">{p.name}</span>
+                <span className={cn("block truncate text-sm font-semibold", off ? "text-[var(--color-gray-400)]" : "text-[var(--color-gray-900)]")}>{p.name}</span>
                 <span className="block text-[0.7rem] text-[var(--color-gray-400)] tabular-nums">{sub}</span>
               </span>
             </button>
@@ -360,4 +371,11 @@ function cnRail(active: boolean) {
     "flex items-center gap-1.5 border-b border-[var(--board-groove)] px-3 py-2.5 last:border-b-0 transition",
     active ? "bg-[var(--brand-rose-soft)]" : "hover:bg-black/[0.02]",
   ].join(" ");
+}
+
+function cnAvatar(off: boolean) {
+  return cn(
+    "text-[0.7rem] font-semibold",
+    off ? "bg-[var(--color-gray-100)] text-[var(--color-gray-400)]" : "bg-accent text-secondary",
+  );
 }

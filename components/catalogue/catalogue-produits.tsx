@@ -36,7 +36,7 @@ export function CatalogueProduits() {
   return (
     <Board
       legend={`${filtered.length} produit${filtered.length > 1 ? "s" : ""}`}
-      legendRight={<ChipFilter options={options} value={category} onChange={setCategory} />}
+      legendRight={<ChipFilter options={options} value={category} onChange={setCategory} wrap={false} className="max-w-full sm:max-w-[70%]" />}
     >
       {filtered.length === 0 ? (
         <BoardEmpty title="Aucun produit dans cette catégorie" hint="Choisissez une autre catégorie ci-dessus." />
