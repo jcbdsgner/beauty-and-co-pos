@@ -1,7 +1,7 @@
 // Shared conceptual model — see docs/USERFLOW.md § "Modèle conceptuel". One object, one file per
 // concept below, all cross-referenced by id rather than duplicated, matching the unified model
-// (Rendez-vous <-> Vente relation, Relance as one discriminated-union object, Vente's "abandonnée"
-// state) that the v2 userflow rework requires.
+// (Rendez-vous <-> Vente relation, Conversation/Message per client thread — ADR 0011, Vente's
+// "abandonnée" state) that the v2 userflow rework requires.
 
 export type Role = "coiffeuse" | "estheticienne" | "menage" | "accueil";
 
@@ -234,25 +234,42 @@ export type Style = {
 
 export type RelanceType = "anniversaire" | "soins" | "fidelite" | "reconquete" | "recommandation";
 
-/** Relances now fire automatically from a back-office outside this app; the section only reads them.
- *  A relance is simply still to come or already gone out — no authorisation or ignore states. */
-export type RelanceStatus = "a_venir" | "envoyee";
-
 export type RelanceChannel = "whatsapp" | "sms" | "email";
 
-export type Relance = {
+/**
+ * Who holds a conversation thread (ADR 0011). `auto` and `conseillere` behave identically — the
+ * virtual conseillère tends the thread, scheduled relances go out — they differ only by the inbox
+ * token: `auto` was never touched by a human, `conseillere` was handed back to her after a
+ * receptionist take-over. `direction` is terminal: the thread left the app, it stays read-only.
+ */
+export type ConversationState = "auto" | "conseillere" | "receptionniste" | "direction";
+
+export type MessageSender = "cliente" | "receptionniste" | "conseillere";
+
+export type Message = {
   id: string;
-  clientId: string;
-  type: RelanceType;
-  status: RelanceStatus;
-  /** Which channel the automatic message goes out on — a read-only filter in the section. */
+  sender: MessageSender;
   channel: RelanceChannel;
-  /** ISO datetime — when it was sent (`envoyee`) or is scheduled to go out (`a_venir`). */
-  date: string;
-  message: string;
+  /** ISO datetime — when the message went out, or (if `pending`) when the relance is due to. */
+  at: string;
+  body: string;
+  /** Present ⇔ the message is an automatic relance carried by the Conseillère. */
+  relanceType?: RelanceType;
+  /** true ⇔ a scheduled relance that has not gone out yet. */
+  pending?: boolean;
   lateDays?: number;
   styleId?: string;
   discountLabel?: string;
+};
+
+export type Conversation = {
+  id: string;
+  clientId: string;
+  channel: RelanceChannel;
+  state: ConversationState;
+  /** A client reply not yet seen — carries the amber signal. */
+  unread: boolean;
+  messages: Message[];
 };
 
 export type Company = {

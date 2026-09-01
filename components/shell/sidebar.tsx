@@ -10,15 +10,16 @@ import { ConfirmDialog } from "@/components/ui/molecules/confirm-dialog";
 import { SwitchUserDialog } from "@/components/compte/switch-user-dialog";
 import { useSession } from "@/lib/session";
 import { ROLE_LABEL } from "@/lib/data/utilisateurs";
-import { HomeIcon, CalendarIcon, PeopleIcon, HeartPulseIcon, GearIcon, LogoutIcon } from "@/components/ui/atoms/icons";
-import { Sparkles, ArrowLeftRight } from "lucide-react";
+import { HomeIcon, CalendarIcon, PeopleIcon, GearIcon, LogoutIcon } from "@/components/ui/atoms/icons";
+import { MessageCircle, Sparkles, ArrowLeftRight } from "lucide-react";
+import { useAppData } from "@/components/providers/app-data-provider";
 import { cn } from "@/lib/utils";
 
 const NAV = [
   { href: "/", label: "Accueil", icon: HomeIcon, match: (p: string) => p === "/" || p.startsWith("/recap-ventes") },
   { href: "/planning", label: "Planning", icon: CalendarIcon, match: (p: string) => p.startsWith("/planning") || p.startsWith("/equipe") },
   { href: "/clientele", label: "Clientèle", icon: PeopleIcon, match: (p: string) => p.startsWith("/clientele") },
-  { href: "/relances", label: "Relances", icon: HeartPulseIcon, match: (p: string) => p.startsWith("/relances") },
+  { href: "/messages", label: "Messages", icon: MessageCircle, match: (p: string) => p.startsWith("/messages") },
   { href: "/catalogue", label: "Catalogue", icon: Sparkles, match: (p: string) => p.startsWith("/catalogue") },
 ];
 
@@ -29,6 +30,8 @@ export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { currentUser } = useSession();
+  const { conversations } = useAppData();
+  const unreadCount = conversations.filter((c) => c.unread).length;
   const [confirmLogout, setConfirmLogout] = useState(false);
   const [switchOpen, setSwitchOpen] = useState(false);
 
@@ -53,7 +56,12 @@ export function Sidebar() {
               )}
             >
               <Icon className="size-5" />
-              {item.label}
+              <span className="flex-1">{item.label}</span>
+              {item.href === "/messages" && unreadCount > 0 && (
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--board-amber)] px-1 text-[11px] font-semibold text-white tabular-nums">
+                  {unreadCount}
+                </span>
+              )}
             </Link>
           );
         })}

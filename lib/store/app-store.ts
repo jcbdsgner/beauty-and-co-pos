@@ -5,16 +5,16 @@ import { CLIENTS, clientFullName } from "@/lib/data/clientele";
 import { RESERVATIONS, reservationById, timeToMinutes } from "@/lib/data/planning";
 import { PRODUITS, serviceById } from "@/lib/data/menu";
 import { PRATICIENNES } from "@/lib/data/praticiennes";
-import { RELANCES } from "@/lib/data/relances";
+import { CONVERSATIONS } from "@/lib/data/conversations";
 import { CARTES_CADEAUX, carteCadeauByCode, giftCardExpiryLabel, normalizeGiftCardCode } from "@/lib/data/cartes-cadeaux";
 import { formatFcfa } from "@/lib/utils";
 import type {
   CartLine,
   Cliente,
+  Conversation,
   PaymentMode,
   Praticienne,
   Produit,
-  Relance,
   RemiseMode,
   RendezVous,
   Reservation,
@@ -172,9 +172,10 @@ export type AppState = {
   /** Client ids most recently opened on this station, newest first — powers "Vues récemment" on
    *  the Clientèle landing. Session-only, capped, no persistence (consistent with the rest of the store). */
   recentClientIds: string[];
-  /** Relances the direction's back-office fires automatically — read-only here. The section and
-   *  the Fiche cliente both read this list; nothing in the app writes to it (ADR 0010). */
-  relances: Relance[];
+  /** One message thread per cliente (ADR 0011). The receptionist can take a thread over and write,
+   *  hand it back to the Conseillère, or transfer it to the direction (terminal). Scheduled
+   *  relances stay defined in the direction's back-office — the app only writes *into* a thread. */
+  conversations: Conversation[];
 
   // Clients
   addClient: (data: Omit<Cliente, "id" | "points" | "totalSpent" | "totalVisits" | "createdAt" | "tier">) => Cliente;
@@ -227,6 +228,19 @@ export type AppState = {
   setLoyaltyPointsUsed: (saleId: string, points: number) => void;
   confirmPayment: (saleId: string, modes: { mode: PaymentMode; amount: number }[]) => void;
   activeSale: () => Sale | undefined;
+
+  // Messages (ADR 0011)
+  /** Receptionist takes a thread over — she now writes; that cliente's pending relances are held. */
+  takeOverConversation: (convId: string) => void;
+  /** Hand a thread back to the Conseillère (never back to `auto`). */
+  handBackToConseillere: (convId: string) => void;
+  /** Transfer a thread to the direction — terminal, the thread leaves the app and freezes. */
+  transferToDirection: (convId: string) => void;
+  /** Append a receptionist message; no-op unless the thread is `receptionniste`. Scripts one
+   *  client reply back after ~1.5s (prototype, like the scanner demo). */
+  sendClientMessage: (convId: string, body: string) => void;
+  /** A client reply has been seen — clears the amber signal. */
+  markConversationRead: (convId: string) => void;
 };
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -239,7 +253,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   activeSaleId: null,
   comptoirDeployed: false,
   recentClientIds: [],
-  relances: RELANCES,
+  conversations: CONVERSATIONS,
 
   addClient: (data) => {
     const client: Cliente = { ...data, id: nextId("cl"), tier: null, points: 0, totalSpent: 0, totalVisits: 0, createdAt: new Date().toISOString() };
@@ -590,5 +604,74 @@ export const useAppStore = create<AppState>((set, get) => ({
   activeSale: () => {
     const { sales, activeSaleId } = get();
     return sales.find((s) => s.id === activeSaleId);
+  },
+
+  // ── Messages (ADR 0011) ────────────────────────────────────────────────
+  takeOverConversation: (convId) =>
+    set((s) => ({
+      conversations: s.conversations.map((c) =>
+        c.id === convId && c.state !== "direction" ? { ...c, state: "receptionniste" } : c,
+      ),
+    })),
+
+  handBackToConseillere: (convId) =>
+    set((s) => ({
+      conversations: s.conversations.map((c) =>
+        c.id === convId && c.state === "receptionniste" ? { ...c, state: "conseillere" } : c,
+      ),
+    })),
+
+  transferToDirection: (convId) =>
+    set((s) => ({
+      conversations: s.conversations.map((c) => (c.id === convId ? { ...c, state: "direction" } : c)),
+    })),
+
+  markConversationRead: (convId) =>
+    set((s) => ({
+      conversations: s.conversations.map((c) => (c.id === convId && c.unread ? { ...c, unread: false } : c)),
+    })),
+
+  sendClientMessage: (convId, body) => {
+    const text = body.trim();
+    if (!text) return;
+    const conv = get().conversations.find((c) => c.id === convId);
+    if (!conv || conv.state !== "receptionniste") return;
+    const now = new Date().toISOString();
+    set((s) => ({
+      conversations: s.conversations.map((c) =>
+        c.id === convId
+          ? {
+              ...c,
+              messages: [
+                ...c.messages,
+                { id: `m-${convId}-${c.messages.length + 1}`, sender: "receptionniste", channel: c.channel, at: now, body: text },
+              ],
+            }
+          : c,
+      ),
+    }));
+    // Scripted client reply, like the scanner demo — one line, once, after a short delay.
+    setTimeout(() => {
+      set((s) => ({
+        conversations: s.conversations.map((c) =>
+          c.id === convId
+            ? {
+                ...c,
+                unread: true,
+                messages: [
+                  ...c.messages,
+                  {
+                    id: `m-${convId}-${c.messages.length + 1}`,
+                    sender: "cliente",
+                    channel: c.channel,
+                    at: new Date().toISOString(),
+                    body: "Merci, c'est noté 🙏",
+                  },
+                ],
+              }
+            : c,
+        ),
+      }));
+    }, 1500);
   },
 }));

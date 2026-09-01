@@ -33,7 +33,7 @@ La personne qui **reçoit** une prestation d'un rendez-vous — distincte de la 
 _Avoid_: Invité·e, accompagnant·e, second client
 
 **Accueil**:
-La section d'atterrissage de l'app : le centre de pilotage du jour — chronologie des rendez-vous du jour (groupés par praticienne, chacun avec « Encaisser »), résumé de l'argent réellement encaissé, widget « Tournée du matin » (rappel de ce qui part automatiquement aujourd'hui, lien vers la section Relances). Porté le nom **Journée** pendant la refonte v2 du userflow, revenu à **Accueil**. Ne ressuscite pas le verbe **Accueillir** (retiré — voir Encaisser) : la section s'appelle Accueil, le geste au comptoir reste « Encaisser ». Coexiste avec le rôle « Accueil » de la vue Équipe (la fonction de la personne au comptoir) — même mot, contextes distincts (item de navigation vs filtre de rôle).
+La section d'atterrissage de l'app : le centre de pilotage du jour — chronologie des rendez-vous du jour (groupés par praticienne, chacun avec « Encaisser »), résumé de l'argent réellement encaissé, cartes cadeaux à imprimer. Porté le nom **Journée** pendant la refonte v2 du userflow, revenu à **Accueil**. Ne ressuscite pas le verbe **Accueillir** (retiré — voir Encaisser) : la section s'appelle Accueil, le geste au comptoir reste « Encaisser ». Coexiste avec le rôle « Accueil » de la vue Équipe (la fonction de la personne au comptoir) — même mot, contextes distincts (item de navigation vs filtre de rôle).
 _Avoid_: Journée (nom de refonte v2, abandonné), Accueillir (verbe retiré), Dashboard, Tableau de bord, Home, Bienvenue
 
 **Planning**:
@@ -45,16 +45,32 @@ Déplacer un rendez-vous existant à un autre créneau (jour + heure), depuis la
 _Avoid_: Décaler, Déplacer, Reporter
 
 **Clientèle**:
-La section de consultation de la relation cliente dans la durée. Porte d'entrée **recherche d'abord** : grande recherche cliente (mécanisme unique, partagé avec le Comptoir) + « Vues récemment » + « Attendues aujourd'hui » ; l'annuaire complet filtrable (Toutes / Nouvelles / Historique / VIP) vit sur la même page, en dessous. Mène à la **Fiche cliente** (identité, historique de visites, abonnement, fidélité, **préférences**). Ne contient ni tournée de relance ni campagnes — la vue lecture des relances vit dans la section **Relances**.
+La section de consultation de la relation cliente dans la durée. Porte d'entrée **recherche d'abord** : grande recherche cliente (mécanisme unique, partagé avec le Comptoir) + « Vues récemment » + « Attendues aujourd'hui » ; l'annuaire complet filtrable (Toutes / Nouvelles / Historique / VIP) vit sur la même page, en dessous. Mène à la **Fiche cliente** (identité, historique de visites, abonnement, fidélité, **préférences**, accès « Voir les échanges »). Ne contient ni tournée de relance ni campagnes — les échanges avec la cliente vivent dans la section **Messages**.
 _Avoid_: Clients (ancien nom de la section), Répertoire / Annuaire (une vue de la section, pas la section), Fichier client, CRM
 
 **Préférence**:
 Ce que le salon retient des goûts d'une cliente, sur sa fiche : le **type de cheveux**, la **référence couleur**, puis un texte libre par domaine — **mani-pédi-onglerie**, **coiffure**, **spa**, **épilation** — et les **préférences de boisson**. Des photos de référence peuvent être attachées par domaine. Une **note** ajoutée à la fiche peut être rangée dans l'un de ces domaines : son texte vient alors compléter la préférence correspondante (sinon elle reste une note interne).
 _Avoid_: Profil beauté (le libellé d'une carte, pas le concept), Goûts
 
-**Relances**:
-La section qui donne à la réceptionniste une **vue en lecture** sur les relances partant automatiquement aux clientes : celles déjà envoyées (cliente, type, date, canal — filtrable) et celles **à venir**, les **anniversaires** en tête pour qu'elle puisse en tenir compte quand la cliente se présente. Elle **n'envoie rien** et **ne configure rien** — conditions, délais et textes sont définis par la direction dans un back-office hors de cette app, l'envoi est automatique (ADR 0010). Le widget « Tournée du matin » de l'Accueil en est le rappel du jour.
-_Avoid_: Suivi (ancien nom), Fidélisation, Marketing, Tournée du matin (rappel de l'Accueil, plus un geste d'envoi), Campagne / Envois groupés (retirés)
+**Messages**:
+La section messagerie : un **fil de conversation par cliente** réunissant sur une seule timeline les **relances** automatiques déjà envoyées, celles **à venir**, et les messages échangés. La réceptionniste peut **prendre la main** sur un fil pour écrire à la cliente, **repasser la main** à la Conseillère, ou **transférer à la direction** (état terminal, hors app). Les **anniversaires** du jour restent en tête de l'inbox, pour en tenir compte quand la cliente se présente. Elle **ne configure toujours rien** — conditions, délais et textes des relances sont définis par la direction dans un back-office hors de cette app (ADR 0010, 0011). Ex-**Relances** (item de sidebar renommé ; « relance » reste le mot pour un message automatique dans un fil).
+_Avoid_: Relances (ancien nom de la section), Suivi, Fidélisation, Marketing, Chat / Messagerie instantanée (côté cliente c'est WhatsApp/SMS/email, pas un chat propriétaire), Tournée du matin (retirée), Campagne / Envois groupés (retirés)
+
+**Conversation** (ou **Fil**):
+L'échange avec une cliente précise dans la section Messages : une timeline unique de **Messages** (relances automatiques envoyées, relances à venir, réponses de la cliente, réponses de la Conseillère ou de la réceptionniste), plus un **état** et le **canal** (WhatsApp / SMS / email). Un fil par cliente. États : `conseillere` (la Conseillère tient le fil — défaut ; `auto` tant qu'aucun humain n'y a touché), `receptionniste` (un humain tient le fil ; les relances programmées de cette cliente sont **en pause**), `direction` (**terminal** — transféré hors de l'app, le fil reste visible figé).
+_Avoid_: Ticket, Discussion, Échange (le libellé d'un bouton, pas l'objet)
+
+**Message**:
+Une entrée d'un **Fil** : un émetteur (**cliente**, **réceptionniste** ou **Conseillère**), un canal, une date, un corps. Une **relance** est un Message porté par la Conseillère avec un type (anniversaire / soins / fidélité / reconquête / recommandation) ; tant qu'elle n'est pas partie, elle apparaît dans le fil comme un message **à venir**.
+_Avoid_: Bulle (la forme à l'écran, pas l'objet), Notification
+
+**Prise en main**:
+Le geste par lequel la réceptionniste passe un fil de l'état `conseillere` à `receptionniste` pour écrire elle-même à la cliente. Tant qu'elle tient le fil, les relances automatiques de cette cliente sont suspendues. Elle peut ensuite **repasser la main** à la Conseillère (les relances reprennent) ou **transférer à la direction**.
+_Avoid_: Reprise, Escalade, Assignation
+
+**Non lu**:
+L'état d'un fil dont la dernière réponse de la cliente n'a pas encore été vue. Porte le **signal ambre** de l'app (le seul) dans l'inbox et un compteur sur l'item de sidebar. Se lève quand le fil est ouvert.
+_Avoid_: Nouveau, En attente, Notification
 
 **Menu**:
 La liste des prestations et des produits que la réceptionniste peut mettre dans un panier et encaisser : chaque entrée a un nom, un prix, une catégorie ; les prestations portent en plus une **durée** et un marqueur **« réalisable à 2 »** (pastille 2 praticiennes) ; les **produits** portent un **stock**, décrémenté à chaque vente — un produit à zéro ne peut plus être ajouté au panier. C'est ce qu'on parcourt dans le panneau de gauche du Comptoir, où l'icône de la catégorie sélectionnée coiffe la liste. Édité hors de cette app — point-de-vente ne fait que le lire : la liste des prestations **reflète, verbatim, le catalogue de réservation Beauty and Co** (`b&co/lib/data/booking-services.ts`) — mêmes ids, libellés, prix, durées, éligibilité « à 2 ». Les libellés de prestation arrivent **en capitales** (« DEFRISAGE PROFESSIONNEL BEAUTY AND CO / TEXLAX ») : c'est la casse du catalogue b&co, conservée telle quelle à l'écran — jamais recasée (ni Title Case, ni phrase). La lisibilité au comptoir se règle par la mise en page, pas par la casse.
@@ -69,8 +85,8 @@ Une entrée du Catalogue : un look signature nommé, rattaché à une catégorie
 _Avoid_: Look, Modèle, Prestation vedette
 
 **Conseillère**:
-La conseillère beauté virtuelle qui signe les messages de relance envoyés aux clientes (« Votre conseillère beauté · Beauty and Co »). Ce n'est pas une personne de l'équipe. Son savoir — conseils par famille de soin, délais et textes de relance par prestation — est édité par la direction dans un back-office **hors de cette app** ; point-de-vente n'affiche que le résultat (cf. Relances).
-_Avoid_: Assistante, bot, IA (côté cliente elle est simplement « la conseillère »)
+L'agent conversationnel beauté virtuel qui **tient la conversation automatiquement** avec les clientes : elle envoie les relances programmées et répond aux messages entrants — par défaut sur chaque fil, ou dès que la réceptionniste lui **repasse la main**. Ses messages sont signés « Votre conseillère beauté · Beauty and Co ». Ce n'est pas une personne de l'équipe. Son savoir — conseils par famille de soin, délais et textes de relance — est édité par la direction dans un back-office **hors de cette app** ; point-de-vente n'affiche que le résultat. Côté cliente, toujours « la conseillère », jamais « bot ».
+_Avoid_: Assistante, bot, IA, chatbot (côté cliente elle est simplement « la conseillère »)
 
 **Remise**:
 Toute réduction appliquée à une vente. Trois mécanismes, **cumulables**, pouvant amener le total à 0 F : des **points fidélité** utilisés, une **carte cadeau**, et une **remise accordée** par la réceptionniste. Le pied de ticket, le reçu et le Récap des ventes les **ventilent** ligne par ligne — jamais un total « Remises » agrégé.

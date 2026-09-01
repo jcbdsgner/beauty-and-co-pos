@@ -32,23 +32,9 @@ import {
   PREFERENCE_DOMAINS,
   PREFERENCE_DOMAIN_LABEL,
   type PreferenceDomain,
-  type RelanceChannel,
-  type RelanceType,
 } from "@/lib/data/types";
 
 const TIER_LABEL: Record<string, string> = { vip: "VIP", gold: "Gold", silver: "Silver" };
-const RELANCE_TYPE_LABEL: Record<RelanceType, string> = {
-  anniversaire: "Anniversaire",
-  fidelite: "Fidélité",
-  soins: "Soin & rendez-vous",
-  reconquete: "Reconquête",
-  recommandation: "Recommandation",
-};
-const RELANCE_CHANNEL_LABEL: Record<RelanceChannel, string> = {
-  whatsapp: "WhatsApp",
-  sms: "SMS",
-  email: "Email",
-};
 
 /** Where "Ajouter une note" files the text: the internal log, or one of the five préférence domains. */
 const NOTE_TARGETS: { value: string; label: string }[] = [
@@ -58,7 +44,7 @@ const NOTE_TARGETS: { value: string; label: string }[] = [
 
 export function FicheClienteView({ clientId }: { clientId: string }) {
   const router = useRouter();
-  const { clients, praticiennes, relances, openNewTab, updateClient, noteClientViewed } = useAppData();
+  const { clients, praticiennes, conversations, openNewTab, updateClient, noteClientViewed } = useAppData();
   const client = clients.find((c) => c.id === clientId);
   const clientExists = Boolean(client);
 
@@ -90,9 +76,10 @@ export function FicheClienteView({ clientId }: { clientId: string }) {
   }
 
   const preferredStaff = client.preferredStaffId ? praticiennes.find((p) => p.id === client.preferredStaffId) : undefined;
-  const upcomingRelances = relances
-    .filter((r) => r.clientId === client.id && r.status === "a_venir")
-    .sort((a, b) => a.date.localeCompare(b.date));
+  const conversation = conversations.find((c) => c.clientId === client.id);
+  const lastMessages = conversation
+    ? [...conversation.messages].sort((a, b) => a.at.localeCompare(b.at)).slice(-2)
+    : [];
   const preferenceNotes = client.preferenceNotes ?? {};
   const preferencePhotos = client.preferencePhotos ?? {};
   const hasPreferences = Boolean(
@@ -184,27 +171,33 @@ export function FicheClienteView({ clientId }: { clientId: string }) {
           </Board>
 
           <Board
-            legend="Relances à venir"
+            legend="Échanges"
             legendRight={
-              upcomingRelances.length > 0 && (
-                <a href="/relances" className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--brand-taupe-muted)] underline underline-offset-2">
-                  Voir les relances
+              lastMessages.length > 0 && (
+                <a
+                  href={`/messages?client=${client.id}`}
+                  className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--brand-taupe-muted)] underline underline-offset-2"
+                >
+                  Voir les échanges
                 </a>
               )
             }
           >
-            {upcomingRelances.length === 0 ? (
-              <BoardEmpty title="Aucune relance à venir" hint="Rien de programmé pour cette cliente." />
+            {lastMessages.length === 0 ? (
+              <BoardEmpty title="Aucun échange" hint="Rien n'a encore été envoyé à cette cliente." />
             ) : (
-              upcomingRelances.map((r) => (
-                <Lane
-                  key={r.id}
-                  title={RELANCE_TYPE_LABEL[r.type]}
-                  meta={<span className="line-clamp-2">{r.message}</span>}
-                  chip={<FlipChip value={RELANCE_CHANNEL_LABEL[r.channel]} tone="neutral" />}
-                  className="items-start py-3"
-                />
-              ))
+              lastMessages.map((m) => {
+                const who =
+                  m.sender === "cliente" ? client.firstName : m.sender === "receptionniste" ? "Vous" : "Conseillère";
+                return (
+                  <Lane
+                    key={m.id}
+                    title={who}
+                    meta={<span className="line-clamp-2">{m.body}</span>}
+                    className="items-start py-3"
+                  />
+                );
+              })
             )}
           </Board>
 

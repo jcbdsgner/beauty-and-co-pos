@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, ChevronRight, Users } from "lucide-react";
+import { ChevronRight, Users } from "lucide-react";
 import { Avatar } from "@/components/ui/atoms/avatar";
 import { Button } from "@/components/ui/atoms/button";
 import {
@@ -21,7 +21,7 @@ import { useSession } from "@/lib/session";
 import { clientFullName, clientInitial } from "@/lib/data/clientele";
 import { serviceById } from "@/lib/data/menu";
 import { appointmentEndTime, flattenRendezVous } from "@/lib/data/planning";
-import type { RelanceType, RendezVous } from "@/lib/data/types";
+import type { RendezVous } from "@/lib/data/types";
 
 const DAY_FMT = new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long" });
 
@@ -30,22 +30,14 @@ function greeting() {
   return h < 5 ? "Bonsoir" : h < 18 ? "Bonjour" : "Bonsoir";
 }
 
-const RELANCE_TYPE_SINGULAR: Record<RelanceType, string> = {
-  anniversaire: "anniversaire",
-  soins: "soin",
-  fidelite: "fidélité",
-  reconquete: "reconquête",
-  recommandation: "reco",
-};
-
 /**
  * Accueil — l'écran d'atterrissage, refait dans le langage « Le Tableau » (docs/adr/0005) pour
  * ne plus être le seul écran de l'app à parler l'ancien langage. Un point du jour calme (pas de
- * hero-metrics), la tournée du matin branchée sur le vrai state du store, et le jour en tableau
- * de lignes — mêmes lignes, mêmes jetons que le Planning.
+ * hero-metrics), les cartes cadeaux à imprimer, et le jour en tableau de lignes — mêmes lignes,
+ * mêmes jetons que le Planning.
  */
 export default function AccueilPage() {
-  const { reservations, praticiennes, clients, sales, relances } = useAppData();
+  const { reservations, praticiennes, clients, sales } = useAppData();
   const dayRows = useMemo(
     () => flattenRendezVous(reservations).filter((r) => r.rv.status !== "annule"),
     [reservations],
@@ -58,19 +50,6 @@ export default function AccueilPage() {
   const encaisseAujourdhui = sales
     .filter((s) => s.status === "encaissee")
     .reduce((sum, s) => sum + computeTotals(s).total, 0);
-
-  const today = new Date().toISOString().slice(0, 10);
-  const roundReady = useMemo(
-    () => relances.filter((r) => r.status === "a_venir" && r.date.slice(0, 10) === today),
-    [relances, today],
-  );
-  const roundBreakdown = useMemo(() => {
-    const counts: Partial<Record<RelanceType, number>> = {};
-    for (const r of roundReady) counts[r.type] = (counts[r.type] ?? 0) + 1;
-    return Object.entries(counts)
-      .map(([t, n]) => `${n} ${RELANCE_TYPE_SINGULAR[t as RelanceType]}${n > 1 && t !== "fidelite" && t !== "reconquete" ? "s" : ""}`)
-      .join(" · ");
-  }, [roundReady]);
 
   const groups = praticiennes
     .map((staff) => ({
@@ -106,23 +85,6 @@ export default function AccueilPage() {
             muted={encaisseAujourdhui === 0}
           />
           <PointCell href="/planning" label="Rendez-vous du jour" value={String(liveCount)} hint="Ouvrir le planning" />
-        </div>
-      </Board>
-
-      {/* Tournée du matin — rappel de ce qui part automatiquement aujourd'hui (ADR 0010, lecture seule) */}
-      <Board legend="Tournée du matin" tone={roundReady.length > 0 ? "act" : "plain"}>
-        <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-4">
-          <div className="min-w-0">
-            <p className="font-[family-name:var(--font-heading)] text-[15px] font-semibold text-[var(--color-gray-900)]">
-              {roundReady.length === 0
-                ? "Aucune relance ne part aujourd'hui."
-                : `${roundReady.length} relance${roundReady.length > 1 ? "s" : ""} part${roundReady.length > 1 ? "ent" : ""} automatiquement aujourd'hui.`}
-            </p>
-            {roundBreakdown && <p className="mt-0.5 text-sm text-[var(--color-gray-500)]">{roundBreakdown}</p>}
-          </div>
-          <Button variant="dark" size="sm" href="/relances" icon={<ArrowRight className="size-4" />} className="shrink-0">
-            Ouvrir les relances
-          </Button>
         </div>
       </Board>
 
