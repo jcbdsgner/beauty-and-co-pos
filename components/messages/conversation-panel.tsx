@@ -195,7 +195,7 @@ function Composer({
       <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border bg-[var(--color-gray-50)] p-4">
         <p className="text-sm text-[var(--color-gray-500)]">La Conseillère tient cette conversation.</p>
         <Button variant="brand" size="sm" onClick={onTakeOver}>
-          Répondre / Prendre la conversation
+          Prendre la conversation
         </Button>
       </div>
     );
