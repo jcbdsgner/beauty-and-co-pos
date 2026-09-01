@@ -43,7 +43,7 @@ export function ComptoirPanel() {
       </div>
 
       {/* Cream working sheet */}
-      <div className="min-h-0 flex-1 overflow-hidden rounded-t-[32px] bg-[var(--brand-cream)]">
+      <div className="min-h-0 flex-1 overflow-hidden rounded-t-2xl bg-[var(--brand-cream)]">
         {!activeSale ? (
           <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
             <BrandMark className="size-12 text-border" />

@@ -1,13 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Lock, Minus, Plus, ScanLine, Trash2, UserPlus } from "lucide-react";
+import { Lock, Minus, Plus, ScanLine, Search, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/atoms/button";
 import { IconButton } from "@/components/ui/atoms/icon-button";
 import { Badge } from "@/components/ui/atoms/badge";
 import { BrandMark } from "@/components/ui/atoms/brand-mark";
 import { ClientSearchField } from "@/components/shared/client-search-field";
-import { NewClientDialog } from "@/components/clientele/new-client-dialog";
 import { DiscountSection } from "@/components/comptoir/discount-section";
 import { useAppData, computeTotals } from "@/components/providers/app-data-provider";
 import { clientFullName, clientInitial } from "@/lib/data/clientele";
@@ -27,12 +25,14 @@ const TIER_BADGE = {
  */
 export function SaleCartPanel({ sale, onScanClient, onScanGiftCard }: { sale: Sale; onScanClient: () => void; onScanGiftCard: () => void }) {
   const { updateCartQty, removeCartLine, updateSale, clients, reservations, produits } = useAppData();
-  const [creatingClient, setCreatingClient] = useState(false);
   const totals = computeTotals(sale);
   const isEmpty = sale.cart.length === 0;
   const itemCount = sale.cart.reduce((n, l) => n + l.qty, 0);
   const client = sale.clientId ? clients.find((c) => c.id === sale.clientId) : undefined;
   const canCheckout = !isEmpty && sale.clientId !== null;
+  // The one blocker left once the basket is filled: no cliente. Echoed on the search trigger and
+  // spelled out on the Encaisser button (amber = "needs a decision", per DESIGN.md One-Signal rule).
+  const needsClient = !isEmpty && sale.clientId === null;
   const originReservation = sale.originReservationId
     ? reservations.find((r) => r.id === sale.originReservationId)
     : undefined;
@@ -75,23 +75,36 @@ export function SaleCartPanel({ sale, onScanClient, onScanGiftCard }: { sale: Sa
             </div>
           ) : (
             <div className="flex flex-col gap-2">
-              <ClientSearchField selectedClientId={null} onSelect={(id) => updateSale(sale.id, { clientId: id })} required />
               <div className="flex gap-2">
-                <button
-                  type="button"
+                <Button
+                  variant="outline"
+                  size="default"
+                  className={cn("flex-1", needsClient && "border-[var(--board-amber)] text-[var(--board-amber)]")}
+                  icon={<ScanLine className="size-4" />}
                   onClick={onScanClient}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-full border border-border py-2 text-xs font-medium text-[var(--color-gray-600)] transition active:scale-[0.97] hover:border-secondary/50"
                 >
-                  <ScanLine aria-hidden className="size-3.5" /> Scanner
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCreatingClient(true)}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-full border border-border py-2 text-xs font-medium text-[var(--color-gray-600)] transition active:scale-[0.97] hover:border-secondary/50"
-                >
-                  <UserPlus aria-hidden className="size-3.5" /> Nouvelle
-                </button>
+                  Scanner la cliente
+                </Button>
+                <ClientSearchField
+                  selectedClientId={null}
+                  onSelect={(id) => updateSale(sale.id, { clientId: id })}
+                  trigger={
+                    <button
+                      type="button"
+                      aria-label="Chercher une cliente"
+                      className={cn(
+                        "flex size-14 shrink-0 items-center justify-center rounded-full border bg-white transition active:scale-[0.97]",
+                        needsClient
+                          ? "border-[var(--board-amber)] text-[var(--board-amber)]"
+                          : "border-[var(--brand-color-1)] text-[var(--brand-taupe-muted)] hover:bg-[var(--color-gray-50)]",
+                      )}
+                    >
+                      <Search aria-hidden className="size-5" />
+                    </button>
+                  }
+                />
               </div>
+              {needsClient && <p className="text-xs font-medium text-[var(--board-amber)]">Cliente requise pour encaisser.</p>}
             </div>
           )}
           {originReservation && (
@@ -253,17 +266,6 @@ export function SaleCartPanel({ sale, onScanClient, onScanGiftCard }: { sale: Sa
           {canCheckout ? "Encaisser" : isEmpty ? "Panier vide" : "Choisir une cliente"}
         </Button>
       </div>
-
-      {creatingClient && (
-        <NewClientDialog
-          open
-          onClose={() => setCreatingClient(false)}
-          onCreated={(id) => {
-            updateSale(sale.id, { clientId: id });
-            setCreatingClient(false);
-          }}
-        />
-      )}
     </div>
   );
 }

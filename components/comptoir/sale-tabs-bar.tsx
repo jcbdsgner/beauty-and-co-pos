@@ -26,7 +26,7 @@ export function SaleTabsBar() {
 
   return (
     <>
-      <div className="flex items-end gap-1 overflow-x-auto">
+      <div className="flex items-end gap-1">
         {tabs.map((tab) => {
           const active = tab.id === activeSaleId;
           const { total } = computeTotals(tab);
@@ -34,15 +34,15 @@ export function SaleTabsBar() {
             <div
               key={tab.id}
               className={cn(
-                "group flex h-12 shrink-0 items-center gap-2 rounded-t-2xl px-4 text-sm font-semibold transition",
+                "group flex h-14 shrink-0 items-center gap-1.5 rounded-t-2xl px-4 text-sm font-semibold transition",
                 active
-                  ? "bg-[var(--brand-cream)] text-[var(--color-gray-900)]"
-                  : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white",
+                  ? "relative z-10 -mb-0.5 bg-[var(--brand-cream)] text-[var(--color-gray-900)]"
+                  : "bg-white/10 text-white/70 hover:bg-white/15 hover:text-white",
               )}
             >
               <button type="button" onClick={() => switchTab(tab.id)} className="flex flex-col items-start leading-tight active:scale-[0.97]">
                 <span>{tab.label}</span>
-                <span className={cn("text-[11px] font-medium tabular-nums", active ? "text-[var(--color-gray-500)]" : "text-white/50")}>
+                <span className={cn("text-[11px] font-medium tabular-nums", active ? "text-[var(--color-gray-500)]" : "text-white/70")}>
                   {total > 0 ? formatFcfa(total) : "—"}
                 </span>
               </button>
@@ -51,22 +51,23 @@ export function SaleTabsBar() {
                 onClick={() => handleCloseRequest(tab.id)}
                 aria-label={`Fermer ${tab.label}`}
                 className={cn(
-                  "flex size-8 items-center justify-center rounded-full transition active:scale-90",
+                  "flex size-11 shrink-0 items-center justify-center rounded-full transition active:scale-90",
                   active
                     ? "text-[var(--color-gray-400)] hover:bg-[var(--color-error-soft)] hover:text-destructive"
-                    : "text-white/50 opacity-0 group-hover:opacity-100 hover:bg-white/10",
+                    : "text-white/60 opacity-0 group-hover:opacity-100 hover:bg-white/10",
                 )}
               >
-                <X aria-hidden className="size-3.5" />
+                <X aria-hidden className="size-4" />
               </button>
             </div>
           );
         })}
+        <span aria-hidden className="mx-1 h-6 w-px shrink-0 self-center bg-white/15" />
         <button
           type="button"
           onClick={() => openNewTab()}
           aria-label="Nouvelle vente"
-          className="mb-1 flex size-11 shrink-0 items-center justify-center rounded-full text-white/80 transition active:scale-90 hover:bg-white/10"
+          className="flex size-11 shrink-0 items-center justify-center self-center rounded-full text-white/80 transition active:scale-90 hover:bg-white/10"
         >
           <Plus aria-hidden className="size-5" />
         </button>

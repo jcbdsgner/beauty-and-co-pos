@@ -36,6 +36,10 @@ type ClientSearchFieldProps = {
   placeholder?: string;
   required?: boolean;
   className?: string;
+  /** A custom trigger element, replacing the default dashed button (placeholder/required/className
+   *  are ignored when set) — lets a caller reuse the search + create mechanism behind its own
+   *  affordance (e.g. a plain search-icon button next to a Scanner button). */
+  trigger?: React.ReactNode;
 };
 
 /**
@@ -44,7 +48,7 @@ type ClientSearchFieldProps = {
  * rendez-vous form. cmdk's own filtering is off — `searchClients` (name + phone) stays the single
  * source of matching logic across the app.
  */
-export function ClientSearchField({ selectedClientId, onSelect, placeholder = "Chercher une cliente…", required, className }: ClientSearchFieldProps) {
+export function ClientSearchField({ selectedClientId, onSelect, placeholder = "Chercher une cliente…", required, className, trigger }: ClientSearchFieldProps) {
   const { clients } = useAppData();
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -58,20 +62,22 @@ export function ClientSearchField({ selectedClientId, onSelect, placeholder = "C
     <>
     <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
       <PopoverPrimitive.Trigger asChild>
-        <button
-          type="button"
-          className={cn(
-            "flex h-14 w-full items-center gap-2 rounded-xl border px-4 text-left text-[15px] transition outline-none focus-visible:ring-4 focus-visible:ring-ring/15",
-            selected
-              ? "border-border bg-white text-[var(--color-gray-900)]"
-              : "border-dashed border-secondary/40 bg-white text-[var(--color-gray-400)]",
-            className,
-          )}
-        >
-          <Search aria-hidden className="size-4 shrink-0 text-[var(--color-gray-400)]" />
-          {selected ? clientFullName(selected) : placeholder}
-          {required && !selected && <span className="text-destructive">*</span>}
-        </button>
+        {trigger ?? (
+          <button
+            type="button"
+            className={cn(
+              "flex h-14 w-full items-center gap-2 rounded-xl border px-4 text-left text-[15px] transition outline-none focus-visible:ring-4 focus-visible:ring-ring/15",
+              selected
+                ? "border-border bg-white text-[var(--color-gray-900)]"
+                : "border-dashed border-secondary/40 bg-white text-[var(--color-gray-400)]",
+              className,
+            )}
+          >
+            <Search aria-hidden className="size-4 shrink-0 text-[var(--color-gray-400)]" />
+            {selected ? clientFullName(selected) : placeholder}
+            {required && !selected && <span className="text-destructive">*</span>}
+          </button>
+        )}
       </PopoverPrimitive.Trigger>
       <PopoverPrimitive.Portal>
         <PopoverPrimitive.Content
@@ -84,22 +90,7 @@ export function ClientSearchField({ selectedClientId, onSelect, placeholder = "C
             <CommandInput value={query} onValueChange={setQuery} placeholder="Nom ou téléphone…" autoFocus />
             <CommandList>
               {results.length === 0 ? (
-                <div className="px-2 py-3">
-                  <p className="px-2 pb-2 text-center text-sm text-[var(--color-gray-500)]">Aucune cliente trouvée.</p>
-                  {trimmedQuery !== "" && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setOpen(false);
-                        setCreating(true);
-                      }}
-                      className="flex min-h-14 w-full items-center gap-3 rounded-xl bg-accent px-3 text-left text-[15px] font-semibold text-secondary transition active:scale-[0.99]"
-                    >
-                      <UserPlus aria-hidden className="size-4 shrink-0" />
-                      Ajouter «&nbsp;{trimmedQuery}&nbsp;» comme nouvelle cliente
-                    </button>
-                  )}
-                </div>
+                <p className="px-4 py-6 text-center text-sm text-[var(--color-gray-500)]">Aucune cliente trouvée.</p>
               ) : (
                 results.map((c) => (
                   <CommandItem
@@ -122,6 +113,18 @@ export function ClientSearchField({ selectedClientId, onSelect, placeholder = "C
                   </CommandItem>
                 ))
               )}
+              {/* Toujours accessible, pas seulement quand la recherche ne donne rien. */}
+              <CommandItem
+                value="__create__"
+                onSelect={() => {
+                  setOpen(false);
+                  setCreating(true);
+                }}
+                className="font-semibold text-secondary"
+              >
+                <UserPlus aria-hidden className="size-4 shrink-0" />
+                {trimmedQuery ? <>Ajouter «&nbsp;{trimmedQuery}&nbsp;» comme nouvelle cliente</> : "Créer une nouvelle cliente"}
+              </CommandItem>
               {clients.length > 0 && query.trim() === "" && (
                 <p className="mt-1.5 px-3 pb-1 text-xs text-[var(--color-gray-400)]">{clients.length} clientes au répertoire.</p>
               )}
