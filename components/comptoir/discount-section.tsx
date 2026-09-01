@@ -54,7 +54,7 @@ export function DiscountSection({ sale, onScanGiftCard }: { sale: Sale; onScanGi
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="mb-3 flex w-full items-center justify-between rounded-xl border border-dashed border-border px-4 py-2.5 text-[15px] font-medium text-[var(--color-gray-600)] transition active:scale-[0.99] hover:border-secondary/50 outline-none focus-visible:ring-4 focus-visible:ring-ring/15"
+        className="mb-3 flex min-h-14 w-full items-center justify-between gap-2 rounded-[10px] border border-border px-4 text-[15px] font-medium text-[var(--color-gray-600)] transition active:scale-[0.99] hover:border-secondary/50 outline-none focus-visible:ring-4 focus-visible:ring-ring/15"
       >
         <span className="flex items-center gap-2">
           <Percent aria-hidden className="size-4 text-secondary" />
@@ -63,7 +63,7 @@ export function DiscountSection({ sale, onScanGiftCard }: { sale: Sale; onScanGi
         {hasDiscount ? (
           <Badge variant="success">−{formatFcfa(totals.totalDiscount)}</Badge>
         ) : (
-          <span className="text-xs text-[var(--color-gray-400)]">Carte cadeau · points · remise</span>
+          <span className="text-xs text-[var(--color-gray-500)]">Carte cadeau · points · remise</span>
         )}
       </button>
 

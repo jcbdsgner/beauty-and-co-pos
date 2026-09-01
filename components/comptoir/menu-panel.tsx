@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
-import { LayoutGrid, Users } from "lucide-react";
+import { Coffee, LayoutGrid, Users } from "lucide-react";
 import { SegmentedToggle } from "@/components/ui/molecules/segmented-toggle";
 import { SearchInput } from "@/components/ui/atoms/search-input";
 import { Pills } from "@/components/ui/molecules/pills";
@@ -79,29 +79,35 @@ export function MenuPanel({ saleId }: { saleId: string }) {
   return (
     <div className="flex h-full min-h-0 gap-4">
       {/* Vertical category rail */}
-      <nav className="flex w-[88px] shrink-0 flex-col gap-1.5 overflow-y-auto pb-2" aria-label="Catégories">
+      <nav className="flex w-[112px] shrink-0 flex-col gap-1.5 overflow-y-auto pb-2" aria-label="Catégories">
         {railTiles.map((cat) => {
           const active = cat.id === categoryId;
           const icon = CATEGORY_ICON[cat.id];
+          // Le Bar (« Boissons ») se détache des catégories de revente par un filet et son propre glyphe.
+          const isBar = cat.id === "boissons";
           return (
-            <button
-              key={cat.id}
-              type="button"
-              onClick={() => pickCategory(cat.id)}
-              aria-pressed={active}
-              className={cn(
-                "flex flex-col items-center gap-1 rounded-2xl px-1 py-3 text-center transition active:scale-[0.95]",
-                active ? "bg-secondary text-white" : "bg-white text-[var(--color-gray-500)] hover:bg-accent",
-              )}
-            >
-              {icon ? (
-                <Image src={icon} alt="" width={28} height={28} className={cn("size-7 object-contain", active && "brightness-0 invert")} />
-              ) : (
-                <LayoutGrid aria-hidden className="size-7" />
-              )}
-              <span className="line-clamp-2 text-[10px] leading-tight font-semibold">{cat.name}</span>
-              <span className={cn("text-[10px] tabular-nums", active ? "text-white/70" : "text-[var(--color-gray-400)]")}>{cat.count}</span>
-            </button>
+            <div key={cat.id} className="contents">
+              {isBar && <div aria-hidden className="my-1 h-px shrink-0 bg-[var(--board-groove)]" />}
+              <button
+                type="button"
+                onClick={() => pickCategory(cat.id)}
+                aria-pressed={active}
+                className={cn(
+                  "flex min-h-[60px] flex-col items-center justify-center gap-1 rounded-[14px] px-1.5 py-2.5 text-center transition active:scale-[0.95]",
+                  active ? "bg-secondary text-white" : "bg-white text-[var(--color-gray-600)] hover:bg-accent",
+                )}
+              >
+                {isBar ? (
+                  <Coffee aria-hidden className="size-6" />
+                ) : icon ? (
+                  <Image src={icon} alt="" width={26} height={26} className={cn("size-6 object-contain", active && "brightness-0 invert")} />
+                ) : (
+                  <LayoutGrid aria-hidden className="size-6" />
+                )}
+                <span className="w-full truncate text-[11px] font-semibold leading-tight">{cat.name}</span>
+                <span className={cn("text-[10px] tabular-nums", active ? "text-white/70" : "text-[var(--color-gray-500)]")}>{cat.count}</span>
+              </button>
+            </div>
           );
         })}
       </nav>
@@ -144,18 +150,18 @@ export function MenuPanel({ saleId }: { saleId: string }) {
             {activeCategoryIcon ? (
               <Image src={activeCategoryIcon} alt="" width={22} height={22} className="size-[22px] shrink-0 object-contain" />
             ) : (
-              <LayoutGrid aria-hidden className="size-[22px] shrink-0 text-[var(--color-gray-400)]" />
+              <LayoutGrid aria-hidden className="size-[22px] shrink-0 text-[var(--color-gray-500)]" />
             )}
             <h3 className="font-[family-name:var(--font-heading)] text-sm font-semibold text-[var(--color-gray-900)]">
               {activeCategory.name}
             </h3>
-            <span className="text-xs tabular-nums text-[var(--color-gray-400)]">{filtered.length}</span>
+            <span className="text-xs tabular-nums text-[var(--color-gray-500)]">{filtered.length}</span>
           </div>
         )}
 
         <div className="min-h-0 flex-1 overflow-y-auto pb-2">
           {filtered.length === 0 ? (
-            <p className="py-16 text-center text-sm text-[var(--color-gray-400)]">
+            <p className="py-16 text-center text-sm text-[var(--color-gray-500)]">
               {mode === "services" ? "Aucune prestation ne correspond." : "Aucun produit ne correspond."}
             </p>
           ) : (
@@ -180,22 +186,28 @@ export function MenuPanel({ saleId }: { saleId: string }) {
                         unitPrice: item.price,
                       })
                     }
+                    title={item.name}
                     className={cn(
-                      "relative flex min-h-[112px] flex-col overflow-hidden rounded-2xl border text-left transition active:scale-[0.96]",
+                      "relative flex min-h-[120px] flex-col rounded-[14px] border-2 text-left transition active:scale-[0.96]",
                       soldOut
                         ? "cursor-not-allowed border-border bg-[var(--color-gray-50)]"
                         : inCart > 0
-                          ? "border-secondary bg-white"
-                          : "border-border bg-white hover:border-secondary/50",
+                          ? "border-[var(--brand-taupe-muted)] bg-[var(--board-taupe-plaque)]"
+                          : "border-border bg-white hover:border-[var(--brand-taupe-muted)]/40",
                     )}
                   >
                     {inCart > 0 && (
-                      <span className="absolute -top-2 -right-2 z-10 flex h-6 min-w-6 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-bold text-primary-foreground tabular-nums">
+                      <span className="absolute top-1.5 right-1.5 z-10 flex h-6 min-w-6 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-bold text-primary-foreground tabular-nums shadow-sm">
                         {inCart}
                       </span>
                     )}
                     {isProduit && (
-                      <div className={cn("relative aspect-[5/3] w-full bg-[var(--brand-cream)]", soldOut && "opacity-60 grayscale")}>
+                      <div
+                        className={cn(
+                          "relative aspect-[5/3] w-full overflow-hidden rounded-t-[12px] bg-[var(--brand-cream)]",
+                          soldOut && "opacity-60 grayscale",
+                        )}
+                      >
                         {"image" in item && item.image ? (
                           <Image src={item.image} alt="" fill className="object-cover" />
                         ) : (
@@ -203,39 +215,38 @@ export function MenuPanel({ saleId }: { saleId: string }) {
                         )}
                       </div>
                     )}
-                    <div className="flex flex-1 flex-col justify-between p-3.5">
-                      <span className="line-clamp-2 text-[13px] leading-snug font-semibold text-[var(--color-gray-900)]">{item.name}</span>
-                      <span className="mt-2 flex items-center justify-between gap-1">
-                        <span className="text-[15px] font-bold text-[var(--button-2-color)] tabular-nums">{formatFcfa(item.price)}</span>
-                        <span className="flex items-center gap-1">
-                          {"twoPractitionersEligible" in item && item.twoPractitionersEligible && (
-                            <span
-                              title="Réalisable à deux praticiennes"
-                              className="flex items-center gap-0.5 rounded-full bg-[var(--brand-rose-soft)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--brand-taupe-muted)]"
-                            >
-                              <Users aria-hidden className="size-3" /> 2
-                            </span>
-                          )}
-                          {"durationMinutes" in item && (
-                            <span className="rounded-full bg-[var(--color-gray-100)] px-2 py-0.5 text-[10px] font-medium text-[var(--color-gray-500)] tabular-nums">
-                              {item.durationMinutes} min
-                            </span>
-                          )}
-                          {remaining !== null && (
-                            <span
-                              className={cn(
-                                "rounded-full px-2 py-0.5 text-[10px] font-semibold tabular-nums",
-                                soldOut
-                                  ? "bg-[var(--color-error-soft)] text-[var(--color-error)]"
-                                  : remaining <= 5
-                                    ? "bg-[var(--brand-rose-soft)] text-[var(--board-amber)]"
-                                    : "bg-[var(--color-gray-100)] text-[var(--color-gray-500)]",
-                              )}
-                            >
-                              {soldOut ? "Rupture" : `${remaining} en stock`}
-                            </span>
-                          )}
+                    <div className="flex flex-1 flex-col justify-between gap-2 p-3.5">
+                      <span className="line-clamp-3 text-[13px] leading-snug font-semibold text-[var(--color-gray-900)]">
+                        {item.name}
+                      </span>
+                      <span className="flex flex-col gap-1">
+                        <span className="flex items-baseline justify-between gap-1.5">
+                          <span className="text-[17px] font-bold text-[var(--button-2-color)] tabular-nums">
+                            {formatFcfa(item.price)}
+                          </span>
+                          <span className="flex items-center gap-1.5 text-[11px] font-medium text-[var(--color-gray-500)] tabular-nums">
+                            {"twoPractitionersEligible" in item && item.twoPractitionersEligible && (
+                              <span title="Réalisable à deux praticiennes" className="flex items-center gap-0.5">
+                                <Users aria-hidden className="size-3" />2
+                              </span>
+                            )}
+                            {"durationMinutes" in item && <span>{item.durationMinutes} min</span>}
+                          </span>
                         </span>
+                        {remaining !== null && (
+                          <span
+                            className={cn(
+                              "text-[11px] font-semibold tabular-nums",
+                              soldOut
+                                ? "text-[var(--color-error)]"
+                                : remaining <= 5
+                                  ? "text-[var(--board-amber)]"
+                                  : "text-[var(--color-gray-500)]",
+                            )}
+                          >
+                            {soldOut ? "Rupture" : `${remaining} en stock`}
+                          </span>
+                        )}
                       </span>
                     </div>
                   </button>

@@ -35,7 +35,7 @@ export function ComptoirPanel() {
         <button
           type="button"
           onClick={collapseComptoir}
-          className="mb-2 flex h-11 shrink-0 items-center gap-2 rounded-full bg-white/10 px-4 text-sm font-medium text-white transition active:scale-[0.97] hover:bg-white/20"
+          className="mb-2 flex h-12 shrink-0 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-[var(--brand-taupe-muted)] transition active:scale-[0.97] hover:bg-white/90"
         >
           <ChevronDown aria-hidden className="size-4" />
           Replier

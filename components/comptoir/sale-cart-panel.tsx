@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Minus, Plus, ScanLine, Trash2, UserPlus } from "lucide-react";
+import { Lock, Minus, Plus, ScanLine, Trash2, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/atoms/button";
 import { IconButton } from "@/components/ui/atoms/icon-button";
 import { Badge } from "@/components/ui/atoms/badge";
@@ -38,13 +38,13 @@ export function SaleCartPanel({ sale, onScanClient, onScanGiftCard }: { sale: Sa
     : undefined;
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-3xl border border-border bg-white">
+    <div className="flex h-full flex-col overflow-hidden rounded-[14px] border border-border bg-white">
       {/* Head */}
       <div className="relative shrink-0 overflow-hidden border-b border-border px-5 pt-5 pb-4">
         <BrandMark className="pointer-events-none absolute -top-8 -right-6 size-32 text-[var(--brand-rose-soft)]" />
         <div className="relative flex items-baseline justify-between">
           <p className="font-[family-name:var(--font-heading)] font-bold text-lg text-[var(--color-gray-900)]">Ticket</p>
-          <span className="text-xs font-semibold tracking-wide text-[var(--color-gray-400)] uppercase tabular-nums">
+          <span className="text-xs font-semibold tracking-[0.12em] text-[var(--color-gray-500)] uppercase tabular-nums">
             {itemCount} {itemCount > 1 ? "articles" : "article"}
           </span>
         </div>
@@ -110,9 +110,10 @@ export function SaleCartPanel({ sale, onScanClient, onScanGiftCard }: { sale: Sa
           <div className="flex h-full flex-col items-center justify-center gap-2 py-10 text-center">
             <BrandMark className="size-10 text-border" />
             <p className="text-sm font-medium text-[var(--color-gray-500)]">Aucune prestation</p>
-            <p className="text-xs text-[var(--color-gray-400)]">Touchez une prestation dans le menu.</p>
+            <p className="text-xs text-[var(--color-gray-500)]">Touchez une prestation dans le menu.</p>
           </div>
         ) : (
+          <>
           <ul className="flex flex-col divide-y divide-border">
             {sale.cart.map((line) => {
               const maxQty =
@@ -135,24 +136,24 @@ export function SaleCartPanel({ sale, onScanClient, onScanGiftCard }: { sale: Sa
                 </div>
 
                 <div className="mt-2 flex items-center gap-2">
-                  {/* single-pill quantity stepper */}
+                  {/* single-pill quantity stepper — the most-used control on the ticket, so 56px */}
                   <div className="flex items-center rounded-full border border-border">
                     <button
                       type="button"
                       onClick={() => updateCartQty(sale.id, line.id, Math.max(1, line.qty - 1))}
                       disabled={line.qty <= 1}
                       aria-label={`Moins — ${line.name}`}
-                      className="flex size-11 items-center justify-center rounded-full text-[var(--color-gray-600)] transition active:scale-90 disabled:opacity-30"
+                      className="flex size-14 items-center justify-center rounded-full text-[var(--color-gray-600)] transition active:scale-90 disabled:opacity-30"
                     >
                       <Minus aria-hidden className="size-4" />
                     </button>
-                    <span className="w-6 text-center text-[15px] font-bold text-[var(--color-gray-900)] tabular-nums">{line.qty}</span>
+                    <span className="w-7 text-center text-[15px] font-bold text-[var(--color-gray-900)] tabular-nums">{line.qty}</span>
                     <button
                       type="button"
                       onClick={() => updateCartQty(sale.id, line.id, Math.min(maxQty, line.qty + 1))}
                       disabled={line.qty >= maxQty}
                       aria-label={`Plus — ${line.name}`}
-                      className="flex size-11 items-center justify-center rounded-full text-[var(--color-gray-600)] transition active:scale-90 disabled:opacity-30"
+                      className="flex size-14 items-center justify-center rounded-full text-[var(--color-gray-600)] transition active:scale-90 disabled:opacity-30"
                     >
                       <Plus aria-hidden className="size-4" />
                     </button>
@@ -163,7 +164,7 @@ export function SaleCartPanel({ sale, onScanClient, onScanGiftCard }: { sale: Sa
                   <IconButton
                     onClick={() => removeCartLine(sale.id, line.id)}
                     aria-label={`Retirer ${line.name}`}
-                    className="size-11 shrink-0 rounded-full text-[var(--color-gray-400)] transition active:scale-90 hover:bg-[var(--color-error-soft)] hover:text-destructive"
+                    className="size-14 shrink-0 rounded-full text-[var(--color-gray-500)] transition active:scale-90 hover:bg-[var(--color-error-soft)] hover:text-destructive"
                   >
                     <Trash2 aria-hidden className="size-4" />
                   </IconButton>
@@ -172,6 +173,24 @@ export function SaleCartPanel({ sale, onScanClient, onScanGiftCard }: { sale: Sa
               );
             })}
           </ul>
+
+          {/* Fills the gap under a short list with context the receptionist can use with the
+              cliente in front of her, rather than leaving dead space above the total. */}
+          {client && (client.lastVisit || client.points > 0) && (
+            <div className="mt-3 flex flex-col gap-1 rounded-[10px] border border-[var(--board-groove)] bg-[var(--brand-cream)] px-3.5 py-3 text-xs text-[var(--color-gray-500)]">
+              {client.lastVisit && (
+                <div className="flex items-center justify-between">
+                  <span>Dernière visite</span>
+                  <span className="font-medium tabular-nums">{client.lastVisit}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between">
+                <span>Points fidélité</span>
+                <span className="font-medium tabular-nums">{client.points} pts</span>
+              </div>
+            </div>
+          )}
+          </>
         )}
       </div>
 
@@ -210,10 +229,10 @@ export function SaleCartPanel({ sale, onScanClient, onScanGiftCard }: { sale: Sa
         )}
 
         <div className="mb-3 flex items-end justify-between">
-          <span className="pb-1.5 text-xs font-semibold tracking-wide text-[var(--color-gray-500)] uppercase">Total</span>
+          <span className="pb-1.5 text-xs font-semibold tracking-[0.12em] text-[var(--color-gray-500)] uppercase">Total</span>
           <span
             key={totals.total}
-            className="animate-total-pulse origin-right font-[family-name:var(--font-heading)] font-semibold text-[2.75rem] leading-none text-[var(--color-gray-900)] tabular-nums"
+            className="animate-total-pulse origin-right font-[family-name:var(--font-heading)] font-semibold text-[2.75rem] leading-none text-[var(--color-gray-900)] tabular-nums tracking-[0.01em]"
           >
             {formatFcfa(totals.total)}
           </span>
@@ -222,17 +241,17 @@ export function SaleCartPanel({ sale, onScanClient, onScanGiftCard }: { sale: Sa
         <Button
           variant="brand"
           size="xl"
-          className={cn("w-full", !canCheckout && "disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100")}
+          className={cn(
+            "w-full",
+            !canCheckout &&
+              "disabled:bg-[var(--brand-rose-soft)] disabled:text-[var(--brand-taupe-muted)] disabled:opacity-100",
+          )}
           disabled={!canCheckout}
+          icon={canCheckout ? undefined : <Lock className="size-4" />}
           onClick={() => updateSale(sale.id, { step: "paiement" })}
         >
-          Encaisser
+          {canCheckout ? "Encaisser" : isEmpty ? "Panier vide" : "Choisir une cliente"}
         </Button>
-        {!canCheckout && (
-          <p className="mt-2 text-center text-xs font-medium text-[var(--color-gray-500)]">
-            {isEmpty ? "Ajoutez une prestation pour encaisser" : "Choisissez une cliente pour encaisser"}
-          </p>
-        )}
       </div>
 
       {creatingClient && (

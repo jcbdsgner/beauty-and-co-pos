@@ -82,8 +82,18 @@ this refonte (4 sections, full re-implementation); the build is the proof.
 
 The world is established on **Planning, Clientèle, Relances, Catalogue** and their sub-screens
 (Équipe, Fiche cliente, Carte de fidélité, Détail planche) plus the board primitives in
-`components/ui/board.tsx`. `Accueil`, the `Comptoir` layer, `/compte` and `Récap des ventes`
-still wear the previous flat-card language and migrate next. Shared atoms (`Button`, `Field`,
+`components/ui/board.tsx`. `Accueil`, `/compte` and `Récap des ventes` still wear the previous
+flat-card language and migrate next.
+
+The **`Comptoir` layer** takes the world's *vocabulary* — routed-groove frames, tracked-uppercase
+legends, `tabular-nums` figures, the 14px plaque radius, amber as the sole signal, 56–60px touch
+targets, the Disabled-Is-Not-Invisible rule — **without** the `Lane` / legend-rail / `FlipChip`
+machinery: a fast tactile item grid + a ticket is not a self-ranking day board, and forcing lanes
+onto it would hurt the primary job. Its three weight planes are the calm uniform item grid (the
+working surface), the ticket read as a *document*, and the TOTAL + Encaisser anchor. No ADR — this
+applies the established language, it does not decide a new one.
+
+Shared atoms (`Button`, `Field`,
 `Dialog`, `Toast`, `ConfirmDialog`, `EmptyState`, form inputs) are used by both worlds and were
 kept working; where the board world needed its own shape it got a board primitive rather than a
 destructive edit to a shared atom.
