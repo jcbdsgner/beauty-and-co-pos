@@ -14,6 +14,7 @@ import {
   BoardEmpty,
 } from "@/components/ui/board";
 import { AppointmentDetailSheet } from "@/components/planning/appointment-detail-sheet";
+import { GiftCardsBoard } from "@/components/journee/gift-cards-board";
 import { useEncaissement } from "@/components/journee/use-encaissement";
 import { computeTotals, useAppData } from "@/components/providers/app-data-provider";
 import { useSession } from "@/lib/session";
@@ -124,6 +125,8 @@ export default function AccueilPage() {
           </Button>
         </div>
       </Board>
+
+      <GiftCardsBoard />
 
       {/* Le jour — mêmes lignes, mêmes jetons que le Planning */}
       <Board legend={`Le jour · ${liveCount} rendez-vous`}>
