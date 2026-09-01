@@ -16,7 +16,7 @@ import { useAppData } from "@/components/providers/app-data-provider";
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { href: "/", label: "Accueil", icon: HomeIcon, match: (p: string) => p === "/" || p.startsWith("/recap-ventes") },
+  { href: "/", label: "Accueil", icon: HomeIcon, match: (p: string) => p === "/" || p.startsWith("/recap-ventes") || p.startsWith("/cartes-cadeaux") },
   { href: "/planning", label: "Planning", icon: CalendarIcon, match: (p: string) => p.startsWith("/planning") || p.startsWith("/equipe") },
   { href: "/clientele", label: "Clientèle", icon: PeopleIcon, match: (p: string) => p.startsWith("/clientele") },
   { href: "/messages", label: "Messages", icon: MessageCircle, match: (p: string) => p.startsWith("/messages") },

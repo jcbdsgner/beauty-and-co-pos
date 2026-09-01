@@ -14,9 +14,8 @@ import {
   BoardEmpty,
 } from "@/components/ui/board";
 import { AppointmentDetailSheet } from "@/components/planning/appointment-detail-sheet";
-import { GiftCardsBoard } from "@/components/journee/gift-cards-board";
 import { useEncaissement } from "@/components/journee/use-encaissement";
-import { computeTotals, useAppData } from "@/components/providers/app-data-provider";
+import { useAppData } from "@/components/providers/app-data-provider";
 import { useSession } from "@/lib/session";
 import { clientFullName, clientInitial } from "@/lib/data/clientele";
 import { serviceById } from "@/lib/data/menu";
@@ -33,11 +32,10 @@ function greeting() {
 /**
  * Accueil — l'écran d'atterrissage, refait dans le langage « Le Tableau » (docs/adr/0005) pour
  * ne plus être le seul écran de l'app à parler l'ancien langage. Un point du jour calme (pas de
- * hero-metrics), les cartes cadeaux à imprimer, et le jour en tableau de lignes — mêmes lignes,
- * mêmes jetons que le Planning.
+ * hero-metrics) et le jour en tableau de lignes — mêmes lignes, mêmes jetons que le Planning.
  */
 export default function AccueilPage() {
-  const { reservations, praticiennes, clients, sales } = useAppData();
+  const { reservations, praticiennes, clients, giftCardOrders } = useAppData();
   const dayRows = useMemo(
     () => flattenRendezVous(reservations).filter((r) => r.rv.status !== "annule"),
     [reservations],
@@ -47,9 +45,9 @@ export default function AccueilPage() {
 
   const [detail, setDetail] = useState<RendezVous | null>(null);
 
-  const encaisseAujourdhui = sales
-    .filter((s) => s.status === "encaissee")
-    .reduce((sum, s) => sum + computeTotals(s).total, 0);
+  const cartesAPreparer = giftCardOrders.filter(
+    (o) => o.status === "a_imprimer" || o.status === "imprimee",
+  ).length;
 
   const groups = praticiennes
     .map((staff) => ({
@@ -78,17 +76,15 @@ export default function AccueilPage() {
       <Board legend="Le point du jour" tone="now">
         <div className="flex divide-x divide-[var(--board-groove)]">
           <PointCell
-            href="/recap-ventes"
-            label="Encaissé aujourd'hui"
-            value={encaisseAujourdhui > 0 ? `${encaisseAujourdhui.toLocaleString("fr-FR")} F` : "Rien encore"}
-            hint="Voir le récap complet"
-            muted={encaisseAujourdhui === 0}
+            href="/cartes-cadeaux"
+            label="Cartes à préparer"
+            value={cartesAPreparer > 0 ? String(cartesAPreparer) : "Aucune carte à préparer"}
+            hint="Ouvrir la file"
+            muted={cartesAPreparer === 0}
           />
           <PointCell href="/planning" label="Rendez-vous du jour" value={String(liveCount)} hint="Ouvrir le planning" />
         </div>
       </Board>
-
-      <GiftCardsBoard />
 
       {/* Le jour — mêmes lignes, mêmes jetons que le Planning */}
       <Board legend={`Le jour · ${liveCount} rendez-vous`}>

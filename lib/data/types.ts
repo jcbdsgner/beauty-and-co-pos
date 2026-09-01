@@ -183,6 +183,34 @@ export type CarteCadeau = {
   expiresOn?: string;
 };
 
+/** How the buyer chose to receive a printed gift card at purchase (ADR 0012). E-cards are out of
+ *  scope; both printed modes feed the salon's preparation queue. */
+export type GiftCardFulfillment = "retrait" | "livraison";
+
+export type GiftCardOrderStatus = "a_imprimer" | "imprimee" | "remise" | "livree";
+
+/**
+ * A gift card bought and paid for on an external platform, in a printed version the salon must
+ * prepare: print it, then hand it over (retrait) or pass it to delivery (livraison). No cashing —
+ * it is already paid (ADR 0001, 0012).
+ */
+export type GiftCardOrder = {
+  id: string;
+  /** The buyer — always a known cliente fiche. */
+  buyerClientId: string;
+  /** A `CARTES_CADEAUX` code — the printed card carries it, reusable later at the counter. */
+  code: string;
+  amount: number;
+  fulfillment: GiftCardFulfillment;
+  /** ISO date — purchased on the platform (display only, no deadline). */
+  orderedAt: string;
+  status: GiftCardOrderStatus;
+  /** Set only when `fulfillment === "livraison"`. */
+  recipientName?: string;
+  recipientPhone?: string;
+  deliveryAddress?: string;
+};
+
 export type CartLine = {
   id: string;
   refId: string; // service or produit id

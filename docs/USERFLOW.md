@@ -50,6 +50,22 @@
 > réceptionniste ne configure pas les relances » tient). Les passages ci-dessous marqués v2.3 sur la
 > lecture seule de Relances sont **supersédés**.
 
+> **Amendement 2026-09-01 (v2.6) — Cartes cadeaux : achat externe, file de préparation.**
+> Une carte cadeau est **achetée et payée sur une plateforme externe** ; à l'achat, l'acheteur choisit
+> e-carte (hors périmètre), **retrait** imprimé, ou **livraison** imprimée. Les deux modes imprimés
+> alimentent une **file de préparation** : la réceptionniste imprime la carte puis la remet (retrait)
+> ou la confie à la livraison (hors app). **Aucun encaissement au salon** — déjà payé, ADR 0001
+> préservé. Nouvel objet **`GiftCardOrder`** (« Commande de carte cadeau » : `buyerClientId`, `code`
+> du ledger, `amount`, `fulfillment: retrait|livraison`, `status: a_imprimer→imprimee→remise|livree`,
+> + nom/tél/adresse bénéficiaire si livraison). Le ledger `CarteCadeau` (codes/soldes, application au
+> comptoir) est inchangé. **Accueil** : la cellule « Encaissé aujourd'hui » de « Le point du jour »
+> devient **« Cartes à préparer »** (compteur des commandes `a_imprimer` + `imprimee`, vide en
+> sourdine) → route **`/cartes-cadeaux`** (la file : acheteur + montant + badge Retrait/Livraison,
+> détails livraison au dépli, actions Imprimer puis Marquer remise/expédiée). « Encaissé aujourd'hui »
+> sort de l'Accueil (reste via Récap). La version « 4 dénominations à imprimer à volonté » (commit
+> `7b38d71`, `components/journee/gift-cards-board.tsx`) est **abandonnée** — lecture erronée du
+> concept. Voir `docs/adr/0012` (répond à la question ouverte d'émission de `docs/adr/0002`).
+
 > **Amendement 2026-08-27 (v2.2) — Refonte 2 : Planning · Clientèle · Relances · Catalogue.** Ces
 > quatre sections (et leurs sous-écrans : Équipe, Fiche cliente, Carte de fidélité, Détail planche)
 > ont été **redesignées à partir des seules job stories**, dans un **nouveau langage visuel
@@ -116,7 +132,8 @@ La sidebar passe de **6 items à 5** (Accueil / Planning / Clientèle / Relances
 | **Rendez-vous** | Une **prestation planifiée** atomique : une prestation, un·e bénéficiaire, un créneau, une praticienne — deux si la prestation est « réalisable à 2 » (`secondStaffId`, durée déjà divisée). Plusieurs peuvent partager la même heure. Ligne d'une Réservation. La réceptionniste l'**ajuste** au comptoir (prestation, praticienne, bénéficiaire, **reprogrammation**, ajout / retrait, annulation avec `cancelReason?` facultatif) — jamais de création (v2.4, ADR 0009). | `N,1 —— 1,1 Réservation` · `N,1 —— 1,1 Praticienne` (assignée) · `N,1 —— 0,1 Praticienne` (seconde) · `N,1 —— 1,1 Service` · `N,1 —— 0,1 Cliente` (bénéficiaire ; sinon `beneficiaryName` libre ; sinon la payeuse) | `actif → (annulé)` — **pas** de « en attente / confirmé » (les réservations arrivent fermes de la plateforme en ligne) ; Annulé est terminal, jamais supprimé (cf. toggle « Afficher les annulés ») ; un rendez-vous *retiré* (erreur de saisie) disparaît, distinct d'*annulé* |
 | **Vente** (panier) | Une transaction en cours de construction ou déjà encaissée, un onglet du Comptoir. | `1,1 —— 0,1 Cliente` · `1,1 —— 0,N LigneDePanier` · `0,1 —— 1,1 Réservation` (rôle inverse : *origine*, si ouverte via « Encaisser ») · `1,1 —— 0,1 CarteCadeau` (appliquée) · `1,1 —— 0,1 Remise` (accordée par la réceptionniste) | `ouverte(catalogue\|paiement) → encaissée` (terminal, produit un Reçu) **ou** `→ abandonnée` (fermée sans encaissement — nouvel état, nécessaire pour que le Récap des ventes distingue une vraie vente d'un onglet fermé vide) |
 | **Remise** | Une réduction exprimée en montant fixe **ou** en pourcentage — `{ mode, valeur }`. Le **même objet** est porté par une Vente (remise accordée au comptoir : jusqu'à 10 % des prestations au code réceptionniste, 10–20 % avec un **code manager**, + motif) et par une relance de reconquête — un **Message** (ex. −15 %, code promo, défini par la direction). Les *points fidélité utilisés* et la *carte cadeau* ne sont **pas** des Remise — ce sont des mécanismes distincts qui, avec la Remise, se cumulent dans le calcul du total. | `0,N —— 1,1 Vente` *ou* `0,N —— 1,1 Message` (jamais les deux) | — (valeur figée à la création ; pour une Vente, le `motif` est renseigné après l'encaissement) |
-| **CarteCadeau** | Un instrument **prépayé** (pas une remise) : un code, un solde propre, un statut. Une Vente n'en consomme que ce qu'il faut ; le reliquat reste sur la carte. | `0,N —— 0,1 Vente` (appliquée) | `active → utilisée` (solde épuisé) · `expirée` (terminal) |
+| **CarteCadeau** | Un instrument **prépayé** (pas une remise) : un code, un solde propre, un statut. Achetée hors app. Une Vente n'en consomme que ce qu'il faut ; le reliquat reste sur la carte. | `0,N —— 0,1 Vente` (appliquée) · `1,1 —— 0,N GiftCardOrder` (via `code`) | `active → utilisée` (solde épuisé) · `expirée` (terminal) |
+| **GiftCardOrder** (commande de carte cadeau) | Une carte cadeau achetée en version **imprimée** que le salon prépare : imprimer, puis remettre (retrait) ou confier à la livraison. Aucun encaissement (v2.6). Porte l'acheteur, le montant, le code du ledger, le mode, et — si livraison — nom/tél/adresse du bénéficiaire. | `N,1 —— 1,1 Cliente` (rôle : acheteur) · `N,1 —— 1,1 CarteCadeau` (via `code`) | `a_imprimer → imprimee → remise` (retrait) / `→ livree` (livraison — confiée au coursier, hors app) |
 | **Style** | Un contenu du **Catalogue** de références (ex-Lookbook) : un rendu à montrer ou recommander. Consulté depuis le module Catalogue ou une recommandation de Fiche cliente — jamais depuis le Comptoir, aucun lien avec le panier. | `0,N —— 0,N Message` (référencé par une relance de recommandation) | — |
 | **Conversation** (fil) | La messagerie avec une cliente : une timeline de **Messages** (section Messages), plus un canal et un état. Un fil par cliente. La direction pilote toujours les relances hors de l'app ; la réceptionniste **échange** sans rien configurer (v2.5). | `1,1 —— 1,1 Cliente` · `1,1 —— 1,N Message` | `auto → conseillere ⇄ receptionniste` ; `→ direction` (terminal — transféré hors app, fil figé). `receptionniste` **met en pause** les relances programmées de la cliente. |
 | **Message** | Une entrée d'un **Fil** : un émetteur (cliente / réceptionniste / Conseillère), un canal, une date, un corps. Une **relance** = un Message de la Conseillère avec un `relanceType` (anniversaire / soins / fidélité / reconquête / recommandation) ; `pending` tant qu'elle n'est pas partie. Réponses cliente + Conseillère simulées (prototype). | `N,1 —— 1,1 Conversation` · `N,1 —— 0,1 Style` (relance de recommandation) · `N,1 —— 0,1 Remise` (relance de reconquête) | `pending → envoyé` pour une relance ; les autres messages n'ont pas d'état |
@@ -215,7 +232,8 @@ graph TB
 
     A[Accueil] --> J1[Chronologie du jour]
     A --> J5[Récap des ventes]
-    A --> GC[Cartes cadeaux à imprimer]
+    A --> GC[Cartes à préparer]
+    GC --> GCQ[/cartes-cadeaux - file : imprimer, remettre, expédier]
     A --> CPT
     J1 --> JD[Détail rendez-vous - lecture + Encaisser]
     JD --> CPT
@@ -375,9 +393,11 @@ Accueil
   - un rendez-vous déjà pris en charge (un onglet de vente lui est déjà associé) affiche un badge « En cours » à la place du bouton « Encaisser » ; le retaper **bascule** sur l'onglet existant au lieu d'en ouvrir un doublon — répond au cas d'un double-tap ou de deux membres de l'équipe qui cliquent chacun de leur côté sur le **même** rendez-vous ; deux rendez-vous **différents** ne posent aucun conflit, chacun ouvrant son propre onglet
   - tap sur un rendez-vous → Fiche réservation (payeuse + toutes ses prestations, « Encaisser la réservation » + « Annuler cette prestation ») ; pas d'édition ni de confirmation — la prise de rendez-vous se fait en ligne
 - ~~Widget « Tournée du matin »~~ **retiré (v2.5, ADR 0011)** : plus de rappel des relances sur l'Accueil ; l'info (anniversaires du jour en tête) vit dans l'inbox **Messages**
-- « Cartes cadeaux à imprimer » : une pastille par dénomination active du catalogue démo, chacune ouvre la face imprimable de la carte (aucune génération de code — ADR 0002)
-- Résumé du jour : total réellement encaissé aujourd'hui (calculé depuis les ventes à l'état *encaissée* de la session), nombre de rendez-vous du jour — remplace les cartes « Revenus »/« Rendez-vous » figées ou mortes de l'ancien Accueil
-  - « Voir le récap complet » → **Récap des ventes** (lieu retrouvé en confrontant les captures d'écran originales du design de référence à `FEATURES.md` : la maquette d'origine prévoyait une action rapide « Récap ventes » que ni le code actuel ni la v2 précédente de ce document ne couvraient — un vrai trou, maintenant comblé)
+- Board « Le point du jour » — 2 cellules (v2.6) :
+  - **« Cartes à préparer »** : compteur des commandes de carte cadeau non résolues (`a_imprimer` + `imprimee`) ; vide → « Aucune carte à préparer » en sourdine. → route **`/cartes-cadeaux`**
+  - **« Rendez-vous du jour »** : nombre de rendez-vous du jour → section Planning
+  - *(« Encaissé aujourd'hui » a quitté l'Accueil en v2.6 — reste atteignable via le Récap des ventes)*
+- ~~« Cartes cadeaux à imprimer »~~ (pastilles de dénominations, `7b38d71`) **abandonné (v2.6, ADR 0012)** : remplacé par la file `/cartes-cadeaux`
 - « Ouvrir le planning » → section Planning (semaine, équipe, lecture des rendez-vous)
 [ Aucun rendez-vous aujourd'hui → état vide avec un lien « Ouvrir le planning » (pas de bouton de création — la prise de rendez-vous se fait en ligne, `docs/adr/0006`) ]
 [ Minuit passé avec une vente encore ouverte dans le Comptoir → la vente reste rattachée à l'Accueil du jour où elle a été ouverte, jamais une bascule silencieuse vers le lendemain ; le Résumé du jour se fige à minuit et un nouvel Accueil démarre à zéro, la vente à cheval vient s'ajouter au total du jour d'origine une fois encaissée — frontière claire, pas un cas laissé au hasard de l'implémentation ]
@@ -391,6 +411,25 @@ Récap des ventes  (sous l'Accueil — l'argent du jour, pas l'agenda)
 ```
 
 **Décisions actées (Accueil)** : « Encaisser » depuis la Chronologie est LE chemin d'une vente liée à une réservation ; le résumé du jour reflète des données réelles ; la prise de rendez-vous ne vit pas dans l'app (`docs/adr/0006`).
+
+### Cartes cadeaux à préparer — route `/cartes-cadeaux` (v2.6)
+
+*La file des cartes cadeaux achetées en version imprimée, à préparer par la réceptionniste. Achat + paiement hors app. Atteinte par la cellule « Cartes à préparer » de l'Accueil.*
+
+```
+Cartes cadeaux à préparer  (route dédiée, retour → Accueil)
+- la file : toutes les commandes non résolues (a_imprimer + imprimee), sans date d'échéance, jusqu'à remise/livraison
+- une ligne : acheteur (fiche cliente) · montant · badge Retrait / Livraison · statut (À imprimer / Imprimée)
+  - Livraison : nom + téléphone + adresse du bénéficiaire, accessibles (dépli ou inline)
+- actions par ligne :
+  - statut À imprimer → « Imprimer » : impression directe de la face carte (react-to-print, PAS de dialog de preview) → passe Imprimée
+  - statut Imprimée → « Marquer comme remise » (retrait) / « Marquer comme expédiée » (livraison) → quitte la file
+    + « Réimprimer » (secondaire, au cas où)
+- la face imprimée = code + montant + QR démo + branding (livrable client ; jamais rendue dans l'UI de la file)
+[ aucune commande non résolue → « Aucune carte à préparer » ; la cellule Accueil est en sourdine ]
+```
+
+**Décisions actées (Cartes cadeaux)** : achat externe, salon = préparation, **zéro encaissement** (ADR 0001) ; `GiftCardOrder` (`buyerClientId` toujours une fiche, `code` du ledger, `fulfillment`, `status`) distinct du ledger `CarteCadeau` ; livraison réelle hors app ; face imprimée riche. Cf. `docs/adr/0012`.
 
 ---
 
@@ -439,7 +478,7 @@ Choix de la remplaçante  (bloquant — « Encaisser » quand au moins un rendez
   - chaque rendez-vous → « Encaisser » → Comptoir déployé, nouvel onglet pré-rempli (cliente + prestations)
   - rendez-vous déjà pris en charge → badge « En cours » à la place de « Encaisser » ; le retaper bascule sur l'onglet existant au lieu d'ouvrir un doublon
   - tap sur un rendez-vous → Fiche réservation (Encaisser · Ajuster la réservation · Annuler cette prestation avec motif ; v2.4) — identique depuis le Planning
-- ~~Widget « Tournée du matin »~~ retiré (v2.5, ADR 0011) ; « Cartes cadeaux à imprimer » (v2.4) : pastilles de dénominations, face imprimable
+- ~~Widget « Tournée du matin »~~ retiré (v2.5) ; « Le point du jour » : cellules « Cartes à préparer » (→ `/cartes-cadeaux`) + « Rendez-vous du jour » (v2.6, ADR 0012)
 - Résumé du jour : total réellement encaissé aujourd'hui (ventes à l'état *encaissée*), nombre de rendez-vous du jour
   - « Voir le récap complet » → Récap des ventes
 - « Ouvrir le planning » → section Planning

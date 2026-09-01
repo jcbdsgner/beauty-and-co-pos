@@ -104,8 +104,12 @@ _Avoid_: Code direction, code responsable, code superviseur, PIN admin
 La justification en texte libre d'une remise accordée, saisie sur un écran bloquant **après** « Confirmer l'encaissement » et avant le reçu — jamais avant, pour ne pas ralentir le comptoir avec une cliente en face. Visible ensuite sur le reçu et dans le Récap des ventes.
 
 **Carte cadeau**:
-Un instrument **prépayé** — pas une remise. Elle porte un solde propre ; la vente n'en consomme que ce qu'il faut pour couvrir le reste à payer, et le **reliquat reste sur la carte** pour un prochain passage. Saisie au clavier ou scannée. Statuts : active, utilisée (solde épuisé), expirée — chacun avec son message au comptoir, jamais le texte générique d'un code mal tapé.
+Un instrument **prépayé** — pas une remise. **Achetée et payée sur une plateforme externe** (le parcours d'achat ne vit pas dans cette app), avec un mode de remise choisi à l'achat : e-carte (hors périmètre), **retrait** au salon en version imprimée, ou **livraison** de la version imprimée. Elle porte un solde propre ; la vente n'en consomme que ce qu'il faut pour couvrir le reste à payer, et le **reliquat reste sur la carte** pour un prochain passage. Saisie au clavier ou scannée. Statuts (au comptoir) : active, utilisée (solde épuisé), expirée — chacun avec son message, jamais le texte générique d'un code mal tapé (ADR 0002, 0012).
 _Avoid_: Bon cadeau, chèque cadeau, avoir
+
+**Commande de carte cadeau**:
+Une carte cadeau achetée en version imprimée (retrait ou livraison) que le salon doit **préparer** : l'imprimer, puis la remettre à la personne ou la confier à la livraison. Aucun encaissement — c'est déjà payé. Portée : acheteur (toujours une fiche cliente), montant, code du ledger, mode de remise, et — pour une livraison — nom / téléphone / adresse du bénéficiaire. Statuts : à imprimer → imprimée → remise (retrait) / livrée (livraison, = confiée au coursier ; la livraison réelle est hors app). La file des commandes non résolues vit sur la route `/cartes-cadeaux`, atteinte par la cellule « Cartes à préparer » de l'Accueil (ADR 0012).
+_Avoid_: Bon de commande, ticket carte cadeau, à imprimer (un statut, pas l'objet)
 
 **Points fidélité**:
 Le solde de fidélité d'une cliente, avec deux mouvements distincts. L'**acquisition** : 10 points par tranche de 1 000 F réellement payés (calculée sur le total après remises). L'**utilisation** : 100 points = 1 000 F de réduction, par pas de 100, dans la limite du solde — c'est l'un des trois mécanismes de Remise.

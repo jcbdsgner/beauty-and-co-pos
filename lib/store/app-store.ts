@@ -6,12 +6,19 @@ import { RESERVATIONS, reservationById, timeToMinutes } from "@/lib/data/plannin
 import { PRODUITS, serviceById } from "@/lib/data/menu";
 import { PRATICIENNES } from "@/lib/data/praticiennes";
 import { CONVERSATIONS } from "@/lib/data/conversations";
-import { CARTES_CADEAUX, carteCadeauByCode, giftCardExpiryLabel, normalizeGiftCardCode } from "@/lib/data/cartes-cadeaux";
+import {
+  CARTES_CADEAUX,
+  GIFT_CARD_ORDERS,
+  carteCadeauByCode,
+  giftCardExpiryLabel,
+  normalizeGiftCardCode,
+} from "@/lib/data/cartes-cadeaux";
 import { formatFcfa } from "@/lib/utils";
 import type {
   CartLine,
   Cliente,
   Conversation,
+  GiftCardOrder,
   PaymentMode,
   Praticienne,
   Produit,
@@ -176,6 +183,9 @@ export type AppState = {
    *  hand it back to the Conseillère, or transfer it to the direction (terminal). Scheduled
    *  relances stay defined in the direction's back-office — the app only writes *into* a thread. */
   conversations: Conversation[];
+  /** Printed gift cards bought on the external platform, awaiting preparation (ADR 0012). Reactive
+   *  so marking one handed-over drops its row from the queue immediately. */
+  giftCardOrders: GiftCardOrder[];
 
   // Clients
   addClient: (data: Omit<Cliente, "id" | "points" | "totalSpent" | "totalVisits" | "createdAt" | "tier">) => Cliente;
@@ -241,6 +251,12 @@ export type AppState = {
   sendClientMessage: (convId: string, body: string) => void;
   /** A client reply has been seen — clears the amber signal. */
   markConversationRead: (convId: string) => void;
+
+  // Cartes cadeaux à préparer (ADR 0012)
+  /** `a_imprimer → imprimee`. No-op past that. The actual print fires in the component. */
+  printGiftCardOrder: (orderId: string) => void;
+  /** `imprimee → remise` (retrait) / `→ livree` (livraison) — the order leaves the queue. */
+  markGiftCardOrderHandedOver: (orderId: string) => void;
 };
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -254,6 +270,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   comptoirDeployed: false,
   recentClientIds: [],
   conversations: CONVERSATIONS,
+  giftCardOrders: GIFT_CARD_ORDERS,
 
   addClient: (data) => {
     const client: Cliente = { ...data, id: nextId("cl"), tier: null, points: 0, totalSpent: 0, totalVisits: 0, createdAt: new Date().toISOString() };
@@ -674,4 +691,21 @@ export const useAppStore = create<AppState>((set, get) => ({
       }));
     }, 1500);
   },
+
+  // ── Cartes cadeaux à préparer (ADR 0012) ───────────────────────────────
+  printGiftCardOrder: (orderId) =>
+    set((s) => ({
+      giftCardOrders: s.giftCardOrders.map((o) =>
+        o.id === orderId && o.status === "a_imprimer" ? { ...o, status: "imprimee" } : o,
+      ),
+    })),
+
+  markGiftCardOrderHandedOver: (orderId) =>
+    set((s) => ({
+      giftCardOrders: s.giftCardOrders.map((o) =>
+        o.id === orderId && o.status === "imprimee"
+          ? { ...o, status: o.fulfillment === "retrait" ? "remise" : "livree" }
+          : o,
+      ),
+    })),
 }));
