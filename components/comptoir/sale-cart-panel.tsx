@@ -26,7 +26,7 @@ const TIER_BADGE = {
  * the checkout button are the only other things allowed here.
  */
 export function SaleCartPanel({ sale, onScanClient, onScanGiftCard }: { sale: Sale; onScanClient: () => void; onScanGiftCard: () => void }) {
-  const { updateCartQty, removeCartLine, updateSale, clients, reservations } = useAppData();
+  const { updateCartQty, removeCartLine, updateSale, clients, reservations, produits } = useAppData();
   const [creatingClient, setCreatingClient] = useState(false);
   const totals = computeTotals(sale);
   const isEmpty = sale.cart.length === 0;
@@ -114,8 +114,14 @@ export function SaleCartPanel({ sale, onScanClient, onScanGiftCard }: { sale: Sa
           </div>
         ) : (
           <ul className="flex flex-col divide-y divide-border">
-            {sale.cart.map((line) => (
+            {sale.cart.map((line) => {
+              const maxQty =
+                line.kind === "produit" ? (produits.find((p) => p.id === line.refId)?.stock ?? 20) : 20;
+              return (
               <li key={line.id} className="animate-line-in py-3.5">
+                {line.kind === "produit" && line.qty >= maxQty && (
+                  <p className="mb-1 text-xs font-medium text-[var(--board-amber)]">Stock atteint — {maxQty} en rayon.</p>
+                )}
                 <div className="flex items-start justify-between gap-3">
                   <span className="min-w-0 flex-1">
                     <span className="block text-[15px] font-semibold text-[var(--color-gray-900)]">{line.name}</span>
@@ -143,8 +149,8 @@ export function SaleCartPanel({ sale, onScanClient, onScanGiftCard }: { sale: Sa
                     <span className="w-6 text-center text-[15px] font-bold text-[var(--color-gray-900)] tabular-nums">{line.qty}</span>
                     <button
                       type="button"
-                      onClick={() => updateCartQty(sale.id, line.id, Math.min(20, line.qty + 1))}
-                      disabled={line.qty >= 20}
+                      onClick={() => updateCartQty(sale.id, line.id, Math.min(maxQty, line.qty + 1))}
+                      disabled={line.qty >= maxQty}
                       aria-label={`Plus — ${line.name}`}
                       className="flex size-11 items-center justify-center rounded-full text-[var(--color-gray-600)] transition active:scale-90 disabled:opacity-30"
                     >
@@ -163,7 +169,8 @@ export function SaleCartPanel({ sale, onScanClient, onScanGiftCard }: { sale: Sa
                   </IconButton>
                 </div>
               </li>
-            ))}
+              );
+            })}
           </ul>
         )}
       </div>

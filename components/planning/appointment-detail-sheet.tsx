@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Clock, Scissors, User, Users } from "lucide-react";
+import { Clock, Scissors, User, Users, SlidersHorizontal } from "lucide-react";
 import { Dialog } from "@/components/ui/molecules/dialog";
-import { ConfirmDialog } from "@/components/ui/molecules/confirm-dialog";
 import { CloseButton } from "@/components/ui/atoms/icon-button";
 import { Button } from "@/components/ui/atoms/button";
+import { Textarea } from "@/components/ui/atoms/textarea";
+import { Field } from "@/components/ui/molecules/field";
 import { FlipChip, Legend } from "@/components/ui/board";
+import { EditRendezVousDialog } from "@/components/planning/edit-rendez-vous-dialog";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { clientFullName } from "@/lib/data/clientele";
 import { serviceById } from "@/lib/data/menu";
@@ -21,12 +23,13 @@ type Props = {
   onEncaisser: (reservationId: string) => void;
 };
 
-/** Fiche réservation — le détail (payeuse, prestations, praticiennes), avec Encaisser / Annuler.
- *  Pas de confirmation ni d'édition : la prise de rendez-vous se fait en ligne, les rendez-vous
- *  arrivent fermes. */
+/** Fiche réservation — le détail (payeuse, prestations, praticiennes), avec Encaisser, Ajuster et
+ *  Annuler (motif facultatif). La création de réservation se fait en ligne (ADR 0006/0009). */
 export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Props) {
   const { clients, praticiennes, reservations, cancelAppointment } = useAppData();
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+  const [editing, setEditing] = useState(false);
 
   if (!appointment) return null;
 
@@ -111,32 +114,54 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
               {hasSale ? "Voir la vente en cours" : "Encaisser la réservation"}
             </Button>
           )}
+          {reservation && !cancelled && (
+            <Button variant="outline" icon={<SlidersHorizontal className="size-4" />} onClick={() => setEditing(true)}>
+              Ajuster la réservation
+            </Button>
+          )}
           {!cancelled && (
             <Button variant="danger-outline" onClick={() => setConfirmCancel(true)}>
               Annuler cette prestation
             </Button>
           )}
+          {cancelled && appointment.cancelReason && (
+            <p className="px-1 text-xs text-[var(--color-gray-500)]">Motif : {appointment.cancelReason}</p>
+          )}
         </div>
       </Dialog>
 
-      <ConfirmDialog
-        open={confirmCancel}
-        title="Annuler cette prestation ?"
-        description={
-          hasSale
+      <Dialog open={confirmCancel} labelledBy="cancel-prestation-title" className="max-w-sm p-6">
+        <h3 id="cancel-prestation-title" className="font-[family-name:var(--font-heading)] text-lg font-semibold text-[var(--color-gray-900)]">
+          Annuler cette prestation ?
+        </h3>
+        <p className="mt-2 text-sm text-[var(--color-gray-500)]">
+          {hasSale
             ? "Une vente est ouverte pour cette réservation — l'annuler ne la fermera pas."
-            : "La prestation passera au statut Annulé et restera consultable via « Afficher les annulés »."
-        }
-        confirmLabel="Annuler la prestation"
-        cancelLabel="Retour"
-        confirmVariant="danger"
-        onCancel={() => setConfirmCancel(false)}
-        onConfirm={() => {
-          cancelAppointment(appointment.id);
-          setConfirmCancel(false);
-          onClose();
-        }}
-      />
+            : "La prestation passera au statut Annulé et restera consultable via « Afficher les annulés »."}
+        </p>
+        <Field label="Motif (facultatif)" className="mt-4">
+          <Textarea value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} rows={2} placeholder="Ex. la cliente a décalé sa venue" />
+        </Field>
+        <div className="mt-4 flex gap-3">
+          <Button variant="outline" className="flex-1" onClick={() => setConfirmCancel(false)}>
+            Retour
+          </Button>
+          <Button
+            variant="danger"
+            className="flex-1"
+            onClick={() => {
+              cancelAppointment(appointment.id, cancelReason);
+              setConfirmCancel(false);
+              setCancelReason("");
+              onClose();
+            }}
+          >
+            Annuler la prestation
+          </Button>
+        </div>
+      </Dialog>
+
+      <EditRendezVousDialog reservationId={editing && reservation ? reservation.id : null} onClose={() => setEditing(false)} />
     </>
   );
 }

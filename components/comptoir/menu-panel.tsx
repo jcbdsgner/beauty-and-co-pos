@@ -6,7 +6,8 @@ import { LayoutGrid, Users } from "lucide-react";
 import { SegmentedToggle } from "@/components/ui/molecules/segmented-toggle";
 import { SearchInput } from "@/components/ui/atoms/search-input";
 import { Pills } from "@/components/ui/molecules/pills";
-import { PRODUCT_CATEGORIES, PRODUITS, SERVICE_CATEGORIES, SERVICES } from "@/lib/data/menu";
+import { PhotoPlaceholder } from "@/components/ui/atoms/photo-placeholder";
+import { PRODUCT_CATEGORIES, SERVICE_CATEGORIES, SERVICES } from "@/lib/data/menu";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { cn, formatFcfa } from "@/lib/utils";
 
@@ -25,7 +26,7 @@ const CATEGORY_ICON: Record<string, string> = {
 };
 
 export function MenuPanel({ saleId }: { saleId: string }) {
-  const { addCartLine, sales } = useAppData();
+  const { addCartLine, sales, produits } = useAppData();
   const [mode, setMode] = useState<MenuMode>("services");
   const [query, setQuery] = useState("");
   const [categoryId, setCategoryId] = useState<string>("toutes");
@@ -39,7 +40,7 @@ export function MenuPanel({ saleId }: { saleId: string }) {
   }, [sales, saleId]);
 
   const categories = mode === "services" ? SERVICE_CATEGORIES : PRODUCT_CATEGORIES;
-  const items = mode === "services" ? SERVICES : PRODUITS;
+  const items = mode === "services" ? SERVICES : produits;
 
   const railTiles = useMemo(
     () => [
@@ -69,6 +70,9 @@ export function MenuPanel({ saleId }: { saleId: string }) {
     setCategoryId(id);
     setSubcategory("");
   }
+
+  const activeCategory = categoryId === "toutes" ? null : railTiles.find((t) => t.id === categoryId);
+  const activeCategoryIcon = CATEGORY_ICON[categoryId];
 
   return (
     <div className="flex h-full min-h-0 gap-4">
@@ -101,7 +105,7 @@ export function MenuPanel({ saleId }: { saleId: string }) {
       </nav>
 
       {/* Menu */}
-      <div className="flex min-h-0 flex-1 flex-col gap-3">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
         <div className="flex shrink-0 items-center gap-3">
           <SegmentedToggle
             className="shrink-0"
@@ -125,61 +129,111 @@ export function MenuPanel({ saleId }: { saleId: string }) {
 
         {subcats.length > 0 && (
           <Pills
-            className="shrink-0 flex-nowrap overflow-x-auto"
+            className="shrink-0"
+            wrap={false}
             options={[{ value: "", label: "Tout" }, ...subcats.map((s) => ({ value: s, label: s }))]}
             value={subcategory}
             onChange={setSubcategory}
           />
         )}
 
+        {activeCategory && (
+          <div className="flex shrink-0 items-center gap-2 px-0.5">
+            {activeCategoryIcon ? (
+              <Image src={activeCategoryIcon} alt="" width={22} height={22} className="size-[22px] shrink-0 object-contain" />
+            ) : (
+              <LayoutGrid aria-hidden className="size-[22px] shrink-0 text-[var(--color-gray-400)]" />
+            )}
+            <h3 className="font-[family-name:var(--font-heading)] text-sm font-semibold text-[var(--color-gray-900)]">
+              {activeCategory.name}
+            </h3>
+            <span className="text-xs tabular-nums text-[var(--color-gray-400)]">{filtered.length}</span>
+          </div>
+        )}
+
         <div className="min-h-0 flex-1 overflow-y-auto pb-2">
           {filtered.length === 0 ? (
-            <p className="py-16 text-center text-sm text-[var(--color-gray-400)]">Aucune prestation ne correspond.</p>
+            <p className="py-16 text-center text-sm text-[var(--color-gray-400)]">
+              {mode === "services" ? "Aucune prestation ne correspond." : "Aucun produit ne correspond."}
+            </p>
           ) : (
             <div className="grid grid-cols-[repeat(auto-fill,minmax(158px,1fr))] gap-3">
               {filtered.map((item) => {
                 const inCart = countByRef[item.id] ?? 0;
+                const isProduit = !("durationMinutes" in item);
+                const remaining = "stock" in item ? item.stock - inCart : null;
+                const soldOut = remaining !== null && remaining <= 0;
                 return (
                   <button
                     key={item.id}
                     type="button"
+                    disabled={soldOut}
                     onClick={() =>
                       addCartLine(saleId, {
                         refId: item.id,
-                        kind: mode === "services" ? "service" : "produit",
+                        kind: isProduit ? "produit" : "service",
                         name: item.name,
                         unitPrice: item.price,
                       })
                     }
                     className={cn(
-                      "relative flex min-h-[112px] flex-col justify-between rounded-2xl border bg-white p-3.5 text-left transition active:scale-[0.96]",
-                      inCart > 0 ? "border-secondary" : "border-border hover:border-secondary/50",
+                      "relative flex min-h-[112px] flex-col overflow-hidden rounded-2xl border text-left transition active:scale-[0.96]",
+                      soldOut
+                        ? "cursor-not-allowed border-border bg-[var(--color-gray-50)]"
+                        : inCart > 0
+                          ? "border-secondary bg-white"
+                          : "border-border bg-white hover:border-secondary/50",
                     )}
                   >
                     {inCart > 0 && (
-                      <span className="absolute -top-2 -right-2 flex h-6 min-w-6 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-bold text-primary-foreground tabular-nums">
+                      <span className="absolute -top-2 -right-2 z-10 flex h-6 min-w-6 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-bold text-primary-foreground tabular-nums">
                         {inCart}
                       </span>
                     )}
-                    <span className="line-clamp-2 text-[13px] leading-snug font-semibold text-[var(--color-gray-900)]">{item.name}</span>
-                    <span className="mt-2 flex items-center justify-between gap-1">
-                      <span className="text-[15px] font-bold text-[var(--button-2-color)] tabular-nums">{formatFcfa(item.price)}</span>
-                      <span className="flex items-center gap-1">
-                        {"twoPractitionersEligible" in item && item.twoPractitionersEligible && (
-                          <span
-                            title="Réalisable à deux praticiennes"
-                            className="flex items-center gap-0.5 rounded-full bg-[var(--brand-rose-soft)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--brand-taupe-muted)]"
-                          >
-                            <Users aria-hidden className="size-3" /> 2
-                          </span>
+                    {isProduit && (
+                      <div className={cn("relative aspect-[5/3] w-full bg-[var(--brand-cream)]", soldOut && "opacity-60 grayscale")}>
+                        {"image" in item && item.image ? (
+                          <Image src={item.image} alt="" fill className="object-cover" />
+                        ) : (
+                          <PhotoPlaceholder className="size-full rounded-none border-0 bg-transparent" label="Photo" />
                         )}
-                        {"durationMinutes" in item && (
-                          <span className="rounded-full bg-[var(--color-gray-100)] px-2 py-0.5 text-[10px] font-medium text-[var(--color-gray-500)] tabular-nums">
-                            {item.durationMinutes} min
-                          </span>
-                        )}
+                      </div>
+                    )}
+                    <div className="flex flex-1 flex-col justify-between p-3.5">
+                      <span className="line-clamp-2 text-[13px] leading-snug font-semibold text-[var(--color-gray-900)]">{item.name}</span>
+                      <span className="mt-2 flex items-center justify-between gap-1">
+                        <span className="text-[15px] font-bold text-[var(--button-2-color)] tabular-nums">{formatFcfa(item.price)}</span>
+                        <span className="flex items-center gap-1">
+                          {"twoPractitionersEligible" in item && item.twoPractitionersEligible && (
+                            <span
+                              title="Réalisable à deux praticiennes"
+                              className="flex items-center gap-0.5 rounded-full bg-[var(--brand-rose-soft)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--brand-taupe-muted)]"
+                            >
+                              <Users aria-hidden className="size-3" /> 2
+                            </span>
+                          )}
+                          {"durationMinutes" in item && (
+                            <span className="rounded-full bg-[var(--color-gray-100)] px-2 py-0.5 text-[10px] font-medium text-[var(--color-gray-500)] tabular-nums">
+                              {item.durationMinutes} min
+                            </span>
+                          )}
+                          {remaining !== null && (
+                            <span
+                              className={cn(
+                                "rounded-full px-2 py-0.5 text-[10px] font-semibold tabular-nums",
+                                soldOut
+                                  ? "bg-[var(--color-error-soft)] text-[var(--color-error)]"
+                                  : remaining <= 5
+                                    ? "bg-[var(--brand-rose-soft)] text-[var(--board-amber)]"
+                                    : "bg-[var(--color-gray-100)] text-[var(--color-gray-500)]",
+                              )}
+                            >
+                              {soldOut ? "Rupture" : `${remaining} en stock`}
+                            </span>
+                          )}
+                        </span>
                       </span>
-                    </span>
+                    </div>
                   </button>
                 );
               })}

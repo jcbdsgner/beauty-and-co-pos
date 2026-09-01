@@ -6,7 +6,7 @@ import { useAppData } from "@/components/providers/app-data-provider";
 
 /**
  * Clientèle — recherche d'abord (docs/REFONTE-2.md §2.2). Chercher une cliente, ouvrir et tenir
- * sa fiche. La tournée de relance et les campagnes vivent dans la section Relances.
+ * sa fiche. Les relances (vue en lecture) vivent dans la section Relances.
  */
 export default function ClientelePage() {
   const { clients } = useAppData();

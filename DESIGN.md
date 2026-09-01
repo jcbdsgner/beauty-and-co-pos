@@ -5,8 +5,8 @@ colors:
   rose: "#fdcfca"          # the actionable plaque, filled primary actions, price emphasis
   taupe: "#886666"         # the current / emphasis plaque, active nav, dark CTA
   cream: "#f8f6f9"         # app ground (the wall the boards hang on)
-  slate: "#2a2320"         # the standing board header (warm near-black, derived from taupe)
-  slate-line: "#4a3f3a"    # routed-groove hairline on the slate header
+  slate: "#2a2320"         # dark chrome for contextual sheet/panel bars only (ADR 0007 retired it as the section header)
+  slate-line: "#4a3f3a"    # routed-groove hairline on that dark chrome
   amber: "#b5590a"         # THE one signal — changed / now / needs a decision. Nothing else uses it.
   amber-soft: "#fdf0e3"
   rose-soft: "#fef0ee"     # secondary plaque fill, chip wells
@@ -46,12 +46,12 @@ cream-ground / rounded-card / one-accent consumer app, and the dark dashboard wi
 
 **OWN-WORLD.** Painted directory-board plaques hung on the cream wall. Each content region is a
 flat plaque — **rose** when it holds something to act on, **taupe** when it holds the current
-state, **slate** (`#2a2320`) for the one standing board header per screen — framed by a *routed
+state — framed by a *routed
 groove* (a `groove`-colour double hairline with 1px of inset, drawn with `box-shadow`, never a
 raised shadow). Down the left of every board runs a **legend rail**: hours, letters, or names set
 in `legend` type (700, uppercase, `0.12em` tracking). Rows are **lanes** on hairline rules,
 `lane-height` tall. State is a **flip-chip** — a small `chip`-radius tabular tile (`PRÊT`,
-`ENVOYÉ`, `EN COURS`, `CONFIRMÉ`, `ANNULÉ`, `ABSENTE`, `TENDANCE`) that does one 140ms mechanical
+`ENVOYÉ`, `EN COURS`, `ANNULÉ`, `ABSENTE`, `TENDANCE`) that does one 140ms mechanical
 half-flip on change; it never relies on colour alone. **One signal colour: `amber`.** It marks
 *changed / now / needs you* — the lane pulses amber once, then holds a 3px amber left-edge until
 acknowledged. Figures (time, count, total, points) are always `figure` type with `tabular-nums`
@@ -63,9 +63,10 @@ only under the wordmark.
 what changed since she last looked, what still needs a decision. She acts on the lane itself; the
 board reflows in place; the chip flips; the amber edge clears.
 
-**FIRST VIEWPORT (Planning).** The standing slate board header — section name, live day in full,
-`AUJOURD'HUI` reset. No create button: bookings are made online (ADR 0006); the board is read +
-counter gestures (Confirmer / Annuler / Encaisser). Under it the week strip of day tiles. Then the
+**FIRST VIEWPORT (Planning).** The section heading — the section name as a plain bold title on the
+cream ground (ADR 0007 retired the slate plaque), an `AUJOURD'HUI` reset shown only off-today.
+No create button, no confirm step: bookings arrive firm from the online platform (ADR 0006); the
+board is read + counter gestures (Annuler / Encaisser). Under it the week strip of day tiles. Then the
 day board: a roster rail on the left, practitioner lanes, one lane per *rendez-vous* (an atomic
 planned prestation — a two-practitioner one shows on both lanes), each carrying its flip-chip.
 Nothing bleeds to the window edge — the board always has its frame.
@@ -97,8 +98,10 @@ destructive edit to a shared atom.
 - **Taupe `#886666`** — the *current-state* plaque, the active nav item, the one dark CTA per
   screen, legend-rail text on light, icon accents. A taupe plaque means "this is where things
   stand".
-- **Slate `#2a2320`** — the standing board header only. One per screen. White text, `slate-line`
-  groove. It is the board's own frame, not a hero banner.
+- **Slate `#2a2320`** — dark overlay chrome only: the contextual sheet/panel bars that read as a
+  bar over the board (the client Fiche sticky header, the appointment detail sheet). White text,
+  `slate-line` groove. **Not a section header** — ADR 0007 retired that role; a section is now
+  named by a plain bold title on the cream ground.
 - **Amber `#b5590a`** — **the** signal. Changed row, "now" marker, a decision still owed
   (unauthorised reconquête, absent practitioner, a just-created follow-up). Pulse once, then hold
   a 3px left-edge on the lane. Never used decoratively, never as a third structural hue. Semantic
@@ -128,7 +131,7 @@ the wordmark tagline. Hierarchy is weight + role, never a second face.
 
 | Role | Spec | Where |
 |---|---|---|
-| Board header | 700, `text-[1.9rem]`–`text-3xl`, tight leading | the one slate header per screen |
+| Section title | 700, `text-[1.9rem]`, `tracking-[-0.02em]`, `ink-900` | the plain heading on cream at the top of each screen |
 | Legend / lane label | **700, uppercase, `tracking-[0.12em]`, `text-xs`** | legend rail, plaque titles, chip text |
 | Figure | 600, `tabular-nums` | every time, count, total, points, price |
 | Name / dialog title | 600 | client names, appointment client, dialog `<h2>` |
@@ -141,8 +144,9 @@ as a `text-lg` heading — a board is labelled like a schedule, not titled like 
 
 Fixed 260px sidebar + fluid content, `max-w-6xl`, `px-8 py-8` (unchanged). Inside a section:
 
-- **The slate board header** spans the content width, `rounded-plaque`, `slate` fill, white text,
-  section name + context + primary action. One per screen.
+- **The section heading** is a plain bold title on the cream ground (ADR 0007) — section name,
+  optional `context` line in `ink-500` beneath it, `reset` / `action` aligned right, an optional
+  bordered "Retour" pill on white. No plaque, no fill. One per screen.
 - **Boards** are plaques: `rounded-plaque`, white or `rose-soft`/`taupe`-tint fill, routed-groove
   frame, an internal **legend rail** (`w-14` to `w-24` depending on content) and a lane column.
 - **Lanes** are `lane-height` rows separated by `groove` hairlines, full-width tap targets, their
@@ -168,9 +172,11 @@ motion, orchestrated, once — not scattered hover effects.
 ## Components
 
 ### `BoardHeader`
-The standing slate header. Props: `section`, `context` (live day, count, subtitle), `action`,
+The section heading — a plain bold `<h1>` (`text-[1.9rem]`, 700, `tracking-[-0.02em]`, `ink-900`)
+on the cream ground. ADR 0007 retired the slate plaque; the API is unchanged so every call site
+still works. Props: `section`, `context` (optional line in `ink-500` under the title), `action`,
 optional `reset` (the "Aujourd'hui"-style control shown only when relevant), optional `backHref`
-(a real 56px bordered button on the slate, never a bare chevron link).
+(a bordered "Retour" pill on white, `groove` border — never a bare chevron link).
 
 ### `Board`
 A plaque region. Props: `legend` (the tracked-uppercase label sitting on the routed frame),

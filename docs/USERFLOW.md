@@ -1,5 +1,35 @@
 # Userflow — Point de vente (Beauty and Co) — refonte totale (v2)
 
+> **Amendement 2026-09-01 (v2.3) — Relances entièrement automatiques ; la section devient une vue de lecture.**
+> Les relances partent automatiquement ; leurs conditions, délais et textes sont définis par la
+> direction dans un **back-office hors de cette app**. La réceptionniste n'envoie plus rien et ne
+> configure plus rien — la section Relances est un **écran unique en lecture** : les relances déjà
+> parties (cliente, type, date, canal — filtrable) et celles **à venir**, **anniversaires en tête**
+> pour que le comptoir en tienne compte à l'arrivée de la cliente. **Retirés :** les trois volets
+> (« La Tournée du matin » avec son geste « Valider & envoyer », « Envois groupés » et l'objet
+> **Campagne**, « Contenu conseillère » avec `BeautyTip`) ; le bloc « Recommandations / Proposer »
+> de la Fiche cliente ; l'autorisation de remise de reconquête. `RelanceStatus` se réduit à
+> `a_venir | envoyee` et une Relance porte désormais un `channel`. Le widget « Tournée du matin »
+> de l'Accueil devient **informatif** (rappel de ce qui part aujourd'hui, sans envoi). La
+> **conseillère** reste la signature des messages ; son savoir est édité hors app. Voir
+> `docs/adr/0010`. Les passages ci-dessous marqués v2.1 / v2.2 sur la Tournée, les Campagnes et le
+> Contenu conseillère sont **supersédés**.
+
+> **Amendement 2026-09-01 (v2.4) — Ajustement des réservations au comptoir ; équipe (ménage + horaires).**
+> Deux changements, issus des notes manuscrites du 2026-09-01 (cf. `docs/adr/0009` et `CONTEXT.md`) :
+> 1. **La fiche réservation redevient éditable** (§ Planning ci-dessous, ADR 0009 qui amende 0006).
+>    Depuis le Planning **et** l'Accueil, la réceptionniste peut, sur une réservation qui arrive :
+>    changer la prestation / la praticienne / la 2ᵉ praticienne / le·la bénéficiaire d'un
+>    rendez-vous, **reprogrammer** un créneau, **ajouter** ou **retirer** un rendez-vous, **annuler**
+>    avec un motif texte libre facultatif (visible dans l'historique des annulés). Seul garde-fou
+>    dur : une praticienne ne peut pas tenir deux rendez-vous qui se chevauchent — bloqué. Aucune
+>    **création de réservation** dans l'app : « Créer un rendez-vous » ouvre la plateforme externe.
+>    `RendezVous` gagne `cancelReason?`. Nouveau terme `CONTEXT.md` : **Reprogrammer**.
+> 2. **Équipe** : `Role` gagne **`menage`** ; les libellés de rôle passent au masculin (Coiffeur /
+>    Esthéticien / Ménage / Accueil — la fonction, pas la personne) ; `Praticienne` gagne un horaire
+>    de présence du jour (`shiftStart` / `shiftEnd`, donnée dure) affiché dans le rail Équipe du
+>    Planning ; le ménage apparaît dans ce rail **sans lane** (jamais de rendez-vous).
+
 > **Amendement 2026-08-27 (v2.2) — Refonte 2 : Planning · Clientèle · Relances · Catalogue.** Ces
 > quatre sections (et leurs sous-écrans : Équipe, Fiche cliente, Carte de fidélité, Détail planche)
 > ont été **redesignées à partir des seules job stories**, dans un **nouveau langage visuel
@@ -46,7 +76,7 @@ L'app actuelle organise tout en **6 modules à plat, par nom d'objet métier** :
 
 La sidebar passe de **6 items à 5** (Accueil / Planning / Clientèle / Relances / Catalogue) + la **barre Comptoir**, ancrée au pied de la zone de travail sur toutes les sections, pleine largeur : ce n'est pas un item de navigation mais une capacité globale — le Comptoir replié — et c'est l'action n°1 du poste, donc une vraie barre au repos (voir § barre Comptoir), jamais une pastille dans un coin. Il n'y a **plus de section Réglages** : point-de-vente a un persona unique (ADR 0001), les seuls écrans « moi » (Profil, Sécurité) vivent sous `/compte`, atteint par le menu identité du pied de sidebar.
 
-**Pourquoi Planning sort de l'Accueil.** Le geste quotidien de la réceptionniste, c'est *encaisser* ; consulter la chronologie du jour en est le contexte (qui va venir payer). Mais *gérer l'agenda* — créer un rendez-vous surtout — est rare : les clientes réservent elles-mêmes en ligne sur une autre plateforme. Fondre les deux dans l'Accueil mettait un bouton « Nouveau rendez-vous » en vedette sur l'écran d'atterrissage pour une tâche d'exception. Séparer *timeline du jour* (Accueil) et *gestion de l'agenda* (Planning) applique le principe de rythme d'usage plus finement, pas moins : de la gestion rare, niveau section propre — pas du pilotage quotidien.
+**Pourquoi Planning sort de l'Accueil.** Le geste quotidien de la réceptionniste, c'est *encaisser* ; consulter la chronologie du jour en est le contexte (qui va venir payer). Mais *consulter l'agenda complet* — la semaine, les disponibilités de l'équipe, l'historique des annulations — est rare : les clientes réservent elles-mêmes en ligne sur une autre plateforme et les réservations arrivent fermes. Fondre les deux dans l'Accueil chargeait l'écran d'atterrissage d'une surface d'exception. Séparer *timeline du jour* (Accueil) et *agenda complet* (Planning) applique le principe de rythme d'usage plus finement, pas moins : de la consultation rare, niveau section propre — pas du pilotage quotidien. *(À l'origine ce raisonnement portait aussi sur « créer un rendez-vous » ; ADR 0006 a depuis retiré la prise de rendez-vous de l'app.)*
 
 **Pourquoi Relances sort de Clientèle (v2.1).** Le même raisonnement, appliqué à l'autre bout. La v2 fondait Suivi + Campagnes + Conseils dans Clientèle « parce que ce sont des façons de regarder la relation cliente dans le temps » — vrai sur le fond, mais la table de rythme ci-dessus range « la tournée de relance du matin » en **Quotidien**, pas en « Relationnel, pas tous les jours ». Enterrer un geste quotidien sous un onglet d'une section de consultation, c'était le même contresens que mettre « Nouveau rendez-vous » sur l'atterrissage. La v2 le sentait déjà : elle a dû créer le widget « Tournée du matin » sur la Journée *pour compenser*. La v2.1 assume la conséquence — Relances est une section, le widget en reste le raccourci. Clientèle redevient ce qu'elle est vraiment : chercher une cliente et lire sa fiche. Le lien de cross-référence que la fusion cherchait à préserver (une recommandation de Fiche cliente crée une carte de Relance) survit très bien entre deux sections — il n'exigeait pas la co-location dans une même barre d'onglets.
 
@@ -60,15 +90,15 @@ La sidebar passe de **6 items à 5** (Accueil / Planning / Clientèle / Relances
 
 | Objet | Ce que c'est (point de vue utilisatrice) | Relations clés | États |
 |---|---|---|---|
-| **Cliente** | Une personne identifiée du salon, avec son historique. | `1,1 —— 0,1 Abonnement` · `1,1 —— 0,N Vente` (rôle : cliente de) · `1,1 —— 0,N Rendez-vous` (rôle : bénéficiaire) · `1,1 —— 0,N Relance` (rôle : cible) | — (pas de cycle de vie propre ; une fiche existe ou n'existe pas) |
+| **Cliente** | Une personne identifiée du salon, avec son historique. Porte un **pays de résidence** (`residenceCountry`, obligatoire à la création, défaut Sénégal) et sa **Préférence** — type de cheveux, référence couleur, et un texte libre + des photos par domaine (mani-pédi-onglerie / coiffure / spa / épilation / boisson) ; une note de la fiche peut être rangée dans l'un de ces domaines (v2.4). | `1,1 —— 0,1 Abonnement` · `1,1 —— 0,N Vente` (rôle : cliente de) · `1,1 —— 0,N Rendez-vous` (rôle : bénéficiaire) · `1,1 —— 0,N Relance` (rôle : cible) | — (pas de cycle de vie propre ; une fiche existe ou n'existe pas) |
+| **Praticienne** | Un membre de l'équipe. `role` ∈ coiffeuse · esthéticienne · **ménage** · accueil (libellés affichés au masculin — la fonction, pas la personne). Porte un **horaire de présence du jour** (`shiftStart` / `shiftEnd`) affiché dans le rail Équipe. Le ménage et l'accueil ne tiennent jamais de rendez-vous ; le ménage figure quand même dans le rail Équipe, l'accueil non (v2.4). | `1,1 —— 0,N Rendez-vous` (assignée) · `1,1 —— 0,N Rendez-vous` (seconde, prestations « à 2 ») | `présente / absente aujourd'hui / repos` (dérivé, pas un cycle de vie stocké) |
 | **Réservation** | La prise de rendez-vous au niveau de la **payeuse** : une cliente réserve, pour elle et éventuellement d'autres, une ou plusieurs prestations sur une ou plusieurs praticiennes. Presque toujours faite en ligne (`source`) — le parcours de réservation ne vit pas dans cette app. L'unité qu'on encaisse. | `N,1 —— 1,1 Cliente` (rôle : *payeuse*) · `1,1 —— 1,N Rendez-vous` · **`1,1 —— 0,1 Vente`** (rôle : *passage en caisse* — le lien qui déclenche le badge « En cours ») | — (pas de cycle de vie propre ; son statut effectif se déduit de ses rendez-vous) |
-| **Rendez-vous** | Une **prestation planifiée** atomique : une prestation, un·e bénéficiaire, un créneau, une praticienne — deux si la prestation est « réalisable à 2 » (`secondStaffId`, durée déjà divisée). Plusieurs peuvent partager la même heure. Ligne d'une Réservation. | `N,1 —— 1,1 Réservation` · `N,1 —— 1,1 Praticienne` (assignée) · `N,1 —— 0,1 Praticienne` (seconde) · `N,1 —— 1,1 Service` · `N,1 —— 0,1 Cliente` (bénéficiaire ; sinon `beneficiaryName` libre ; sinon la payeuse) | `actif → (annulé)` — **pas** de « en attente / confirmé » (les réservations arrivent fermes de la plateforme en ligne) ; Annulé est terminal, jamais supprimé (cf. toggle « Afficher les annulés ») |
+| **Rendez-vous** | Une **prestation planifiée** atomique : une prestation, un·e bénéficiaire, un créneau, une praticienne — deux si la prestation est « réalisable à 2 » (`secondStaffId`, durée déjà divisée). Plusieurs peuvent partager la même heure. Ligne d'une Réservation. La réceptionniste l'**ajuste** au comptoir (prestation, praticienne, bénéficiaire, **reprogrammation**, ajout / retrait, annulation avec `cancelReason?` facultatif) — jamais de création (v2.4, ADR 0009). | `N,1 —— 1,1 Réservation` · `N,1 —— 1,1 Praticienne` (assignée) · `N,1 —— 0,1 Praticienne` (seconde) · `N,1 —— 1,1 Service` · `N,1 —— 0,1 Cliente` (bénéficiaire ; sinon `beneficiaryName` libre ; sinon la payeuse) | `actif → (annulé)` — **pas** de « en attente / confirmé » (les réservations arrivent fermes de la plateforme en ligne) ; Annulé est terminal, jamais supprimé (cf. toggle « Afficher les annulés ») ; un rendez-vous *retiré* (erreur de saisie) disparaît, distinct d'*annulé* |
 | **Vente** (panier) | Une transaction en cours de construction ou déjà encaissée, un onglet du Comptoir. | `1,1 —— 0,1 Cliente` · `1,1 —— 0,N LigneDePanier` · `0,1 —— 1,1 Réservation` (rôle inverse : *origine*, si ouverte via « Encaisser ») · `1,1 —— 0,1 CarteCadeau` (appliquée) · `1,1 —— 0,1 Remise` (accordée par la réceptionniste) | `ouverte(catalogue\|paiement) → encaissée` (terminal, produit un Reçu) **ou** `→ abandonnée` (fermée sans encaissement — nouvel état, nécessaire pour que le Récap des ventes distingue une vraie vente d'un onglet fermé vide) |
-| **Remise** | Une réduction exprimée en montant fixe **ou** en pourcentage — `{ mode, valeur }`. Le **même objet** est porté par une Vente (remise accordée au comptoir, plafond 20 % des prestations, code réceptionniste + motif) et par une Relance de reconquête (ex. −15 %, code promo, autorisée par la direction). Les *points fidélité utilisés* et la *carte cadeau* ne sont **pas** des Remise — ce sont des mécanismes distincts qui, avec la Remise, se cumulent dans le calcul du total. | `0,N —— 1,1 Vente` *ou* `0,N —— 1,1 Relance` (jamais les deux) | — (valeur figée à la création ; pour une Vente, le `motif` est renseigné après l'encaissement) |
+| **Remise** | Une réduction exprimée en montant fixe **ou** en pourcentage — `{ mode, valeur }`. Le **même objet** est porté par une Vente (remise accordée au comptoir : jusqu'à 10 % des prestations au code réceptionniste, 10–20 % avec un **code manager**, + motif) et par une Relance de reconquête (ex. −15 %, code promo, autorisée par la direction). Les *points fidélité utilisés* et la *carte cadeau* ne sont **pas** des Remise — ce sont des mécanismes distincts qui, avec la Remise, se cumulent dans le calcul du total. | `0,N —— 1,1 Vente` *ou* `0,N —— 1,1 Relance` (jamais les deux) | — (valeur figée à la création ; pour une Vente, le `motif` est renseigné après l'encaissement) |
 | **CarteCadeau** | Un instrument **prépayé** (pas une remise) : un code, un solde propre, un statut. Une Vente n'en consomme que ce qu'il faut ; le reliquat reste sur la carte. | `0,N —— 0,1 Vente` (appliquée) | `active → utilisée` (solde épuisé) · `expirée` (terminal) |
 | **Style** | Un contenu du **Catalogue** de références (ex-Lookbook) : un rendu à montrer ou recommander. Consulté depuis le module Catalogue ou une recommandation de Fiche cliente — jamais depuis le Comptoir, aucun lien avec le panier. | `0,N —— 0,N Relance` (référencé par une recommandation) | — |
-| **Relance** | Une action de suivi ciblant une cliente précise (anniversaire, fenêtre de soin, fidélité, reconquête, recommandation). **Unifie ce qui est aujourd'hui 3 formes de carte ad hoc dans le code (`contact`/`pending`/`discount`) en un seul objet à type discriminé** — la vraie décision de modèle derrière l'onglet Relances. | `N,1 —— 1,1 Cliente` · `N,1 —— 0,1 Style` (si recommandation) · `N,1 —— 0,1 Remise` (si reconquête) | `en_attente → envoyée` / `→ ignorée` / (reconquête) `en_attente_autorisation → autorisée → envoyée` |
-| **Campagne** | Un message envoyé en masse à une audience de clientes — distinct d'une Relance par sa cardinalité (une audience, pas une cliente). | `1,1 —— 0,N Cliente` (audience, calculée par critère, pas une liste figée) | `brouillon → planifiée → envoyée` (envoyée porte un rapport par destinataire, cf. edge case Campagnes) |
+| **Relance** | Un message de suivi ciblant une cliente précise (anniversaire, fenêtre de soin, fidélité, reconquête, recommandation), **déclenché et rédigé automatiquement par un back-office hors de cette app** (v2.3). Objet à type discriminé ; porte le `channel` d'envoi (whatsapp / sms / email). L'app ne fait que le lire. | `N,1 —— 1,1 Cliente` · `N,1 —— 0,1 Style` (si recommandation) · `N,1 —— 0,1 Remise` (si reconquête) | `a_venir → envoyée` (v2.3 — plus d'état d'ignorance ni d'autorisation ; l'envoi est automatique) |
 
 ### Carte relationnelle
 
@@ -79,7 +109,6 @@ erDiagram
     Cliente ||--o{ Reservation : "payeuse"
     Cliente ||--o{ RendezVous : "bénéficiaire"
     Cliente ||--o{ Relance : "cible"
-    Cliente }o--o{ Campagne : "audience"
     Reservation ||--|{ RendezVous : "regroupe"
     Reservation |o--o| Vente : "origine (Encaisser)"
     RendezVous }o--|| Praticienne : "assigné à"
@@ -120,12 +149,12 @@ stateDiagram-v2
 - **Remise / CarteCadeau / Points fidélité** : le « code manager » de `FEATURES.md` (n'importe quelle chaîne → 5 000 F) et la carte cadeau à montant fixe (25 000 F) disparaissent. Trois mécanismes distincts, cumulables, pouvant amener le total à 0 F — voir § Comptoir et ADR 0002–0003.
 - **Vente** gagne un état **abandonnée**, absent de la v2 précédente : sans lui, le nouveau Récap des ventes (cf. section Accueil) ne peut pas distinguer une transaction réelle d'un onglet ouvert puis refermé vide — un objet ne mérite cet état persistant que parce qu'un vrai écran (le Récap) en a besoin, pas par exhaustivité gratuite.
 - **Relance** devient officiellement un seul objet à type discriminé plutôt que 3 formes de cartes qui se ressemblent sans être nommées comme la même chose — la vocabulaire list de `FEATURES.md` (« contact »/« pending »/« discount ») devient un attribut `type` de l'objet, pas trois objets distincts.
-- **Relances / Campagnes / Conseils** (v2.1) : ne sont plus des onglets de Clientèle mais les trois volets d'une **section Relances** de la sidebar. L'objet **Campagne** garde son nom ; l'écran s'appelle **Envois groupés**. Voir `docs/adr/0004`.
+- **Relances** (v2.3) : la section est une **vue en lecture seule**. L'envoi est automatique, piloté hors de l'app ; `RelanceStatus` = `a_venir | envoyee` ; une Relance porte un `channel`. L'objet **Campagne** et le **Contenu conseillère** (`BeautyTip`) sont retirés, ainsi que « Proposer » depuis la Fiche cliente. Voir `docs/adr/0010` (supersède `docs/adr/0004` sur ces points).
 - **Clientèle** (v2.1) : réduite à Répertoire + Fiche cliente, sur une page unique *recherche d'abord*. L'annuaire filtrable (Toutes / Nouvelles / Historique / VIP) reste, mais **sous** la recherche et les listes contextuelles (« Vues récemment », « Attendues aujourd'hui ») — pas une route à part.
 - **Cliente** : un seul mécanisme de recherche (« Chercher une cliente »), réutilisé identiquement dans le Comptoir et le Répertoire de Clientèle.
   - [ Le jour où cette recherche interroge un vrai backend : timeout ou erreur → message inline + « Réessayer », la saisie déjà tapée reste dans le champ — même comportement partout où le mécanisme est utilisé ]
 - **Style** : le catalogue de références (ex-Lookbook) devient un **module autonome** (« Catalogue »), consulté ponctuellement par la réceptionniste ou les praticiennes ; il absorbe aussi les **Photos de référence** (ex-Réglages). Points d'entrée : le module lui-même, et une recommandation de Fiche cliente. Il ne touche plus jamais l'encaissement — pas de tiroir dans le Comptoir, pas de « Ajouter au panier ».
-- **Planning** : la gestion de l'agenda (grille semaine, dispo équipe, confirmation / annulation d'un rendez-vous) devient une **section de navigation à part**. L'Accueil n'en garde que la *chronologie du jour* (lecture + « Encaisser »). La **création / édition de rendez-vous est retirée de l'app** — les clientes réservent en ligne (`docs/adr/0006`).
+- **Planning** : la gestion de l'agenda (grille semaine, dispo équipe, annulation / **ajustement** d'un rendez-vous) devient une **section de navigation à part**. L'Accueil n'en garde que la *chronologie du jour* (lecture + « Encaisser »). La **création de réservation reste hors de l'app** (réservations faites en ligne, `docs/adr/0006`) ; l'**édition** d'une réservation qui arrive est rouverte au comptoir (v2.4, `docs/adr/0009`).
 - **« Accueillir » → « Encaisser »** : le geste depuis un rendez-vous s'appelle désormais « Encaisser ». Le modèle mental change — ce n'est pas un accueil à l'arrivée (la cliente va directement voir sa praticienne), c'est le passage en caisse **à la fin** de la prestation.
 
 ### Vocabulaire encore à confirmer
@@ -165,11 +194,11 @@ graph TB
 
     A[Accueil] --> J1[Chronologie du jour]
     A --> J5[Récap des ventes]
-    A --> RTW[Widget Tournée du matin]
+    A --> RTW[Widget Tournée du matin - informatif]
     A --> CPT
     J1 --> JD[Détail rendez-vous - lecture + Encaisser]
     JD --> CPT
-    RTW -.->|Voir le détail| RL1
+    RTW -.->|Ouvrir les relances| RL
 
     P[Planning] --> P2[Grille semaine]
     P --> P3[Équipe]
@@ -181,10 +210,8 @@ graph TB
     CL2 --> CL4[Nouvelle cliente]
     CL3 --> CL5[Carte de fidélité]
 
-    RL[Relances] --> RL1[Tournée du matin]
-    RL --> RL2[Envois groupés - ex-Campagnes]
-    RL --> RL3[Paramétrage conseillère - conseils & délais]
-    CL3 -.->|"Proposer une reco → crée une carte"| RL1
+    RL[Relances - vue en lecture seule] --> RL1[À venir - anniversaires en tête]
+    RL --> RL2[Déjà envoyées - filtrable cliente/type/canal]
 
     CAT[Catalogue] --> CAT2[Styles]
     CAT --> CAT3[Photos de référence]
@@ -227,7 +254,7 @@ Comptoir (déployé)
   1. **Carte cadeau** — code saisi ou scanné. Instrument prépayé : la carte a un solde ; la vente en consomme ce qu'il faut, le **reliquat reste sur la carte** et s'affiche (« couvre −18 000 F · reste 7 000 F sur la carte »). Un seul code actif à la fois — en appliquer un second **remplace** le premier avec un message inline (« remplace la carte XXX »).
      - [ Carte déjà utilisée ou expirée → message distinct d'une faute de frappe : « Cette carte a déjà été utilisée » / « Cette carte a expiré le [date] », jamais le même texte générique qu'un code non reconnu — un message qui semble accuser la cliente en face serait un mauvais moment à vivre au comptoir ]
   2. **Points fidélité** — stepper ±100 pts, borné au solde de la cliente (100 pts = 1 000 F). Masqué si la cliente a < 100 pts.
-  3. **Remise accordée** — la réceptionniste saisit **son code personnel** (4 caractères), choisit **Montant** ou **Pourcentage**, puis la valeur. **Plafond : 20 % du total des prestations** (services seuls — les produits n'en bénéficient jamais). Au-delà → refus explicite (« le maximum sur ce panier est X — 20 % des prestations »). Le **motif** n'est PAS demandé ici : il est saisi juste après l'encaissement (voir Paiement).
+  3. **Remise accordée** — la réceptionniste saisit **son code personnel** (4 caractères), choisit **Montant** ou **Pourcentage**, puis la valeur. **Jusqu'à 10 % du total des prestations** avec son seul code ; **de 10 à 20 %**, un champ **code manager** (4–6 chiffres, non vérifié — mock) apparaît et devient obligatoire. **20 % est le plafond absolu** — au-delà, refus explicite. Services seuls, les produits n'en bénéficient jamais. Le **motif** n'est PAS demandé ici : il est saisi juste après l'encaissement (voir Paiement). Cf. ADR 0008.
   - ordre de calcul : remise accordée (sur les prestations) → points → carte cadeau en dernier, clampée à ce qui reste dû
   - le pied de ticket et le reçu **ventilent** les lignes de remise, jamais un total « Remises » agrégé
 - « Encaisser » (désactivé + texte d'aide tant que panier vide ou cliente non identifiée) → Paiement
@@ -260,7 +287,7 @@ Reçu (dans le Comptoir déployé)
 
 **Assignation praticienne retirée du panier** : le panier ne porte plus d'assignation par ligne. La praticienne d'une vente est celle du rendez-vous d'origine (via « Encaisser ») ou aucune pour une vente au comptoir ; le Récap des ventes ventile sur cette base.
 
-**Décisions actées** : le rendu de monnaie sur les paiements impliquant Espèces est une **capacité nouvelle** ; l'auto-remplissage du panier depuis un rendez-vous est explicite (message dans le panier) ; le scan ne s'applique plus jamais sans étape de confirmation, y compris la carte cadeau ; la carte cadeau devient un instrument prépayé (reliquat conservé, cf. ADR 0002) ; la « remise manager » devient une remise réceptionniste bornée à 20 % avec motif obligatoire (cf. ADR 0003) ; un reçu imprimable existe enfin.
+**Décisions actées** : le rendu de monnaie sur les paiements impliquant Espèces est une **capacité nouvelle** ; l'auto-remplissage du panier depuis un rendez-vous est explicite (message dans le panier) ; le scan ne s'applique plus jamais sans étape de confirmation, y compris la carte cadeau ; la carte cadeau devient un instrument prépayé (reliquat conservé, cf. ADR 0002) ; la « remise manager » devient une remise réceptionniste bornée à 10 % au code personnel, 20 % avec un code manager ponctuel, motif obligatoire (cf. ADR 0003, 0008) ; un reçu imprimable existe enfin.
 
 ### Fonctionnalités par écran
 
@@ -280,9 +307,9 @@ Reçu (dans le Comptoir déployé)
 - Ouverture via « Encaisser » depuis une réservation → panier auto-rempli avec toutes ses prestations, message explicite dans le panier (« Prestations de la réservation ajoutées »)
 - Bascule Services / Produits du Menu, recherche, catégories et sous-catégories, grille de prestations → ajout au panier (incrémente la quantité si la ligne existe déjà)
 - Panier : quantité par ligne, retrait de ligne (pas d'assignation de praticienne — retirée)
-- Remise : panneau dédié, trois mécanismes cumulables (carte cadeau saisie/scan, points fidélité, remise accordée par code réceptionniste ≤ 20 % des prestations), erreur inline explicite ; lignes ventilées au pied de ticket
+- Remise : panneau dédié, trois mécanismes cumulables (carte cadeau saisie/scan, points fidélité, remise accordée : ≤ 10 % des prestations au code réceptionniste, ≤ 20 % avec un code manager), erreur inline explicite ; lignes ventilées au pied de ticket
   - carte cadeau : instrument prépayé, un seul code actif à la fois, un second remplace le premier (« remplace la carte XXX ») ; déjà utilisée ou expirée → message distinct d'un code non reconnu ; reliquat affiché
-  - remise accordée : refus explicite au-delà de 20 % des prestations ; motif demandé après l'encaissement, jamais avant
+  - remise accordée : code manager requis de 10 à 20 % des prestations, refus explicite au-delà de 20 % ; motif demandé après l'encaissement, jamais avant
 - « Encaisser » : désactivé tant que le panier est vide ou qu'aucune cliente n'est identifiée, avec un texte d'aide visible en permanence expliquant pourquoi → passe au Paiement
 
 #### Scanner (caméra réelle, réutilisé pour l'identification cliente ET le code cadeau)
@@ -301,7 +328,7 @@ Reçu (dans le Comptoir déployé)
 
 #### Motif de remise (uniquement si une remise accordée a été appliquée)
 - Écran bloquant intercalé entre « Confirmer » et le Reçu — jamais avant l'encaissement
-- Rappel de la remise (X % ou montant · −Y F · code réceptionniste) + champ texte libre obligatoire (≥ 3 caractères)
+- Rappel de la remise (X % ou montant · −Y F · code réceptionniste · code manager si > 10 %) + champ texte libre obligatoire (≥ 3 caractères)
 - « Enregistrer le motif » → Reçu. Le motif apparaît sur le reçu et dans le détail de la vente au Récap des ventes
 
 #### Reçu
@@ -317,15 +344,15 @@ Reçu (dans le Comptoir déployé)
 
 ## Section Accueil
 
-*Écran d'atterrissage par défaut de l'app. Remplace l'ancien Accueil (dashboard statique) et absorbe la chronologie du jour + le bandeau Suivi. La **gestion** de l'agenda (créer / éditer / annuler un rendez-vous, vue semaine, équipe) est passée dans sa propre section — voir « Section Planning ».*
+*Écran d'atterrissage par défaut de l'app. Remplace l'ancien Accueil (dashboard statique) et absorbe la chronologie du jour + le bandeau Suivi. La consultation de l'agenda complet (vue semaine, équipe, annulation, historique des annulations) est passée dans sa propre section — voir « Section Planning ».*
 
 ```
 Accueil
-- Chronologie du jour : rendez-vous du jour groupés par praticien·ne (vue condensée, pas la grille horaire complète)
+- Chronologie du jour : rendez-vous du jour groupés par praticien·ne (vue condensée, pas le tableau complet du Planning)
   - chaque rendez-vous → « Encaisser » → Comptoir déployé, nouvel onglet pré-rempli avec la cliente + ses prestations — LE point d'entrée d'une vente liée à un rendez-vous : la cliente a réservé en ligne, est venue, a eu sa prestation, elle passe à la caisse à la fin
   - un rendez-vous déjà pris en charge (un onglet de vente lui est déjà associé) affiche un badge « En cours » à la place du bouton « Encaisser » ; le retaper **bascule** sur l'onglet existant au lieu d'en ouvrir un doublon — répond au cas d'un double-tap ou de deux membres de l'équipe qui cliquent chacun de leur côté sur le **même** rendez-vous ; deux rendez-vous **différents** ne posent aucun conflit, chacun ouvrant son propre onglet
   - tap sur un rendez-vous → Fiche réservation (payeuse + toutes ses prestations, « Encaisser la réservation » + « Annuler cette prestation ») ; pas d'édition ni de confirmation — la prise de rendez-vous se fait en ligne
-- Widget « Tournée du matin » (résumé) : nombre de messages prêts, CTA « Valider & envoyer » directement ici (pas besoin d'ouvrir la section Relances pour le geste le plus fréquent), lien « Voir le détail » → **section Relances** → volet Tournée du matin — le geste quotidien à haute fréquence (valider & envoyer en bloc) reste à 1 tap depuis l'écran d'atterrissage ; seul le traitement carte par carte (autoriser une remise, ignorer un cas, marquer un RDV pris) demande d'ouvrir la section Relances — un tap de plus, acceptable car ce sont des exceptions, pas le geste répété chaque matin
+- Widget « Tournée du matin » (v2.3 — **informatif**) : rappel de ce qui part automatiquement aujourd'hui (nombre, répartition par type), lien « Ouvrir les relances » → **section Relances**. Plus de « Valider & envoyer » : l'envoi est automatique, piloté hors de l'app (`docs/adr/0010`)
 - Résumé du jour : total réellement encaissé aujourd'hui (calculé depuis les ventes à l'état *encaissée* de la session), nombre de rendez-vous du jour — remplace les cartes « Revenus »/« Rendez-vous » figées ou mortes de l'ancien Accueil
   - « Voir le récap complet » → **Récap des ventes** (lieu retrouvé en confrontant les captures d'écran originales du design de référence à `FEATURES.md` : la maquette d'origine prévoyait une action rapide « Récap ventes » que ni le code actuel ni la v2 précédente de ce document ne couvraient — un vrai trou, maintenant comblé)
 - « Ouvrir le planning » → section Planning (semaine, équipe, lecture des rendez-vous)
@@ -346,7 +373,7 @@ Récap des ventes  (sous l'Accueil — l'argent du jour, pas l'agenda)
 
 ## Section Planning
 
-*La gestion de l'agenda. Rare pour la réceptionniste — la plupart des rendez-vous sont pris en ligne par les clientes elles-mêmes ; ici on gère les exceptions (créer, décaler, annuler) et on regarde la semaine et les disponibilités de l'équipe. La sous-page **Équipe** y est fondue (voir `docs/adr/0005`).*
+*La gestion de l'agenda. Rare pour la réceptionniste — les rendez-vous sont pris en ligne par les clientes elles-mêmes et arrivent fermes ; ici on annule une exception, on signale une absence, on encaisse, et on regarde la semaine et les disponibilités de l'équipe. La sous-page **Équipe** y est fondue (voir `docs/adr/0005`).*
 
 > **Assaini (v2.2).** Le parcours détaillé et le raisonnement vivent dans `docs/REFONTE-2.md` §2.1. Ci-dessous : le parcours, les capacités par lieu et les cas limites — **aucune prescription de composant, de mise en page ni de style**.
 
@@ -356,37 +383,40 @@ Planning  (un seul lieu ; le roster de l'équipe y est intégré)
 - naviguer d'un jour / d'une semaine à l'autre
 - « Afficher les annulés » : les rendez-vous annulés restent visibles, atténués — l'historique des annulations vit ici, pas dans un écran à part
 - regrouper les rendez-vous par praticienne ou pour toute l'équipe (mêmes données)
-- l'équipe : chaque praticienne porte son état de présence (présente / absente aujourd'hui) et, par praticienne :
+- l'équipe (rail intégré) : chaque personne porte son **horaire de présence du jour** (`shiftStart`–`shiftEnd`) et son état (présente / absente aujourd'hui / repos) ; le **ménage** y figure sans lane (jamais de rendez-vous) ; l'accueil non. Par praticienne :
   - « Voir seule » → ne garder que ses rendez-vous ; annulable
   - « Marquer absente aujourd'hui » (absence de dernière minute) → ses rendez-vous du jour sont signalés « absente » partout (ici + Chronologie de l'Accueil) ; « Encaisser » l'un d'eux impose d'indiquer la remplaçante avant d'ouvrir le Comptoir — jamais une vente attribuée à quelqu'un qui n'était pas là
 - plusieurs rendez-vous à la même heure = normal (praticiennes différentes) ; un rendez-vous « à 2 » apparaît sur les deux lanes
 - choisir un rendez-vous existant → Fiche réservation
-- **pas de création ni d'édition de rendez-vous** — la prise de rendez-vous se fait en ligne (`docs/adr/0006`)
+- **pas de création de réservation** — la prise de rendez-vous se fait en ligne (`docs/adr/0006`) ; l'**ajustement** d'une réservation qui arrive, lui, se fait au comptoir (v2.4, `docs/adr/0009`)
 [ jour affiché sans rendez-vous (le mock ne couvre qu'aujourd'hui) → le dire franchement, pas un vide muet ]
 [ personne au planning ce jour-là → le dire + accès à l'équipe ]
 
 Fiche réservation  (le détail — depuis le Planning OU la Chronologie de l'Accueil)
-- en-tête : **payeuse** (la cliente qui règle) + statut du rendez-vous tapé + « réservée en ligne / notée au comptoir » + « règle N prestations »
+- en-tête : **payeuse** (la cliente qui règle) + « En cours » si une vente est ouverte (sinon rien) + « réservée en ligne / notée au comptoir » + « règle N prestations »
 - corps : une ligne par prestation planifiée — prestation + prix, horaire, praticienne·s (« à 2 » le cas échéant), « pour {bénéficiaire} » si ce n'est pas la payeuse ; total des prestations
-- « Encaisser la réservation » → Comptoir, onglet pré-rempli (payeuse + toutes les prestations) ; vente déjà ouverte → rebascule sur l'onglet existant · « Annuler cette prestation » → Confirmation ; statut Annulé, jamais de suppression. Pas de « Confirmer » : un rendez-vous arrive ferme.
+- « Encaisser la réservation » → Comptoir, onglet pré-rempli (payeuse + toutes les prestations) ; vente déjà ouverte → rebascule sur l'onglet existant
+- « Ajuster la réservation » (v2.4) → éditeur : par rendez-vous, changer prestation / praticienne / 2ᵉ praticienne / bénéficiaire, **reprogrammer** le créneau ; **ajouter** ou **retirer** un rendez-vous à la réservation ; **annuler** un rendez-vous avec un **motif texte libre facultatif**. Garde-fou dur : chevauchement de deux rendez-vous d'une même praticienne → **bloqué**, message explicite. « Créer un rendez-vous » ouvre la **plateforme externe** dans un onglet — aucune création dans l'app.
+- « Annuler cette prestation » → Confirmation (motif facultatif) ; statut Annulé, jamais de suppression dure. Pas de « Confirmer » : un rendez-vous arrive ferme.
 [ « Annuler » alors qu'une vente est ouverte pour cette réservation → la Confirmation le signale ; l'annulation ne ferme pas l'onglet ]
+[ reprogrammation / réassignation qui chevaucherait un autre rendez-vous de la praticienne → refus net, le créneau d'origine est conservé ]
 
 Choix de la remplaçante  (bloquant — « Encaisser » quand au moins un rendez-vous de la réservation a une praticienne absente)
 - pour **chaque** rendez-vous concerné : indiquer qui a réalisé la prestation (praticiennes présentes du même rôle) → le Comptoir s'ouvre, chaque prestation est réattribuée
 - aucune candidate pour une ligne → le dire, sans ouvrir le Comptoir
 ```
 
-**Décisions actées (Planning)** : la gestion de l'agenda est une section propre, Équipe y est fondue (`docs/adr/0005`) ; **la prise de rendez-vous est retirée de l'app** — création / édition / confirmation faites en ligne, ne restent que **Annuler** et **Encaisser** (`docs/adr/0006`) ; un rendez-vous est actif ou annulé (pas de « en attente / confirmé ») ; « Encaisser » agit au niveau **réservation** (toutes les prestations, un seul règlement) ; annuler conserve un statut Annulé ; l'absence de dernière minute d'une praticienne a un geste dédié.
+**Décisions actées (Planning)** : la gestion de l'agenda est une section propre, Équipe y est fondue (`docs/adr/0005`) ; **la création de réservation reste hors de l'app** (faite en ligne, `docs/adr/0006`) mais l'**ajustement** d'une réservation qui arrive se fait au comptoir — reprogrammer, réassigner, ajouter / retirer, annuler avec motif ; seul blocage dur : chevauchement praticienne (v2.4, `docs/adr/0009`) ; un rendez-vous est actif ou annulé (pas de « en attente / confirmé ») ; « Encaisser » agit au niveau **réservation** (toutes les prestations, un seul règlement) ; annuler conserve un statut Annulé ; l'absence de dernière minute d'une praticienne a un geste dédié ; le rail Équipe porte les horaires de présence et le ménage (sans lane).
 
 ### Rappel — Fonctionnalités Accueil / Récap des ventes (hors périmètre Refonte 2)
 
 #### Accueil (atterrissage)
 - Écran d'atterrissage par défaut de l'app
-- Chronologie du jour : rendez-vous du jour groupés par praticienne, vue condensée (pas la grille horaire complète)
+- Chronologie du jour : rendez-vous du jour groupés par praticienne, vue condensée (pas le tableau complet du Planning)
   - chaque rendez-vous → « Encaisser » → Comptoir déployé, nouvel onglet pré-rempli (cliente + prestations)
   - rendez-vous déjà pris en charge → badge « En cours » à la place de « Encaisser » ; le retaper bascule sur l'onglet existant au lieu d'ouvrir un doublon
-  - tap sur un rendez-vous → Fiche réservation (Encaisser la réservation + Annuler cette prestation ; pas de confirmation ni d'édition)
-- Widget « Tournée du matin » : nombre de messages prêts, « Valider & envoyer » directement ici (confirmation), lien « Voir le détail » → section Relances → volet Tournée du matin
+  - tap sur un rendez-vous → Fiche réservation (Encaisser · Ajuster la réservation · Annuler cette prestation avec motif ; v2.4) — identique depuis le Planning
+- Widget « Tournée du matin » (v2.3 — informatif) : rappel de ce qui part automatiquement aujourd'hui, lien « Ouvrir les relances » → section Relances (lecture seule ; plus de « Valider & envoyer »)
 - Résumé du jour : total réellement encaissé aujourd'hui (ventes à l'état *encaissée*), nombre de rendez-vous du jour
   - « Voir le récap complet » → Récap des ventes
 - « Ouvrir le planning » → section Planning
@@ -426,9 +456,9 @@ Le Répertoire
 
 La Fiche  (le tableau d'une cliente)
 - identité toujours visible (nom, tier fidélité, marqueurs) + « Nouvelle vente » (→ Comptoir, cliente sélectionnée) · « Contacter » (désactivé + explication si aucune coordonnée)
-- valeur & visites · relances ouvertes pour cette cliente (→ section Relances) · notes internes (un point d'entrée, persistant) · recommandations
+- valeur & visites · relances **à venir** pour cette cliente (lecture ; lien → section Relances) · notes internes (un point d'entrée, persistant)
 - carte de fidélité (QR motif démo + impression), coordonnées (« Modifier », édition inline), préférences beauté (« Modifier »), abonnement (section toujours présente, état vide honnête) · praticienne préférée → Planning filtré
-- recommandations : chaque suggestion référence un Style du Catalogue → ouvre son Détail (lecture) sans quitter la fiche ; « Proposer » **crée réellement** une carte dans la Tournée du matin, même toast réversible que le reste de la tournée
+- (v2.3) le bloc « Recommandations / Proposer » est retiré — la Fiche ne crée plus de relance ; les relances partent automatiquement (`docs/adr/0010`)
 [ id cliente inconnu → tableau d'erreur explicite + retour au Répertoire (jamais la fiche du 1ᵉʳ mock) ]
 
 Nouvelle cliente  (formulaire — depuis le Répertoire OU depuis le Comptoir)
@@ -440,7 +470,7 @@ Carte de fidélité  (depuis « Ouvrir » sur La Fiche)
 - envoi WhatsApp / email (désactivés + explication si coordonnée absente), « Télécharger » génère réellement un fichier, « Imprimer » dédié à la carte
 ```
 
-**Décisions actées (Clientèle)** : *recherche d'abord* (recherche + « Vues récemment » + « Attendues aujourd'hui », annuaire filtrable sur la même route) ; « Proposer » une recommandation crée réellement une `Relance` partagée avec la Tournée du matin ; la forme de la Fiche est libre (`docs/adr/0005`).
+**Décisions actées (Clientèle)** : *recherche d'abord* (recherche + « Vues récemment » + « Attendues aujourd'hui », annuaire filtrable sur la même route) ; la Fiche affiche les relances **à venir** de la cliente en lecture seule (v2.3 — plus de « Proposer », cf. `docs/adr/0010`) ; la forme de la Fiche est libre (`docs/adr/0005`).
 
 ### Fonctionnalités par écran
 
@@ -450,36 +480,28 @@ Carte de fidélité  (depuis « Ouvrir » sur La Fiche)
 
 ## Section Relances
 
-*v2.1 : item de sidebar propre (ex-onglets Suivi + Campagnes + Conseils & cycles de relance de Clientèle). Réunit ce qui **pilote la relation dans le temps** : la pile de messages à envoyer chaque matin, les envois à une audience, et le savoir de la conseillère qui rédige ces messages. Position sidebar : Accueil · Planning · Clientèle · **Relances** · Catalogue.*
+*v2.3 : item de sidebar propre, **vue en lecture seule**. La direction pilote les relances (conditions, délais, textes) dans un back-office hors de cette app ; l'envoi est automatique. La réceptionniste consulte, pour tenir compte à l'arrivée d'une cliente de ce qui lui a été / va lui être envoyé. Position sidebar : Accueil · Planning · Clientèle · **Relances** · Catalogue.*
 
-*Trois job stories distincts partageant une porte d'entrée : vider la tournée du matin ; préparer / suivre un envoi groupé ; tenir le contenu de la conseillère.*
+*Un seul job story : savoir ce qui part et ce qui est parti vers une cliente, sans rien déclencher.*
 
-> **Assaini (v2.2).** Parcours détaillé et raisonnement dans `docs/REFONTE-2.md` §2.3 ; inventaire tagué §1.6. Ci-dessous : parcours, capacités par lieu, cas limites — **aucune prescription de composant, de mise en page ni de style**.
+> **v2.3 — supersède l'assaini v2.2.** Raisonnement dans `docs/adr/0010`. Les trois volets (Tournée du matin actionnable, Envois groupés / Campagne, Contenu conseillère) sont retirés.
 
 ```
-Relances  (3 volets : La Tournée du matin · Envois groupés · Contenu conseillère — défaut : La Tournée)
+Relances  (écran unique, lecture seule — aucun envoi, aucune configuration)
 
-La Tournée du matin
-- compteur « à traiter » recalculé depuis les lignes affichées ; « Valider & envoyer » → Confirmation (patron unique) → le lot bascule d'un coup ; toast réversible ; archive réellement dans l'Historique
-- réglage de vue Aujourd'hui / À venir / Historique (une seule barre, pas des vues imbriquées)
-- une Relance = un objet à type discriminé (anniversaire / fenêtre de soin / fidélité / reconquête / recommandation — cf. Modèle conceptuel)
-- toute action individuelle à effet immédiat (envoi, RDV pris, ignorer) → toast réversible unique, plus de disparition définitive sans filet
-- reconquête : « Autoriser la remise » reste possible indépendamment de l'état du lot
-  - [ reconquête non autorisée quand la tournée est validée en bloc → reste dans la tournée du lendemain, jamais envoyée sans sa remise ]
-- reçoit les cartes « recommandation » créées depuis une Fiche cliente (« Proposer »)
-[ aucune ligne à traiter → « Tournée à jour » ]
+Filtres : cliente · type · canal  (le type discriminé : anniversaire / soin / fidélité / reconquête / recommandation — cf. Modèle conceptuel)
 
-Envois groupés  (l'objet garde le nom Campagne)
-- « + Créer » → Éditeur de campagne (titre, message avec variable {prenom}, audience calculée par critère)
-- « Modifier » / « Supprimer » (Confirmation) réellement câblés ; statuts brouillon → planifiée → envoyée
-  - [ envoi qui échoue partiellement → rapport par destinataire (« 42 envoyés, 3 échoués — Réessayer les échecs »), jamais un statut global qui masque des échecs ]
+À venir
+- anniversaires en tête (le comptoir en tient compte quand la cliente se présente), puis par date d'échéance
+- chaque ligne : cliente · type · date prévue · canal · aperçu du message  — pas d'action
+[ rien de prévu pour le filtre courant → « Rien à venir » ]
 
-Contenu conseillère  (ce qui alimente les messages ci-dessus — volet rare-édition)
-- conseils par famille de soin : CRUD complet, Suppression via Confirmation, validation inline sur les champs requis
-- délais et textes de relance par prestation (J+N) : annoncé « bientôt », jamais un faux écran tant que le modèle n'existe pas
+Déjà envoyées
+- par date décroissante ; mêmes colonnes ; le canal réellement utilisé
+[ aucun envoi → « Aucun envoi » ]
 ```
 
-**Décisions actées (Relances)** : les sous-vues de la Tournée sont un réglage de vue, plus des onglets imbriqués ; « Proposer » depuis la Fiche cliente alimente réellement la Tournée (`Relance` promue dans le store, `docs/adr/0005`) ; l'objet **Campagne** garde son nom, l'écran s'appelle **Envois groupés** (`docs/adr/0004`).
+**Décisions actées (Relances)** : écran **en lecture seule** ; `RelanceStatus` = `a_venir | envoyee` ; une Relance porte un `channel` (whatsapp / sms / email) ; plus d'objet **Campagne**, plus de `BeautyTip`, plus de « Proposer » depuis la Fiche cliente. Cf. `docs/adr/0010`.
 
 ### Fonctionnalités par écran
 
@@ -612,17 +634,17 @@ Prochainement  (une seule liste compacte, pas 9 cartes grisées de même poids q
 | Onglets de vente, sélection client, scan QR | Comptoir (calque transversal) |
 | Menu (prestations/produits), panier, remises | Comptoir |
 | Paiement, motif de remise, reçu | Comptoir |
-| Planning (grille, formulaire, conflit, équipe) | **Section Planning** (grille, Formulaire, Détail, Équipe) |
-| Détail/annulation de rendez-vous | Planning → Détail rendez-vous (version lecture depuis l'Accueil) |
+| Planning (grille, conflit, équipe, horaires) | **Section Planning** (grille · rail Équipe avec horaires + ménage · Fiche réservation) |
+| Détail / ajustement / annulation de rendez-vous | Planning ou Accueil → Fiche réservation → « Ajuster la réservation » (reprogrammer, réassigner, ajouter / retirer, annuler avec motif ; v2.4, ADR 0009) |
 | Répertoire clients, nouveau client | Clientèle (page recherche d'abord + annuaire) |
 | Fiche client (coordonnées, stats, abonnement, notes, préférences, suivi) | Clientèle → Fiche cliente |
 | Carte de fidélité | Clientèle → Carte de fidélité |
-| Suivi (tournée, sections, historique) | **Section Relances** → Tournée du matin |
-| Campagnes | **Section Relances** → Envois groupés (objet Campagne) |
-| Lookbook (consultation + détail) | **Section Catalogue** (onglet Styles) + Détail style + recommandations de Fiche cliente |
+| Suivi (tournée, sections, historique) | **Section Relances** — vue en lecture seule (à venir / déjà envoyées) ; v2.3, ADR 0010 |
+| Campagnes | Retiré (v2.3, ADR 0010 — l'objet Campagne n'existe plus) |
+| Lookbook (consultation + détail) | **Section Catalogue** (onglet Styles) + Détail style |
 | Gestion Services / Produits / Catégories | Retiré (le Menu est une donnée en lecture seule, éditée hors de l'app — ADR 0001) |
 | Photos de référence | **Section Catalogue** (onglet Photos de référence) |
-| Conseils beauté / cycles de relance | **Section Relances** → Contenu conseillère |
+| Conseils beauté / cycles de relance | Retiré de l'app (v2.3, ADR 0010 — édité par la direction dans un back-office ; la conseillère reste la signature) |
 | Entreprises & Salons | Retiré (ADR 0001) |
 | Gestion Utilisateurs / Salon, Tendances, Notifications, Apparence | Retiré (ADR 0001) |
 | Mon Profil, Sécurité | `/compte` (menu identité du pied de sidebar) |
@@ -640,10 +662,10 @@ Prochainement  (une seule liste compacte, pas 9 cartes grisées de même poids q
 - **Suivi + Campagnes + Conseils : section `Relances` de la sidebar** (v2.1, remplace la fusion en onglets de Clientèle décidée en v2). Motif : la tournée du matin est un geste **quotidien**, mal logé dans une section « pas tous les jours » — même raisonnement que la sortie de Planning hors de l'Accueil. Sidebar : 5 items (Accueil / Planning / Clientèle / Relances / Catalogue). L'objet **Campagne** garde son nom ; l'écran s'appelle **Envois groupés**. Cf. `docs/adr/0004`.
 - **`Clientèle` recentrée** (v2.1) : Répertoire + Fiche cliente uniquement, page unique *recherche d'abord* (recherche + « Vues récemment » + « Attendues aujourd'hui », annuaire filtrable en dessous). Fiche cliente = en-tête d'identité collant + corps deux colonnes.
 - Lookbook + Photos de référence sortent en module **Catalogue** autonome (consultation ponctuelle), sans lien avec le Comptoir ni le panier.
-- **Planning** : la gestion de l'agenda devient une section de sidebar à part ; l'Accueil n'en garde que la chronologie du jour. La prise de rendez-vous (création / édition) est retirée de l'app — réservations faites en ligne par les clientes (`docs/adr/0006`).
+- **Planning** : la gestion de l'agenda devient une section de sidebar à part ; l'Accueil n'en garde que la chronologie du jour. La **création** de réservation est faite en ligne par les clientes (`docs/adr/0006`) ; l'**ajustement** d'une réservation qui arrive (reprogrammer, réassigner, ajouter / retirer, annuler avec motif) est fait au comptoir, seul blocage dur = chevauchement praticienne (v2.4, `docs/adr/0009`).
 - **« Accueillir » → « Encaisser »** : le geste depuis un rendez-vous est un passage en caisse à la fin de la prestation, pas un accueil à l'arrivée.
 - **Barre Comptoir = CTA primaire** : une barre pleine largeur ancrée au pied de la zone de travail (jamais une pastille dans un coin) — rose « + Nouvelle vente » au repos, taupe (cliente + total du panier actif + « Ouvrir le comptoir ») dès qu'une vente existe. La barre du haut ne porte plus que la date + une horloge.
-- **Remise** : trois mécanismes cumulables (points fidélité, carte cadeau *prépayée* avec reliquat, remise accordée par code réceptionniste ≤ 20 % des prestations + motif obligatoire après l'encaissement). Remplace le « code manager » et la carte cadeau à montant fixe. Cf. ADR 0002–0003. L'objet **Remise** (`{ mode, valeur }`) est le même que celui d'une Relance de reconquête.
+- **Remise** : trois mécanismes cumulables (points fidélité, carte cadeau *prépayée* avec reliquat, remise accordée par code réceptionniste ≤ 10 % des prestations — jusqu'à 20 % avec un **code manager** ponctuel — + motif obligatoire après l'encaissement). Cf. ADR 0002–0003, 0008. L'objet **Remise** (`{ mode, valeur }`) est le même que celui d'une Relance de reconquête.
 - Assignation praticienne par ligne de panier : retirée. La praticienne d'une vente est celle du rendez-vous d'origine, ou aucune.
 - **Plus de section Réglages** : persona unique (ADR 0001). Profil / Sécurité → `/compte`.
 - Un seul mécanisme de recherche cliente, un seul patron de confirmation, un seul patron de validation, un seul toast réversible pour les actions individuelles de Relances.

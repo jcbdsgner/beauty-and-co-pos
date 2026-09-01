@@ -13,22 +13,28 @@ import {
   Pencil,
   ChevronRight,
   Sparkles,
+  Globe,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/atoms/avatar";
 import { Button } from "@/components/ui/atoms/button";
 import { IconButton } from "@/components/ui/atoms/icon-button";
 import { Textarea } from "@/components/ui/atoms/textarea";
+import { Select } from "@/components/ui/atoms/select";
+import { PhotoPlaceholder } from "@/components/ui/atoms/photo-placeholder";
 import { Board, Lane, Legend, BoardEmpty, FlipChip } from "@/components/ui/board";
-import { Toast } from "@/components/ui/molecules/toast";
 import { DemoQrBlock } from "@/components/clientele/loyalty-card";
 import { EditCoordonneesDialog } from "@/components/clientele/edit-coordonnees-dialog";
 import { EditPreferencesDialog } from "@/components/clientele/edit-preferences-dialog";
-import { StyleDetailDialog } from "@/components/catalogue/style-detail-dialog";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { clientFullName, clientInitial } from "@/lib/data/clientele";
-import { STYLES } from "@/lib/data/styles";
 import { formatFcfa, cn } from "@/lib/utils";
-import type { RelanceType, Style } from "@/lib/data/types";
+import {
+  PREFERENCE_DOMAINS,
+  PREFERENCE_DOMAIN_LABEL,
+  type PreferenceDomain,
+  type RelanceChannel,
+  type RelanceType,
+} from "@/lib/data/types";
 
 const TIER_LABEL: Record<string, string> = { vip: "VIP", gold: "Gold", silver: "Silver" };
 const RELANCE_TYPE_LABEL: Record<RelanceType, string> = {
@@ -38,11 +44,21 @@ const RELANCE_TYPE_LABEL: Record<RelanceType, string> = {
   reconquete: "Reconquête",
   recommandation: "Recommandation",
 };
+const RELANCE_CHANNEL_LABEL: Record<RelanceChannel, string> = {
+  whatsapp: "WhatsApp",
+  sms: "SMS",
+  email: "Email",
+};
+
+/** Where "Ajouter une note" files the text: the internal log, or one of the five préférence domains. */
+const NOTE_TARGETS: { value: string; label: string }[] = [
+  { value: "interne", label: "Note interne" },
+  ...PREFERENCE_DOMAINS.map((d) => ({ value: d, label: `Préférence · ${PREFERENCE_DOMAIN_LABEL[d]}` })),
+];
 
 export function FicheClienteView({ clientId }: { clientId: string }) {
   const router = useRouter();
-  const { clients, praticiennes, relances, openNewTab, updateClient, noteClientViewed, proposeStyleRelance, removeRelance } =
-    useAppData();
+  const { clients, praticiennes, relances, openNewTab, updateClient, noteClientViewed } = useAppData();
   const client = clients.find((c) => c.id === clientId);
   const clientExists = Boolean(client);
 
@@ -53,9 +69,7 @@ export function FicheClienteView({ clientId }: { clientId: string }) {
   const [editCoordOpen, setEditCoordOpen] = useState(false);
   const [editPrefOpen, setEditPrefOpen] = useState(false);
   const [noteDraft, setNoteDraft] = useState("");
-  const [detailStyle, setDetailStyle] = useState<Style | null>(null);
-  const [proposedStyleIds, setProposedStyleIds] = useState<Set<string>>(new Set());
-  const [toast, setToast] = useState<{ message: string; action?: { label: string; onClick: () => void } } | null>(null);
+  const [noteTarget, setNoteTarget] = useState("interne");
 
   if (!client) {
     return (
@@ -76,39 +90,33 @@ export function FicheClienteView({ clientId }: { clientId: string }) {
   }
 
   const preferredStaff = client.preferredStaffId ? praticiennes.find((p) => p.id === client.preferredStaffId) : undefined;
-  const openRelances = relances.filter(
-    (r) => r.clientId === client.id && (r.status === "en_attente" || r.status === "autorisee" || r.status === "en_attente_autorisation"),
+  const upcomingRelances = relances
+    .filter((r) => r.clientId === client.id && r.status === "a_venir")
+    .sort((a, b) => a.date.localeCompare(b.date));
+  const preferenceNotes = client.preferenceNotes ?? {};
+  const preferencePhotos = client.preferencePhotos ?? {};
+  const hasPreferences = Boolean(
+    client.hairType ||
+      client.colorReference ||
+      PREFERENCE_DOMAINS.some((d) => preferenceNotes[d] || preferencePhotos[d]?.length),
   );
-  const recommendations = STYLES.slice(0, 3);
-  const hasPreferences = Boolean(client.hairType || client.colorReference || client.skinNotes || client.preferencesNotes);
   const canContact = Boolean(client.whatsapp || client.phone || client.email);
 
   function addNote() {
     if (!client || !noteDraft.trim()) return;
-    const stamp = new Date().toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-    const entry = `[${stamp}] ${noteDraft.trim()}`;
-    updateClient(client.id, { internalNotes: client.internalNotes ? `${entry}\n\n${client.internalNotes}` : entry });
+    const text = noteDraft.trim();
+    if (noteTarget === "interne") {
+      const stamp = new Date().toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+      const entry = `[${stamp}] ${text}`;
+      updateClient(client.id, { internalNotes: client.internalNotes ? `${entry}\n\n${client.internalNotes}` : entry });
+    } else {
+      const domain = noteTarget as PreferenceDomain;
+      const current = client.preferenceNotes?.[domain];
+      updateClient(client.id, {
+        preferenceNotes: { ...client.preferenceNotes, [domain]: current ? `${current}\n${text}` : text },
+      });
+    }
     setNoteDraft("");
-  }
-
-  function propose(style: Style) {
-    if (!client) return;
-    const id = proposeStyleRelance(client.id, style.id);
-    setProposedStyleIds((prev) => new Set(prev).add(style.id));
-    setToast({
-      message: `« ${style.name} » ajoutée à la tournée de relance de ${clientFullName(client)}.`,
-      action: {
-        label: "Annuler",
-        onClick: () => {
-          removeRelance(id);
-          setProposedStyleIds((prev) => {
-            const next = new Set(prev);
-            next.delete(style.id);
-            return next;
-          });
-        },
-      },
-    });
   }
 
   function contact() {
@@ -119,9 +127,11 @@ export function FicheClienteView({ clientId }: { clientId: string }) {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Bandeau d'identité collant — la plaque ardoise de la cliente */}
-      <div className="sticky top-0 z-20 -mx-8 -mt-8 border-b border-[var(--board-slate-line)] bg-[var(--board-slate)] px-8 py-4">
+    <div className="flex flex-col">
+      {/* Bandeau d'identité collant — la plaque ardoise de la cliente. Isolé dans son propre contexte
+          d'empilement et sorti du flux `gap` : au scroll il couvre proprement le contenu qui passe
+          dessous, sans bande morte ni coin de plaque qui dépasse. */}
+      <div className="sticky top-0 z-30 isolate -mx-8 -mt-8 mb-6 border-b border-[var(--board-slate-line)] bg-[var(--board-slate)] px-8 py-4 shadow-[0_12px_24px_-14px_rgba(0,0,0,0.55)]">
         <Link href="/clientele" className="mb-2 inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.11em] text-white/50 transition hover:text-white/80">
           ← Clientèle
         </Link>
@@ -174,78 +184,63 @@ export function FicheClienteView({ clientId }: { clientId: string }) {
           </Board>
 
           <Board
-            legend="Relances ouvertes"
+            legend="Relances à venir"
             legendRight={
-              openRelances.length > 0 && (
+              upcomingRelances.length > 0 && (
                 <a href="/relances" className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--brand-taupe-muted)] underline underline-offset-2">
-                  Voir la tournée
+                  Voir les relances
                 </a>
               )
             }
           >
-            {openRelances.length === 0 ? (
-              <BoardEmpty title="Aucune relance en attente" hint="Rien de prévu pour cette cliente." />
+            {upcomingRelances.length === 0 ? (
+              <BoardEmpty title="Aucune relance à venir" hint="Rien de programmé pour cette cliente." />
             ) : (
-              openRelances.map((r) => (
+              upcomingRelances.map((r) => (
                 <Lane
                   key={r.id}
                   title={RELANCE_TYPE_LABEL[r.type]}
                   meta={<span className="line-clamp-2">{r.message}</span>}
-                  chip={
-                    <FlipChip
-                      value={r.status === "en_attente_autorisation" ? "Autorisation" : r.status === "autorisee" ? "Autorisée" : "Prêt"}
-                      tone={r.status === "en_attente_autorisation" ? "signal" : r.status === "autorisee" ? "now" : "act"}
-                    />
-                  }
-                  signal={r.status === "en_attente_autorisation" ? "hold" : "none"}
+                  chip={<FlipChip value={RELANCE_CHANNEL_LABEL[r.channel]} tone="neutral" />}
                   className="items-start py-3"
                 />
               ))
             )}
           </Board>
 
-          <Board legend="Notes internes">
+          <Board legend="Notes">
             {client.internalNotes && (
               <div className="max-h-48 overflow-y-auto whitespace-pre-line border-b border-[var(--board-groove)] bg-black/[0.015] px-4 py-3 text-sm text-[var(--color-gray-700)]">
                 {client.internalNotes}
               </div>
             )}
             <div className="flex flex-col gap-3 p-4">
-              <Textarea value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} placeholder="Une observation, une préférence exprimée en salon…" rows={3} />
-              <Button variant="brand" onClick={addNote} disabled={!noteDraft.trim()} className="self-start">
-                Ajouter une note
-              </Button>
+              <Textarea
+                value={noteDraft}
+                onChange={(e) => setNoteDraft(e.target.value)}
+                placeholder="Une observation, une préférence exprimée en salon…"
+                rows={3}
+              />
+              <div className="flex flex-wrap items-center gap-2">
+                <Select
+                  value={noteTarget}
+                  onChange={setNoteTarget}
+                  options={NOTE_TARGETS}
+                  size="compact"
+                  className="w-auto min-w-[15rem]"
+                />
+                <Button variant="brand" onClick={addNote} disabled={!noteDraft.trim()}>
+                  Ajouter
+                </Button>
+              </div>
+              <p className="text-xs text-[var(--color-gray-400)]">
+                {noteTarget === "interne"
+                  ? "Rangée dans le journal interne de la fiche."
+                  : `Ajoutée à la préférence « ${PREFERENCE_DOMAIN_LABEL[noteTarget as PreferenceDomain]} ».`}
+              </p>
             </div>
           </Board>
 
-          <Board legend="Recommandations">
-            {recommendations.map((style) => (
-              <Lane
-                key={style.id}
-                leading={
-                  <span className="flex size-9 items-center justify-center rounded-[8px] bg-accent text-secondary">
-                    <Sparkles className="size-4" />
-                  </span>
-                }
-                title={style.name}
-                meta={<span className="tabular-nums text-[var(--button-2-color)]">{formatFcfa(style.price)}</span>}
-                onSelect={() => setDetailStyle(style)}
-                actions={
-                  <Button
-                    variant="success"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      propose(style);
-                    }}
-                    disabled={proposedStyleIds.has(style.id)}
-                  >
-                    {proposedStyleIds.has(style.id) ? "Proposée" : "Proposer"}
-                  </Button>
-                }
-              />
-            ))}
-          </Board>
         </div>
 
         {/* La référence */}
@@ -285,6 +280,7 @@ export function FicheClienteView({ clientId }: { clientId: string }) {
               <Row icon={<Mail className="size-4" />} label="Email" value={client.email} />
               <Row icon={<Briefcase className="size-4" />} label="Profession" value={client.profession} />
               <Row icon={<MapPin className="size-4" />} label="Adresse" value={client.address} />
+              <Row icon={<Globe className="size-4" />} label="Pays de résidence" value={client.residenceCountry} />
               {preferredStaff && (
                 <button
                   type="button"
@@ -319,14 +315,34 @@ export function FicheClienteView({ clientId }: { clientId: string }) {
             }
           >
             {hasPreferences ? (
-              <div className="flex flex-col gap-3 p-4 text-sm">
-                <Pref label="Type de cheveux" value={client.hairType} />
-                <Pref label="Référence couleur" value={client.colorReference} />
-                <Pref label="Notes peau" value={client.skinNotes} />
-                <Pref label="Préférences" value={client.preferencesNotes} />
+              <div className="flex flex-col divide-y divide-[var(--board-groove)] text-sm">
+                {(client.hairType || client.colorReference) && (
+                  <div className="flex flex-col gap-3 p-4">
+                    <Pref label="Type de cheveux" value={client.hairType} />
+                    <Pref label="Référence couleur" value={client.colorReference} />
+                  </div>
+                )}
+                {PREFERENCE_DOMAINS.map((domain) => {
+                  const note = preferenceNotes[domain];
+                  const photos = preferencePhotos[domain] ?? [];
+                  if (!note && photos.length === 0) return null;
+                  return (
+                    <div key={domain} className="flex flex-col gap-2 p-4">
+                      <Legend>{PREFERENCE_DOMAIN_LABEL[domain]}</Legend>
+                      {note && <p className="whitespace-pre-line text-[var(--color-gray-800)]">{note}</p>}
+                      {photos.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {photos.map((ref) => (
+                            <PhotoPlaceholder key={ref} className="size-16" label="" />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             ) : (
-              <BoardEmpty title="Aucune préférence enregistrée" hint="Renseignez le profil beauté de cette cliente." />
+              <BoardEmpty title="Aucune préférence enregistrée" hint="Type de cheveux, référence couleur et goûts par domaine." />
             )}
           </Board>
 
@@ -338,8 +354,6 @@ export function FicheClienteView({ clientId }: { clientId: string }) {
 
       <EditCoordonneesDialog open={editCoordOpen} client={client} onClose={() => setEditCoordOpen(false)} />
       <EditPreferencesDialog open={editPrefOpen} client={client} onClose={() => setEditPrefOpen(false)} />
-      <StyleDetailDialog style={detailStyle} onClose={() => setDetailStyle(null)} />
-      <Toast message={toast?.message ?? null} action={toast?.action} onDismiss={() => setToast(null)} />
     </div>
   );
 }

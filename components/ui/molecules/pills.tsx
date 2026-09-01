@@ -13,6 +13,9 @@ type PillsProps = {
   value: string;
   onChange: (value: string) => void;
   className?: string;
+  /** false → a single non-wrapping row that scrolls horizontally instead of stacking (keeps a
+   *  long filter list from widening its container). Default true: the classic wrapping row. */
+  wrap?: boolean;
 };
 
 /**
@@ -22,9 +25,15 @@ type PillsProps = {
  * mark instead of only a color swap, so it reads unambiguously as "chosen" rather than looking
  * like SegmentedToggle's mode-switch or Tabs' navigation. py-3 = 44px tap height.
  */
-export function Pills({ options, value, onChange, className }: PillsProps) {
+export function Pills({ options, value, onChange, className, wrap = true }: PillsProps) {
   return (
-    <div className={cn("flex flex-wrap gap-2", className)}>
+    <div
+      className={cn(
+        "flex gap-2",
+        wrap ? "flex-wrap" : "flex-nowrap overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+        className,
+      )}
+    >
       {options.map((option) => {
         const active = option.value === value;
         return (
@@ -34,7 +43,7 @@ export function Pills({ options, value, onChange, className }: PillsProps) {
             onClick={() => onChange(option.value)}
             aria-pressed={active}
             className={cn(
-              "inline-flex h-14 items-center gap-1.5 rounded-full px-5 text-[15px] font-medium transition active:scale-[0.97] outline-none focus-visible:ring-4 focus-visible:ring-ring/20",
+              "inline-flex h-14 shrink-0 items-center gap-1.5 rounded-full px-5 text-[15px] font-medium transition active:scale-[0.97] outline-none focus-visible:ring-4 focus-visible:ring-ring/20",
               active
                 ? "bg-primary text-primary-foreground"
                 : "border border-border bg-white text-[var(--color-gray-600)] hover:bg-[var(--color-gray-50)]",

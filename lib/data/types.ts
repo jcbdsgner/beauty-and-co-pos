@@ -3,7 +3,7 @@
 // (Rendez-vous <-> Vente relation, Relance as one discriminated-union object, Vente's "abandonnée"
 // state) that the v2 userflow rework requires.
 
-export type Role = "coiffeuse" | "estheticienne" | "accueil";
+export type Role = "coiffeuse" | "estheticienne" | "menage" | "accueil";
 
 export type Praticienne = {
   id: string;
@@ -12,9 +12,25 @@ export type Praticienne = {
   initial: string;
   workingToday: boolean;
   unavailableToday?: boolean;
+  /** Today's presence hours — hard roster data, shown in the Équipe rail. "HH:mm". Absent ⇒ jour de repos. */
+  shiftStart?: string;
+  shiftEnd?: string;
 };
 
 export type ClientTier = "vip" | "gold" | "silver" | null;
+
+/** Les cinq domaines de préférence tenus sur une fiche cliente — chacun un texte libre + des photos. */
+export type PreferenceDomain = "onglerie" | "coiffure" | "spa" | "epilation" | "boisson";
+
+export const PREFERENCE_DOMAINS: PreferenceDomain[] = ["onglerie", "coiffure", "spa", "epilation", "boisson"];
+
+export const PREFERENCE_DOMAIN_LABEL: Record<PreferenceDomain, string> = {
+  onglerie: "Mani-pédi-onglerie",
+  coiffure: "Coiffure",
+  spa: "Spa",
+  epilation: "Épilation",
+  boisson: "Boisson",
+};
 
 export type Cliente = {
   id: string;
@@ -26,12 +42,16 @@ export type Cliente = {
   address?: string;
   profession?: string;
   birthday?: string; // ISO date
+  /** Pays de résidence — obligatoire à la création (défaut « Sénégal »). */
+  residenceCountry: string;
   tier: ClientTier;
   points: number;
   hairType?: string;
   colorReference?: string;
-  skinNotes?: string;
-  preferencesNotes?: string;
+  /** Texte libre par domaine de préférence ; une note rangée dans un domaine vient s'y ajouter. */
+  preferenceNotes?: Partial<Record<PreferenceDomain, string>>;
+  /** Photos de référence par domaine (mock : identifiants de placeholder, pas de vrai upload). */
+  preferencePhotos?: Partial<Record<PreferenceDomain, string[]>>;
   internalNotes?: string;
   lastVisit?: string;
   totalSpent: number;
@@ -69,9 +89,15 @@ export type Produit = {
   categoryId: string;
   name: string;
   price: number;
+  /** Units left in the salon. Decremented at "Confirmer l'encaissement"; a produit at 0 can't be
+   *  added to a panier. Session-only — a page refresh resets it (mock, no backend). */
   stock: number;
   active: boolean;
   importedAbroad?: boolean;
+  /** Optional product photo (path under /public). Absent → a placeholder tile. */
+  image?: string;
+  /** Short blurb — used by bar drinks (catégorie « boissons »), where the composition matters. */
+  description?: string;
 };
 
 /** A rendez-vous is simply live or cancelled. There is no "pending / confirmed" step: bookings are
@@ -121,13 +147,16 @@ export type RendezVous = {
   start: string; // "HH:mm"
   durationMin: number;
   status: AppointmentStatus;
+  /** Free-text reason captured when the receptionist cancels — visible in the annulés history (ADR 0009). */
+  cancelReason?: string;
 };
 
 export type PaymentMode = "wave" | "orange_money" | "especes" | "carte";
 
 /** How a receptionist-granted discount is expressed. `pourcentage` is a share of the prestations
- *  total (services only, products excluded); `montant` is a flat FCFA cut. Either way it is capped
- *  at 20 % of the prestations total — see `MAX_REMISE_PCT` in the store. */
+ *  total (services only, products excluded); `montant` is a flat FCFA cut. Capped at
+ *  `RECEPTIONIST_MAX_PCT` (10 %) with the receptionist's own code, up to `MAX_REMISE_PCT` (20 %)
+ *  with a manager code — see the store. */
 export type RemiseMode = "montant" | "pourcentage";
 
 export type RemiseAccordee = {
@@ -136,6 +165,9 @@ export type RemiseAccordee = {
   value: number;
   /** The receptionist's personal code — identifies who authorised the discount. */
   grantedByCode: string;
+  /** A manager's one-off code, present only when the discount went past 10 % of the prestations.
+   *  Not verified (mock) — kept on the sale for traceability. See ADR 0008. */
+  managerCode?: string;
   /** Free-text justification, captured after the sale is cashed in (never before). */
   reason: string | null;
 };
@@ -201,27 +233,26 @@ export type Style = {
 };
 
 export type RelanceType = "anniversaire" | "soins" | "fidelite" | "reconquete" | "recommandation";
-export type RelanceStatus = "en_attente" | "envoyee" | "ignoree" | "en_attente_autorisation" | "autorisee";
+
+/** Relances now fire automatically from a back-office outside this app; the section only reads them.
+ *  A relance is simply still to come or already gone out — no authorisation or ignore states. */
+export type RelanceStatus = "a_venir" | "envoyee";
+
+export type RelanceChannel = "whatsapp" | "sms" | "email";
 
 export type Relance = {
   id: string;
   clientId: string;
   type: RelanceType;
   status: RelanceStatus;
+  /** Which channel the automatic message goes out on — a read-only filter in the section. */
+  channel: RelanceChannel;
+  /** ISO datetime — when it was sent (`envoyee`) or is scheduled to go out (`a_venir`). */
+  date: string;
   message: string;
   lateDays?: number;
   styleId?: string;
   discountLabel?: string;
-};
-
-export type CampaignStatus = "brouillon" | "planifiee" | "envoyee";
-
-export type Campaign = {
-  id: string;
-  title: string;
-  message: string;
-  audienceLabel: string;
-  status: CampaignStatus;
 };
 
 export type Company = {
@@ -235,11 +266,4 @@ export type Salon = {
   name: string;
   address: string;
   active: boolean;
-};
-
-export type BeautyTip = {
-  id: string;
-  family: string;
-  title: string;
-  body: string;
 };

@@ -58,8 +58,11 @@
      « Le Tableau » — board world (DESIGN.md / docs/adr/0005). Planning /
      Clientèle / Relances / Catalogue only for now; the rest migrates next.
      ───────────────────────────────────────────────────────────────────────── */
-  --board-slate: #2a2320;            /* the one standing board header per screen */
-  --board-slate-line: #4a3f3a;       /* routed groove on the slate header */
+  /* Retired as the section header (ADR 0007 — now a plain title on cream). Kept for the
+     contextual sheet/panel chrome that still reads as a dark overlay bar: the client Fiche
+     sticky header and the appointment detail sheet. */
+  --board-slate: #2a2320;
+  --board-slate-line: #4a3f3a;
   --board-groove: #e4e0e2;           /* the routed double-hairline that frames every plaque */
   --board-amber: #b5590a;            /* THE signal — changed / now / needs a decision */
   --board-amber-soft: #fdf0e3;

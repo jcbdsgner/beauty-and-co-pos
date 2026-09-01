@@ -19,6 +19,7 @@ export function DiscountBreakdown({ sale, className }: { sale: Sale; className?:
           <span>
             Remise accordée
             {sale.discountGranted?.mode === "pourcentage" && ` (${sale.discountGranted.value} %)`}
+            {sale.discountGranted?.managerCode && " · code manager"}
           </span>
           <span className="tabular-nums">−{formatFcfa(t.grantedDiscount)}</span>
         </div>

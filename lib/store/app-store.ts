@@ -2,11 +2,10 @@
 
 import { create } from "zustand";
 import { CLIENTS, clientFullName } from "@/lib/data/clientele";
-import { RESERVATIONS, reservationById } from "@/lib/data/planning";
-import { serviceById } from "@/lib/data/menu";
+import { RESERVATIONS, reservationById, timeToMinutes } from "@/lib/data/planning";
+import { PRODUITS, serviceById } from "@/lib/data/menu";
 import { PRATICIENNES } from "@/lib/data/praticiennes";
 import { RELANCES } from "@/lib/data/relances";
-import { styleById } from "@/lib/data/styles";
 import { CARTES_CADEAUX, carteCadeauByCode, giftCardExpiryLabel, normalizeGiftCardCode } from "@/lib/data/cartes-cadeaux";
 import { formatFcfa } from "@/lib/utils";
 import type {
@@ -14,16 +13,13 @@ import type {
   Cliente,
   PaymentMode,
   Praticienne,
+  Produit,
   Relance,
-  RelanceStatus,
   RemiseMode,
   RendezVous,
   Reservation,
   Sale,
 } from "@/lib/data/types";
-
-/** A sent tournée du matin — kept in the store so its history survives a volet switch. */
-export type TourneeBatch = { id: string; sentAt: string; count: number; relanceIds: string[] };
 
 /* ────────────────────────────────────────────────────────────────────────────
    Session state store — was a React context (components/providers/
@@ -46,6 +42,33 @@ function patchRendezVous(reservations: Reservation[], rvId: string, patch: Parti
       ? { ...r, rendezVous: r.rendezVous.map((rv) => (rv.id === rvId ? { ...rv, ...patch } : rv)) }
       : r,
   );
+}
+
+/** Do two time ranges share any minute? */
+function timeRangesOverlap(a: { start: string; durationMin: number }, b: { start: string; durationMin: number }) {
+  const aStart = timeToMinutes(a.start);
+  const bStart = timeToMinutes(b.start);
+  return aStart < bStart + b.durationMin && bStart < aStart + a.durationMin;
+}
+
+/**
+ * The one hard guard on rendez-vous edits (ADR 0009): a praticienne can't hold two rendez-vous that
+ * overlap. Checks a candidate slot against every other active rendez-vous that shares a praticienne.
+ */
+function findStaffClash(
+  reservations: Reservation[],
+  rvId: string,
+  cand: { staffIds: string[]; start: string; durationMin: number },
+): { staffId: string; other: RendezVous } | null {
+  for (const r of reservations) {
+    for (const rv of r.rendezVous) {
+      if (rv.id === rvId || rv.status === "annule") continue;
+      const otherStaff = [rv.staffId, rv.secondStaffId].filter(Boolean) as string[];
+      const shared = cand.staffIds.find((id) => otherStaff.includes(id));
+      if (shared && timeRangesOverlap(cand, rv)) return { staffId: shared, other: rv };
+    }
+  }
+  return null;
 }
 
 /** The bénéficiaire's display name, or undefined when it's the payer herself. */
@@ -73,7 +96,9 @@ function emptySale(label: string): Sale {
   };
 }
 
-/** The most a receptionist can knock off with her own code, as a share of the prestations total. */
+/** The most a receptionist can knock off with her own code alone, as a share of the prestations. */
+export const RECEPTIONIST_MAX_PCT = 10;
+/** The absolute ceiling on a granted discount — reachable only with a manager code (ADR 0008). */
 export const MAX_REMISE_PCT = 20;
 
 /**
@@ -90,6 +115,7 @@ export function computeTotals(sale: Sale) {
   const subtotal = prestations + produits;
 
   const maxGrantedDiscount = Math.round((prestations * MAX_REMISE_PCT) / 100);
+  const receptionistMaxDiscount = Math.round((prestations * RECEPTIONIST_MAX_PCT) / 100);
   const g = sale.discountGranted;
   const grantedDiscount = !g
     ? 0
@@ -116,6 +142,7 @@ export function computeTotals(sale: Sale) {
     giftCardDiscount,
     giftCardRemaining,
     maxGrantedDiscount,
+    receptionistMaxDiscount,
     totalDiscount,
     total,
   };
@@ -135,6 +162,9 @@ export type AppState = {
   clients: Cliente[];
   reservations: Reservation[];
   praticiennes: Praticienne[];
+  /** Produits en rayon with their live stock — decremented at `confirmPayment`. Read by the Menu
+   *  panel (blocks adding a produit at 0) and the Catalogue "Produits" volet. Session-only. */
+  produits: Produit[];
   sales: Sale[];
   openTabIds: string[];
   activeSaleId: string | null;
@@ -142,10 +172,9 @@ export type AppState = {
   /** Client ids most recently opened on this station, newest first — powers "Vues récemment" on
    *  the Clientèle landing. Session-only, capped, no persistence (consistent with the rest of the store). */
   recentClientIds: string[];
-  /** The one shared follow-up list — the Fiche cliente and La Tournée du matin read the same
-   *  state, so "Proposer" on a recommendation really lands in the morning round. */
+  /** Relances the direction's back-office fires automatically — read-only here. The section and
+   *  the Fiche cliente both read this list; nothing in the app writes to it (ADR 0010). */
   relances: Relance[];
-  tourneeBatches: TourneeBatch[];
 
   // Clients
   addClient: (data: Omit<Cliente, "id" | "points" | "totalSpent" | "totalVisits" | "createdAt" | "tier">) => Cliente;
@@ -154,10 +183,22 @@ export type AppState = {
   /** Record that a cliente's fiche was opened (called from FicheClienteView). */
   noteClientViewed: (id: string) => void;
 
-  // Rendez-vous (atomic, nested inside their Réservation). No création/édition/confirmation here —
-  // the booking journey lives on the external platform and bookings arrive firm; the receptionist
-  // only cancels or cashes in.
-  cancelAppointment: (rvId: string) => void;
+  // Rendez-vous (atomic, nested inside their Réservation). No création de réservation here — the
+  // booking journey lives on the external platform. But the receptionist adjusts what arrives
+  // (ADR 0009): reschedule, reassign, swap prestation / bénéficiaire, add / remove a rendez-vous,
+  // cancel with a reason. The one hard block is a praticienne double-booked (findStaffClash).
+  cancelAppointment: (rvId: string, reason?: string) => void;
+  rescheduleRendezVous: (rvId: string, start: string) => { ok: boolean; message: string };
+  updateRendezVous: (
+    rvId: string,
+    patch: Partial<Pick<RendezVous, "serviceId" | "staffId" | "secondStaffId" | "beneficiaryClientId" | "beneficiaryName" | "durationMin">>,
+  ) => { ok: boolean; message: string };
+  addRendezVous: (
+    reservationId: string,
+    data: Pick<RendezVous, "serviceId" | "staffId" | "start"> &
+      Partial<Pick<RendezVous, "secondStaffId" | "beneficiaryClientId" | "beneficiaryName" | "durationMin">>,
+  ) => { ok: boolean; message: string };
+  removeRendezVous: (rvId: string) => void;
   markStaffUnavailable: (staffId: string) => void;
 
   // Comptoir / Sales
@@ -171,37 +212,34 @@ export type AppState = {
   updateCartQty: (saleId: string, lineId: string, qty: number) => void;
   removeCartLine: (saleId: string, lineId: string) => void;
   applyGiftCard: (saleId: string, code: string) => { ok: boolean; message: string };
-  /** Validate a receptionist's personal code and attach a discretionary discount (≤ 20 % of the
-   *  prestations total). The `reason` is captured later, after the sale is cashed in. */
-  grantDiscount: (saleId: string, code: string, mode: RemiseMode, value: number) => { ok: boolean; message: string };
+  /** Validate a receptionist's personal code and attach a discretionary discount: ≤ 10 % of the
+   *  prestations with her code alone, up to 20 % with a `managerCode` (ADR 0008). The `reason` is
+   *  captured later, after the sale is cashed in. */
+  grantDiscount: (
+    saleId: string,
+    code: string,
+    mode: RemiseMode,
+    value: number,
+    managerCode?: string,
+  ) => { ok: boolean; message: string };
   /** Store the free-text justification for a granted discount (the post-payment step). */
   setDiscountReason: (saleId: string, reason: string) => void;
   setLoyaltyPointsUsed: (saleId: string, points: number) => void;
   confirmPayment: (saleId: string, modes: { mode: PaymentMode; amount: number }[]) => void;
   activeSale: () => Sale | undefined;
-
-  // Relances (shared follow-up list — see `relances` above)
-  setRelanceStatus: (id: string, status: RelanceStatus) => void;
-  /** Create a "recommandation" card from a Fiche cliente. Returns the new id (for an undo toast). */
-  proposeStyleRelance: (clientId: string, styleId: string) => string;
-  removeRelance: (id: string) => void;
-  /** Send every actionable "en_attente"/"autorisee" card due today in one go. Returns the affected
-   *  ids + the batch id so the caller can offer a real "Annuler". */
-  sendTourneeBatch: (ids: string[]) => { batchId: string };
-  revertTourneeBatch: (batchId: string, ids: string[]) => void;
 };
 
 export const useAppStore = create<AppState>((set, get) => ({
   clients: CLIENTS,
   reservations: RESERVATIONS,
   praticiennes: PRATICIENNES,
+  produits: PRODUITS,
   sales: [],
   openTabIds: [],
   activeSaleId: null,
   comptoirDeployed: false,
   recentClientIds: [],
   relances: RELANCES,
-  tourneeBatches: [],
 
   addClient: (data) => {
     const client: Cliente = { ...data, id: nextId("cl"), tier: null, points: 0, totalSpent: 0, totalVisits: 0, createdAt: new Date().toISOString() };
@@ -216,7 +254,91 @@ export const useAppStore = create<AppState>((set, get) => ({
   noteClientViewed: (id) =>
     set((s) => ({ recentClientIds: [id, ...s.recentClientIds.filter((x) => x !== id)].slice(0, 8) })),
 
-  cancelAppointment: (rvId) => set((s) => ({ reservations: patchRendezVous(s.reservations, rvId, { status: "annule" }) })),
+  cancelAppointment: (rvId, reason) =>
+    set((s) => ({
+      reservations: patchRendezVous(s.reservations, rvId, {
+        status: "annule",
+        ...(reason?.trim() ? { cancelReason: reason.trim() } : {}),
+      }),
+    })),
+
+  rescheduleRendezVous: (rvId, start) => {
+    const { reservations } = get();
+    const rv = reservations.flatMap((r) => r.rendezVous).find((x) => x.id === rvId);
+    if (!rv) return { ok: false, message: "Rendez-vous introuvable." };
+    if (!/^\d{2}:\d{2}$/.test(start)) return { ok: false, message: "Indiquez une heure valide (HH:MM)." };
+    const staffIds = [rv.staffId, rv.secondStaffId].filter(Boolean) as string[];
+    const clash = findStaffClash(reservations, rvId, { staffIds, start, durationMin: rv.durationMin });
+    if (clash) {
+      const who = get().praticiennes.find((p) => p.id === clash.staffId)?.name ?? "La praticienne";
+      return { ok: false, message: `${who} a déjà un rendez-vous à ${clash.other.start} — choisissez un autre créneau.` };
+    }
+    set((s) => ({ reservations: patchRendezVous(s.reservations, rvId, { start }) }));
+    return { ok: true, message: "Rendez-vous reprogrammé." };
+  },
+
+  updateRendezVous: (rvId, patch) => {
+    const { reservations } = get();
+    const rv = reservations.flatMap((r) => r.rendezVous).find((x) => x.id === rvId);
+    if (!rv) return { ok: false, message: "Rendez-vous introuvable." };
+
+    const next: RendezVous = { ...rv, ...patch };
+    // Changing the prestation carries its duration unless the caller set one explicitly.
+    if (patch.serviceId && patch.durationMin === undefined) {
+      next.durationMin = serviceById(patch.serviceId)?.durationMinutes ?? rv.durationMin;
+    }
+    // A bénéficiaire is one or the other, never both.
+    if (patch.beneficiaryClientId) next.beneficiaryName = undefined;
+    if (patch.beneficiaryName) next.beneficiaryClientId = undefined;
+
+    if (patch.staffId || patch.secondStaffId !== undefined || patch.serviceId || patch.durationMin !== undefined) {
+      const staffIds = [next.staffId, next.secondStaffId].filter(Boolean) as string[];
+      const clash = findStaffClash(reservations, rvId, { staffIds, start: next.start, durationMin: next.durationMin });
+      if (clash) {
+        const who = get().praticiennes.find((p) => p.id === clash.staffId)?.name ?? "La praticienne";
+        return { ok: false, message: `${who} est déjà prise à ${clash.other.start} — impossible sur ce créneau.` };
+      }
+    }
+    set((s) => ({ reservations: patchRendezVous(s.reservations, rvId, next) }));
+    return { ok: true, message: "Rendez-vous modifié." };
+  },
+
+  addRendezVous: (reservationId, data) => {
+    const { reservations } = get();
+    const reservation = reservationById(reservations, reservationId);
+    if (!reservation) return { ok: false, message: "Réservation introuvable." };
+    const durationMin = data.durationMin ?? serviceById(data.serviceId)?.durationMinutes ?? 30;
+    const staffIds = [data.staffId, data.secondStaffId].filter(Boolean) as string[];
+    const clash = findStaffClash(reservations, "", { staffIds, start: data.start, durationMin });
+    if (clash) {
+      const who = get().praticiennes.find((p) => p.id === clash.staffId)?.name ?? "La praticienne";
+      return { ok: false, message: `${who} a déjà un rendez-vous à ${clash.other.start} — choisissez un autre créneau.` };
+    }
+    const rv: RendezVous = {
+      id: nextId("rdv"),
+      reservationId,
+      serviceId: data.serviceId,
+      staffId: data.staffId,
+      start: data.start,
+      durationMin,
+      status: "actif",
+      ...(data.secondStaffId ? { secondStaffId: data.secondStaffId } : {}),
+      ...(data.beneficiaryClientId ? { beneficiaryClientId: data.beneficiaryClientId } : {}),
+      ...(data.beneficiaryName ? { beneficiaryName: data.beneficiaryName } : {}),
+    };
+    set((s) => ({
+      reservations: s.reservations.map((r) => (r.id === reservationId ? { ...r, rendezVous: [...r.rendezVous, rv] } : r)),
+    }));
+    return { ok: true, message: "Rendez-vous ajouté à la réservation." };
+  },
+
+  removeRendezVous: (rvId) =>
+    set((s) => ({
+      reservations: s.reservations.map((r) => {
+        if (!r.rendezVous.some((rv) => rv.id === rvId)) return r;
+        return { ...r, rendezVous: r.rendezVous.filter((rv) => rv.id !== rvId) };
+      }),
+    })),
 
   markStaffUnavailable: (staffId) =>
     set((s) => ({ praticiennes: s.praticiennes.map((p) => (p.id === staffId ? { ...p, unavailableToday: true } : p)) })),
@@ -317,16 +439,22 @@ export const useAppStore = create<AppState>((set, get) => ({
   updateSale: (saleId, patch) => set((s) => ({ sales: s.sales.map((sale) => (sale.id === saleId ? { ...sale, ...patch } : sale)) })),
 
   addCartLine: (saleId, line) =>
-    set((s) => ({
-      sales: s.sales.map((sale) => {
-        if (sale.id !== saleId) return sale;
-        const existing = sale.cart.find((l) => l.refId === line.refId);
-        if (existing) {
-          return { ...sale, cart: sale.cart.map((l) => (l.id === existing.id ? { ...l, qty: Math.min(20, l.qty + 1) } : l)) };
-        }
-        return { ...sale, cart: [...sale.cart, { ...line, id: nextId("line"), qty: 1 }] };
-      }),
-    })),
+    set((s) => {
+      // A produit can't be added past what's left in the salon; a prestation is capped at 20.
+      const produit = line.kind === "produit" ? s.produits.find((p) => p.id === line.refId) : undefined;
+      const max = produit ? produit.stock : 20;
+      return {
+        sales: s.sales.map((sale) => {
+          if (sale.id !== saleId) return sale;
+          const existing = sale.cart.find((l) => l.refId === line.refId);
+          if (existing) {
+            return { ...sale, cart: sale.cart.map((l) => (l.id === existing.id ? { ...l, qty: Math.min(max, l.qty + 1) } : l)) };
+          }
+          if (max < 1) return sale;
+          return { ...sale, cart: [...sale.cart, { ...line, id: nextId("line"), qty: 1 }] };
+        }),
+      };
+    }),
 
   updateCartQty: (saleId, lineId, qty) =>
     set((s) => ({
@@ -361,25 +489,50 @@ export const useAppStore = create<AppState>((set, get) => ({
     };
   },
 
-  grantDiscount: (saleId, code, mode, value) => {
+  grantDiscount: (saleId, code, mode, value, managerCode) => {
     const trimmed = code.trim();
     if (trimmed.length < 4) return { ok: false, message: "Entrez votre code réceptionniste." };
     const sale = get().sales.find((s) => s.id === saleId);
     if (!sale) return { ok: false, message: "Vente introuvable." };
-    const { prestations, maxGrantedDiscount } = computeTotals(sale);
+    const { prestations, maxGrantedDiscount, receptionistMaxDiscount } = computeTotals(sale);
     if (prestations <= 0) return { ok: false, message: "Ajoutez une prestation avant d'accorder une remise." };
     if (!Number.isFinite(value) || value <= 0) return { ok: false, message: "Indiquez le montant ou le pourcentage de la remise." };
-    if (mode === "pourcentage" && value > MAX_REMISE_PCT) {
-      return { ok: false, message: `Une réceptionniste peut accorder jusqu'à ${MAX_REMISE_PCT} %. Au-delà, il faut l'accord de la direction.` };
+
+    // The request as a share of the prestations, whichever way it was entered.
+    const requestedPct = mode === "pourcentage" ? value : (value / prestations) * 100;
+    const mgr = managerCode?.trim() ?? "";
+
+    if (requestedPct > MAX_REMISE_PCT + 1e-6) {
+      return mode === "pourcentage"
+        ? { ok: false, message: `${MAX_REMISE_PCT} % est le plafond absolu — aucune remise plus forte n'est possible ici.` }
+        : { ok: false, message: `Le maximum absolu sur ce panier est ${formatFcfa(maxGrantedDiscount)} — ${MAX_REMISE_PCT} % des prestations.` };
     }
-    if (mode === "montant" && value > maxGrantedDiscount) {
-      return {
-        ok: false,
-        message: `Le maximum sur ce panier est ${formatFcfa(maxGrantedDiscount)} — ${MAX_REMISE_PCT} % des prestations.`,
-      };
+    if (requestedPct > RECEPTIONIST_MAX_PCT + 1e-6) {
+      if (!mgr) {
+        return mode === "pourcentage"
+          ? { ok: false, message: `Au-delà de ${RECEPTIONIST_MAX_PCT} %, saisissez le code manager.` }
+          : { ok: false, message: `Au-delà de ${formatFcfa(receptionistMaxDiscount)} (${RECEPTIONIST_MAX_PCT} % des prestations), saisissez le code manager.` };
+      }
+      if (!/^\d{4,6}$/.test(mgr)) {
+        return { ok: false, message: "Le code manager doit faire 4 à 6 chiffres." };
+      }
     }
-    get().updateSale(saleId, { discountGranted: { mode, value, grantedByCode: trimmed.toUpperCase(), reason: null } });
-    return { ok: true, message: "Remise accordée. Le motif vous sera demandé après l'encaissement." };
+
+    get().updateSale(saleId, {
+      discountGranted: {
+        mode,
+        value,
+        grantedByCode: trimmed.toUpperCase(),
+        ...(requestedPct > RECEPTIONIST_MAX_PCT && mgr ? { managerCode: mgr } : {}),
+        reason: null,
+      },
+    });
+    return {
+      ok: true,
+      message: mgr
+        ? "Remise accordée avec le code manager. Le motif vous sera demandé après l'encaissement."
+        : "Remise accordée. Le motif vous sera demandé après l'encaissement.",
+    };
   },
 
   setDiscountReason: (saleId, reason) =>
@@ -413,6 +566,11 @@ export const useAppStore = create<AppState>((set, get) => ({
           ? { ...x, status: "encaissee", step: "recu", payment: { modes }, loyaltyPointsEarned: earned, encaisseeAt: new Date().toISOString() }
           : x,
       ),
+      // Take the produits sold off the shelf — their stock is now real for the next sale.
+      produits: s.produits.map((p) => {
+        const line = sale.cart.find((l) => l.kind === "produit" && l.refId === p.id);
+        return line ? { ...p, stock: Math.max(0, p.stock - line.qty) } : p;
+      }),
       clients: sale.clientId
         ? s.clients.map((c) =>
             c.id === sale.clientId
@@ -433,47 +591,4 @@ export const useAppStore = create<AppState>((set, get) => ({
     const { sales, activeSaleId } = get();
     return sales.find((s) => s.id === activeSaleId);
   },
-
-  setRelanceStatus: (id, status) =>
-    set((s) => ({ relances: s.relances.map((r) => (r.id === id ? { ...r, status } : r)) })),
-
-  proposeStyleRelance: (clientId, styleId) => {
-    const id = nextId("rel");
-    const style = styleById(styleId);
-    const relance: Relance = {
-      id,
-      clientId,
-      type: "recommandation",
-      status: "en_attente",
-      message: style
-        ? `Ce style pourrait vous plaire pour votre prochain rendez-vous : ${style.name}.`
-        : "Un style qui pourrait vous plaire pour votre prochain rendez-vous.",
-      styleId,
-    };
-    set((s) => ({ relances: [relance, ...s.relances] }));
-    return id;
-  },
-
-  removeRelance: (id) => set((s) => ({ relances: s.relances.filter((r) => r.id !== id) })),
-
-  sendTourneeBatch: (ids) => {
-    const batchId = nextId("batch");
-    const batch: TourneeBatch = {
-      id: batchId,
-      sentAt: new Date().toLocaleString("fr-FR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }),
-      count: ids.length,
-      relanceIds: ids,
-    };
-    set((s) => ({
-      relances: s.relances.map((r) => (ids.includes(r.id) ? { ...r, status: "envoyee" as RelanceStatus } : r)),
-      tourneeBatches: [batch, ...s.tourneeBatches],
-    }));
-    return { batchId };
-  },
-
-  revertTourneeBatch: (batchId, ids) =>
-    set((s) => ({
-      relances: s.relances.map((r) => (ids.includes(r.id) ? { ...r, status: "en_attente" as RelanceStatus } : r)),
-      tourneeBatches: s.tourneeBatches.filter((b) => b.id !== batchId),
-    })),
 }));

@@ -12,7 +12,7 @@ import { InputOtp } from "@/components/ui/molecules/input-otp";
 import { Pills } from "@/components/ui/molecules/pills";
 import { SegmentedToggle } from "@/components/ui/molecules/segmented-toggle";
 import { useAppData, computeTotals } from "@/components/providers/app-data-provider";
-import { MAX_REMISE_PCT } from "@/lib/store/app-store";
+import { MAX_REMISE_PCT, RECEPTIONIST_MAX_PCT } from "@/lib/store/app-store";
 import { formatFcfa } from "@/lib/utils";
 import type { RemiseMode, Sale } from "@/lib/data/types";
 
@@ -199,8 +199,9 @@ const PCT_PRESETS = [5, 10, 15, MAX_REMISE_PCT];
 
 /**
  * The receptionist authenticates with her personal code, then sets the discount as a flat amount
- * or a percentage of the prestations. Anything over 20 % is refused here — that needs the
- * direction. The *reason* is not asked now: it's captured right after the sale is cashed in.
+ * or a percentage of the prestations. Her code alone covers up to 10 %; between 10 and 20 % she
+ * must also enter a manager code (ADR 0008). Over 20 % is refused. The *reason* is not asked now:
+ * it's captured right after the sale is cashed in.
  */
 function GrantedDiscountBlock({ sale }: { sale: Sale }) {
   const { grantDiscount, updateSale } = useAppData();
@@ -211,19 +212,29 @@ function GrantedDiscountBlock({ sale }: { sale: Sale }) {
   const [mode, setMode] = useState<RemiseMode>("pourcentage");
   const [pct, setPct] = useState(10);
   const [montant, setMontant] = useState("");
+  const [managerCode, setManagerCode] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
 
   const value = mode === "pourcentage" ? pct : Number(montant) || 0;
+  const requestedPct =
+    mode === "pourcentage" ? pct : totals.prestations > 0 ? ((Number(montant) || 0) / totals.prestations) * 100 : 0;
+  const needsManager = requestedPct > RECEPTIONIST_MAX_PCT;
+  const overCeiling = requestedPct > MAX_REMISE_PCT;
+  const managerOk = /^\d{4,6}$/.test(managerCode.trim());
   const preview =
     mode === "pourcentage"
       ? Math.round((totals.prestations * Math.min(pct, MAX_REMISE_PCT)) / 100)
       : Math.min(Number(montant) || 0, totals.maxGrantedDiscount);
-  const canApply = code.trim().length >= 4 && value > 0 && totals.prestations > 0;
+  const canApply =
+    code.trim().length >= 4 && value > 0 && totals.prestations > 0 && !overCeiling && (!needsManager || managerOk);
 
   function apply() {
-    const res = grantDiscount(sale.id, code, mode, value);
+    const res = grantDiscount(sale.id, code, mode, value, needsManager ? managerCode : undefined);
     setMsg(res.message);
-    if (res.ok) setCode("");
+    if (res.ok) {
+      setCode("");
+      setManagerCode("");
+    }
   }
 
   if (granted) {
@@ -245,7 +256,8 @@ function GrantedDiscountBlock({ sale }: { sale: Sale }) {
             </button>
           </div>
           <p className="mt-0.5 text-[var(--color-success)]/85">
-            Code {granted.grantedByCode} · motif demandé après l&apos;encaissement
+            Code {granted.grantedByCode}
+            {granted.managerCode ? " · validée par code manager" : ""} · motif demandé après l&apos;encaissement
           </p>
         </div>
       </section>
@@ -282,11 +294,16 @@ function GrantedDiscountBlock({ sale }: { sale: Sale }) {
         </div>
 
         {mode === "pourcentage" ? (
-          <Pills
-            value={String(pct)}
-            onChange={(v) => setPct(Number(v))}
-            options={PCT_PRESETS.map((p) => ({ value: String(p), label: `${p} %` }))}
-          />
+          <div>
+            <Pills
+              value={String(pct)}
+              onChange={(v) => setPct(Number(v))}
+              options={PCT_PRESETS.map((p) => ({ value: String(p), label: `${p} %` }))}
+            />
+            <p className="mt-1 text-[11px] text-[var(--color-gray-400)]">
+              Jusqu&apos;à {RECEPTIONIST_MAX_PCT} % avec votre code · jusqu&apos;à {MAX_REMISE_PCT} % avec un code manager
+            </p>
+          </div>
         ) : (
           <div>
             <TextInput
@@ -298,9 +315,31 @@ function GrantedDiscountBlock({ sale }: { sale: Sale }) {
               className="text-right tabular-nums"
             />
             <p className="mt-1 text-xs text-[var(--color-gray-500)]">
-              Maximum {formatFcfa(totals.maxGrantedDiscount)} — {MAX_REMISE_PCT} % des prestations
+              Jusqu&apos;à {formatFcfa(totals.receptionistMaxDiscount)} avec votre code · {formatFcfa(totals.maxGrantedDiscount)} ({MAX_REMISE_PCT} %) avec un code manager
             </p>
           </div>
+        )}
+
+        {needsManager && !overCeiling && (
+          <div className="rounded-lg bg-[var(--brand-rose-soft)] p-2.5">
+            <p className="mb-1.5 flex items-center gap-1 text-xs font-medium text-[var(--brand-taupe-muted)]">
+              <ShieldCheck aria-hidden className="size-3.5" /> Au-delà de {RECEPTIONIST_MAX_PCT} % — code manager requis
+            </p>
+            <TextInput
+              size="compact"
+              inputMode="numeric"
+              value={managerCode}
+              onChange={(e) => setManagerCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              placeholder="Code à 4–6 chiffres"
+              aria-label="Code manager"
+              className="tabular-nums tracking-[0.3em]"
+            />
+          </div>
+        )}
+        {overCeiling && (
+          <p className="text-xs font-medium text-destructive">
+            {MAX_REMISE_PCT} % est le plafond absolu — impossible d&apos;accorder plus ici.
+          </p>
         )}
 
         <div className="flex items-center justify-between border-t border-border pt-2.5">

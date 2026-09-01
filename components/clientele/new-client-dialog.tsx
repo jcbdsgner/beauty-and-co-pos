@@ -8,13 +8,14 @@ import { CloseButton } from "@/components/ui/atoms/icon-button";
 import { Card } from "@/components/ui/atoms/card";
 import { Field } from "@/components/ui/molecules/field";
 import { TextInput } from "@/components/ui/atoms/text-input";
-import { Textarea } from "@/components/ui/atoms/textarea";
+import { Select } from "@/components/ui/atoms/select";
 import { DatePicker } from "@/components/ui/molecules/date-picker";
 import { Alert } from "@/components/ui/molecules/alert";
 import { Button } from "@/components/ui/atoms/button";
 import { FieldLabel } from "@/components/ui/atoms/field-label";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { clientFullName } from "@/lib/data/clientele";
+import { PAYS_DEFAUT, PAYS_OPTIONS } from "@/lib/data/pays";
 import type { Cliente } from "@/lib/data/types";
 
 type NewClientDialogProps = {
@@ -33,11 +34,10 @@ const emptyForm = {
   whatsapp: "",
   email: "",
   address: "",
+  residenceCountry: PAYS_DEFAUT,
   profession: "",
   hairType: "",
   colorReference: "",
-  skinNotes: "",
-  preferencesNotes: "",
 };
 
 /**
@@ -72,7 +72,11 @@ export function NewClientDialog({ open, onClose, onCreated, initialValues }: New
     onClose();
   }
 
-  const canSubmit = form.firstName.trim() !== "" && form.lastName.trim() !== "" && form.phone.trim() !== "";
+  const canSubmit =
+    form.firstName.trim() !== "" &&
+    form.lastName.trim() !== "" &&
+    form.phone.trim() !== "" &&
+    form.residenceCountry.trim() !== "";
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -86,12 +90,11 @@ export function NewClientDialog({ open, onClose, onCreated, initialValues }: New
       whatsapp: form.whatsapp.trim() || undefined,
       email: form.email.trim() || undefined,
       address: form.address.trim() || undefined,
+      residenceCountry: form.residenceCountry,
       profession: form.profession.trim() || undefined,
       birthday: birthday ? birthday.toISOString().slice(0, 10) : undefined,
       hairType: form.hairType.trim() || undefined,
       colorReference: form.colorReference.trim() || undefined,
-      skinNotes: form.skinNotes.trim() || undefined,
-      preferencesNotes: form.preferencesNotes.trim() || undefined,
     });
 
     reset();
@@ -143,8 +146,16 @@ export function NewClientDialog({ open, onClose, onCreated, initialValues }: New
             <Field label="Profession">
               <TextInput value={form.profession} onChange={(e) => set("profession", e.target.value)} />
             </Field>
-            <Field label="Adresse" className="col-span-2">
+            <Field label="Adresse">
               <TextInput value={form.address} onChange={(e) => set("address", e.target.value)} />
+            </Field>
+            <Field label="Pays de résidence" required>
+              <Select
+                value={form.residenceCountry}
+                onChange={(v) => set("residenceCountry", v)}
+                options={PAYS_OPTIONS}
+                tone="cream"
+              />
             </Field>
             <Field label="Anniversaire" className="col-span-2">
               <DatePicker value={birthday} onChange={setBirthday} />
@@ -177,17 +188,14 @@ export function NewClientDialog({ open, onClose, onCreated, initialValues }: New
             <Field label="Référence couleur">
               <TextInput value={form.colorReference} onChange={(e) => set("colorReference", e.target.value)} />
             </Field>
-            <Field label="Notes peau" className="col-span-2">
-              <Textarea value={form.skinNotes} onChange={(e) => set("skinNotes", e.target.value)} rows={2} />
-            </Field>
-            <Field label="Préférences" className="col-span-2">
-              <Textarea value={form.preferencesNotes} onChange={(e) => set("preferencesNotes", e.target.value)} rows={2} />
-            </Field>
           </div>
+          <p className="text-xs text-[var(--color-gray-400)]">
+            Les préférences détaillées (onglerie, coiffure, spa, épilation, boisson) se renseignent ensuite sur la fiche.
+          </p>
         </Card>
 
         {attempted && !canSubmit && (
-          <Alert tone="error" title="Complétez les champs obligatoires" description="Prénom, nom et téléphone sont nécessaires pour créer la fiche." />
+          <Alert tone="error" title="Complétez les champs obligatoires" description="Prénom, nom, téléphone et pays de résidence sont nécessaires pour créer la fiche." />
         )}
 
         <div className="flex gap-3">

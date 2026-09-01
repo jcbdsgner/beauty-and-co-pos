@@ -16,9 +16,11 @@ export type Utilisateur = {
   pin: string;
 };
 
+/** Libellés au masculin — la fonction, pas la personne (l'équipe est mixte). */
 export const ROLE_LABEL: Record<Role, string> = {
-  coiffeuse: "Coiffeuse",
-  estheticienne: "Esthéticienne",
+  coiffeuse: "Coiffeur",
+  estheticienne: "Esthéticien",
+  menage: "Ménage",
   accueil: "Accueil",
 };
 

@@ -1,5 +1,9 @@
 # Langage visuel « Le Tableau » sur Planning · Clientèle · Relances · Catalogue
 
+> **Mise à jour (ADR 0007)** : la clause « ardoise = l'unique en-tête de section » est retirée —
+> l'en-tête de section est désormais un titre nu sur le crème. Le reste de « Le Tableau »
+> (plaques à rainure, rail de légende, lanes, jeton d'état, signal ambre) tient.
+
 ## Contexte
 
 Après le maquettage des sections partagées (`components/ui/*` repeints sur shadcn), les quatre

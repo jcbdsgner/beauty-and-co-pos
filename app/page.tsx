@@ -2,11 +2,9 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Send, ChevronRight, Users } from "lucide-react";
+import { ArrowRight, ChevronRight, Users } from "lucide-react";
 import { Avatar } from "@/components/ui/atoms/avatar";
 import { Button } from "@/components/ui/atoms/button";
-import { ConfirmDialog } from "@/components/ui/molecules/confirm-dialog";
-import { Toast } from "@/components/ui/molecules/toast";
 import {
   BoardHeader,
   Board,
@@ -46,7 +44,7 @@ const RELANCE_TYPE_SINGULAR: Record<RelanceType, string> = {
  * de lignes — mêmes lignes, mêmes jetons que le Planning.
  */
 export default function AccueilPage() {
-  const { reservations, praticiennes, clients, sales, relances, sendTourneeBatch, revertTourneeBatch } = useAppData();
+  const { reservations, praticiennes, clients, sales, relances } = useAppData();
   const dayRows = useMemo(
     () => flattenRendezVous(reservations).filter((r) => r.rv.status !== "annule"),
     [reservations],
@@ -55,16 +53,15 @@ export default function AccueilPage() {
   const { currentUser } = useSession();
 
   const [detail, setDetail] = useState<RendezVous | null>(null);
-  const [confirmSend, setConfirmSend] = useState(false);
-  const [toast, setToast] = useState<{ message: string; action?: { label: string; onClick: () => void } } | null>(null);
 
   const encaisseAujourdhui = sales
     .filter((s) => s.status === "encaissee")
     .reduce((sum, s) => sum + computeTotals(s).total, 0);
 
+  const today = new Date().toISOString().slice(0, 10);
   const roundReady = useMemo(
-    () => relances.filter((r) => r.status === "en_attente" || r.status === "autorisee"),
-    [relances],
+    () => relances.filter((r) => r.status === "a_venir" && r.date.slice(0, 10) === today),
+    [relances, today],
   );
   const roundBreakdown = useMemo(() => {
     const counts: Partial<Record<RelanceType, number>> = {};
@@ -84,16 +81,6 @@ export default function AccueilPage() {
     .filter((g) => g.items.length > 0);
 
   const liveCount = new Set(dayRows.map((r) => r.rv.id)).size;
-
-  function handleSendRound() {
-    const ids = roundReady.map((r) => r.id);
-    const { batchId } = sendTourneeBatch(ids);
-    setConfirmSend(false);
-    setToast({
-      message: `Tournée envoyée à ${ids.length} cliente${ids.length > 1 ? "s" : ""}.`,
-      action: { label: "Annuler", onClick: () => revertTourneeBatch(batchId, ids) },
-    });
-  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -121,31 +108,20 @@ export default function AccueilPage() {
         </div>
       </Board>
 
-      {/* Tournée du matin — branchée sur le store partagé avec la section Relances */}
+      {/* Tournée du matin — rappel de ce qui part automatiquement aujourd'hui (ADR 0010, lecture seule) */}
       <Board legend="Tournée du matin" tone={roundReady.length > 0 ? "act" : "plain"}>
         <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-4">
           <div className="min-w-0">
             <p className="font-[family-name:var(--font-heading)] text-[15px] font-semibold text-[var(--color-gray-900)]">
               {roundReady.length === 0
-                ? "Tournée à jour."
-                : `${roundReady.length} message${roundReady.length > 1 ? "s" : ""} de relance prêt${roundReady.length > 1 ? "s" : ""} à envoyer.`}
+                ? "Aucune relance ne part aujourd'hui."
+                : `${roundReady.length} relance${roundReady.length > 1 ? "s" : ""} part${roundReady.length > 1 ? "ent" : ""} automatiquement aujourd'hui.`}
             </p>
             {roundBreakdown && <p className="mt-0.5 text-sm text-[var(--color-gray-500)]">{roundBreakdown}</p>}
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <Button variant="outline" size="sm" href="/relances" icon={<ArrowRight className="size-4" />}>
-              Ouvrir les relances
-            </Button>
-            <Button
-              variant="dark"
-              size="sm"
-              icon={<Send className="size-4" />}
-              disabled={roundReady.length === 0}
-              onClick={() => setConfirmSend(true)}
-            >
-              Valider &amp; envoyer
-            </Button>
-          </div>
+          <Button variant="outline" size="sm" href="/relances" icon={<ArrowRight className="size-4" />} className="shrink-0">
+            Ouvrir les relances
+          </Button>
         </div>
       </Board>
 
@@ -232,16 +208,6 @@ export default function AccueilPage() {
         }}
       />
 
-      <ConfirmDialog
-        open={confirmSend}
-        title={`Envoyer ${roundReady.length} message${roundReady.length > 1 ? "s" : ""} ?`}
-        description="Chaque cliente reçoit son message de relance personnalisé maintenant."
-        confirmLabel="Valider & envoyer"
-        confirmVariant="dark"
-        onCancel={() => setConfirmSend(false)}
-        onConfirm={handleSendRound}
-      />
-      <Toast message={toast?.message ?? null} action={toast?.action} onDismiss={() => setToast(null)} />
       {encaissementDialog}
     </div>
   );

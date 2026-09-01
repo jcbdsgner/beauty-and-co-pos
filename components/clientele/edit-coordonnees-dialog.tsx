@@ -5,8 +5,10 @@ import { Dialog } from "@/components/ui/molecules/dialog";
 import { CloseButton } from "@/components/ui/atoms/icon-button";
 import { Field } from "@/components/ui/molecules/field";
 import { TextInput } from "@/components/ui/atoms/text-input";
+import { Select } from "@/components/ui/atoms/select";
 import { Button } from "@/components/ui/atoms/button";
 import { useAppData } from "@/components/providers/app-data-provider";
+import { PAYS_DEFAUT, PAYS_OPTIONS } from "@/lib/data/pays";
 import type { Cliente } from "@/lib/data/types";
 
 type EditCoordonneesDialogProps = {
@@ -32,16 +34,18 @@ function EditCoordonneesForm({ client, onClose }: { client: Cliente; onClose: ()
   const [whatsapp, setWhatsapp] = useState(client.whatsapp ?? "");
   const [email, setEmail] = useState(client.email ?? "");
   const [address, setAddress] = useState(client.address ?? "");
+  const [residenceCountry, setResidenceCountry] = useState(client.residenceCountry || PAYS_DEFAUT);
   const [profession, setProfession] = useState(client.profession ?? "");
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!phone.trim()) return;
+    if (!phone.trim() || !residenceCountry.trim()) return;
     updateClient(client.id, {
       phone: phone.trim(),
       whatsapp: whatsapp.trim() || undefined,
       email: email.trim() || undefined,
       address: address.trim() || undefined,
+      residenceCountry,
       profession: profession.trim() || undefined,
     });
     onClose();
@@ -65,6 +69,9 @@ function EditCoordonneesForm({ client, onClose }: { client: Cliente; onClose: ()
         </Field>
         <Field label="Adresse">
           <TextInput value={address} onChange={(e) => setAddress(e.target.value)} />
+        </Field>
+        <Field label="Pays de résidence" required>
+          <Select value={residenceCountry} onChange={setResidenceCountry} options={PAYS_OPTIONS} tone="cream" />
         </Field>
         <Field label="Profession">
           <TextInput value={profession} onChange={(e) => setProfession(e.target.value)} />

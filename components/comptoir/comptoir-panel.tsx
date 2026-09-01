@@ -60,7 +60,7 @@ export function ComptoirPanel() {
             ) : step === "recu" ? (
               <ReceiptStep sale={activeSale} />
             ) : (
-              <div className="grid h-full grid-cols-[1fr_440px] gap-5 p-5">
+              <div className="grid h-full grid-cols-[minmax(0,1fr)_440px] gap-5 p-5">
                 <MenuPanel saleId={activeSale.id} />
                 <SaleCartPanel
                   sale={activeSale}

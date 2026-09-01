@@ -17,8 +17,6 @@ import { serviceById } from "@/lib/data/menu";
 import { appointmentEndTime, flattenRendezVous } from "@/lib/data/planning";
 import type { Praticienne, RendezVous, Reservation } from "@/lib/data/types";
 
-const DAY_FMT = new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long" });
-
 function sameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
@@ -56,20 +54,27 @@ function PlanningBoardInner({ initialGrouping }: Required<PlanningBoardProps>) {
     [isToday, reservations, showCancelled],
   );
 
-  const schedulable = praticiennes.filter((p) => p.role !== "accueil");
+  // Coiffure + esthétique get a lane; ménage shows in the Équipe rail but never carries rendez-vous;
+  // accueil is off the planning entirely.
+  const schedulable = praticiennes.filter((p) => p.role !== "accueil" && p.role !== "menage");
+  const menageStaff = praticiennes.filter((p) => p.role === "menage");
   const workingStaff = schedulable.filter((p) => p.workingToday);
 
   const onStaff = (r: Row, id: string) => r.rv.staffId === id || r.rv.secondStaffId === id;
   const visibleStaff = staffFilter ? schedulable.filter((p) => p.id === staffFilter) : schedulable;
   const filteredRows = staffFilter ? dayRows.filter((r) => onStaff(r, staffFilter)) : dayRows;
-  const rowCount = new Set(filteredRows.map((r) => r.rv.id)).size;
 
-  function apptLane(row: Row, showStaff: boolean) {
+  function apptLane(row: Row, showStaff: boolean, laneStaffId?: string) {
     const { rv, reservation } = row;
     const payer = clients.find((c) => c.id === reservation.payerClientId);
     const service = serviceById(rv.serviceId);
     const staff = praticiennes.find((p) => p.id === rv.staffId);
     const second = rv.secondStaffId ? praticiennes.find((p) => p.id === rv.secondStaffId) : null;
+    // When a two-practitioner rendez-vous is shown on the *second* practitioner's lane, the
+    // encaissement belongs to the primary lane only — this lane is read-only so the receptionist
+    // can't start (or think she double-started) the same sale twice.
+    const isSecondLane = Boolean(laneStaffId && second && laneStaffId === rv.secondStaffId && laneStaffId !== rv.staffId);
+    const partnerName = isSecondLane ? staff?.name : second?.name;
     const benef = rv.beneficiaryClientId
       ? clients.find((c) => c.id === rv.beneficiaryClientId)?.lastName
       : rv.beneficiaryName;
@@ -101,7 +106,7 @@ function PlanningBoardInner({ initialGrouping }: Required<PlanningBoardProps>) {
           <span>
             {service?.name ?? "Prestation"}
             {benef ? ` · pour ${benef}` : ""}
-            {second ? ` · à 2 (${second.name})` : ""}
+            {partnerName ? ` · à 2 avec ${partnerName}` : ""}
             {showStaff && staff ? ` · ${staff.name}` : ""}
             {siblingCount > 0 ? ` · +${siblingCount} sur la note` : ""}
             {absent ? " · praticienne absente" : ""}
@@ -132,6 +137,7 @@ function PlanningBoardInner({ initialGrouping }: Required<PlanningBoardProps>) {
   const rail = (
     <RosterRail
       staff={visibleStaff}
+      menageStaff={staffFilter ? [] : menageStaff}
       rows={filteredRows}
       selectedDate={selectedDate}
       staffFilter={staffFilter}
@@ -185,13 +191,6 @@ function PlanningBoardInner({ initialGrouping }: Required<PlanningBoardProps>) {
     <div className="flex flex-col gap-6">
       <BoardHeader
         section="Planning"
-        context={
-          <span>
-            <span className="capitalize">{DAY_FMT.format(selectedDate)}</span>
-            {" · "}
-            {isToday ? `${rowCount} rendez-vous` : "hors des données de démo"}
-          </span>
-        }
         reset={
           !isToday && (
             <Button variant="outline" size="sm" onClick={() => setSelectedDate(new Date())}>
@@ -229,7 +228,7 @@ function PlanningBoardInner({ initialGrouping }: Required<PlanningBoardProps>) {
         </button>
       )}
 
-      <Board legend="Le jour" rail={rail} railWidth={196}>
+      <Board legend="Le jour" rail={rail} railWidth={280}>
         {bodyContent}
       </Board>
 
@@ -248,8 +247,19 @@ function PlanningBoardInner({ initialGrouping }: Required<PlanningBoardProps>) {
 
 /* ── Roster rail (the ex-Équipe sub-page, folded into the board's legend) ── */
 
+/** "09:00" → "9h", "18:30" → "18h30". */
+function shiftLabel(p: Praticienne) {
+  if (!p.shiftStart || !p.shiftEnd) return null;
+  const fmt = (t: string) => {
+    const [h, m] = t.split(":");
+    return m === "00" ? `${Number(h)}h` : `${Number(h)}h${m}`;
+  };
+  return `${fmt(p.shiftStart)}–${fmt(p.shiftEnd)}`;
+}
+
 function RosterRail({
   staff,
+  menageStaff,
   rows,
   selectedDate,
   staffFilter,
@@ -258,6 +268,7 @@ function RosterRail({
   onStaff,
 }: {
   staff: Praticienne[];
+  menageStaff: Praticienne[];
   rows: Row[];
   selectedDate: Date;
   staffFilter: string | null;
@@ -274,22 +285,24 @@ function RosterRail({
       {staff.map((p) => {
         const working = isToday && p.workingToday && !p.unavailableToday;
         const count = rows.filter((r) => onStaff(r, p.id) && r.rv.status !== "annule").length;
-        const status = p.unavailableToday
-          ? { value: "Absente", tone: "signal" as ChipTone }
-          : p.workingToday
-            ? { value: "En poste", tone: "done" as ChipTone }
-            : { value: "Repos", tone: "void" as ChipTone };
+        const hours = shiftLabel(p);
+        const sub = p.unavailableToday
+          ? "Absente aujourd'hui"
+          : !p.workingToday
+            ? "Repos"
+            : hours
+              ? `${hours} · ${count} rdv`
+              : `${count} rdv`;
         return (
           <div key={p.id} className={cnRail(staffFilter === p.id)}>
             <button type="button" onClick={() => onFilter(staffFilter === p.id ? null : p.id)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
               <Avatar initial={p.initial} size={28} className="bg-accent text-[0.7rem] font-semibold text-secondary" />
               <span className="min-w-0">
                 <span className="block truncate text-sm font-semibold text-[var(--color-gray-900)]">{p.name}</span>
-                <span className="block text-[0.7rem] text-[var(--color-gray-400)] tabular-nums">{count} rdv</span>
+                <span className="block text-[0.7rem] text-[var(--color-gray-400)] tabular-nums">{sub}</span>
               </span>
             </button>
             <div className="flex shrink-0 items-center gap-0.5">
-              <FlipChip value={status.value} tone={status.tone} className="min-w-0 px-1.5 py-0.5 text-[0.5rem]" />
               <DropdownMenu
                 align="end"
                 trigger={
@@ -316,6 +329,28 @@ function RosterRail({
           </div>
         );
       })}
+
+      {menageStaff.length > 0 && (
+        <>
+          <div className="border-y border-[var(--board-groove)] bg-black/[0.02] px-3 py-1.5">
+            <Legend>Ménage</Legend>
+          </div>
+          {menageStaff.map((p) => {
+            const hours = shiftLabel(p);
+            return (
+              <div key={p.id} className="flex items-center gap-2 px-3 py-2.5 last:border-b-0">
+                <Avatar initial={p.initial} size={28} className="bg-[var(--color-gray-100)] text-[0.7rem] font-semibold text-[var(--color-gray-500)]" />
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-semibold text-[var(--color-gray-900)]">{p.name}</span>
+                  <span className="block text-[0.7rem] text-[var(--color-gray-400)] tabular-nums">
+                    {p.unavailableToday ? "Absente aujourd'hui" : !p.workingToday ? "Repos" : (hours ?? "Présente")}
+                  </span>
+                </span>
+              </div>
+            );
+          })}
+        </>
+      )}
     </div>
   );
 }

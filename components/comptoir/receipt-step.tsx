@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/atoms/textarea";
 import { Dialog } from "@/components/ui/molecules/dialog";
 import { computeTotals, useAppData } from "@/components/providers/app-data-provider";
 import { DiscountBreakdown } from "@/components/comptoir/discount-breakdown";
+import { SendReceiptButtons } from "@/components/comptoir/send-receipt-buttons";
 import { clientFullName } from "@/lib/data/clientele";
 import { formatFcfa } from "@/lib/utils";
 import type { Sale } from "@/lib/data/types";
@@ -121,6 +122,7 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
             Imprimer le reçu
           </Button>
         )}
+        <SendReceiptButtons client={client} />
         <div className="mt-1 flex justify-center gap-4 text-sm">
           <button
             type="button"
@@ -151,8 +153,9 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
           {sale.discountGranted?.mode === "pourcentage"
             ? `${sale.discountGranted.value} % des prestations`
             : "Montant fixe"}{" "}
-          · −{formatFcfa(totals.grantedDiscount)} · code {sale.discountGranted?.grantedByCode}. Indiquez pourquoi cette
-          remise a été accordée — elle apparaîtra dans le récap des ventes.
+          · −{formatFcfa(totals.grantedDiscount)} · code {sale.discountGranted?.grantedByCode}
+          {sale.discountGranted?.managerCode ? ` · code manager ${sale.discountGranted.managerCode}` : ""}. Indiquez
+          pourquoi cette remise a été accordée — elle apparaîtra dans le récap des ventes.
         </p>
         <Textarea
           className="mt-3"

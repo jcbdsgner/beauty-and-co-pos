@@ -31,11 +31,16 @@ export function Legend({ children, className }: { children: React.ReactNode; cla
   );
 }
 
-/* ── Board header (the one standing slate plaque per screen) ─────────────── */
+/* ── Board header (the section heading — a plain title on the cream wall) ──── */
 
+/**
+ * The section heading. Retired the slate plaque (ADR 0007): a POS section is named, not framed —
+ * a heavy standing banner on every screen only added chrome the receptionist reads past. Now a
+ * plain bold title on the cream ground, with the same props so every call site is unchanged.
+ */
 type BoardHeaderProps = {
   section: string;
-  /** live day, count, subtitle — the board's context line */
+  /** live day, count, subtitle — the heading's context line */
   context?: React.ReactNode;
   action?: React.ReactNode;
   /** shown only when relevant (e.g. an "Aujourd'hui" reset) */
@@ -46,25 +51,21 @@ type BoardHeaderProps = {
 
 export function BoardHeader({ section, context, action, reset, backHref, className }: BoardHeaderProps) {
   return (
-    <div
-      className={cn(
-        "flex flex-wrap items-center gap-x-6 gap-y-4 rounded-[14px] bg-[var(--board-slate)] px-6 py-5 text-white",
-        "shadow-[inset_0_0_0_1px_var(--board-slate-line)]",
-        className,
-      )}
-    >
+    <div className={cn("flex flex-wrap items-center gap-x-4 gap-y-3 pl-1", className)}>
       {backHref && (
         <Link
           href={backHref}
-          className="flex h-12 shrink-0 items-center gap-1.5 rounded-full border border-white/20 px-4 text-sm font-medium text-white/80 transition active:scale-[0.97] hover:bg-white/10"
+          className="flex h-10 shrink-0 items-center gap-1.5 rounded-full border border-[var(--board-groove)] bg-white px-3.5 text-sm font-medium text-[var(--color-gray-500)] transition active:scale-[0.97] hover:bg-[var(--color-gray-50)]"
         >
           <ChevronLeft aria-hidden className="size-4" />
           Retour
         </Link>
       )}
       <div className="min-w-0 flex-1">
-        <h1 className="font-[family-name:var(--font-heading)] text-[1.9rem] font-bold leading-none tracking-tight">{section}</h1>
-        {context && <div className="mt-2 text-sm text-white/60">{context}</div>}
+        <h1 className="font-[family-name:var(--font-heading)] text-[1.9rem] font-bold leading-none tracking-[-0.02em] text-[var(--color-gray-900)]">
+          {section}
+        </h1>
+        {context && <div className="mt-2 text-sm text-[var(--color-gray-500)]">{context}</div>}
       </div>
       {reset}
       {action}

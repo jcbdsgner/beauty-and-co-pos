@@ -36,7 +36,7 @@ export function NumericKeypad({ value, onChange, maxLength = 9, className }: Num
           onClick={() => press(key)}
           aria-label={key === "back" ? "Effacer un chiffre" : key === "C" ? "Tout effacer" : key}
           className={cn(
-            "flex h-16 items-center justify-center rounded-xl border border-border bg-white text-2xl font-semibold text-[var(--color-gray-900)] tabular-nums transition",
+            "flex h-16 items-center justify-center rounded-2xl border border-border bg-white text-2xl font-semibold text-[var(--color-gray-900)] tabular-nums transition",
             "active:scale-[0.96] active:bg-accent hover:border-secondary/40",
             "outline-none focus-visible:ring-4 focus-visible:ring-ring/20",
             key === "C" && "text-[15px] font-bold text-[var(--color-gray-500)]",

@@ -1,11 +1,15 @@
 # Refonte 2 — Planning · Clientèle · Relances · Catalogue
 
-> **⚠ Amendé par `docs/adr/0006` (2026-08-28).** Le modèle de rendez-vous a changé : **Réservation
-> → Rendez-vous atomiques**, un seul payeur, prestations multiples / praticiennes multiples /
-> bénéficiaires multiples, RDV parallèles à la même heure. La **prise de rendez-vous est retirée
-> de l'app** — plus d'« Éditeur de rendez-vous », plus de « Nouveau rendez-vous » ni de « Décaler ».
-> Le Planning ne garde que Confirmer / Annuler / Encaisser. Toutes les mentions de l'éditeur de
-> rendez-vous ci-dessous sont caduques ; le reste (langage visuel, Clientèle, Relances, Catalogue) tient.
+> **⚠ Amendé par `docs/adr/0006` puis « Drop the pending/confirmed rendez-vous state » (2026-08-28),
+> et `docs/adr/0007` (2026-08-31).** Le modèle de rendez-vous a changé : **Réservation → Rendez-vous
+> atomiques**, un seul payeur, prestations multiples / praticiennes multiples / bénéficiaires
+> multiples, RDV parallèles à la même heure. La **prise de rendez-vous est retirée de l'app** —
+> plus d'« Éditeur de rendez-vous », plus de « Nouveau rendez-vous » ni de « Décaler ». Un
+> rendez-vous est `actif` ou `annulé` : pas d'étape « en attente → confirmé », pas d'action
+> « Confirmer » ; le Planning ne garde que **Annuler** et **Encaisser** (au niveau réservation).
+> L'ADR 0007 retire par ailleurs l'en-tête ardoise (§2.0) : le titre de section est nu sur le
+> crème. §2.1 a été réécrit en conséquence ; le reste (langage visuel, Clientèle, Relances,
+> Catalogue) tient.
 >
 > **Portée.** Cette refonte ne touche que les quatre sections **Planning, Clientèle, Relances,
 > Catalogue** (et leurs sous-écrans : Équipe, Fiche cliente, Carte de fidélité, Détail style).
@@ -222,64 +226,65 @@ Chaque section devient donc **un tableau qui se classe tout seul par le temps et
 lignes tant qu'on ne les a pas traitées** :
 
 - une **ligne** (lane) par élément, sur un rail de légende (heures / lettres / noms) ;
-- un **jeton d'état** qui bascule mécaniquement au changement (`PRÊT` → `ENVOYÉ`, `EN ATTENTE` →
-  `CONFIRMÉ`, `EN POSTE` → `ABSENTE`) — jamais la couleur seule ;
+- un **jeton d'état** qui bascule mécaniquement au changement (`PRÊT` → `ENVOYÉ`, `EN POSTE` →
+  `ABSENTE`, une lane du Planning qui passe à `EN COURS` ou `ANNULÉ`) — jamais la couleur seule ;
 - **un seul signal** — l'ambre — pour *ce qui a changé / maintenant / demande une décision* :
   il pulse une fois puis **tient** un liseré sur la ligne jusqu'à ce qu'on l'ait vue ;
 - les lignes **se reclassent sur place** (elles ne disparaissent pas pour réapparaître ailleurs).
 
 ### 2.1 Section Planning
 
-*Job stories : « une cliente appelle pour décaler / annuler / prendre un rendez-vous » (rare) ·
-« une praticienne est absente aujourd'hui, il faut le signaler » · « je veux voir la semaine et
-qui est disponible ».*
+*Job stories : « une cliente appelle pour annuler un rendez-vous » (rare) · « une praticienne est
+absente aujourd'hui, il faut le signaler » · « je veux voir la semaine et qui est disponible » ·
+« la cliente est là, il faut l'encaisser depuis sa réservation ».*
+
+> **Amendé par `docs/adr/0006` + « Drop the pending/confirmed rendez-vous state ».** La prise de
+> rendez-vous est faite en ligne : plus d'« Éditeur de rendez-vous », plus de « Nouveau
+> rendez-vous », plus de « Décaler ». Une réservation arrive **ferme** — un rendez-vous est
+> `actif` ou `annulé`, il n'y a pas d'étape « en attente → confirmé » ni d'action « Confirmer ».
+> Le détail s'ouvre sur une **Fiche réservation** (la payeuse + toutes ses prestations), pas une
+> fiche mono-rendez-vous. Breadboard à jour ci-dessous.
 
 ```
 Le Tableau du Planning  (la section — un seul tableau, la sous-page Équipe y est fondue comme rail)
-- bandeau : nom de section · jour affiché en toutes lettres · « Aujourd'hui » (seulement si on a navigué ailleurs) → revient au jour réel
-- « Nouveau rendez-vous » → Éditeur de rendez-vous (vide)
+- bandeau : nom de section (titre nu sur le crème, ADR 0007) · « Aujourd'hui » (seulement si on a navigué ailleurs) → revient au jour réel
 - strip de semaine : ◀/▶ + 7 jours → change le jour affiché
-- réglage « Afficher les annulés » → les rendez-vous annulés restent sur le tableau, atténués et barrés
-- rail de légende = les heures OU, replié, l'équipe :
+- réglage « Afficher les annulés » → les rendez-vous annulés restent sur le tableau, atténués et barrés ; l'historique des annulations vit ici
+- rail de légende = l'équipe :
     - basculer « Par praticienne / Toute l'équipe » → regroupe les lignes autrement (même données)
-    - chaque en-tête de praticienne porte un jeton EN POSTE / ABSENTE + un menu :
+    - chaque praticienne porte son état de présence (présente / absente aujourd'hui) + un menu :
         - « Voir seule » → le tableau ne garde que ses lignes ; « Voir tout le monde » annule
-        - « Marquer absente aujourd'hui » → jeton bascule ABSENTE ; ses rendez-vous du jour prennent un liseré ambre + jeton « ABSENTE »
-- ligne de rendez-vous (positionnée par l'heure) : cliente · prestation · jeton EN ATTENTE / CONFIRMÉ / EN COURS / ANNULÉ
-    - taper la ligne → Fiche rendez-vous (complète)
-    - taper une plage vide du rail → Éditeur de rendez-vous (praticienne + heure pré-remplies)
+        - « Marquer absente aujourd'hui » → ses rendez-vous du jour sont signalés « absente » partout (ici + Chronologie de l'Accueil)
+- ligne de rendez-vous (positionnée par l'heure) : cliente · prestation · « pour {bénéficiaire} » si ≠ payeuse · jeton EN COURS (une vente est ouverte) ou ANNULÉ
+    - plusieurs rendez-vous à la même heure = normal (praticiennes différentes) ; un rendez-vous « à 2 » apparaît sur les deux lanes
+    - taper la ligne → Fiche réservation (la payeuse + toutes ses prestations)
+    - PAS de création : taper une plage vide ne fait rien — la prise de rendez-vous se fait en ligne
 [ jour affiché sans données parce que le mock ne couvre qu'aujourd'hui → le tableau le dit franchement (« Aucun rendez-vous ce jour-là »), pas un vide muet ]
 [ personne ne travaille le jour affiché → « Personne au planning ce jour-là » + « Ouvrir l'équipe » ]
 
-Fiche rendez-vous  (le détail — ouverte depuis le Tableau du Planning OU la Chronologie de l'Accueil)
-- rappel : cliente (+ tier, points si fiche liée) · heure–fin · prestation + prix · praticienne (+ ABSENTE)
-- « Confirmer » (si EN ATTENTE) → jeton bascule CONFIRMÉ, reste sur la Fiche
-- « Encaisser » (si pas ANNULÉ) → Comptoir déployé, onglet pré-rempli (cliente + prestation) ; déjà une vente ouverte → « Voir la vente en cours » rebascule sur l'onglet existant
-    - praticienne marquée ABSENTE et pas encore de vente → Choix de la remplaçante (bloquant) → Comptoir
-- version **Planning** seulement : « Décaler / modifier » → Éditeur · « Annuler » → Confirmation
-- version **Accueil** : lecture + « Confirmer » + « Encaisser » seulement (jamais Décaler / Annuler)
-[ « Annuler » alors qu'une vente est ouverte pour ce rendez-vous → la Confirmation le dit (« un onglet de vente restera ouvert »), l'annulation ne ferme pas l'onglet ]
+Fiche réservation  (le détail — ouverte depuis le Tableau du Planning OU la Chronologie de l'Accueil)
+- en-tête : payeuse (+ tier, points si fiche liée) · « En cours » si une vente est ouverte (sinon rien) · « réservée en ligne / notée au comptoir » · « règle N prestations »
+- corps : une ligne par prestation planifiée — prestation + prix · horaire · praticienne·s (« à 2 » le cas échéant) · « pour {bénéficiaire} » si ≠ payeuse ; total des prestations
+- « Encaisser la réservation » → Comptoir déployé, onglet pré-rempli (payeuse + toutes les prestations) ; déjà une vente ouverte → rebascule sur l'onglet existant
+    - au moins un rendez-vous avec une praticienne ABSENTE et pas encore de vente → Choix de la remplaçante (bloquant) → Comptoir
+- « Annuler cette prestation » → Confirmation ; statut Annulé, jamais de suppression
+- PAS de « Confirmer » (un rendez-vous arrive ferme), PAS de « Décaler / modifier » (fait en ligne)
+[ « Annuler » alors qu'une vente est ouverte pour cette réservation → la Confirmation le dit ; l'annulation ne ferme pas l'onglet ]
 
-Éditeur de rendez-vous  (création / modification — depuis « Nouveau rendez-vous », une plage vide, ou « Décaler »)
-- Cliente* (recherche unique — « Ajouter … comme nouvelle cliente » si zéro résultat)
-- Prestation* (renseigne la durée par défaut tant qu'on ne l'a pas changée à la main)
-- Praticienne* (seulement celles qui travaillent le jour affiché)
-- Heure de début* (les créneaux déjà pris de cette praticienne sont visibles mais non sélectionnables)
-- Durée* · Statut (En attente / Confirmé)
-- « Enregistrer » → conflit de chevauchement détecté à l'enregistrement → message inline, rien n'est perdu ; sinon retour au Tableau, la ligne apparaît / se reclasse
-- « Annuler » → retour au Tableau sans rien changer
-
-Choix de la remplaçante  (bloquant — « Encaisser » sur un rendez-vous d'une praticienne absente)
-- « {praticienne} est absente aujourd'hui. Qui a réalisé la prestation ? » → liste des praticiennes présentes du même rôle
-- aucune candidate → message + « Ajoutez une disponibilité en équipe », pas d'ouverture du Comptoir
-- « Ouvrir le Comptoir » → onglet pré-rempli, la vente est attribuée à la remplaçante, le rendez-vous du jour reflète ce choix
+Choix de la remplaçante  (bloquant — « Encaisser » quand au moins un rendez-vous de la réservation a une praticienne absente)
+- pour CHAQUE rendez-vous concerné : « {praticienne} est absente aujourd'hui. Qui a réalisé la prestation ? » → liste des praticiennes présentes du même rôle
+- aucune candidate pour une ligne → message, pas d'ouverture du Comptoir
+- validé → le Comptoir s'ouvre, chaque prestation est réattribuée à sa remplaçante
 ```
 
 **Ce qui change vs l'existant** : `/equipe` n'est plus une page à part — le roster est le rail de
-légende du tableau (statut + menu par praticienne) ; l'URL `/equipe` reste un raccourci qui ouvre
-le tableau avec le rail déplié sur l'équipe. Les sélecteurs Entreprise / Salon disparaissent (1
-entreprise, données non taguées salon — décision ouverte si un vrai multi-salon arrive). La grille
-figée sur « aujourd'hui » assume sa limite à l'écran.
+légende du tableau (présence + menu par praticienne) ; l'URL `/equipe` reste un raccourci qui
+ouvre le tableau avec le rail déplié sur l'équipe. **La prise de rendez-vous quitte l'app**
+(faite en ligne, ADR 0006) : l'Éditeur de rendez-vous, « Nouveau rendez-vous » et « Décaler »
+disparaissent, `createAppointment` / `updateAppointment` / `confirmAppointment` sont retirés du
+store. Les sélecteurs Entreprise / Salon disparaissent (1 entreprise, données non taguées salon —
+décision ouverte si un vrai multi-salon arrive). Le tableau figé sur « aujourd'hui » assume sa
+limite à l'écran.
 
 ### 2.2 Section Clientèle
 
@@ -405,12 +410,15 @@ sinon parcours conforme.
 | Bascule Grille / Équipe | Tableau du Planning — regroupement des lignes + rail de légende |
 | Sélecteurs Entreprise / Salon (cosmétiques) | Retirés (décision ouverte si multi-salon réel) |
 | Afficher les annulés | Tableau du Planning — réglage, lignes barrées atténuées |
-| Filtre praticienne (`?staff=`) | Tableau du Planning — « Voir seule » sur l'en-tête de praticienne |
-| Grille horaire, clic case vide, clic bloc | Tableau du Planning — lignes positionnées, plage vide → Éditeur, ligne → Fiche rendez-vous |
-| Nouveau rendez-vous | Tableau du Planning — action de bandeau → Éditeur de rendez-vous |
-| Détail rendez-vous (Confirmer / Encaisser / Modifier / Annuler) | Fiche rendez-vous (version Planning) |
-| Détail rendez-vous lecture depuis l'Accueil | Fiche rendez-vous (version Accueil) |
-| Formulaire rendez-vous + détection de conflit | Éditeur de rendez-vous |
+| Filtre praticienne (`?staff=`) | Tableau du Planning — « Voir seule » sur la praticienne du rail |
+| Grille horaire, clic bloc | Tableau du Planning — lignes positionnées, ligne → Fiche réservation |
+| Clic case vide → formulaire | **Retiré** — la prise de rendez-vous se fait en ligne (ADR 0006) |
+| Nouveau rendez-vous | **Retiré** (ADR 0006) — les réservations arrivent de la plateforme en ligne |
+| Détail rendez-vous (Encaisser / Annuler) | Fiche réservation — « Encaisser la réservation », « Annuler cette prestation » |
+| « Confirmer » un rendez-vous | **Retiré** — un rendez-vous arrive ferme, il n'y a rien à valider |
+| « Modifier / Décaler » un rendez-vous | **Retiré** (ADR 0006) — modification faite en ligne |
+| Détail rendez-vous lecture depuis l'Accueil | Fiche réservation (ouverte depuis la Chronologie) |
+| Formulaire rendez-vous + détection de conflit | **Retiré** avec l'Éditeur (ADR 0006) |
 | Garde praticienne absente → remplaçante | Choix de la remplaçante (bloquant) |
 | Équipe : filtre rôle, carte membre, marquer absente, ouvrir planning filtré | Rail de légende du Tableau du Planning (`/equipe` = raccourci) |
 | Recherche cliente, listes contextuelles, annuaire filtré | Le Répertoire |
@@ -433,6 +441,10 @@ sinon parcours conforme.
   l'ancien système que la palette b&co (rose / taupe / crème), Cabinet Grotesk et le logo.
 - **Équipe fondue dans le Planning** — le roster est le rail de légende ; `/equipe` devient un
   raccourci vers le tableau, rail déplié sur l'équipe.
+- **Prise de rendez-vous retirée de l'app** (ADR 0006) — faite en ligne ; plus d'Éditeur, plus de
+  « Nouveau rendez-vous », plus de « Décaler ». Un rendez-vous est `actif` ou `annulé` : pas
+  d'étape « en attente → confirmé », pas d'action « Confirmer ». Le détail est une **Fiche
+  réservation** (payeuse + prestations), pas une fiche mono-rendez-vous.
 - **`Relance` promue dans le store** — un slice `relances` réel : la Fiche cliente et La Tournée
   lisent le même état, « Proposer » crée réellement une carte, l'undo est réel.
 - **Sélecteurs Entreprise / Salon retirés du Planning** — cosmétiques, non branchés. À réintroduire

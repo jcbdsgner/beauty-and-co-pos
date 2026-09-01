@@ -34,8 +34,9 @@ export const buttonVariants = cva(
       variant: {
         brand: cn("bg-primary text-primary-foreground hover:opacity-90", AMBIENT),
         dark: cn("bg-secondary text-secondary-foreground hover:opacity-90", AMBIENT),
+        // taupe text (not the lighter rose #a27576) so an outline button clears WCAG AA on white.
         outline:
-          "bg-white border border-[var(--brand-color-1)] text-[var(--button-2-color)] hover:bg-[var(--color-gray-50)]",
+          "bg-white border border-[var(--brand-color-1)] text-[var(--brand-taupe-muted)] hover:bg-[var(--color-gray-50)]",
         lilac: cn("bg-[var(--brand-lilac)] text-[var(--text-secondary)] hover:opacity-90", AMBIENT),
         success: cn("bg-[var(--color-success)] text-white hover:opacity-90", AMBIENT),
         info: cn("bg-[var(--color-info)] text-white hover:opacity-90", AMBIENT),

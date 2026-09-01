@@ -3,6 +3,7 @@ import { HeroNumber } from "@/components/ui/atoms/hero-number";
 import { StatTile, StatTileRow } from "@/components/ui/molecules/stat-tile";
 import { computeTotals, useAppData } from "@/components/providers/app-data-provider";
 import { DiscountBreakdown } from "@/components/comptoir/discount-breakdown";
+import { SendReceiptButtons } from "@/components/comptoir/send-receipt-buttons";
 import { clientFullName } from "@/lib/data/clientele";
 import { formatFcfa } from "@/lib/utils";
 import type { Sale } from "@/lib/data/types";
@@ -65,6 +66,8 @@ export function ReceiptView({ sale }: { sale: Sale }) {
           <StatTile value={client.points} label="Solde fidélité" />
         </StatTileRow>
       )}
+
+      <SendReceiptButtons client={client} />
     </div>
   );
 }
