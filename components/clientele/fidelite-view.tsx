@@ -25,7 +25,7 @@ export function FideliteView({ clientId }: FideliteViewProps) {
           hint="Impossible d'afficher une carte de fidélité pour cette fiche."
           action={
             <Button href="/clientele" variant="outline">
-              Retour au répertoire
+              Retour à la Clientèle
             </Button>
           }
         />
@@ -114,7 +114,7 @@ export function FideliteView({ clientId }: FideliteViewProps) {
   return (
     <div className="flex flex-col gap-6">
       <div className="print:hidden">
-        <BoardHeader section="Carte de fidélité" context={clientFullName(client)} backHref={`/clientele/${client.id}`} />
+        <BoardHeader section="Carte de fidélité" backHref={`/clientele/${client.id}`} backLabel="Fiche cliente" />
       </div>
 
       <div className="mx-auto flex w-full max-w-lg flex-col gap-4">

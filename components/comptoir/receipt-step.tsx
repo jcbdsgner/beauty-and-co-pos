@@ -17,6 +17,14 @@ import type { Sale } from "@/lib/data/types";
 
 const MODE_LABEL = { wave: "Wave", orange_money: "Orange Money", especes: "Espèces", carte: "Carte" };
 
+const RECEIPT_DATE_FMT = new Intl.DateTimeFormat("fr-FR", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
 const PRINT_PAGE_STYLE = `
   @page { size: 80mm auto; margin: 6mm; }
   @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
@@ -66,8 +74,8 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
       >
         <div className="mb-2 text-center">
           <p className="font-[family-name:var(--font-heading)] font-semibold text-base">Beauty and Co</p>
-          <p className="text-xs text-[var(--color-gray-500)] tabular-nums">
-            {sale.label} · {new Date(sale.encaisseeAt ?? sale.createdAt).toLocaleString("fr-FR")}
+          <p className="text-xs text-[var(--color-gray-500)]">
+            {sale.label} · {RECEIPT_DATE_FMT.format(new Date(sale.encaisseeAt ?? sale.createdAt))}
           </p>
           {client && <p className="text-xs text-[var(--color-gray-500)]">Cliente : {clientFullName(client)}</p>}
         </div>
@@ -100,14 +108,19 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
             {sale.payment.modes.map((m) => `${MODE_LABEL[m.mode]} · ${formatFcfa(m.amount)}`).join("  +  ")}
           </p>
         )}
+        {client && (
+          <div className="mt-2 flex flex-col gap-0.5 border-t border-border pt-2 text-xs">
+            <div className="flex justify-between">
+              <span className="text-[var(--color-gray-500)]">Points gagnés</span>
+              <span className="font-semibold tabular-nums text-[var(--color-success)]">+{sale.loyaltyPointsEarned ?? 0}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[var(--color-gray-500)]">Nouveau solde</span>
+              <span className="font-semibold tabular-nums text-[var(--color-gray-800)]">{client.points} points</span>
+            </div>
+          </div>
+        )}
       </div>
-
-      {client && (
-        <p className="text-sm text-[var(--color-gray-600)]">
-          <span className="font-semibold text-[var(--color-success)]">+{sale.loyaltyPointsEarned ?? 0} points</span> · nouveau solde{" "}
-          <span className="tabular-nums">{client.points}</span>
-        </p>
-      )}
 
       <div className="mt-1 flex w-full flex-col gap-2">
         <Button variant="brand" size="xl" className="w-full" onClick={() => openNewTab()}>

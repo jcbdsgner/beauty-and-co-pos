@@ -33,7 +33,7 @@ export function GiftCardQueue() {
 
   return (
     <div className="flex flex-col gap-6">
-      <BoardHeader section="Cartes cadeaux à préparer" backHref="/" />
+      <BoardHeader section="Cartes cadeaux" backHref="/" backLabel="Accueil" />
 
       {open.length === 0 ? (
         <Board legend="File">

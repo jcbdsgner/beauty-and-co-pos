@@ -40,16 +40,21 @@ export function Legend({ children, className }: { children: React.ReactNode; cla
  */
 type BoardHeaderProps = {
   section: string;
-  /** live day, count, subtitle — the heading's context line */
+  /**
+   * @deprecated A POS section is named, not narrated — no greetings, counts or standing guidance
+   * (DESIGN.md). Kept only until the last call site drops it; do not add new ones.
+   */
   context?: React.ReactNode;
   action?: React.ReactNode;
   /** shown only when relevant (e.g. an "Aujourd'hui" reset) */
   reset?: React.ReactNode;
   backHref?: string;
+  /** the back pill's label — names the destination ("Clientèle", "Accueil"), never a bare "Retour" */
+  backLabel?: string;
   className?: string;
 };
 
-export function BoardHeader({ section, context, action, reset, backHref, className }: BoardHeaderProps) {
+export function BoardHeader({ section, action, reset, backHref, backLabel = "Retour", className }: BoardHeaderProps) {
   return (
     <div className={cn("flex flex-wrap items-center gap-x-4 gap-y-3 pl-1", className)}>
       {backHref && (
@@ -58,14 +63,13 @@ export function BoardHeader({ section, context, action, reset, backHref, classNa
           className="flex h-10 shrink-0 items-center gap-1.5 rounded-full border border-[var(--board-groove)] bg-white px-3.5 text-sm font-medium text-[var(--color-gray-500)] transition active:scale-[0.97] hover:bg-[var(--color-gray-50)]"
         >
           <ChevronLeft aria-hidden className="size-4" />
-          Retour
+          {backLabel}
         </Link>
       )}
       <div className="min-w-0 flex-1">
         <h1 className="font-[family-name:var(--font-heading)] text-[1.9rem] font-bold leading-none tracking-[-0.02em] text-[var(--color-gray-900)]">
           {section}
         </h1>
-        {context && <div className="mt-2 text-sm text-[var(--color-gray-500)]">{context}</div>}
       </div>
       {reset}
       {action}

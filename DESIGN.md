@@ -183,10 +183,12 @@ motion, orchestrated, once — not scattered hover effects.
 
 ### `BoardHeader`
 The section heading — a plain bold `<h1>` (`text-[1.9rem]`, 700, `tracking-[-0.02em]`, `ink-900`)
-on the cream ground. ADR 0007 retired the slate plaque; the API is unchanged so every call site
-still works. Props: `section`, `context` (optional line in `ink-500` under the title), `action`,
-optional `reset` (the "Aujourd'hui"-style control shown only when relevant), optional `backHref`
-(a bordered "Retour" pill on white, `groove` border — never a bare chevron link).
+on the cream ground. ADR 0007 retired the slate plaque. **No subtitle line** — a POS section is
+named, not narrated; greetings, counts and standing guidance were removed (the count lives on the
+board legend or a `PointCell`). Props: `section`, `action`, optional `reset` (the "Aujourd'hui"-style
+control shown only when relevant), optional `backHref` + `backLabel` (a bordered pill on white,
+`groove` border, whose label **names the destination** — "Clientèle", "Accueil" — never a bare
+chevron link, never a generic "Retour").
 
 ### `Board`
 A plaque region. Props: `legend` (the tracked-uppercase label sitting on the routed frame),

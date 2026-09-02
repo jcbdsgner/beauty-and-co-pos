@@ -89,11 +89,13 @@ export function carteCadeauByCode(raw: string): CarteCadeau | undefined {
   return CARTES_CADEAUX.find((c) => c.code === code);
 }
 
+const GIFT_CARD_DATE_FMT = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+
 /** French-formatted expiry date for the "carte expirée" message, or null if unknown. */
 export function giftCardExpiryLabel(card: CarteCadeau): string | null {
   if (!card.expiresOn) return null;
   const d = new Date(card.expiresOn);
-  return Number.isNaN(d.getTime()) ? null : d.toLocaleDateString("fr-FR");
+  return Number.isNaN(d.getTime()) ? null : GIFT_CARD_DATE_FMT.format(d);
 }
 
 export function giftCardOrderById(id: string): GiftCardOrder | undefined {

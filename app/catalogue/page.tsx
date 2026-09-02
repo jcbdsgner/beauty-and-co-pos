@@ -16,7 +16,7 @@ export default function CataloguePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <BoardHeader section="Catalogue" context="À feuilleter avec la cliente — jamais relié à la caisse." />
+      <BoardHeader section="Catalogue" />
       <VoletSwitch
         value={volet}
         onChange={setVolet}

@@ -23,7 +23,7 @@ const NAV = [
   { href: "/catalogue", label: "Catalogue", icon: Sparkles, match: (p: string) => p.startsWith("/catalogue") },
 ];
 
-/** Sidebar: brand + nav (Accueil / Planning / Clientèle / Relances / Catalogue) + the identity menu at the foot.
+/** Sidebar: brand + nav (Accueil / Planning / Clientèle / Messages / Catalogue) + the identity menu at the foot.
  *  There is no Réglages section — point-de-vente has a single persona (see ADR 0001); the only
  *  "moi" screens (Profil, Sécurité) hang off this identity menu. */
 export function Sidebar() {

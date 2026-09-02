@@ -299,7 +299,7 @@ export function PaymentStep({ sale }: { sale: Sale }) {
           </Button>
           <div className="flex flex-[2] flex-col items-stretch gap-1">
             <Button variant="dark" size="xl" icon={<Check className="size-5" />} disabled={!canConfirm} onClick={handleConfirm}>
-              Encaisser {formatFcfa(total)}
+              Encaisser
             </Button>
             {disabledReason && (
               <p className="text-center text-xs font-medium text-[var(--color-gray-500)]">{disabledReason}</p>

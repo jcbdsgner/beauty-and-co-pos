@@ -2,7 +2,7 @@
 
 import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { MoreHorizontal, UserX, Eye, X, Users } from "lucide-react";
+import { MoreHorizontal, UserX, Eye, X } from "lucide-react";
 import { Avatar } from "@/components/ui/atoms/avatar";
 import { Button } from "@/components/ui/atoms/button";
 import { IconButton } from "@/components/ui/atoms/icon-button";
@@ -10,37 +10,41 @@ import { Switch } from "@/components/ui/atoms/switch";
 import { DropdownMenu } from "@/components/ui/molecules/dropdown-menu";
 import { BoardHeader, Board, Lane, FlipChip, Legend, WeekStrip, BoardEmpty, ChipFilter, type ChipTone, type LaneSignal } from "@/components/ui/board";
 import { AppointmentDetailSheet } from "@/components/planning/appointment-detail-sheet";
+import { DayList } from "@/components/planning/day-list";
+import { DayGrid } from "@/components/planning/day-grid";
 import { useEncaissement } from "@/components/journee/use-encaissement";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { clientFullName } from "@/lib/data/clientele";
 import { cn } from "@/lib/utils";
 import { serviceById } from "@/lib/data/menu";
-import { appointmentEndTime, flattenRendezVous } from "@/lib/data/planning";
-import type { Praticienne, RendezVous, Reservation } from "@/lib/data/types";
+import { appointmentEndTime, flattenRendezVous, groupDayByReservation, type RendezVousRow } from "@/lib/data/planning";
+import type { Praticienne, RendezVous } from "@/lib/data/types";
 
 function sameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
-type Row = { rv: RendezVous; reservation: Reservation };
+/** Les trois façons de regarder la journée (ADR 0014). Chronologique par réservation = défaut :
+ *  la réceptionniste retrouve une cliente au comptoir sans la chercher dans 7 groupes. */
+export type PlanningView = "chrono" | "praticienne" | "grille";
 
-type PlanningBoardProps = { initialGrouping?: "praticienne" | "equipe" };
+type PlanningBoardProps = { initialView?: PlanningView };
 
-export function PlanningBoard({ initialGrouping = "praticienne" }: PlanningBoardProps) {
+export function PlanningBoard({ initialView = "chrono" }: PlanningBoardProps) {
   return (
     <Suspense fallback={null}>
-      <PlanningBoardInner initialGrouping={initialGrouping} />
+      <PlanningBoardInner initialView={initialView} />
     </Suspense>
   );
 }
 
-function PlanningBoardInner({ initialGrouping }: Required<PlanningBoardProps>) {
+function PlanningBoardInner({ initialView }: Required<PlanningBoardProps>) {
   const { reservations, praticiennes, clients, markStaffUnavailable } = useAppData();
   const { requestEncaissement, encaissementDialog } = useEncaissement();
   const searchParams = useSearchParams();
 
   const [selectedDate, setSelectedDate] = useState(() => new Date());
-  const [grouping, setGrouping] = useState<"praticienne" | "equipe">(initialGrouping);
+  const [view, setView] = useState<PlanningView>(initialView);
   const [showCancelled, setShowCancelled] = useState(false);
   const [staffFilter, setStaffFilter] = useState<string | null>(() => searchParams.get("staff"));
 
@@ -50,10 +54,7 @@ function PlanningBoardInner({ initialGrouping }: Required<PlanningBoardProps>) {
   const isToday = sameDay(selectedDate, today);
 
   // The mock only carries "today" — be honest rather than showing a silent empty board.
-  const dayRows = useMemo<Row[]>(
-    () => (isToday ? flattenRendezVous(reservations) : []).filter((r) => showCancelled || r.rv.status !== "annule"),
-    [isToday, reservations, showCancelled],
-  );
+  const dayReservations = useMemo(() => (isToday ? reservations : []), [isToday, reservations]);
 
   // Coiffure + esthétique get a lane; ménage shows in the Équipe rail but never carries rendez-vous;
   // accueil is off the planning entirely.
@@ -61,11 +62,32 @@ function PlanningBoardInner({ initialGrouping }: Required<PlanningBoardProps>) {
   const menageStaff = praticiennes.filter((p) => p.role === "menage");
   const workingStaff = schedulable.filter((p) => p.workingToday);
 
-  const onStaff = (r: Row, id: string) => r.rv.staffId === id || r.rv.secondStaffId === id;
-  const visibleStaff = staffFilter ? schedulable.filter((p) => p.id === staffFilter) : schedulable;
-  const filteredRows = staffFilter ? dayRows.filter((r) => onStaff(r, staffFilter)) : dayRows;
+  const onStaff = (r: RendezVousRow, id: string) => r.rv.staffId === id || r.rv.secondStaffId === id;
+  const touchesStaff = (rvs: RendezVous[], id: string) =>
+    rvs.some((rv) => rv.staffId === id || rv.secondStaffId === id);
 
-  function apptLane(row: Row, showStaff: boolean, laneStaffId?: string) {
+  const visibleStaff = staffFilter ? schedulable.filter((p) => p.id === staffFilter) : schedulable;
+
+  const rvRows = useMemo<RendezVousRow[]>(
+    () =>
+      flattenRendezVous(dayReservations).filter(
+        (r) =>
+          (showCancelled || r.rv.status !== "annule") &&
+          (!staffFilter || onStaff(r, staffFilter)),
+      ),
+    [dayReservations, showCancelled, staffFilter],
+  );
+
+  const reservationRows = useMemo(() => {
+    const scoped = staffFilter
+      ? dayReservations.filter((res) => touchesStaff(res.rendezVous, staffFilter))
+      : dayReservations;
+    return groupDayByReservation(scoped, { includeCancelled: showCancelled });
+  }, [dayReservations, staffFilter, showCancelled]);
+
+  const isEmpty = view === "chrono" ? reservationRows.length === 0 : rvRows.length === 0;
+
+  function apptLane(row: RendezVousRow, laneStaffId: string) {
     const { rv, reservation } = row;
     const payer = clients.find((c) => c.id === reservation.payerClientId);
     const service = serviceById(rv.serviceId);
@@ -74,7 +96,7 @@ function PlanningBoardInner({ initialGrouping }: Required<PlanningBoardProps>) {
     // When a two-practitioner rendez-vous is shown on the *second* practitioner's lane, the
     // encaissement belongs to the primary lane only — this lane is read-only so the receptionist
     // can't start (or think she double-started) the same sale twice.
-    const isSecondLane = Boolean(laneStaffId && second && laneStaffId === rv.secondStaffId && laneStaffId !== rv.staffId);
+    const isSecondLane = Boolean(second && laneStaffId === rv.secondStaffId && laneStaffId !== rv.staffId);
     const partnerName = isSecondLane ? staff?.name : second?.name;
     const benef = rv.beneficiaryClientId
       ? clients.find((c) => c.id === rv.beneficiaryClientId)?.lastName
@@ -83,7 +105,6 @@ function PlanningBoardInner({ initialGrouping }: Required<PlanningBoardProps>) {
       (staff?.unavailableToday || (second && praticiennes.find((p) => p.id === second.id)?.unavailableToday)) &&
       rv.status !== "annule";
     const hasSale = Boolean(reservation.saleId);
-    // A rendez-vous carries a chip only when there's something to say: cashed-in, or cancelled.
     const chip =
       rv.status === "annule"
         ? { value: "Annulé", tone: "void" as ChipTone }
@@ -108,19 +129,11 @@ function PlanningBoardInner({ initialGrouping }: Required<PlanningBoardProps>) {
             {service?.name ?? "Prestation"}
             {benef ? ` · pour ${benef}` : ""}
             {partnerName ? ` · à 2 avec ${partnerName}` : ""}
-            {showStaff && staff ? ` · ${staff.name}` : ""}
             {siblingCount > 0 ? ` · +${siblingCount} sur la note` : ""}
             {absent ? " · praticienne absente" : ""}
           </span>
         }
-        chip={
-          (second || chip) && (
-            <span className="flex items-center gap-1">
-              {second && <Users aria-hidden className="size-3.5 text-[var(--brand-taupe-muted)]" />}
-              {chip && <FlipChip value={chip.value} tone={chip.tone} />}
-            </span>
-          )
-        }
+        chip={chip && <FlipChip value={chip.value} tone={chip.tone} />}
         struck={rv.status === "annule"}
         signal={signal}
         onSelect={() => setDetail(rv)}
@@ -144,7 +157,7 @@ function PlanningBoardInner({ initialGrouping }: Required<PlanningBoardProps>) {
     <RosterRail
       staff={visibleStaff}
       menageStaff={staffFilter ? [] : menageStaff}
-      rows={filteredRows}
+      rows={rvRows}
       selectedDate={selectedDate}
       staffFilter={staffFilter}
       onFilter={setStaffFilter}
@@ -164,33 +177,41 @@ function PlanningBoardInner({ initialGrouping }: Required<PlanningBoardProps>) {
     );
   } else if (workingStaff.length === 0) {
     bodyContent = <BoardEmpty title="Personne au planning ce jour-là" hint="Aucune praticienne ne travaille aujourd'hui." />;
-  } else if (filteredRows.length === 0) {
+  } else if (isEmpty) {
     bodyContent = (
       <BoardEmpty
         title={staffFilter ? "Aucun rendez-vous pour cette praticienne" : "Journée libre"}
         hint="Les rendez-vous sont pris en ligne par les clientes — ils apparaissent ici une fois réservés."
       />
     );
-  } else if (grouping === "praticienne" && !staffFilter) {
+  } else if (view === "chrono") {
+    bodyContent = (
+      <DayList
+        rows={reservationRows}
+        clients={clients}
+        praticiennes={praticiennes}
+        onOpenReservation={setDetail}
+        onEncaisser={requestEncaissement}
+      />
+    );
+  } else if (view === "grille") {
+    bodyContent = <DayGrid rows={rvRows} staff={visibleStaff} clients={clients} onOpenReservation={setDetail} />;
+  } else {
+    // "praticienne" — rendez-vous grain, one group per praticienne
     bodyContent = visibleStaff
       .map((p) => {
-        const items = filteredRows.filter((r) => onStaff(r, p.id)).sort((a, b) => a.rv.start.localeCompare(b.rv.start));
+        const items = rvRows.filter((r) => onStaff(r, p.id)).sort((a, b) => a.rv.start.localeCompare(b.rv.start));
         if (items.length === 0) return null;
         return (
           <div key={p.id}>
             <div className="border-b border-[var(--board-groove)] bg-black/[0.02] px-4 py-2">
               <Legend>{p.name} · {items.length}</Legend>
             </div>
-            {items.map((r) => apptLane(r, false, p.id))}
+            {items.map((r) => apptLane(r, p.id))}
           </div>
         );
       })
       .filter(Boolean);
-  } else {
-    const byId = new Map(filteredRows.map((r) => [r.rv.id, r]));
-    bodyContent = [...byId.values()]
-      .sort((a, b) => a.rv.start.localeCompare(b.rv.start))
-      .map((r) => apptLane(r, true));
   }
 
   return (
@@ -210,11 +231,12 @@ function PlanningBoardInner({ initialGrouping }: Required<PlanningBoardProps>) {
 
       <div className="flex flex-wrap items-center justify-between gap-4">
         <ChipFilter
-          value={grouping}
-          onChange={(v) => setGrouping(v as "praticienne" | "equipe")}
+          value={view}
+          onChange={(v) => setView(v as PlanningView)}
           options={[
+            { value: "chrono", label: "Liste chronologique" },
             { value: "praticienne", label: "Par praticienne" },
-            { value: "equipe", label: "Toute l'équipe" },
+            { value: "grille", label: "Grille calendrier" },
           ]}
         />
         <label className="flex items-center gap-2 text-sm text-[var(--color-gray-600)]">
@@ -275,12 +297,12 @@ function RosterRail({
 }: {
   staff: Praticienne[];
   menageStaff: Praticienne[];
-  rows: Row[];
+  rows: RendezVousRow[];
   selectedDate: Date;
   staffFilter: string | null;
   onFilter: (id: string | null) => void;
   onMarkAbsent: (id: string) => void;
-  onStaff: (r: Row, id: string) => boolean;
+  onStaff: (r: RendezVousRow, id: string) => boolean;
 }) {
   const isToday = sameDay(selectedDate, new Date());
   return (

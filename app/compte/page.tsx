@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PageHeader } from "@/components/ui/organisms/page-header";
+import { BoardHeader } from "@/components/ui/board";
 import { Tabs } from "@/components/ui/molecules/tabs";
 import { ProfilView } from "@/components/compte/profil-view";
 import { SecuriteView } from "@/components/compte/securite-view";
@@ -15,7 +15,7 @@ export default function ComptePage() {
 
   return (
     <div className="flex flex-col gap-7">
-      <PageHeader title="Mon compte" subtitle="Qui tient le poste, et le code PIN." />
+      <BoardHeader section="Compte" />
       <Tabs
         value={tab}
         onChange={setTab}

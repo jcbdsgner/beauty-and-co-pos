@@ -1,16 +1,16 @@
 "use client";
 
-import { ChevronUp, Plus, ShoppingCart } from "lucide-react";
+import { ChevronUp, ShoppingCart } from "lucide-react";
 import { useAppData, computeTotals } from "@/components/providers/app-data-provider";
 import { clientFullName } from "@/lib/data/clientele";
 import { formatFcfa } from "@/lib/utils";
 
 /**
  * The Comptoir, collapsed — a full-width dock at the foot of the working area, present on every
- * section (Accueil / Planning / Clientèle / Relances / Catalogue). This is the counter's single most
+ * section (Accueil / Planning / Clientèle / Messages / Catalogue). This is the counter's single most
  * important affordance, so it is a real bar, not a corner pill:
  *
- * - no open sale → a rose bar, "+ Nouvelle vente", one tap opens a fresh tab in the deployed
+ * - no open sale → a rose bar, "Nouvelle vente", one tap opens a fresh tab in the deployed
  *   Comptoir
  * - ≥ 1 open sale → a taupe bar carrying the open-sale count, the active basket's client and
  *   running total, and "Ouvrir le comptoir"; one tap re-deploys the Comptoir exactly where it was
@@ -36,7 +36,6 @@ export function ComptoirBar() {
           onClick={() => openNewTab()}
           className="flex h-[60px] w-full items-center justify-center gap-2.5 rounded-full bg-primary text-[17px] font-semibold text-primary-foreground shadow-[0px_1px_3px_0px_rgba(0,0,0,0.12)] transition active:scale-[0.99] hover:opacity-95"
         >
-          <Plus aria-hidden className="size-5" strokeWidth={2.5} />
           Nouvelle vente
         </button>
       </div>

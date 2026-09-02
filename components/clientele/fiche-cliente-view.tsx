@@ -11,6 +11,7 @@ import {
   MapPin,
   Briefcase,
   Pencil,
+  ChevronLeft,
   ChevronRight,
   Sparkles,
   Globe,
@@ -66,7 +67,7 @@ export function FicheClienteView({ clientId }: { clientId: string }) {
             hint="La fiche demandée n'existe pas."
             action={
               <Button href="/clientele" variant="outline">
-                Retour au répertoire
+                Retour à la Clientèle
               </Button>
             }
           />
@@ -119,8 +120,12 @@ export function FicheClienteView({ clientId }: { clientId: string }) {
           d'empilement et sorti du flux `gap` : au scroll il couvre proprement le contenu qui passe
           dessous, sans bande morte ni coin de plaque qui dépasse. */}
       <div className="sticky top-0 z-30 isolate -mx-8 -mt-8 mb-6 border-b border-[var(--board-slate-line)] bg-[var(--board-slate)] px-8 py-4 shadow-[0_12px_24px_-14px_rgba(0,0,0,0.55)]">
-        <Link href="/clientele" className="mb-2 inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.11em] text-white/50 transition hover:text-white/80">
-          ← Clientèle
+        <Link
+          href="/clientele"
+          className="mb-2 inline-flex h-8 items-center gap-1.5 rounded-full border border-white/20 bg-white/5 px-3 text-xs font-medium text-white/70 transition hover:bg-white/10 hover:text-white"
+        >
+          <ChevronLeft aria-hidden className="size-3.5" />
+          Clientèle
         </Link>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3">

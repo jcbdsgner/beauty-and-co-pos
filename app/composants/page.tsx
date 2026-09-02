@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Pencil, Trash2, Copy, Search, Sparkles, Store } from "lucide-react";
 
-import { PageHeader } from "@/components/ui/organisms/page-header";
+import { BoardHeader } from "@/components/ui/board";
 import { Toolbar } from "@/components/ui/organisms/toolbar";
 import { DataTable, type DataTableColumn } from "@/components/ui/organisms/data-table";
 import { DockedPanel } from "@/components/ui/organisms/docked-panel";
@@ -130,9 +130,8 @@ export default function DesignSystemPage() {
   return (
     <>
       <div className="flex flex-col gap-12 pb-24">
-          <PageHeader
-            title="Composants"
-            subtitle="Système de design Beauty and Co — atomes, molécules, organismes."
+          <BoardHeader
+            section="Composants"
             action={<Badge variant="dark">v3 · base shadcn · {COMPONENT_COUNT} composants</Badge>}
           />
 
@@ -585,12 +584,12 @@ export default function DesignSystemPage() {
             </Card>
 
             <Card className="p-6">
-              <FieldLabel className="mb-3">PageHeader (avec retour + action)</FieldLabel>
+              <FieldLabel className="mb-3">BoardHeader (avec retour + action)</FieldLabel>
               <div className="rounded-2xl border border-dashed border-[var(--color-gray-200)] p-4">
-                <PageHeader
-                  title="Gestion Produits"
-                  subtitle="Stock, prix, fournisseurs"
+                <BoardHeader
+                  section="Gestion Produits"
                   backHref="#"
+                  backLabel="Catalogue"
                   action={
                     <Button variant="brand" icon={<Store className="size-4" />}>
                       Ajouter

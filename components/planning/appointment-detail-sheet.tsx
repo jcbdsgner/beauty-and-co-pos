@@ -111,7 +111,7 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
         <div className="flex flex-col gap-2 p-5">
           {reservation && !cancelled && (
             <Button variant="dark" onClick={() => onEncaisser(reservation.id)}>
-              {hasSale ? "Voir la vente en cours" : "Encaisser la réservation"}
+              {hasSale ? "Voir la vente" : "Encaisser"}
             </Button>
           )}
           {reservation && !cancelled && (

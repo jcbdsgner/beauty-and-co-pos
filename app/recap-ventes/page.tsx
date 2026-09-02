@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Receipt } from "lucide-react";
-import { PageHeader } from "@/components/ui/organisms/page-header";
+import { BoardHeader } from "@/components/ui/board";
 import { Pills } from "@/components/ui/molecules/pills";
 import { DataTable, type DataTableColumn } from "@/components/ui/organisms/data-table";
 import { StatBand } from "@/components/ui/molecules/stat-tile";
@@ -98,7 +98,7 @@ export default function RecapVentesPage() {
 
   return (
     <div className="flex flex-col gap-7">
-      <PageHeader eyebrow="Accueil" title="Récap des ventes" backHref="/" />
+      <BoardHeader section="Récap des ventes" backHref="/" backLabel="Accueil" />
 
       <Pills options={PERIOD_OPTIONS} value={period} onChange={setPeriod} />
 
