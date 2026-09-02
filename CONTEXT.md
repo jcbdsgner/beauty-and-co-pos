@@ -77,7 +77,7 @@ La liste des prestations et des produits que la réceptionniste peut mettre dans
 _Avoid_: Catalogue (réservé au module de consultation ci-dessous), Carte (ambigu avec carte de fidélité / carte cadeau), Tarifs (réducteur)
 
 **Catalogue**:
-Le module de consultation autonome (section de navigation propre), trois volets : **Les Planches** (styles signature), **Photos de référence** (banque d'images), **Produits** (chaque produit avec sa photo et son **stock restant**, en lecture). Sert à inspirer la cliente, lui montrer un résultat, et savoir ce qu'il reste en rayon. Sans lien avec l'encaissement — on n'encaisse jamais depuis le Catalogue ; la baisse de stock se fait au Comptoir au moment de la vente.
+Le module de consultation autonome (section de navigation propre), trois volets : **Les Planches** (styles signature), **Produits** (chaque produit avec sa photo et son **stock restant**, en lecture) et **Boissons** (le Bar Beauty & Co). Sert à inspirer la cliente, lui montrer un résultat, et savoir ce qu'il reste en rayon. Sans lien avec l'encaissement — on n'encaisse jamais depuis le Catalogue ; la baisse de stock se fait au Comptoir au moment de la vente. *(Le volet « Photos de référence » — banque d'images uploadables — a été retiré ; les photos par domaine d'une cliente vivent sur sa fiche, cf. Préférence.)*
 _Avoid_: Lookbook, Styles (ancien nom du module), Book, Références
 
 **Style**:

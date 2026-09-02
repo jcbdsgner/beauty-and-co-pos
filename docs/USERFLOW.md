@@ -191,7 +191,7 @@ stateDiagram-v2
 - **Clientèle** (v2.1) : réduite à Répertoire + Fiche cliente, sur une page unique *recherche d'abord*. L'annuaire filtrable (Toutes / Nouvelles / Historique / VIP) reste, mais **sous** la recherche et les listes contextuelles (« Vues récemment », « Attendues aujourd'hui ») — pas une route à part.
 - **Cliente** : un seul mécanisme de recherche (« Chercher une cliente »), réutilisé identiquement dans le Comptoir et le Répertoire de Clientèle.
   - [ Le jour où cette recherche interroge un vrai backend : timeout ou erreur → message inline + « Réessayer », la saisie déjà tapée reste dans le champ — même comportement partout où le mécanisme est utilisé ]
-- **Style** : le catalogue de références (ex-Lookbook) devient un **module autonome** (« Catalogue »), consulté ponctuellement par la réceptionniste ou les praticiennes ; il absorbe aussi les **Photos de référence** (ex-Réglages). Points d'entrée : le module lui-même, et une recommandation de Fiche cliente. Il ne touche plus jamais l'encaissement — pas de tiroir dans le Comptoir, pas de « Ajouter au panier ».
+- **Style** : le catalogue de références (ex-Lookbook) devient un **module autonome** (« Catalogue »), consulté ponctuellement par la réceptionniste ou les praticiennes ; il absorbait aussi les **Photos de référence** (retirées en v2.6). Points d'entrée : le module lui-même, et une recommandation de Fiche cliente. Il ne touche plus jamais l'encaissement — pas de tiroir dans le Comptoir, pas de « Ajouter au panier ».
 - **Planning** : la gestion de l'agenda (grille semaine, dispo équipe, annulation / **ajustement** d'un rendez-vous) devient une **section de navigation à part**. L'Accueil n'en garde que la *chronologie du jour* (lecture + « Encaisser »). La **création de réservation reste hors de l'app** (réservations faites en ligne, `docs/adr/0006`) ; l'**édition** d'une réservation qui arrive est rouverte au comptoir (v2.4, `docs/adr/0009`).
 - **« Accueillir » → « Encaisser »** : le geste depuis un rendez-vous s'appelle désormais « Encaisser ». Le modèle mental change — ce n'est pas un accueil à l'arrivée (la cliente va directement voir sa praticienne), c'est le passage en caisse **à la fin** de la prestation.
 
@@ -253,9 +253,9 @@ graph TB
     RL2 --> RL3[Transférer à la direction - hors app, terminal]
     CL3 -.->|Voir les échanges| RL2
 
-    CAT[Catalogue] --> CAT2[Styles]
-    CAT --> CAT3[Photos de référence]
-    CAT2 --> CAT4[Détail style]
+    CAT[Catalogue] --> CAT2[Les Planches]
+    CAT --> CAT3[Produits / Boissons - lecture]
+    CAT2 --> CAT4[Détail planche]
     CL3 --> CAT4
 
     ID[Menu identité - pied sidebar] --> CO[/compte : Profil / Sécurité]
@@ -587,12 +587,12 @@ la direction prend le relais hors de l'app. Irréversible depuis l'app.
 
 ## Section Catalogue
 
-*Le matériel de consultation (ex-Lookbook + Photos de référence). Ce n'est pas la relation avec une cliente ni de la configuration — on le parcourt ponctuellement pour montrer ou recommander un rendu. Module autonome, aucun lien avec l'encaissement.*
+*Le matériel de consultation (ex-Lookbook). Ce n'est pas la relation avec une cliente ni de la configuration — on le parcourt ponctuellement pour montrer ou recommander un rendu. Module autonome, aucun lien avec l'encaissement.*
 
 > **Assaini (v2.2).** Parcours détaillé dans `docs/REFONTE-2.md` §2.4 ; inventaire tagué §1.7. Ci-dessous : parcours, capacités, cas limites — **aucune prescription de composant, de mise en page ni de style**.
 
 ```
-Catalogue  (2 volets : Les Planches · Photos de référence — jamais de lien vers l'encaissement)
+Catalogue  (3 volets : Les Planches · Produits · Boissons — jamais de lien vers l'encaissement)
 
 Les Planches  (styles signature)
 - filtre par catégorie ; une planche = visuel + nom + prix + marqueur tendance
@@ -602,12 +602,11 @@ Les Planches  (styles signature)
 Détail planche  (dialogue — depuis Les Planches OU une recommandation en Fiche cliente)
 - visuel, nom, prix, tendance, « Fermer » — aucune action vers le panier
 
-Photos de référence  (rare)
-- filtre par catégorie ; par emplacement : ajouter / retirer un fichier
-- [ fichier trop lourd / mauvais format → message inline immédiat avec la limite, jamais un emplacement bloqué en chargement ]
+Produits  (lecture) — chaque produit : photo, prix, stock restant ; filtre catégorie
+Boissons  (lecture) — le Bar Beauty & Co : photo, composition, prix
 ```
 
-**Décisions actées (Catalogue)** : le Lookbook devient **Catalogue**, absorbe les Photos de référence ; consultation à part entière, jamais un tiroir du Comptoir ; le Détail est en lecture seule ; le sélecteur Entreprise (1 seule entreprise) est retiré.
+**Décisions actées (Catalogue)** : le Lookbook devient **Catalogue** ; consultation à part entière, jamais un tiroir du Comptoir ; le Détail est en lecture seule ; le sélecteur Entreprise (1 seule entreprise) est retiré. **Le volet « Photos de référence » est retiré (v2.6)** — c'était un bac d'upload mock sans persistance ; les photos par domaine d'une cliente restent sur sa fiche (cf. entrée `Préférence` de `CONTEXT.md`). Volets : **Les Planches · Produits · Boissons**.
 
 ### Fonctionnalités par écran
 
