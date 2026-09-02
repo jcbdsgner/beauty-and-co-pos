@@ -399,7 +399,8 @@ Accueil
   - *(« Encaissé aujourd'hui » a quitté l'Accueil en v2.6 — reste atteignable via le Récap des ventes)*
 - ~~« Cartes cadeaux à imprimer »~~ (pastilles de dénominations, `7b38d71`) **abandonné (v2.6, ADR 0012)** : remplacé par la file `/cartes-cadeaux`
 - « Ouvrir le planning » → section Planning (semaine, équipe, lecture des rendez-vous)
-[ Aucun rendez-vous aujourd'hui → état vide avec un lien « Ouvrir le planning » (pas de bouton de création — la prise de rendez-vous se fait en ligne, `docs/adr/0006`) ]
+- « Créer un rendez-vous » (en-tête de l'Accueil) → ouvre la plateforme de réservation externe dans un onglet — même URL et même libellé que le bouton de la fiche réservation (`docs/adr/0009`) ; là pour être à portée de main quand la réceptionniste est au téléphone avec une cliente qui veut réserver. Aucune création de réservation dans l'app (`docs/adr/0006`).
+[ Aucun rendez-vous aujourd'hui → état vide avec un lien « Ouvrir le planning » ; la création reste hors app, via « Créer un rendez-vous » de l'en-tête (`docs/adr/0006`) ]
 [ Minuit passé avec une vente encore ouverte dans le Comptoir → la vente reste rattachée à l'Accueil du jour où elle a été ouverte, jamais une bascule silencieuse vers le lendemain ; le Résumé du jour se fige à minuit et un nouvel Accueil démarre à zéro, la vente à cheval vient s'ajouter au total du jour d'origine une fois encaissée — frontière claire, pas un cas laissé au hasard de l'implémentation ]
 
 Récap des ventes  (sous l'Accueil — l'argent du jour, pas l'agenda)

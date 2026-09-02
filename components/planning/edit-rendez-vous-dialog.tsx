@@ -14,11 +14,8 @@ import { Toast } from "@/components/ui/molecules/toast";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { clientFullName } from "@/lib/data/clientele";
 import { SERVICES, serviceById } from "@/lib/data/menu";
-import { appointmentEndTime, reservationById } from "@/lib/data/planning";
+import { appointmentEndTime, BOOKING_URL, reservationById } from "@/lib/data/planning";
 import type { Praticienne, RendezVous } from "@/lib/data/types";
-
-/** External booking platform — création de réservation ne vit pas dans le POS (ADR 0006/0009). */
-const BOOKING_URL = "https://booking.beautyandco.example";
 
 const SERVICE_OPTIONS = [...SERVICES]
   .filter((s) => s.active)

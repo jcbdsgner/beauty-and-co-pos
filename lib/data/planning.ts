@@ -1,6 +1,13 @@
 import type { RendezVous, Reservation } from "@/lib/data/types";
 
 /**
+ * La prise de rendez-vous ne vit pas dans cette app (ADR 0006) : « Créer un rendez-vous » ouvre
+ * la plateforme de réservation externe. Point d'entrée depuis le Planning (fiche réservation) et
+ * l'Accueil (en-tête).
+ */
+export const BOOKING_URL = "https://booking.beautyandco.example";
+
+/**
  * Seed réservations for "today". The booking journey lives on the external platform — here they
  * arrive already made. Each Réservation has one payeur (`payerClientId`) and 1..N atomic
  * Rendez-vous, possibly in parallel (same start, different praticiennes), possibly for a friend

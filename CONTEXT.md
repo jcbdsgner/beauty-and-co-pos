@@ -33,7 +33,7 @@ La personne qui **reçoit** une prestation d'un rendez-vous — distincte de la 
 _Avoid_: Invité·e, accompagnant·e, second client
 
 **Accueil**:
-La section d'atterrissage de l'app : le centre de pilotage du jour — chronologie des rendez-vous du jour (groupés par praticienne, chacun avec « Encaisser »), résumé de l'argent réellement encaissé, cartes cadeaux à imprimer. Porté le nom **Journée** pendant la refonte v2 du userflow, revenu à **Accueil**. Ne ressuscite pas le verbe **Accueillir** (retiré — voir Encaisser) : la section s'appelle Accueil, le geste au comptoir reste « Encaisser ». Coexiste avec le rôle « Accueil » de la vue Équipe (la fonction de la personne au comptoir) — même mot, contextes distincts (item de navigation vs filtre de rôle).
+La section d'atterrissage de l'app : le centre de pilotage du jour — chronologie des rendez-vous du jour (groupés par praticienne, chacun avec « Encaisser »), résumé de l'argent réellement encaissé, cartes cadeaux à imprimer. Son en-tête porte aussi un accès **« Créer un rendez-vous »** vers la plateforme de réservation externe (la prise de rendez-vous ne vit pas dans l'app, ADR 0006/0009) — utile quand une cliente veut réserver par téléphone. Porté le nom **Journée** pendant la refonte v2 du userflow, revenu à **Accueil**. Ne ressuscite pas le verbe **Accueillir** (retiré — voir Encaisser) : la section s'appelle Accueil, le geste au comptoir reste « Encaisser ». Coexiste avec le rôle « Accueil » de la vue Équipe (la fonction de la personne au comptoir) — même mot, contextes distincts (item de navigation vs filtre de rôle).
 _Avoid_: Journée (nom de refonte v2, abandonné), Accueillir (verbe retiré), Dashboard, Tableau de bord, Home, Bienvenue
 
 **Planning**:

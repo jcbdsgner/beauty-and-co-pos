@@ -18,7 +18,10 @@ pas la **création**.
   pas avoir deux rendez-vous qui se chevauchent : le cas est **bloqué** (vaut aussi pour la
   réassignation de praticienne).
 - **Aucune création de réservation dans l'app.** Un bouton « Créer un rendez-vous » ouvre la
-  plateforme de réservation externe dans un onglet.
+  plateforme de réservation externe dans un onglet. Deux points d'entrée : la fiche réservation
+  (pied du dialogue d'édition) et l'**en-tête de l'Accueil** — à portée de main quand la
+  réceptionniste est au téléphone avec une cliente qui veut réserver. Même URL
+  (`BOOKING_URL`, `lib/data/planning.ts`), même libellé.
 - Les ajustements ne sont **pas resynchronisés** vers la plateforme externe — cohérent avec
   `staffOverrides` (ADR 0006) : le mock n'a pas de lien retour, la divergence est assumée.
 - Le modèle d'état du rendez-vous est **inchangé** : toujours `actif | annule`, jamais
