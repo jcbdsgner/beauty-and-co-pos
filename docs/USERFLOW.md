@@ -289,7 +289,8 @@ Comptoir (déployé)
 - « Replier » (et non « Retour » / pas de flèche vers une page parente puisque le Comptoir n'a pas de parent — il flotte au-dessus de tout)
 - Cliente : Chercher une cliente (mécanisme unique, cf. Modèle conceptuel) ou « Scanner » ou « + Nouvelle cliente »
   - ouverture via « Encaisser » depuis une réservation → panier auto-rempli avec toutes ses prestations (payeuse + « pour {bénéficiaire} » sur les lignes concernées), message explicite (« Prestations de la réservation ajoutées »)
-- bascule Services / Produits, recherche, catégories, grille de tuiles → ajout au panier (incrémente si déjà présent)
+  - **identification conditionnelle** (ADR 0013) : une vente **produits uniquement** (le cas d'une « + Nouvelle vente » à froid — une prestation ne naît jamais au comptoir) s'encaisse **sans cliente**, l'identification est facultative (helper en sourdine « Cliente facultative — à ajouter pour la fidélité ou une carte cadeau ») ; dès qu'une **prestation** entre au panier, la cliente redevient **obligatoire** — verrou dynamique, signal ambre
+- bascule Services / Produits, recherche, catégories, grille de tuiles → ajout au panier (incrémente si déjà présent) ; **le Menu s'ouvre sur Produits** (la vente à froid est une revente ; l'onglet Services reste accessible)
 - panier : stepper qty, retrait de ligne, section Remise (panneau dédié). **Trois mécanismes, cumulables, pouvant amener le total à 0 F :**
   1. **Carte cadeau** — code saisi ou scanné. Instrument prépayé : la carte a un solde ; la vente en consomme ce qu'il faut, le **reliquat reste sur la carte** et s'affiche (« couvre −18 000 F · reste 7 000 F sur la carte »). Un seul code actif à la fois — en appliquer un second **remplace** le premier avec un message inline (« remplace la carte XXX »).
      - [ Carte déjà utilisée ou expirée → message distinct d'une faute de frappe : « Cette carte a déjà été utilisée » / « Cette carte a expiré le [date] », jamais le même texte générique qu'un code non reconnu — un message qui semble accuser la cliente en face serait un mauvais moment à vivre au comptoir ]
@@ -297,13 +298,15 @@ Comptoir (déployé)
   3. **Remise accordée** — la réceptionniste saisit **son code personnel** (4 caractères), choisit **Montant** ou **Pourcentage**, puis la valeur. **Jusqu'à 10 % du total des prestations** avec son seul code ; **de 10 à 20 %**, un champ **code manager** (4–6 chiffres, non vérifié — mock) apparaît et devient obligatoire. **20 % est le plafond absolu** — au-delà, refus explicite. Services seuls, les produits n'en bénéficient jamais. Le **motif** n'est PAS demandé ici : il est saisi juste après l'encaissement (voir Paiement). Cf. ADR 0008.
   - ordre de calcul : remise accordée (sur les prestations) → points → carte cadeau en dernier, clampée à ce qui reste dû
   - le pied de ticket et le reçu **ventilent** les lignes de remise, jamais un total « Remises » agrégé
-- « Encaisser » (désactivé + texte d'aide tant que panier vide ou cliente non identifiée) → Paiement
+- « Encaisser » (désactivé + texte d'aide tant que panier vide, **ou** panier avec prestation sans cliente identifiée — ADR 0013) → Paiement
 
-Scanner (dialogue, caméra réelle — un seul lieu, réutilisé identification cliente ET code cadeau)
+Scanner (dialogue unique « Scanner ou saisir une carte », caméra réelle — atteint du bouton « Scanner » du ticket ET de l'icône scan du panneau Remise)
 - cadre de visée, erreur caméra affichée si besoin
-- « Simuler la détection » (explicitement étiqueté mode démo) → pré-remplit le champ d'origine (cliente ou code cadeau), ne l'applique jamais à l'aveugle sans étape de confirmation
-- [ Caméra refuse l'accès en pleine vente (scan cliente ou carte cadeau) → le panier et l'onglet en cours restent strictement intacts ; message rassurant (« Caméra indisponible — utilisez la recherche ou la saisie manuelle ») avec le champ de saisie déjà au premier plan, jamais un blocage qui force à fermer l'onglet ]
-- [ Cliente scannée sans aucune correspondance → pas le texte froid « aucune correspondance » seul : CTA direct « Créer une nouvelle cliente » qui ouvre Nouvelle cliente pré-remplie du numéro lu si disponible, retour au Comptoir avec la cliente déjà sélectionnée une fois créée — le parcours de récupération est aussi direct que la recherche elle-même ]
+- sous le viseur, **deux champs de code** : **carte de fidélité** (→ identifie la cliente, attache sa fiche) et **carte cadeau** (→ applique l'instrument prépayé, flux inchangé). Un QR scanné est routé selon ce que son code résout (carte cadeau connue → cadeau, sinon → fidélité)
+- « Simuler la détection » (mode démo) → deux boutons explicites, « Fidélité » / « Carte cadeau »
+- la carte de fidélité et la carte cadeau sont des instruments **au porteur** : les présenter suffit, aucune vérification de titulaire, aucun rappel d'identité au moment de dépenser des points (ADR 0013)
+- [ Caméra refuse l'accès en pleine vente → le panier et l'onglet en cours restent strictement intacts ; message rassurant (« Caméra indisponible — saisissez le code ci-dessous ») avec les champs déjà au premier plan, jamais un blocage qui force à fermer l'onglet ]
+- [ Code de fidélité qui ne correspond à aucune fiche → message clair (« Ce code de fidélité n'est reconnu pour aucune cliente — utilisez la recherche par nom »), jamais un silence ]
 
 Paiement (dans le Comptoir déployé)
 - À payer affiché en évidence ; si une remise s'applique, le sous-total barré + le total des remises sont rappelés dessous
@@ -327,7 +330,7 @@ Reçu (dans le Comptoir déployé)
 
 **Assignation praticienne retirée du panier** : le panier ne porte plus d'assignation par ligne. La praticienne d'une vente est celle du rendez-vous d'origine (via « Encaisser ») ou aucune pour une vente au comptoir ; le Récap des ventes ventile sur cette base.
 
-**Décisions actées** : le rendu de monnaie sur les paiements impliquant Espèces est une **capacité nouvelle** ; l'auto-remplissage du panier depuis un rendez-vous est explicite (message dans le panier) ; le scan ne s'applique plus jamais sans étape de confirmation, y compris la carte cadeau ; la carte cadeau devient un instrument prépayé (reliquat conservé, cf. ADR 0002) ; la « remise manager » devient une remise réceptionniste bornée à 10 % au code personnel, 20 % avec un code manager ponctuel, motif obligatoire (cf. ADR 0003, 0008) ; un reçu imprimable existe enfin.
+**Décisions actées** : le rendu de monnaie sur les paiements impliquant Espèces est une **capacité nouvelle** ; l'auto-remplissage du panier depuis un rendez-vous est explicite (message dans le panier) ; le scan ne s'applique plus jamais sans étape de confirmation, y compris la carte cadeau ; la carte cadeau devient un instrument prépayé (reliquat conservé, cf. ADR 0002) ; la « remise manager » devient une remise réceptionniste bornée à 10 % au code personnel, 20 % avec un code manager ponctuel, motif obligatoire (cf. ADR 0003, 0008) ; un reçu imprimable existe enfin ; l'identification de la cliente devient **conditionnelle** (facultative en vente de produits, obligatoire dès qu'une prestation est au panier) et le scan cliente + scan carte cadeau fusionnent en **un seul dialogue** à deux champs de code (ADR 0013).
 
 ### Fonctionnalités par écran
 
@@ -343,20 +346,23 @@ Reçu (dans le Comptoir déployé)
 - « Replier » (jamais « Fermer », pas de croix) → retour instantané à la section affichée dessous, barre Comptoir remise à jour
 - Le repli préserve l'état interne exact : onglet actif, étape (Catalogue / Panier / Paiement / Reçu) — redéployer rouvre exactement au même endroit, y compris en plein paiement
 - Naviguer entre Accueil / Planning / Clientèle / Relances / Catalogue ne ferme jamais un onglet de vente
-- Identification de la cliente : « Chercher une cliente » (mécanisme unique, partagé avec Répertoire et Formulaire rendez-vous), « Scanner », ou « + Nouvelle cliente »
+- Identification de la cliente : « Chercher une cliente » (mécanisme unique, partagé avec Répertoire et Formulaire rendez-vous), « Scanner », ou « + Nouvelle cliente ». **Conditionnelle** (ADR 0013) : facultative pour une vente produits, obligatoire dès qu'une prestation est au panier
 - Ouverture via « Encaisser » depuis une réservation → panier auto-rempli avec toutes ses prestations, message explicite dans le panier (« Prestations de la réservation ajoutées »)
-- Bascule Services / Produits du Menu, recherche, catégories et sous-catégories, grille de prestations → ajout au panier (incrémente la quantité si la ligne existe déjà)
+- Bascule Services / Produits du Menu (**défaut Produits**), recherche, catégories et sous-catégories, grille de prestations → ajout au panier (incrémente la quantité si la ligne existe déjà)
 - Panier : quantité par ligne, retrait de ligne (pas d'assignation de praticienne — retirée)
 - Remise : panneau dédié, trois mécanismes cumulables (carte cadeau saisie/scan, points fidélité, remise accordée : ≤ 10 % des prestations au code réceptionniste, ≤ 20 % avec un code manager), erreur inline explicite ; lignes ventilées au pied de ticket
   - carte cadeau : instrument prépayé, un seul code actif à la fois, un second remplace le premier (« remplace la carte XXX ») ; déjà utilisée ou expirée → message distinct d'un code non reconnu ; reliquat affiché
   - remise accordée : code manager requis de 10 à 20 % des prestations, refus explicite au-delà de 20 % ; motif demandé après l'encaissement, jamais avant
-- « Encaisser » : désactivé tant que le panier est vide ou qu'aucune cliente n'est identifiée, avec un texte d'aide visible en permanence expliquant pourquoi → passe au Paiement
+- « Encaisser » : désactivé tant que le panier est vide, ou qu'il contient une prestation sans cliente identifiée (ADR 0013), avec un texte d'aide visible en permanence expliquant pourquoi → passe au Paiement
 
-#### Scanner (caméra réelle, réutilisé pour l'identification cliente ET le code cadeau)
+#### Scanner (dialogue unique « Scanner ou saisir une carte », caméra réelle)
+- Atteint du bouton « Scanner » du ticket et de l'icône scan du panneau Remise
 - Cadre de visée ; message d'erreur affiché si la caméra est refusée
-- « Simuler la détection » (étiqueté mode démo) → pré-remplit le champ concerné (cliente ou code cadeau), sans jamais l'appliquer sans étape de confirmation
-- Caméra refusée en pleine vente → panier et onglet intacts, message rassurant (« Caméra indisponible — utilisez la recherche ou la saisie manuelle »), champ de saisie déjà au premier plan
-- Cliente scannée sans correspondance → CTA direct « Créer une nouvelle cliente » (pré-remplie du numéro lu si disponible), retour au Comptoir avec la cliente sélectionnée une fois créée
+- Deux champs sous le viseur : **code carte de fidélité** (→ identifie la cliente) et **code carte cadeau** (→ applique l'instrument prépayé) ; QR scanné routé selon ce que son code résout
+- « Simuler la détection » (mode démo) → deux boutons « Fidélité » / « Carte cadeau »
+- Instruments **au porteur** : aucune vérification de titulaire, aucun rappel d'identité au moment de dépenser des points ; garde-fou = nom de la cliente lisible en tête de ticket
+- Caméra refusée en pleine vente → panier et onglet intacts, message rassurant (« Caméra indisponible — saisissez le code ci-dessous »), champs déjà au premier plan
+- Code de fidélité sans correspondance → message clair, jamais un silence
 
 #### Paiement
 - Total à payer affiché en évidence ; sous-total barré + total des remises rappelés si une remise s'applique
@@ -388,8 +394,8 @@ Reçu (dans le Comptoir déployé)
 
 ```
 Accueil
-- Chronologie du jour : rendez-vous du jour groupés par praticien·ne (vue condensée, pas le tableau complet du Planning)
-  - chaque rendez-vous → « Encaisser » → Comptoir déployé, nouvel onglet pré-rempli avec la cliente + ses prestations — LE point d'entrée d'une vente liée à un rendez-vous : la cliente a réservé en ligne, est venue, a eu sa prestation, elle passe à la caisse à la fin
+- Vue journée (« Le jour ») : **une ligne par réservation**, triée par heure, dépliable en prestations — la vue chronologique partagée avec le Planning (v2.7, ADR 0014). Plus de regroupement par praticienne : la réceptionniste retrouve la cliente qui se présente au comptoir sans qu'elle soit éparpillée sur plusieurs groupes. Pas de basculeur de vue ici (les trois vues vivent sur le Planning).
+  - chaque réservation → « Encaisser » → Comptoir déployé, nouvel onglet pré-rempli avec la payeuse + toutes ses prestations — LE point d'entrée d'une vente liée à une réservation : la cliente a réservé en ligne, est venue, a eu ses prestations, elle passe à la caisse à la fin
   - un rendez-vous déjà pris en charge (un onglet de vente lui est déjà associé) affiche un badge « En cours » à la place du bouton « Encaisser » ; le retaper **bascule** sur l'onglet existant au lieu d'en ouvrir un doublon — répond au cas d'un double-tap ou de deux membres de l'équipe qui cliquent chacun de leur côté sur le **même** rendez-vous ; deux rendez-vous **différents** ne posent aucun conflit, chacun ouvrant son propre onglet
   - tap sur un rendez-vous → Fiche réservation (payeuse + toutes ses prestations, « Encaisser la réservation » + « Annuler cette prestation ») ; pas d'édition ni de confirmation — la prise de rendez-vous se fait en ligne
 - ~~Widget « Tournée du matin »~~ **retiré (v2.5, ADR 0011)** : plus de rappel des relances sur l'Accueil ; l'info (anniversaires du jour en tête) vit dans l'inbox **Messages**
@@ -445,7 +451,7 @@ Planning  (un seul lieu ; le roster de l'équipe y est intégré)
 - « Aujourd'hui » (seulement si on a navigué ailleurs) → revient au jour réel
 - naviguer d'un jour / d'une semaine à l'autre
 - « Afficher les annulés » : les rendez-vous annulés restent visibles, atténués — l'historique des annulations vit ici, pas dans un écran à part
-- regrouper les rendez-vous par praticienne ou pour toute l'équipe (mêmes données)
+- trois vues de la journée (v2.7, ADR 0014, mêmes données) : **Liste chronologique** (défaut — une ligne par réservation, triée par heure, dépliable en prestations ; pour retrouver et encaisser une cliente), **Par praticienne** (grain rendez-vous, groupes par praticienne ; pour l'équipe et les absences), **Grille calendrier** (heures × praticiennes ; pour repérer trous et chevauchements). La sélection n'est pas persistée. Le bloc « Le jour » de l'Accueil ne porte que la Liste chronologique.
 - l'équipe (rail intégré) : chaque personne porte son **horaire de présence du jour** (`shiftStart`–`shiftEnd`) et son état (présente / absente aujourd'hui / repos) ; le **ménage** y figure sans lane (jamais de rendez-vous) ; l'accueil non. Par praticienne :
   - « Voir seule » → ne garder que ses rendez-vous ; annulable
   - « Marquer absente aujourd'hui » (absence de dernière minute) → ses rendez-vous du jour sont signalés « absente » partout (ici + Chronologie de l'Accueil) ; « Encaisser » l'un d'eux impose d'indiquer la remplaçante avant d'ouvrir le Comptoir — jamais une vente attribuée à quelqu'un qui n'était pas là

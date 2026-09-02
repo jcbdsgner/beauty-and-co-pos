@@ -44,6 +44,10 @@ export type Cliente = {
   birthday?: string; // ISO date
   /** Pays de résidence — obligatoire à la création (défaut « Sénégal »). */
   residenceCountry: string;
+  /** Code carried by her loyalty card — the counter's identification token: scanning its QR or
+   *  typing this code attaches her fiche to a sale. A bearer credential (possession of the card),
+   *  never a password. Generated at creation. See ADR 0013. */
+  loyaltyCode: string;
   tier: ClientTier;
   points: number;
   hairType?: string;

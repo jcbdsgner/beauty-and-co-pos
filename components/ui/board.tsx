@@ -40,11 +40,6 @@ export function Legend({ children, className }: { children: React.ReactNode; cla
  */
 type BoardHeaderProps = {
   section: string;
-  /**
-   * @deprecated A POS section is named, not narrated — no greetings, counts or standing guidance
-   * (DESIGN.md). Kept only until the last call site drops it; do not add new ones.
-   */
-  context?: React.ReactNode;
   action?: React.ReactNode;
   /** shown only when relevant (e.g. an "Aujourd'hui" reset) */
   reset?: React.ReactNode;

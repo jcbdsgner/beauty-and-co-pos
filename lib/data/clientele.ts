@@ -3,6 +3,7 @@ import type { Cliente } from "@/lib/data/types";
 export const CLIENTS: Cliente[] = [
   {
     id: "cl-1",
+    loyaltyCode: "BACO-FID-1042",
     firstName: "Awa",
     lastName: "Sarr",
     phone: "+221784455661",
@@ -25,6 +26,7 @@ export const CLIENTS: Cliente[] = [
   },
   {
     id: "cl-2",
+    loyaltyCode: "BACO-FID-2170",
     firstName: "Fatou",
     lastName: "Camara",
     phone: "+221771122334",
@@ -38,6 +40,7 @@ export const CLIENTS: Cliente[] = [
   },
   {
     id: "cl-3",
+    loyaltyCode: "BACO-FID-3388",
     firstName: "Coumba",
     lastName: "Thiam",
     phone: "+221765544332",
@@ -51,6 +54,7 @@ export const CLIENTS: Cliente[] = [
   },
   {
     id: "cl-4",
+    loyaltyCode: "BACO-FID-4519",
     firstName: "Bineta",
     lastName: "Diagne",
     phone: "+221709988776",
@@ -64,6 +68,7 @@ export const CLIENTS: Cliente[] = [
   },
   {
     id: "cl-5",
+    loyaltyCode: "BACO-FID-5024",
     firstName: "Mariam",
     lastName: "Kane",
     phone: "+221781234567",
@@ -77,6 +82,7 @@ export const CLIENTS: Cliente[] = [
   },
   {
     id: "cl-6",
+    loyaltyCode: "BACO-FID-6607",
     firstName: "Awa",
     lastName: "Niang",
     phone: "+221776543210",
@@ -97,6 +103,7 @@ export const CLIENTS: Cliente[] = [
   },
   {
     id: "cl-7",
+    loyaltyCode: "BACO-FID-7731",
     firstName: "Sokhna",
     lastName: "Ndiaye",
     phone: "+221703216549",
@@ -110,6 +117,7 @@ export const CLIENTS: Cliente[] = [
   },
   {
     id: "cl-8",
+    loyaltyCode: "BACO-FID-8890",
     firstName: "Ndèye",
     lastName: "Diop",
     phone: "+221781239900",
@@ -123,6 +131,7 @@ export const CLIENTS: Cliente[] = [
   },
   {
     id: "cl-9",
+    loyaltyCode: "BACO-FID-9276",
     firstName: "Yacine",
     lastName: "Wade",
     phone: "+221775551234",
@@ -155,6 +164,14 @@ export function clientFullName(c: Cliente) {
 
 export function clientInitial(c: Cliente) {
   return `${c.firstName[0] ?? ""}${c.lastName[0] ?? ""}`.toUpperCase();
+}
+
+/** Resolve a loyalty-card code (scanned QR or typed) to a fiche. Case-insensitive, whitespace
+ *  trimmed — a receptionist keying it under pressure shouldn't be tripped by casing. */
+export function clientByLoyaltyCode(clients: Cliente[], raw: string) {
+  const code = raw.trim().toUpperCase();
+  if (!code) return undefined;
+  return clients.find((c) => c.loyaltyCode.toUpperCase() === code);
 }
 
 /** Takes the live `clients` array (from `useAppData()`) rather than the static seed list, so a cliente created this session is searchable immediately. */

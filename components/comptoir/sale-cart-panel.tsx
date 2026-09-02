@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/atoms/badge";
 import { BrandMark } from "@/components/ui/atoms/brand-mark";
 import { ClientSearchField } from "@/components/shared/client-search-field";
 import { DiscountSection } from "@/components/comptoir/discount-section";
-import { useAppData, computeTotals } from "@/components/providers/app-data-provider";
+import { useAppData, computeTotals, saleNeedsClient } from "@/components/providers/app-data-provider";
 import { clientFullName, clientInitial } from "@/lib/data/clientele";
 import { cn, formatFcfa } from "@/lib/utils";
 import type { Sale } from "@/lib/data/types";
@@ -23,16 +23,18 @@ const TIER_BADGE = {
  * total seated at the foot as the one oversized figure the eye keeps returning to. Discounts and
  * the checkout button are the only other things allowed here.
  */
-export function SaleCartPanel({ sale, onScanClient, onScanGiftCard }: { sale: Sale; onScanClient: () => void; onScanGiftCard: () => void }) {
+export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScanner: () => void }) {
   const { updateCartQty, removeCartLine, updateSale, clients, reservations, produits } = useAppData();
   const totals = computeTotals(sale);
   const isEmpty = sale.cart.length === 0;
   const itemCount = sale.cart.reduce((n, l) => n + l.qty, 0);
   const client = sale.clientId ? clients.find((c) => c.id === sale.clientId) : undefined;
-  const canCheckout = !isEmpty && sale.clientId !== null;
-  // The one blocker left once the basket is filled: no cliente. Echoed on the search trigger and
-  // spelled out on the Encaisser button (amber = "needs a decision", per DESIGN.md One-Signal rule).
-  const needsClient = !isEmpty && sale.clientId === null;
+  // A prestation in the basket means someone was served — the note must name her (ADR 0013). A
+  // products-only walk-in checks out anonymously; the cliente stays optional (fidélité / carte
+  // cadeau). Amber = "needs a decision" (DESIGN.md One-Signal rule) — only when it truly blocks.
+  const needsClient = !isEmpty && sale.clientId === null && saleNeedsClient(sale);
+  const clientOptional = !isEmpty && sale.clientId === null && !saleNeedsClient(sale);
+  const canCheckout = !isEmpty && !needsClient;
   const originReservation = sale.originReservationId
     ? reservations.find((r) => r.id === sale.originReservationId)
     : undefined;
@@ -81,9 +83,9 @@ export function SaleCartPanel({ sale, onScanClient, onScanGiftCard }: { sale: Sa
                   size="default"
                   className={cn("flex-1", needsClient && "border-[var(--board-amber)] text-[var(--board-amber)]")}
                   icon={<ScanLine className="size-4" />}
-                  onClick={onScanClient}
+                  onClick={onOpenScanner}
                 >
-                  Scanner la cliente
+                  Scanner
                 </Button>
                 <ClientSearchField
                   selectedClientId={null}
@@ -104,7 +106,16 @@ export function SaleCartPanel({ sale, onScanClient, onScanGiftCard }: { sale: Sa
                   }
                 />
               </div>
-              {needsClient && <p className="text-xs font-medium text-[var(--board-amber)]">Cliente requise pour encaisser.</p>}
+              {needsClient && (
+                <p className="text-xs font-medium text-[var(--board-amber)]">
+                  Cliente requise : le panier contient une prestation.
+                </p>
+              )}
+              {clientOptional && (
+                <p className="text-xs text-[var(--color-gray-500)]">
+                  Cliente facultative — à ajouter pour la fidélité ou une carte cadeau.
+                </p>
+              )}
             </div>
           )}
           {originReservation && (
@@ -209,7 +220,7 @@ export function SaleCartPanel({ sale, onScanClient, onScanGiftCard }: { sale: Sa
 
       {/* Foot */}
       <div className="shrink-0 border-t border-border bg-white px-5 pt-3 pb-5">
-        {!isEmpty && <DiscountSection sale={sale} onScanGiftCard={onScanGiftCard} />}
+        {!isEmpty && <DiscountSection sale={sale} onOpenScanner={onOpenScanner} />}
 
         {totals.totalDiscount > 0 && (
           <div className="mb-2 flex flex-col gap-0.5 text-sm">

@@ -27,27 +27,16 @@ import type { RemiseMode, Sale } from "@/lib/data/types";
  *  · loyalty points,
  *  · a discretionary discount the receptionist grants with her own code, ≤ 20 % of the prestations.
  */
-export function DiscountSection({ sale, onScanGiftCard }: { sale: Sale; onScanGiftCard: () => void }) {
+export function DiscountSection({ sale, onOpenScanner }: { sale: Sale; onOpenScanner: () => void }) {
   const { applyGiftCard, setLoyaltyPointsUsed, updateSale, clients } = useAppData();
   const [open, setOpen] = useState(false);
   const [giftCardCode, setGiftCardCode] = useState("");
   const [giftCardMsg, setGiftCardMsg] = useState<string | null>(null);
-  // Tracks the last scanned code we've already seeded, so a scan opens the sheet exactly once
-  // (React's "adjust state when a prop changes, during render" pattern — no effect needed).
-  const [seededScan, setSeededScan] = useState("");
 
   const client = sale.clientId ? clients.find((c) => c.id === sale.clientId) : undefined;
   const redeemable = client ? Math.floor(client.points / 100) * 100 : 0;
   const totals = computeTotals(sale);
   const hasDiscount = totals.totalDiscount > 0;
-
-  // A scanned gift card lands in `sale.giftCardCode` — surface it: open the sheet, seed the field.
-  if (sale.giftCardCode && sale.giftCardCode !== seededScan) {
-    setSeededScan(sale.giftCardCode);
-    setGiftCardCode(sale.giftCardCode);
-    setGiftCardMsg(null);
-    setOpen(true);
-  }
 
   return (
     <>
@@ -95,8 +84,8 @@ export function DiscountSection({ sale, onScanGiftCard }: { sale: Sale; onScanGi
                 spellCheck={false}
               />
               <IconButton
-                onClick={onScanGiftCard}
-                aria-label="Scanner la carte cadeau"
+                onClick={onOpenScanner}
+                aria-label="Scanner ou saisir une carte"
                 className="size-11 shrink-0 rounded-full border border-border text-secondary transition active:scale-90 hover:border-secondary hover:bg-accent"
               >
                 <ScanLine aria-hidden className="size-4" />

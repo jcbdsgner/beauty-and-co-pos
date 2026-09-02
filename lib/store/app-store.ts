@@ -103,6 +103,17 @@ function emptySale(label: string): Sale {
   };
 }
 
+/**
+ * Whether this sale can only be cashed in against an identified cliente. True as soon as it holds
+ * one prestation line: a service means someone was served and the note must name her. A
+ * products-only sale (the walk-in "+ Nouvelle vente" case — services never originate at the
+ * counter, they arrive from a réservation that already carries its payeuse) checks out anonymously.
+ * See ADR 0013.
+ */
+export function saleNeedsClient(sale: Sale) {
+  return sale.cart.some((l) => l.kind === "service");
+}
+
 /** The most a receptionist can knock off with her own code alone, as a share of the prestations. */
 export const RECEPTIONIST_MAX_PCT = 10;
 /** The absolute ceiling on a granted discount — reachable only with a manager code (ADR 0008). */
@@ -188,7 +199,7 @@ export type AppState = {
   giftCardOrders: GiftCardOrder[];
 
   // Clients
-  addClient: (data: Omit<Cliente, "id" | "points" | "totalSpent" | "totalVisits" | "createdAt" | "tier">) => Cliente;
+  addClient: (data: Omit<Cliente, "id" | "loyaltyCode" | "points" | "totalSpent" | "totalVisits" | "createdAt" | "tier">) => Cliente;
   updateClient: (id: string, patch: Partial<Cliente>) => void;
   findDuplicatePhone: (phone: string) => Cliente | undefined;
   /** Record that a cliente's fiche was opened (called from FicheClienteView). */
@@ -273,7 +284,16 @@ export const useAppStore = create<AppState>((set, get) => ({
   giftCardOrders: GIFT_CARD_ORDERS,
 
   addClient: (data) => {
-    const client: Cliente = { ...data, id: nextId("cl"), tier: null, points: 0, totalSpent: 0, totalVisits: 0, createdAt: new Date().toISOString() };
+    const client: Cliente = {
+      ...data,
+      id: nextId("cl"),
+      loyaltyCode: `BACO-FID-${Math.floor(1000 + Math.random() * 9000)}`,
+      tier: null,
+      points: 0,
+      totalSpent: 0,
+      totalVisits: 0,
+      createdAt: new Date().toISOString(),
+    };
     set((s) => ({ clients: [client, ...s.clients] }));
     return client;
   },

@@ -9,7 +9,7 @@
 
 import { useAppStore, type AppState } from "@/lib/store/app-store";
 
-export { computeTotals } from "@/lib/store/app-store";
+export { computeTotals, saleNeedsClient } from "@/lib/store/app-store";
 
 /** No longer a real provider — the store is a module singleton. Kept so `app/layout.tsx`
  *  (and any test harness) can keep wrapping the tree without a change. */

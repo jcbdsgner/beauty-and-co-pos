@@ -27,7 +27,10 @@ const CATEGORY_ICON: Record<string, string> = {
 
 export function MenuPanel({ saleId }: { saleId: string }) {
   const { addCartLine, sales, produits } = useAppData();
-  const [mode, setMode] = useState<MenuMode>("services");
+  // Produits first: a "+ Nouvelle vente" at the counter is a retail sale — prestations only ever
+  // reach a sale from a réservation (via « Encaisser »), never keyed here from scratch (ADR 0013).
+  // The toggle still exposes Services for the walk-in who also wants one added.
+  const [mode, setMode] = useState<MenuMode>("produits");
   const [query, setQuery] = useState("");
   const [categoryId, setCategoryId] = useState<string>("toutes");
   const [subcategory, setSubcategory] = useState<string>("");
@@ -128,7 +131,7 @@ export function MenuPanel({ saleId }: { saleId: string }) {
             }}
           />
           <SearchInput
-            placeholder="Rechercher une prestation…"
+            placeholder={mode === "services" ? "Rechercher une prestation…" : "Rechercher un produit…"}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="flex-1"

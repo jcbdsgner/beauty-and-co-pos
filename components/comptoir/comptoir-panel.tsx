@@ -8,7 +8,7 @@ import { MenuPanel } from "@/components/comptoir/menu-panel";
 import { SaleCartPanel } from "@/components/comptoir/sale-cart-panel";
 import { PaymentStep } from "@/components/comptoir/payment-step";
 import { ReceiptStep } from "@/components/comptoir/receipt-step";
-import { ScannerDialog } from "@/components/comptoir/scanner-dialog";
+import { IdentifyDialog } from "@/components/comptoir/identify-dialog";
 import { BrandMark } from "@/components/ui/atoms/brand-mark";
 import { useAppData } from "@/components/providers/app-data-provider";
 
@@ -19,8 +19,8 @@ import { useAppData } from "@/components/providers/app-data-provider";
  * stations live on the sheet: the counter (menu + ticket), payment, and the receipt.
  */
 export function ComptoirPanel() {
-  const { comptoirDeployed, collapseComptoir, sales, activeSaleId, openNewTab, updateSale, clients } = useAppData();
-  const [scanTarget, setScanTarget] = useState<"client" | "gift-card" | null>(null);
+  const { comptoirDeployed, collapseComptoir, sales, activeSaleId, openNewTab } = useAppData();
+  const [scanOpen, setScanOpen] = useState(false);
 
   if (!comptoirDeployed) return null;
 
@@ -62,37 +62,16 @@ export function ComptoirPanel() {
             ) : (
               <div className="grid h-full grid-cols-[minmax(0,1fr)_440px] gap-5 p-5">
                 <MenuPanel saleId={activeSale.id} />
-                <SaleCartPanel
-                  sale={activeSale}
-                  onScanClient={() => setScanTarget("client")}
-                  onScanGiftCard={() => setScanTarget("gift-card")}
-                />
+                <SaleCartPanel sale={activeSale} onOpenScanner={() => setScanOpen(true)} />
               </div>
             )}
           </div>
         )}
       </div>
 
-      <ScannerDialog
-        open={scanTarget === "client"}
-        title="Scanner une cliente"
-        demoValue={clients[0]?.id ?? ""}
-        onClose={() => setScanTarget(null)}
-        onDetect={(clientId) => {
-          if (activeSale && clients.some((c) => c.id === clientId)) updateSale(activeSale.id, { clientId });
-          setScanTarget(null);
-        }}
-      />
-      <ScannerDialog
-        open={scanTarget === "gift-card"}
-        title="Scanner une carte cadeau"
-        demoValue="BACO-GIFT-25000"
-        onClose={() => setScanTarget(null)}
-        onDetect={(code) => {
-          if (activeSale) updateSale(activeSale.id, { giftCardCode: code });
-          setScanTarget(null);
-        }}
-      />
+      {scanOpen && activeSale && (
+        <IdentifyDialog open sale={activeSale} onClose={() => setScanOpen(false)} />
+      )}
     </div>
   );
 }
