@@ -10,6 +10,7 @@ import { DayList } from "@/components/planning/day-list";
 import { useEncaissement } from "@/components/journee/use-encaissement";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { BOOKING_URL, groupDayByReservation } from "@/lib/data/planning";
+import { cn } from "@/lib/utils";
 import type { RendezVous } from "@/lib/data/types";
 
 /**
@@ -28,14 +29,6 @@ export default function AccueilPage() {
   ).length;
 
   const reservationRows = useMemo(() => groupDayByReservation(reservations), [reservations]);
-  const rdvCount = useMemo(
-    () =>
-      reservations.reduce(
-        (n, r) => n + r.rendezVous.filter((rv) => rv.status !== "annule").length,
-        0,
-      ),
-    [reservations],
-  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -58,7 +51,13 @@ export default function AccueilPage() {
             hint="Ouvrir la file"
             muted={cartesAPreparer === 0}
           />
-          <PointCell href="/planning" label="Rendez-vous du jour" value={String(rdvCount)} hint="Ouvrir le planning" />
+          <PointCell
+            href="/planning"
+            label="Réservations du jour"
+            value={reservationRows.length > 0 ? String(reservationRows.length) : "Journée libre"}
+            hint="Ouvrir le planning"
+            muted={reservationRows.length === 0}
+          />
         </div>
       </Board>
 
@@ -117,11 +116,11 @@ function PointCell({
       <span className="min-w-0">
         <Legend>{label}</Legend>
         <span
-          className={
-            muted
-              ? "mt-1 block font-[family-name:var(--font-heading)] text-lg font-semibold text-[var(--color-gray-400)]"
-              : "mt-1 block font-[family-name:var(--font-heading)] text-2xl font-semibold tabular-nums text-[var(--color-gray-900)]"
-          }
+          className={cn(
+            "mt-0.5 block font-[family-name:var(--font-heading)] text-lg font-semibold text-[var(--color-gray-900)]",
+            !muted && "tabular-nums",
+            muted && "text-[var(--color-gray-400)]",
+          )}
         >
           {value}
         </span>

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/atoms/button";
 import { Lane, FlipChip, type LaneSignal } from "@/components/ui/board";
 import { clientFullName, clientInitial } from "@/lib/data/clientele";
 import { serviceById } from "@/lib/data/menu";
-import type { ReservationDayRow } from "@/lib/data/planning";
+import { timeToMinutes, type ReservationDayRow } from "@/lib/data/planning";
 import { cn } from "@/lib/utils";
 import type { Cliente, Praticienne, RendezVous } from "@/lib/data/types";
 
@@ -17,6 +17,10 @@ import type { Cliente, Praticienne, RendezVous } from "@/lib/data/types";
  * (vue « Liste chronologique ») et le bloc « Le jour » de l'Accueil. Langage « Le Tableau »
  * inchangé : `Lane`, `FlipChip`, rail de légende, signal ambre. Une réservation à plusieurs
  * prestations se déplie en sous-lignes ; taper la ligne ouvre la fiche réservation.
+ *
+ * Le tableau se classe par le temps : un filet « maintenant » sépare ce qui est passé de ce qui
+ * vient, une réservation dont l'heure est passée mais qui n'a pas encore de vente porte « à
+ * encaisser » — elle tient la ligne jusqu'à ce qu'elle soit traitée (thèse DESIGN.md).
  */
 type Props = {
   rows: ReservationDayRow[];
@@ -26,6 +30,15 @@ type Props = {
   onOpenReservation: (rv: RendezVous) => void;
   onEncaisser: (reservationId: string) => void;
 };
+
+function currentMinute(): number {
+  const d = new Date();
+  return d.getHours() * 60 + d.getMinutes();
+}
+
+function formatMinute(m: number): string {
+  return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+}
 
 export function DayList({ rows, clients, praticiennes, onOpenReservation, onEncaisser }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -38,6 +51,13 @@ export function DayList({ rows, clients, praticiennes, onOpenReservation, onEnca
     };
     return [...rows].sort((a, b) => a.start.localeCompare(b.start) || name(a).localeCompare(name(b), "fr"));
   }, [rows, clients]);
+
+  const now = currentMinute();
+  // The "maintenant" rule sits before the first réservation not yet finished — or, once every
+  // réservation has ended, becomes a "journée terminée" line at the foot.
+  const firstAhead = sorted.findIndex((r) => timeToMinutes(r.end) > now);
+  const nowLineAt = firstAhead === -1 ? sorted.length : firstAhead;
+  const nowLabel = formatMinute(now);
 
   const staffName = (id?: string) => (id ? praticiennes.find((p) => p.id === id)?.name : undefined);
   const isAbsent = (id?: string) => Boolean(id && praticiennes.find((p) => p.id === id)?.unavailableToday);
@@ -57,7 +77,7 @@ export function DayList({ rows, clients, praticiennes, onOpenReservation, onEnca
 
   return (
     <>
-      {sorted.map((row) => {
+      {sorted.map((row, i) => {
         const { reservation, rendezVous, staffIds } = row;
         const payer = clients.find((c) => c.id === reservation.payerClientId);
         const active = rendezVous.filter((rv) => rv.status !== "annule");
@@ -66,23 +86,40 @@ export function DayList({ rows, clients, praticiennes, onOpenReservation, onEnca
         const multi = rendezVous.length > 1;
         const isOpen = expanded.has(reservation.id);
         const summary = active.map((rv) => serviceById(rv.serviceId)?.name ?? "Prestation").join(" + ");
+
+        const startMin = timeToMinutes(row.start);
+        const endMin = timeToMinutes(row.end);
+        const phase = endMin <= now ? "past" : startMin <= now ? "current" : "upcoming";
+        const awaitingCheckout = phase === "past" && !hasSale && !anyAbsent;
+        // Amber stays the one signal: only an absent praticienne holds the edge. "Now" is carried
+        // by the single NowLine rule; "en cours" / "à encaisser" are quiet taupe text hints.
         const signal: LaneSignal = anyAbsent ? "hold" : "none";
+
+        const timeHint = anyAbsent
+          ? " · praticienne absente"
+          : awaitingCheckout
+            ? " · à encaisser"
+            : phase === "current"
+              ? " · en cours"
+              : "";
+        const hintTone = awaitingCheckout || phase === "current";
 
         return (
           <div key={reservation.id}>
+            {i === nowLineAt && <NowLine label={nowLabel} />}
             <Lane
               leading={
-                <span className="flex flex-col leading-tight">
+                <span className={cn("flex flex-col leading-tight", phase === "past" && !awaitingCheckout && "opacity-60")}>
                   <span>{row.start}</span>
                   <span className="text-[0.7rem] font-normal text-[var(--color-gray-400)]">→ {row.end}</span>
                 </span>
               }
               title={
-                <span className="flex items-center gap-2">
+                <span className={cn("flex items-center gap-2", phase === "past" && !awaitingCheckout && !hasSale && "opacity-70")}>
                   <Avatar
                     initial={payer ? clientInitial(payer) : "?"}
                     size={26}
-                    className="bg-accent text-[0.65rem] font-semibold text-secondary"
+                    className="bg-accent text-[0.65rem] font-bold text-[var(--color-gray-800)]"
                   />
                   {payer ? clientFullName(payer) : "Cliente"}
                 </span>
@@ -95,7 +132,9 @@ export function DayList({ rows, clients, praticiennes, onOpenReservation, onEnca
                     : staffIds.length === 1
                       ? ` · ${staffName(staffIds[0])}`
                       : ""}
-                  {anyAbsent ? " · praticienne absente" : ""}
+                  {timeHint && (
+                    <span className={cn(hintTone && "font-semibold text-[var(--brand-taupe-muted)]")}>{timeHint}</span>
+                  )}
                 </span>
               }
               chip={
@@ -110,7 +149,7 @@ export function DayList({ rows, clients, praticiennes, onOpenReservation, onEnca
                         aria-expanded={isOpen}
                         className="flex items-center gap-0.5 rounded-full px-1.5 py-1 text-xs font-semibold tabular-nums text-[var(--color-gray-400)] transition hover:bg-black/[0.04]"
                       >
-                        {rendezVous.length}
+                        {active.length}
                         <ChevronDown className={cn("size-3.5 transition", isOpen && "rotate-180")} />
                       </button>
                     )}
@@ -118,7 +157,7 @@ export function DayList({ rows, clients, praticiennes, onOpenReservation, onEnca
                 )
               }
               signal={signal}
-              onSelect={() => onOpenReservation(rendezVous[0])}
+              onSelect={() => onOpenReservation(active[0] ?? rendezVous[0])}
               actions={
                 <Button
                   size="sm"
@@ -162,9 +201,22 @@ export function DayList({ rows, clients, praticiennes, onOpenReservation, onEnca
                 })}
               </div>
             )}
+            {i === sorted.length - 1 && nowLineAt === sorted.length && <NowLine label={nowLabel} dayOver />}
           </div>
         );
       })}
     </>
+  );
+}
+
+/** The one "maintenant" rule — a single amber band that ranks the board by time (DESIGN.md: amber = now). */
+function NowLine({ label, dayOver }: { label: string; dayOver?: boolean }) {
+  return (
+    <div className="flex items-center gap-2 border-y border-[var(--board-amber)]/15 bg-[var(--board-amber-soft)] px-4 py-1.5">
+      <span className="size-1.5 shrink-0 rounded-full bg-[var(--board-amber)]" />
+      <span className="font-[family-name:var(--font-heading)] text-[0.66rem] font-bold uppercase tabular-nums tracking-[0.12em] text-[var(--board-amber)]">
+        {dayOver ? "Journée terminée" : `Maintenant · ${label}`}
+      </span>
+    </div>
   );
 }
