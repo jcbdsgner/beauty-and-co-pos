@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
-import { Coffee, LayoutGrid, Users } from "lucide-react";
+import { LayoutGrid, Users } from "lucide-react";
 import { SegmentedToggle } from "@/components/ui/molecules/segmented-toggle";
 import { SearchInput } from "@/components/ui/atoms/search-input";
 import { Pills } from "@/components/ui/molecules/pills";
@@ -11,7 +11,10 @@ import { PRODUCT_CATEGORIES, SERVICE_CATEGORIES, SERVICES } from "@/lib/data/men
 import { useAppData } from "@/components/providers/app-data-provider";
 import { cn, formatFcfa } from "@/lib/utils";
 
-type MenuMode = "services" | "produits";
+/** Trois grandes familles encaissables, comme les volets du Catalogue : prestations, revente
+ *  (Kérastase & co), et le Bar. Produits par défaut — une vente ouverte à froid est de la
+ *  revente (ADR 0013) ; les prestations n'arrivent que d'une réservation. */
+type MenuMode = "services" | "produits" | "boissons";
 
 /** Category → rail icon. Missing keys fall back to a generic grid glyph. */
 const CATEGORY_ICON: Record<string, string> = {
@@ -27,9 +30,6 @@ const CATEGORY_ICON: Record<string, string> = {
 
 export function MenuPanel({ saleId }: { saleId: string }) {
   const { addCartLine, sales, produits } = useAppData();
-  // Produits first: a "+ Nouvelle vente" at the counter is a retail sale — prestations only ever
-  // reach a sale from a réservation (via « Encaisser »), never keyed here from scratch (ADR 0013).
-  // The toggle still exposes Services for the walk-in who also wants one added.
   const [mode, setMode] = useState<MenuMode>("produits");
   const [query, setQuery] = useState("");
   const [categoryId, setCategoryId] = useState<string>("toutes");
@@ -42,12 +42,15 @@ export function MenuPanel({ saleId }: { saleId: string }) {
     return m;
   }, [sales, saleId]);
 
-  const categories = mode === "services" ? SERVICE_CATEGORIES : PRODUCT_CATEGORIES;
+  // Le Bar est sa propre famille (comme le volet Boissons du Catalogue) : il ne vit plus dans le
+  // rail de la revente.
+  const categories =
+    mode === "services" ? SERVICE_CATEGORIES : PRODUCT_CATEGORIES.filter((c) => c.id !== "boissons");
   const items = mode === "services" ? SERVICES : produits;
+  const showRail = mode !== "boissons" && categories.length > 0;
 
   const railTiles = useMemo(
     () => [
-      // Le Bar (« boissons ») a sa propre tuile : on ne le fond pas dans le « Toutes » de la revente.
       { id: "toutes", name: "Toutes", count: items.filter((i) => i.active && i.categoryId !== "boissons").length },
       ...categories.map((c) => ({ id: c.id, name: c.name, count: items.filter((i) => i.categoryId === c.id).length })),
     ],
@@ -70,7 +73,11 @@ export function MenuPanel({ saleId }: { saleId: string }) {
     const q = query.trim().toLowerCase();
     const matchesQuery = !q || item.name.toLowerCase().includes(q);
     const matchesCategory =
-      categoryId === "toutes" ? item.categoryId !== "boissons" : item.categoryId === categoryId;
+      mode === "boissons"
+        ? item.categoryId === "boissons"
+        : categoryId === "toutes"
+          ? item.categoryId !== "boissons"
+          : item.categoryId === categoryId;
     const matchesSub = !subcategory || ("subcategory" in item && item.subcategory === subcategory);
     return matchesQuery && matchesCategory && matchesSub && item.active;
   });
@@ -83,19 +90,20 @@ export function MenuPanel({ saleId }: { saleId: string }) {
   const activeCategory = categoryId === "toutes" ? null : railTiles.find((t) => t.id === categoryId);
   const activeCategoryIcon = CATEGORY_ICON[categoryId];
 
+  const searchPlaceholder =
+    mode === "services" ? "Rechercher une prestation…" : mode === "boissons" ? "Rechercher une boisson…" : "Rechercher un produit…";
+
   return (
     <div className="flex h-full min-h-0 gap-4">
-      {/* Vertical category rail */}
-      <nav className="flex w-[112px] shrink-0 flex-col gap-1.5 overflow-y-auto pb-2" aria-label="Catégories">
-        {railTiles.map((cat) => {
-          const active = cat.id === categoryId;
-          const icon = CATEGORY_ICON[cat.id];
-          // Le Bar (« Boissons ») se détache des catégories de revente par un filet et son propre glyphe.
-          const isBar = cat.id === "boissons";
-          return (
-            <div key={cat.id} className="contents">
-              {isBar && <div aria-hidden className="my-1 h-px shrink-0 bg-[var(--board-groove)]" />}
+      {/* Vertical category rail — pas pour le Bar (aucune sous-catégorie) */}
+      {showRail && (
+        <nav className="flex w-[112px] shrink-0 flex-col gap-1.5 overflow-y-auto pb-2" aria-label="Catégories">
+          {railTiles.map((cat) => {
+            const active = cat.id === categoryId;
+            const icon = CATEGORY_ICON[cat.id];
+            return (
               <button
+                key={cat.id}
                 type="button"
                 onClick={() => pickCategory(cat.id)}
                 aria-pressed={active}
@@ -104,9 +112,7 @@ export function MenuPanel({ saleId }: { saleId: string }) {
                   active ? "bg-secondary text-white" : "bg-white text-[var(--color-gray-600)] hover:bg-accent",
                 )}
               >
-                {isBar ? (
-                  <Coffee aria-hidden className="size-6" />
-                ) : icon ? (
+                {icon ? (
                   <Image src={icon} alt="" width={26} height={26} className={cn("size-6 object-contain", active && "brightness-0 invert")} />
                 ) : (
                   <LayoutGrid aria-hidden className="size-6" />
@@ -114,10 +120,10 @@ export function MenuPanel({ saleId }: { saleId: string }) {
                 <span className="w-full truncate text-[11px] font-semibold leading-tight">{cat.name}</span>
                 <span className={cn("text-[10px] tabular-nums", active ? "text-white/70" : "text-[var(--color-gray-500)]")}>{cat.count}</span>
               </button>
-            </div>
-          );
-        })}
-      </nav>
+            );
+          })}
+        </nav>
+      )}
 
       {/* Menu */}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
@@ -127,6 +133,7 @@ export function MenuPanel({ saleId }: { saleId: string }) {
             options={[
               { value: "services", label: "Services" },
               { value: "produits", label: "Produits" },
+              { value: "boissons", label: "Boissons" },
             ]}
             value={mode}
             onChange={(v) => {
@@ -135,7 +142,7 @@ export function MenuPanel({ saleId }: { saleId: string }) {
             }}
           />
           <SearchInput
-            placeholder={mode === "services" ? "Rechercher une prestation…" : "Rechercher un produit…"}
+            placeholder={searchPlaceholder}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="flex-1"
@@ -169,7 +176,11 @@ export function MenuPanel({ saleId }: { saleId: string }) {
         <div className="min-h-0 flex-1 overflow-y-auto pb-2">
           {filtered.length === 0 ? (
             <p className="py-16 text-center text-sm text-[var(--color-gray-500)]">
-              {mode === "services" ? "Aucune prestation ne correspond." : "Aucun produit ne correspond."}
+              {mode === "services"
+                ? "Aucune prestation ne correspond."
+                : mode === "boissons"
+                  ? "Aucune boisson ne correspond."
+                  : "Aucun produit ne correspond."}
             </p>
           ) : (
             <div className="grid grid-cols-[repeat(auto-fill,minmax(158px,1fr))] gap-3">
@@ -216,7 +227,7 @@ export function MenuPanel({ saleId }: { saleId: string }) {
                         )}
                       >
                         {"image" in item && item.image ? (
-                          <Image src={item.image} alt="" fill className="object-cover" />
+                          <Image src={item.image} alt="" fill sizes="200px" className="object-contain p-1.5" />
                         ) : (
                           <PhotoPlaceholder className="size-full rounded-none border-0 bg-transparent" label="Photo" />
                         )}

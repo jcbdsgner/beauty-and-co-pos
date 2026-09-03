@@ -24,9 +24,9 @@ export function CatalogueBoissons() {
           <div className="grid grid-cols-2 gap-px bg-[var(--board-groove)] md:grid-cols-3 xl:grid-cols-4">
             {boissons.map((b) => (
               <div key={b.id} className="flex flex-col bg-white">
-                <div className="relative aspect-[4/5]">
+                <div className="relative aspect-[4/5] bg-[var(--brand-cream)]">
                   {b.image ? (
-                    <Image src={b.image} alt={b.name} fill className="object-cover" />
+                    <Image src={b.image} alt={b.name} fill sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw" className="object-contain p-3" />
                   ) : (
                     <PhotoPlaceholder className="size-full rounded-none border-0" label="Photo à venir" />
                   )}
