@@ -120,18 +120,20 @@ export function MenuPanel({ saleId }: { saleId: string }) {
         />
       </div>
 
-      {/* Barre de pastilles — pas pour le Bar */}
+      {/* Barre de pastilles — pas pour le Bar. Une seule rangée qui défile à l'horizontale :
+          toutes les catégories restent atteignables (le pavé qui s'enroulait sur 2 rangs
+          masquait Manucure, Spa, Épilation… sous la ligne de flottaison). */}
       {filters.length > 1 && (
-        <div className="flex shrink-0 items-start gap-3">
+        <div className="flex shrink-0 items-center gap-3">
           <Image
             src="/images/brand/escargot.svg"
             alt=""
             aria-hidden
             width={64}
             height={64}
-            className="size-16 shrink-0 self-start object-contain"
+            className="size-16 shrink-0 object-contain"
           />
-          <div className="flex max-h-32 flex-wrap content-start gap-2 overflow-y-auto">
+          <div className="-mx-1 flex flex-1 gap-2 overflow-x-auto px-1 py-1 [scrollbar-width:thin] [-webkit-mask-image:linear-gradient(to_right,transparent,#000_12px,#000_calc(100%_-_32px),transparent)]">
             {filters.map((f) => {
               const active = f.key === activeFilter.key;
               return (
