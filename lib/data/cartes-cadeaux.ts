@@ -8,14 +8,25 @@ import type { CarteCadeau, GiftCardOrder } from "@/lib/data/types";
    ──────────────────────────────────────────────────────────────────────────── */
 
 export const CARTES_CADEAUX: CarteCadeau[] = [
-  { code: "BACO-GIFT-25000", balance: 25000, status: "active" },
-  { code: "BACO-GIFT-30000", balance: 30000, status: "active" },
-  { code: "BACO-GIFT-50000", balance: 50000, status: "active" },
-  { code: "BACO-NOEL-15000", balance: 15000, status: "active" },
-  { code: "BACO-ANNIV-20000", balance: 20000, status: "active" },
-  { code: "BACO-SOIN-8000", balance: 8000, status: "active" },
-  { code: "BACO-EXPIRED", balance: 20000, status: "expired", expiresOn: "2025-12-31" },
-  { code: "BACO-USED", balance: 0, status: "used" },
+  // Montant cards — a free balance to spend. Some carry a holder (identify at the counter), some
+  // are pure bearer cards (offered to someone not on file).
+  { code: "BACO-GIFT-25000", balance: 25000, status: "active", kind: "montant" },
+  { code: "BACO-GIFT-30000", balance: 30000, status: "active", kind: "montant" },
+  { code: "BACO-GIFT-50000", balance: 50000, status: "active", kind: "montant" },
+  { code: "BACO-NOEL-15000", balance: 15000, status: "active", kind: "montant" },
+  { code: "BACO-ANNIV-20000", balance: 20000, status: "active", kind: "montant", holderClientId: "cl-1" },
+  { code: "BACO-SOIN-8000", balance: 8000, status: "active", kind: "montant", holderClientId: "cl-3" },
+  { code: "BACO-EXPIRED", balance: 20000, status: "expired", expiresOn: "2025-12-31", kind: "montant" },
+  { code: "BACO-USED", balance: 0, status: "used", kind: "montant" },
+  // Prestations card — pays for a fixed set of services, `balance` is their value at purchase.
+  {
+    code: "BACO-DUO-EVASION",
+    balance: 109000,
+    status: "active",
+    kind: "prestations",
+    serviceIds: ["soin-du-visage-glow-me-facial", "spa-relax-me-time"],
+    holderClientId: "cl-2",
+  },
 ];
 
 /**

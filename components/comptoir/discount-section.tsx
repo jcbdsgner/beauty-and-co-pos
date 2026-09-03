@@ -7,12 +7,14 @@ import { Button } from "@/components/ui/atoms/button";
 import { IconButton } from "@/components/ui/atoms/icon-button";
 import { TextInput } from "@/components/ui/atoms/text-input";
 import { RoundStepButton } from "@/components/ui/atoms/round-step-button";
+import { Checkbox } from "@/components/ui/atoms/checkbox";
 import { Dialog } from "@/components/ui/molecules/dialog";
 import { InputOtp } from "@/components/ui/molecules/input-otp";
 import { Pills } from "@/components/ui/molecules/pills";
 import { SegmentedToggle } from "@/components/ui/molecules/segmented-toggle";
 import { useAppData, computeTotals } from "@/components/providers/app-data-provider";
 import { MAX_REMISE_PCT, RECEPTIONIST_MAX_PCT } from "@/lib/store/app-store";
+import { serviceById } from "@/lib/data/menu";
 import { formatFcfa } from "@/lib/utils";
 import type { RemiseMode, Sale } from "@/lib/data/types";
 
@@ -28,7 +30,7 @@ import type { RemiseMode, Sale } from "@/lib/data/types";
  *  · a discretionary discount the receptionist grants with her own code, ≤ 20 % of the prestations.
  */
 export function DiscountSection({ sale, onOpenScanner }: { sale: Sale; onOpenScanner: () => void }) {
-  const { applyGiftCard, setLoyaltyPointsUsed, updateSale, clients } = useAppData();
+  const { applyGiftCard, setGiftCardAdjustment, setLoyaltyPointsUsed, updateSale, clients } = useAppData();
   const [open, setOpen] = useState(false);
   const [giftCardCode, setGiftCardCode] = useState("");
   const [giftCardMsg, setGiftCardMsg] = useState<string | null>(null);
@@ -105,24 +107,7 @@ export function DiscountSection({ sale, onOpenScanner }: { sale: Sale; onOpenSca
               </Button>
             </div>
             {sale.giftCardApplied ? (
-              <div className="mt-2 rounded-lg bg-[var(--color-success-soft)] px-3 py-2 text-xs font-medium text-[var(--color-success)]">
-                <div className="flex items-center justify-between">
-                  <span>
-                    Carte « {sale.giftCardApplied.code} » · solde {formatFcfa(sale.giftCardApplied.balance)}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => updateSale(sale.id, { giftCardApplied: null })}
-                    className="underline underline-offset-2"
-                  >
-                    Retirer
-                  </button>
-                </div>
-                <p className="mt-0.5 text-[var(--color-success)]/85">
-                  Couvre −{formatFcfa(totals.giftCardDiscount)}
-                  {totals.giftCardRemaining > 0 && ` · reste ${formatFcfa(totals.giftCardRemaining)} sur la carte`}
-                </p>
-              </div>
+              <AppliedGiftCard sale={sale} totals={totals} onAdjust={(p) => setGiftCardAdjustment(sale.id, p)} onRemove={() => updateSale(sale.id, { giftCardApplied: null })} />
             ) : (
               giftCardMsg && <p className="mt-1 text-xs font-medium text-destructive">{giftCardMsg}</p>
             )}
@@ -173,6 +158,83 @@ export function DiscountSection({ sale, onOpenScanner }: { sale: Sale; onOpenSca
         </Button>
       </Dialog>
     </>
+  );
+}
+
+/**
+ * An applied gift card, with the counter-side adjustment (ADR 0013 §4):
+ *  · a `montant` card → how much of the balance to spend on this ticket;
+ *  · a `prestations` card → which of its prestations to honour here (only those in the cart).
+ * The rest of the balance stays on the card either way.
+ */
+function AppliedGiftCard({
+  sale,
+  totals,
+  onAdjust,
+  onRemove,
+}: {
+  sale: Sale;
+  totals: ReturnType<typeof computeTotals>;
+  onAdjust: (patch: { appliedAmount?: number; coveredServiceIds?: string[] }) => void;
+  onRemove: () => void;
+}) {
+  const gc = sale.giftCardApplied!;
+  const covered = gc.coveredServiceIds ?? gc.serviceIds ?? [];
+
+  return (
+    <div className="mt-2 flex flex-col gap-2 rounded-lg bg-[var(--color-success-soft)] px-3 py-2.5 text-xs">
+      <div className="flex items-center justify-between font-medium text-[var(--color-success)]">
+        <span>
+          Carte « {gc.code} » · {gc.kind === "prestations" ? "prestations" : `solde ${formatFcfa(gc.balance)}`}
+        </span>
+        <button type="button" onClick={onRemove} className="underline underline-offset-2">
+          Retirer
+        </button>
+      </div>
+
+      {gc.kind === "montant" ? (
+        <label className="flex items-center justify-between gap-2 text-[var(--color-gray-700)]">
+          <span>Montant appliqué</span>
+          <span className="flex items-center gap-1.5">
+            <TextInput
+              size="compact"
+              inputMode="numeric"
+              aria-label="Montant de la carte cadeau appliqué à cette vente"
+              className="w-24 text-right tabular-nums"
+              value={String(gc.appliedAmount ?? gc.balance)}
+              onChange={(e) => onAdjust({ appliedAmount: Number(e.target.value.replace(/\D/g, "")) || 0 })}
+            />
+            <span className="text-[var(--color-gray-500)]">F</span>
+          </span>
+        </label>
+      ) : (
+        <div className="flex flex-col">
+          {(gc.serviceIds ?? []).map((id) => {
+            const svc = serviceById(id);
+            const inCart = sale.cart.some((l) => l.kind === "service" && l.refId === id);
+            return (
+              <Checkbox
+                key={id}
+                className="min-h-11 text-[13px]"
+                checked={inCart && covered.includes(id)}
+                disabled={!inCart}
+                onChange={(c) =>
+                  onAdjust({
+                    coveredServiceIds: c ? [...covered, id] : covered.filter((x) => x !== id),
+                  })
+                }
+                label={`${svc?.name ?? id} · ${formatFcfa(svc?.price ?? 0)}${inCart ? "" : " — pas au panier"}`}
+              />
+            );
+          })}
+        </div>
+      )}
+
+      <p className="text-[var(--color-success)]/85">
+        Couvre −{formatFcfa(totals.giftCardDiscount)}
+        {totals.giftCardRemaining > 0 && ` · reste ${formatFcfa(totals.giftCardRemaining)} sur la carte`}
+      </p>
+    </div>
   );
 }
 

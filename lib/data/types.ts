@@ -181,13 +181,22 @@ export type RemiseAccordee = {
 
 export type CarteCadeauStatus = "active" | "used" | "expired";
 
+/** What a gift card pays for: a free amount to spend, or a fixed set of prestations. */
+export type GiftCardKind = "montant" | "prestations";
+
 export type CarteCadeau = {
   code: string;
-  /** Remaining stored value in FCFA. */
+  /** Remaining stored value in FCFA — also the monetary cap for a `prestations` card. */
   balance: number;
   status: CarteCadeauStatus;
   /** ISO date, set when `status === "expired"`. */
   expiresOn?: string;
+  kind: GiftCardKind;
+  /** For `kind === "prestations"` — the service ids the card entitles the holder to. */
+  serviceIds?: string[];
+  /** The cliente this card identifies at the counter. Absent → pure bearer card, identifies no one.
+   *  Where it comes from is out of scope here (it travels on the card — ADR 0013 §5). */
+  holderClientId?: string;
 };
 
 /** How the buyer chose to receive a printed gift card at purchase (ADR 0012). E-cards are out of
@@ -240,9 +249,23 @@ export type Sale = {
   cart: CartLine[];
   /** Pending code being typed or scanned, before it's validated and applied. */
   giftCardCode: string;
-  /** A validated gift card attached to the sale. `balance` is the card's stored value; how much
-   *  of it this sale actually consumes is derived in `computeTotals` (the rest stays on the card). */
-  giftCardApplied: { code: string; balance: number } | null;
+  /** A validated gift card attached to the sale. `balance` is the card's stored value. How much of
+   *  it this sale consumes is derived in `computeTotals` and is adjustable at the counter:
+   *  - `montant` card → `appliedAmount` caps how much of the balance to spend (default: all);
+   *  - `prestations` card → `coveredServiceIds` is which of the card's prestations to honour on
+   *    this ticket (default: all of the card's prestations that are in the cart).
+   *  The rest of the balance stays on the card either way. */
+  giftCardApplied:
+    | {
+        code: string;
+        balance: number;
+        kind: GiftCardKind;
+        /** Present for a `prestations` card — the service ids the card can cover. */
+        serviceIds?: string[];
+        appliedAmount?: number;
+        coveredServiceIds?: string[];
+      }
+    | null;
   loyaltyPointsUsed: number;
   /** A discretionary discount a receptionist granted with her personal code, capped at 20 % of the
    *  prestations total. `reason` is filled in after the sale is cashed in. */

@@ -305,7 +305,7 @@ Scanner (dialogue unique « Scanner ou saisir une carte », caméra réelle — 
 - sous le viseur, **deux champs de code**. **Les deux identifient la cliente** : **carte de fidélité** (→ résout la fiche via `loyaltyCode`, l'attache) et **carte cadeau** (→ résout la **détentrice** que la carte porte, attache sa fiche, **et** applique la carte au panier). Un QR scanné est routé selon ce que son code résout (carte cadeau connue → identité + application, sinon → fidélité)
 - repli **au porteur** : une carte cadeau sans détentrice connue s'applique quand même, sans identifier — la vente reste sans cliente si le panier n'a que des produits
 - « Simuler la détection » (mode démo) → deux boutons explicites, « Fidélité » / « Carte cadeau »
-- jetons **au porteur** : les présenter suffit, aucune vérification de titulaire, aucun rappel d'identité bloquant au moment de dépenser des points ou un solde cadeau ; garde-fou = nom de la cliente lisible en tête de ticket + bouton **« Ce n'est pas la bonne cliente »** (détache la fiche, garde la carte cadeau appliquée) (ADR 0013)
+- jetons **au porteur** : les présenter suffit, aucune vérification de titulaire, aucun rappel d'identité bloquant au moment de dépenser des points ou un solde cadeau ; garde-fou = nom de la cliente lisible en tête de ticket + le **« Retirer »** de la ligne cliente du ticket (détache la fiche, garde la carte cadeau appliquée) (ADR 0013)
 - [ Caméra refuse l'accès en pleine vente → le panier et l'onglet en cours restent strictement intacts ; message rassurant (« Caméra indisponible — saisissez le code ci-dessous ») avec les champs déjà au premier plan, jamais un blocage qui force à fermer l'onglet ]
 - [ Code de fidélité qui ne correspond à aucune fiche → message clair (« Ce code de fidélité n'est reconnu pour aucune cliente — utilisez la recherche par nom »), jamais un silence ]
 
@@ -361,7 +361,7 @@ Reçu (dans le Comptoir déployé)
 - Cadre de visée ; message d'erreur affiché si la caméra est refusée
 - Deux champs sous le viseur, **les deux identifient la cliente** : **code carte de fidélité** (→ résout la fiche) et **code carte cadeau** (→ résout la détentrice + applique la carte) ; QR scanné routé selon ce que son code résout ; carte cadeau sans détentrice connue → appliquée sans identifier
 - « Simuler la détection » (mode démo) → deux boutons « Fidélité » / « Carte cadeau »
-- Jetons **au porteur** : aucune vérification de titulaire, aucun rappel d'identité bloquant au moment de dépenser des points ou un solde cadeau ; garde-fou = nom de la cliente lisible en tête de ticket + « Ce n'est pas la bonne cliente » pour détacher
+- Jetons **au porteur** : aucune vérification de titulaire, aucun rappel d'identité bloquant au moment de dépenser des points ou un solde cadeau ; garde-fou = nom de la cliente lisible en tête de ticket + « Retirer » sur la ligne cliente pour détacher
 - Caméra refusée en pleine vente → panier et onglet intacts, message rassurant (« Caméra indisponible — saisissez le code ci-dessous »), champs déjà au premier plan
 - Code de fidélité sans correspondance → message clair, jamais un silence
 

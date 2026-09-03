@@ -14,21 +14,19 @@ import type { Sale } from "@/lib/data/types";
 
 /** Demo payloads for "Simuler la détection" — one per card kind, always explicitly labelled demo. */
 const DEMO_LOYALTY = "BACO-FID-1042"; // Awa Sarr
-const DEMO_GIFT = "BACO-GIFT-25000";
+const DEMO_GIFT = "BACO-SOIN-8000"; // carte en montant, détentrice Coumba Thiam
 
 /**
  * One dialog, reached from the ticket's "Scanner" and from the Remise panel's scan icon. A real
  * `<video>` feed behind a viewfinder, and below it two code fields — BOTH identify the cliente
  * (ADR 0013):
  *  · carte de fidélité → resolves the fiche via `loyaltyCode`, attaches it;
- *  · carte cadeau → resolves the holder the card carries, attaches her fiche, AND applies the
- *    card to the sale. A card that resolves no holder still applies (bearer fallback).
- * Possession of the card is the authorisation — a bearer credential, never a password.
- * A scanned QR is routed by what its payload resolves to.
- *
- * TODO (ADR 0013 §4/§5) — pending the CarteCadeau model carrying a holder + coverage kind:
- * the carte-cadeau path here only applies today; holder resolution and adjustable application
- * (montant / prestations, like the loyalty-points stepper) land with that model change.
+ *  · carte cadeau → `applyGiftCard` attaches the card's holder fiche (if any) AND applies the
+ *    card; a card that resolves no holder still applies (bearer fallback). The applied amount /
+ *    covered prestations are then adjusted in the Remise panel.
+ * Possession of the card is the authorisation — a bearer credential, never a password. A wrong
+ * identification is undone from the ticket ("Retirer" on the cliente row). A scanned QR is
+ * routed by what its payload resolves to.
  */
 export function IdentifyDialog({ open, sale, onClose }: { open: boolean; sale: Sale; onClose: () => void }) {
   const { clients, updateSale, applyGiftCard } = useAppData();

@@ -144,9 +144,23 @@ export function computeTotals(sale: Sale) {
   const loyaltyDiscount = Math.floor(sale.loyaltyPointsUsed / 100) * 1000;
 
   const beforeGiftCard = Math.max(0, subtotal - grantedDiscount - loyaltyDiscount);
-  const giftCardBalance = sale.giftCardApplied?.balance ?? 0;
-  const giftCardDiscount = Math.min(giftCardBalance, beforeGiftCard);
-  const giftCardRemaining = sale.giftCardApplied ? giftCardBalance - giftCardDiscount : 0;
+  const gc = sale.giftCardApplied;
+  // What this card is willing to take off *this* ticket, before the "still owed" clamp.
+  let giftCardCap = 0;
+  let giftCardCovered = 0; // for a prestations card: value of the covered lines in the cart
+  if (gc) {
+    if (gc.kind === "prestations") {
+      const covered = gc.coveredServiceIds ?? gc.serviceIds ?? [];
+      giftCardCovered = sale.cart
+        .filter((l) => l.kind === "service" && covered.includes(l.refId))
+        .reduce((sum, l) => sum + l.unitPrice * l.qty, 0);
+      giftCardCap = Math.min(gc.balance, giftCardCovered);
+    } else {
+      giftCardCap = Math.min(gc.balance, gc.appliedAmount ?? gc.balance);
+    }
+  }
+  const giftCardDiscount = Math.min(Math.max(0, giftCardCap), beforeGiftCard);
+  const giftCardRemaining = gc ? gc.balance - giftCardDiscount : 0;
 
   const total = beforeGiftCard - giftCardDiscount;
   const totalDiscount = grantedDiscount + loyaltyDiscount + giftCardDiscount;
@@ -159,6 +173,7 @@ export function computeTotals(sale: Sale) {
     loyaltyDiscount,
     giftCardDiscount,
     giftCardRemaining,
+    giftCardCovered,
     maxGrantedDiscount,
     receptionistMaxDiscount,
     totalDiscount,
@@ -234,6 +249,13 @@ export type AppState = {
   updateCartQty: (saleId: string, lineId: string, qty: number) => void;
   removeCartLine: (saleId: string, lineId: string) => void;
   applyGiftCard: (saleId: string, code: string) => { ok: boolean; message: string };
+  /** Adjust how much of an applied gift card this ticket consumes:
+   *  - a `montant` card → `appliedAmount` (clamped to [0, balance]);
+   *  - a `prestations` card → `coveredServiceIds` (subset of the card's prestations). */
+  setGiftCardAdjustment: (
+    saleId: string,
+    patch: { appliedAmount?: number; coveredServiceIds?: string[] },
+  ) => void;
   /** Validate a receptionist's personal code and attach a discretionary discount: ≤ 10 % of the
    *  prestations with her code alone, up to 20 % with a `managerCode` (ADR 0008). The `reason` is
    *  captured later, after the sale is cashed in. */
@@ -530,15 +552,58 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (card.balance <= 0) return { ok: false, message: "Cette carte n'a plus de solde." };
     const sale = get().sales.find((s) => s.id === saleId);
     const replaced = sale?.giftCardApplied;
-    get().updateSale(saleId, { giftCardApplied: { code: card.code, balance: card.balance }, giftCardCode: "" });
-    return {
-      ok: true,
-      message:
-        replaced && replaced.code !== card.code
-          ? `Remplace la carte « ${replaced.code} » — solde ${formatFcfa(card.balance)}.`
-          : `Carte « ${card.code} » appliquée — solde ${formatFcfa(card.balance)}.`,
-    };
+
+    const applied: NonNullable<Sale["giftCardApplied"]> =
+      card.kind === "prestations"
+        ? {
+            code: card.code,
+            balance: card.balance,
+            kind: "prestations",
+            serviceIds: card.serviceIds ?? [],
+            coveredServiceIds: card.serviceIds ?? [],
+          }
+        : { code: card.code, balance: card.balance, kind: "montant" };
+
+    const patch: Partial<Sale> = { giftCardApplied: applied, giftCardCode: "" };
+
+    // Both cards identify (ADR 0013): a card that names a holder attaches her fiche — unless the
+    // sale already has a cliente, which always wins (she's the one in front).
+    let identified: Cliente | undefined;
+    if (card.holderClientId && !sale?.clientId) {
+      identified = get().clients.find((c) => c.id === card.holderClientId);
+      if (identified) patch.clientId = identified.id;
+    }
+
+    get().updateSale(saleId, patch);
+
+    const head =
+      replaced && replaced.code !== card.code
+        ? `Remplace la carte « ${replaced.code} ».`
+        : `Carte « ${card.code} » appliquée.`;
+    const idNote = identified ? ` Cliente identifiée : ${identified.firstName} ${identified.lastName}.` : "";
+    const kindNote =
+      card.kind === "prestations"
+        ? " Carte prestations — ajustez les soins couverts dans la Remise."
+        : ` Solde ${formatFcfa(card.balance)} — ajustez le montant appliqué dans la Remise.`;
+    return { ok: true, message: head + idNote + kindNote };
   },
+
+  setGiftCardAdjustment: (saleId, patch) =>
+    set((s) => ({
+      sales: s.sales.map((sale) => {
+        if (sale.id !== saleId || !sale.giftCardApplied) return sale;
+        const gc = sale.giftCardApplied;
+        const next = { ...gc };
+        if (patch.appliedAmount !== undefined) {
+          next.appliedAmount = Math.min(Math.max(0, Math.round(patch.appliedAmount)), gc.balance);
+        }
+        if (patch.coveredServiceIds !== undefined) {
+          const allowed = new Set(gc.serviceIds ?? []);
+          next.coveredServiceIds = patch.coveredServiceIds.filter((id) => allowed.has(id));
+        }
+        return { ...sale, giftCardApplied: next };
+      }),
+    })),
 
   grantDiscount: (saleId, code, mode, value, managerCode) => {
     const trimmed = code.trim();

@@ -32,7 +32,10 @@ export function DiscountBreakdown({ sale, className }: { sale: Sale; className?:
       )}
       {t.giftCardDiscount > 0 && (
         <div className="flex justify-between gap-3">
-          <span>Carte cadeau{sale.giftCardApplied && ` « ${sale.giftCardApplied.code} »`}</span>
+          <span>
+            Carte cadeau{sale.giftCardApplied && ` « ${sale.giftCardApplied.code} »`}
+            {sale.giftCardApplied?.kind === "prestations" && " (prestations)"}
+          </span>
           <span className="tabular-nums">−{formatFcfa(t.giftCardDiscount)}</span>
         </div>
       )}
