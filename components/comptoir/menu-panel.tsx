@@ -54,13 +54,17 @@ export function MenuPanel({ saleId }: { saleId: string }) {
     [categories, items],
   );
 
-  // Subcategories exist only on services and only within a chosen category.
+  // Subcategories exist within a chosen category — service subcategories, or product ranges
+  // (a Kérastase gamme). The data is stored in range order, so Set insertion order is display order.
   const subcats = useMemo(() => {
-    if (mode !== "services" || categoryId === "toutes") return [];
+    if (categoryId === "toutes") return [];
     const set = new Set<string>();
-    for (const s of SERVICES) if (s.categoryId === categoryId && "subcategory" in s && s.subcategory) set.add(s.subcategory);
+    const source = mode === "services" ? SERVICES : produits;
+    for (const it of source) {
+      if (it.categoryId === categoryId && "subcategory" in it && it.subcategory) set.add(it.subcategory);
+    }
     return [...set];
-  }, [mode, categoryId]);
+  }, [mode, categoryId, produits]);
 
   const filtered = items.filter((item) => {
     const q = query.trim().toLowerCase();

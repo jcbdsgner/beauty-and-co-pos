@@ -91,6 +91,9 @@ export type ProductCategory = {
 export type Produit = {
   id: string;
   categoryId: string;
+  /** Range within the category — e.g. a Kérastase gamme ("Nutritive", "Chronologiste"). Mirrors
+   *  `Service.subcategory`. Absent for products a category doesn't split (bar drinks). */
+  subcategory?: string;
   name: string;
   price: number;
   /** Units left in the salon. Decremented at "Confirmer l'encaissement"; a produit at 0 can't be
