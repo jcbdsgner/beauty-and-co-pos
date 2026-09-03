@@ -17,10 +17,11 @@ type MenuMode = "services" | "produits" | "boissons";
 
 /**
  * Barre de catégories horizontale (maquette Figma node 130:2) — le rail vertical a disparu.
- * Une pastille filtre soit une catégorie entière, soit une sous-catégorie : Coiffure, seule
- * catégorie service assez profonde, voit ses sous-catégories promues au premier niveau ; toute
- * autre catégorie est une pastille unique. En Produits, les pastilles sont les gammes Kérastase.
- * Le Bar (Boissons) n'a pas de barre. L'escargot b&co coiffe la barre.
+ * Deux niveaux : la rangée du haut porte les grandes catégories (Coiffure, Manucure / Pédicure,
+ * Onglerie…) ; sélectionner une catégorie assez profonde (Coiffure) déplie une seconde rangée de
+ * ses sous-catégories. Promouvoir directement les sous-catégories de Coiffure au premier niveau
+ * enfouissait toutes les autres grandes catégories hors de vue. En Produits, la rangée du haut
+ * porte les gammes Kérastase. Le Bar (Boissons) n'a pas de barre. L'escargot b&co coiffe la barre.
  */
 type Filter = {
   key: string;
@@ -28,6 +29,9 @@ type Filter = {
   /** true ⇔ l'article appartient à ce filtre. `Tout` accepte tout ce que la famille affiche. */
   match: (categoryId: string, subcategory: string | undefined) => boolean;
 };
+
+/** Rangée du haut + sous-rangées dépliables, indexées par la clé de la grande catégorie. */
+type FilterTree = { top: Filter[]; subsByParent: Record<string, Filter[]> };
 
 const ALL: Filter = { key: "all", label: "Tout", match: (c) => c !== "boissons" };
 const catFilter = (id: string, label: string): Filter => ({ key: `c:${id}`, label, match: (c) => c === id });
@@ -40,14 +44,19 @@ function subcategoriesOf(items: ReadonlyArray<{ categoryId: string; subcategory?
   return [...seen];
 }
 
-function serviceFilters(): Filter[] {
-  const out: Filter[] = [ALL];
+function serviceFilterTree(): FilterTree {
+  const top: Filter[] = [ALL];
+  const subsByParent: Record<string, Filter[]> = {};
   for (const cat of SERVICE_CATEGORIES) {
+    const parent = catFilter(cat.id, cat.name);
+    top.push(parent);
     const subs = subcategoriesOf(SERVICES, cat.id);
-    if (subs.length > 0) out.push(...subs.map(subFilter));
-    else out.push(catFilter(cat.id, cat.name));
+    // Une seule sous-catégorie ne mérite pas sa rangée : la grande catégorie suffit.
+    if (subs.length > 1) {
+      subsByParent[parent.key] = [{ ...parent, label: "Tout" }, ...subs.map(subFilter)];
+    }
   }
-  return out;
+  return { top, subsByParent };
 }
 
 export function MenuPanel({ saleId }: { saleId: string }) {
@@ -65,18 +74,32 @@ export function MenuPanel({ saleId }: { saleId: string }) {
 
   const items = mode === "services" ? SERVICES : produits;
 
-  const filters = useMemo<Filter[]>(() => {
-    if (mode === "services") return serviceFilters();
+  const { top: topFilters, subsByParent } = useMemo<FilterTree>(() => {
+    if (mode === "services") return serviceFilterTree();
     if (mode === "produits") {
       const source = produits as ReadonlyArray<{ categoryId: string; subcategory?: string }>;
       const hasKerastase = PRODUCT_CATEGORIES.some((c) => c.id === "kerastase");
       const ranges = hasKerastase ? subcategoriesOf(source, "kerastase") : [];
-      return [ALL, ...ranges.map(subFilter)];
+      return { top: [ALL, ...ranges.map(subFilter)], subsByParent: {} };
     }
-    return [];
+    return { top: [], subsByParent: {} };
   }, [mode, produits]);
 
-  const activeFilter = filters.find((f) => f.key === filterKey) ?? ALL;
+  // La grande catégorie dépliée : celle qui est sélectionnée, ou le parent de la sous-catégorie active.
+  const openParentKey = useMemo(() => {
+    if (subsByParent[filterKey]) return filterKey;
+    for (const [parentKey, subs] of Object.entries(subsByParent)) {
+      if (subs.some((s) => s.key === filterKey)) return parentKey;
+    }
+    return null;
+  }, [filterKey, subsByParent]);
+
+  const subFilters = openParentKey ? subsByParent[openParentKey] : null;
+  const allFilters = useMemo(
+    () => [...topFilters, ...Object.values(subsByParent).flat()],
+    [topFilters, subsByParent],
+  );
+  const activeFilter = allFilters.find((f) => f.key === filterKey) ?? ALL;
 
   const filtered = items.filter((item) => {
     if (!item.active) return false;
@@ -120,41 +143,68 @@ export function MenuPanel({ saleId }: { saleId: string }) {
         />
       </div>
 
-      {/* Barre de pastilles — pas pour le Bar. Une seule rangée qui défile à l'horizontale :
-          toutes les catégories restent atteignables (le pavé qui s'enroulait sur 2 rangs
-          masquait Manucure, Spa, Épilation… sous la ligne de flottaison). */}
-      {filters.length > 1 && (
-        <div className="flex shrink-0 items-center gap-3">
-          <Image
-            src="/images/brand/escargot.svg"
-            alt=""
-            aria-hidden
-            width={64}
-            height={64}
-            className="size-16 shrink-0 object-contain"
-          />
-          <div className="-mx-1 flex flex-1 gap-2 overflow-x-auto px-1 py-1 [scrollbar-width:thin] [-webkit-mask-image:linear-gradient(to_right,transparent,#000_12px,#000_calc(100%_-_32px),transparent)]">
-            {filters.map((f) => {
-              const active = f.key === activeFilter.key;
-              return (
-                <button
-                  key={f.key}
-                  type="button"
-                  onClick={() => setFilterKey(f.key)}
-                  aria-pressed={active}
-                  className={cn(
-                    "inline-flex h-14 shrink-0 items-center gap-1.5 rounded-full px-5 text-[15px] font-medium transition active:scale-[0.97]",
-                    active
-                      ? "bg-[var(--core-brand-color)] text-[var(--on-core-brand-color)]"
-                      : "border border-border bg-white text-[var(--color-gray-600)] hover:bg-[var(--color-gray-50)]",
-                  )}
-                >
-                  {active && <Check aria-hidden className="size-3.5" strokeWidth={2.75} />}
-                  {f.label}
-                </button>
-              );
-            })}
+      {/* Barre de catégories — pas pour le Bar. Rangée du haut = grandes catégories ; une seconde
+          rangée déplie les sous-catégories de la catégorie choisie (Coiffure). Chaque rangée défile
+          à l'horizontale, dégradé de fondu à droite. */}
+      {topFilters.length > 1 && (
+        <div className="flex shrink-0 flex-col gap-2">
+          <div className="flex items-center gap-3">
+            <Image
+              src="/images/brand/escargot.svg"
+              alt=""
+              aria-hidden
+              width={64}
+              height={64}
+              className="size-16 shrink-0 object-contain"
+            />
+            <div className="-mx-1 flex flex-1 gap-2 overflow-x-auto px-1 py-1 [scrollbar-width:thin] [-webkit-mask-image:linear-gradient(to_right,transparent,#000_12px,#000_calc(100%_-_32px),transparent)]">
+              {topFilters.map((f) => {
+                const active = f.key === activeFilter.key || f.key === openParentKey;
+                return (
+                  <button
+                    key={f.key}
+                    type="button"
+                    onClick={() => setFilterKey(f.key)}
+                    aria-pressed={active}
+                    className={cn(
+                      "inline-flex h-14 shrink-0 items-center gap-1.5 rounded-full px-5 text-[15px] font-medium transition active:scale-[0.97]",
+                      active
+                        ? "bg-[var(--core-brand-color)] text-[var(--on-core-brand-color)]"
+                        : "border border-border bg-white text-[var(--color-gray-600)] hover:bg-[var(--color-gray-50)]",
+                    )}
+                  >
+                    {active && <Check aria-hidden className="size-3.5" strokeWidth={2.75} />}
+                    {f.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
+
+          {subFilters && (
+            <div className="-mx-1 ml-[76px] flex gap-2 overflow-x-auto px-1 py-1 [scrollbar-width:thin] [-webkit-mask-image:linear-gradient(to_right,transparent,#000_12px,#000_calc(100%_-_32px),transparent)]">
+              {subFilters.map((f) => {
+                const active = f.key === activeFilter.key;
+                return (
+                  <button
+                    key={f.key}
+                    type="button"
+                    onClick={() => setFilterKey(f.key)}
+                    aria-pressed={active}
+                    className={cn(
+                      "inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full px-4 text-[14px] font-medium transition active:scale-[0.97]",
+                      active
+                        ? "bg-[var(--brand-taupe-muted)] text-white"
+                        : "border border-border bg-white text-[var(--color-gray-600)] hover:bg-[var(--color-gray-50)]",
+                    )}
+                  >
+                    {active && <Check aria-hidden className="size-3.5" strokeWidth={2.75} />}
+                    {f.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
