@@ -18,11 +18,17 @@ const DEMO_GIFT = "BACO-GIFT-25000";
 
 /**
  * One dialog, reached from the ticket's "Scanner" and from the Remise panel's scan icon. A real
- * `<video>` feed behind a viewfinder, and below it two code fields:
- *  · carte de fidélité → identifies the cliente (attaches her fiche to the sale);
- *  · carte cadeau → applies the prepaid instrument to the sale.
- * Possession of the card is the authorisation — a bearer credential, never a password (ADR 0013).
+ * `<video>` feed behind a viewfinder, and below it two code fields — BOTH identify the cliente
+ * (ADR 0013):
+ *  · carte de fidélité → resolves the fiche via `loyaltyCode`, attaches it;
+ *  · carte cadeau → resolves the holder the card carries, attaches her fiche, AND applies the
+ *    card to the sale. A card that resolves no holder still applies (bearer fallback).
+ * Possession of the card is the authorisation — a bearer credential, never a password.
  * A scanned QR is routed by what its payload resolves to.
+ *
+ * TODO (ADR 0013 §4/§5) — pending the CarteCadeau model carrying a holder + coverage kind:
+ * the carte-cadeau path here only applies today; holder resolution and adjustable application
+ * (montant / prestations, like the loyalty-points stepper) land with that model change.
  */
 export function IdentifyDialog({ open, sale, onClose }: { open: boolean; sale: Sale; onClose: () => void }) {
   const { clients, updateSale, applyGiftCard } = useAppData();
@@ -84,7 +90,7 @@ export function IdentifyDialog({ open, sale, onClose }: { open: boolean; sale: S
         Scanner ou saisir une carte
       </h2>
       <p className="mt-1 text-sm text-[var(--color-gray-500)]">
-        La carte de fidélité identifie la cliente. La carte cadeau s&apos;applique au paiement.
+        Carte de fidélité ou carte cadeau — l&apos;une comme l&apos;autre identifie la cliente.
       </p>
 
       <div className="relative mt-4 flex aspect-square items-center justify-center overflow-hidden rounded-2xl bg-[var(--color-gray-900)]">

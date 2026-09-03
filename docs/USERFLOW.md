@@ -292,7 +292,7 @@ Comptoir (déployé)
   - **identification conditionnelle** (ADR 0013) : une vente **produits uniquement** (le cas d'une « + Nouvelle vente » à froid — une prestation ne naît jamais au comptoir) s'encaisse **sans cliente**, l'identification est facultative (helper en sourdine « Cliente facultative — à ajouter pour la fidélité ou une carte cadeau ») ; dès qu'une **prestation** entre au panier, la cliente redevient **obligatoire** — verrou dynamique, signal ambre
 - bascule Services / Produits, recherche, catégories, grille de tuiles → ajout au panier (incrémente si déjà présent) ; **le Menu s'ouvre sur Produits** (la vente à froid est une revente ; l'onglet Services reste accessible)
 - panier : stepper qty, retrait de ligne, section Remise (panneau dédié). **Trois mécanismes, cumulables, pouvant amener le total à 0 F :**
-  1. **Carte cadeau** — code saisi ou scanné. Instrument prépayé : la carte a un solde ; la vente en consomme ce qu'il faut, le **reliquat reste sur la carte** et s'affiche (« couvre −18 000 F · reste 7 000 F sur la carte »). Un seul code actif à la fois — en appliquer un second **remplace** le premier avec un message inline (« remplace la carte XXX »).
+  1. **Carte cadeau** — code saisi ou scanné (identifie aussi la détentrice, cf. Scanner). Instrument prépayé qui couvre **un montant** ou **des prestations**. Ce qui est appliqué est **ajustable**, comme les points : carte en montant → combien du solde on consomme, le **reliquat reste sur la carte** et s'affiche (« couvre −18 000 F · reste 7 000 F sur la carte ») ; carte en prestations → quelles lignes du panier elle couvre. Un seul code actif à la fois — en appliquer un second **remplace** le premier avec un message inline (« remplace la carte XXX »).
      - [ Carte déjà utilisée ou expirée → message distinct d'une faute de frappe : « Cette carte a déjà été utilisée » / « Cette carte a expiré le [date] », jamais le même texte générique qu'un code non reconnu — un message qui semble accuser la cliente en face serait un mauvais moment à vivre au comptoir ]
   2. **Points fidélité** — stepper ±100 pts, borné au solde de la cliente (100 pts = 1 000 F). Masqué si la cliente a < 100 pts.
   3. **Remise accordée** — la réceptionniste saisit **son code personnel** (4 caractères), choisit **Montant** ou **Pourcentage**, puis la valeur. **Jusqu'à 10 % du total des prestations** avec son seul code ; **de 10 à 20 %**, un champ **code manager** (4–6 chiffres, non vérifié — mock) apparaît et devient obligatoire. **20 % est le plafond absolu** — au-delà, refus explicite. Services seuls, les produits n'en bénéficient jamais. Le **motif** n'est PAS demandé ici : il est saisi juste après l'encaissement (voir Paiement). Cf. ADR 0008.
@@ -302,9 +302,10 @@ Comptoir (déployé)
 
 Scanner (dialogue unique « Scanner ou saisir une carte », caméra réelle — atteint du bouton « Scanner » du ticket ET de l'icône scan du panneau Remise)
 - cadre de visée, erreur caméra affichée si besoin
-- sous le viseur, **deux champs de code** : **carte de fidélité** (→ identifie la cliente, attache sa fiche) et **carte cadeau** (→ applique l'instrument prépayé, flux inchangé). Un QR scanné est routé selon ce que son code résout (carte cadeau connue → cadeau, sinon → fidélité)
+- sous le viseur, **deux champs de code**. **Les deux identifient la cliente** : **carte de fidélité** (→ résout la fiche via `loyaltyCode`, l'attache) et **carte cadeau** (→ résout la **détentrice** que la carte porte, attache sa fiche, **et** applique la carte au panier). Un QR scanné est routé selon ce que son code résout (carte cadeau connue → identité + application, sinon → fidélité)
+- repli **au porteur** : une carte cadeau sans détentrice connue s'applique quand même, sans identifier — la vente reste sans cliente si le panier n'a que des produits
 - « Simuler la détection » (mode démo) → deux boutons explicites, « Fidélité » / « Carte cadeau »
-- la carte de fidélité et la carte cadeau sont des instruments **au porteur** : les présenter suffit, aucune vérification de titulaire, aucun rappel d'identité au moment de dépenser des points (ADR 0013)
+- jetons **au porteur** : les présenter suffit, aucune vérification de titulaire, aucun rappel d'identité bloquant au moment de dépenser des points ou un solde cadeau ; garde-fou = nom de la cliente lisible en tête de ticket + bouton **« Ce n'est pas la bonne cliente »** (détache la fiche, garde la carte cadeau appliquée) (ADR 0013)
 - [ Caméra refuse l'accès en pleine vente → le panier et l'onglet en cours restent strictement intacts ; message rassurant (« Caméra indisponible — saisissez le code ci-dessous ») avec les champs déjà au premier plan, jamais un blocage qui force à fermer l'onglet ]
 - [ Code de fidélité qui ne correspond à aucune fiche → message clair (« Ce code de fidélité n'est reconnu pour aucune cliente — utilisez la recherche par nom »), jamais un silence ]
 
@@ -351,16 +352,16 @@ Reçu (dans le Comptoir déployé)
 - Bascule Services / Produits du Menu (**défaut Produits**), recherche, catégories et sous-catégories, grille de prestations → ajout au panier (incrémente la quantité si la ligne existe déjà)
 - Panier : quantité par ligne, retrait de ligne (pas d'assignation de praticienne — retirée)
 - Remise : panneau dédié, trois mécanismes cumulables (carte cadeau saisie/scan, points fidélité, remise accordée : ≤ 10 % des prestations au code réceptionniste, ≤ 20 % avec un code manager), erreur inline explicite ; lignes ventilées au pied de ticket
-  - carte cadeau : instrument prépayé, un seul code actif à la fois, un second remplace le premier (« remplace la carte XXX ») ; déjà utilisée ou expirée → message distinct d'un code non reconnu ; reliquat affiché
+  - carte cadeau : instrument prépayé (montant ou prestations), identifie aussi sa détentrice au scan/saisie, **application ajustable** (combien du montant / quelles prestations), un seul code actif à la fois, un second remplace le premier (« remplace la carte XXX ») ; déjà utilisée ou expirée → message distinct d'un code non reconnu ; reliquat affiché
   - remise accordée : code manager requis de 10 à 20 % des prestations, refus explicite au-delà de 20 % ; motif demandé après l'encaissement, jamais avant
 - « Encaisser » : désactivé tant que le panier est vide, ou qu'il contient une prestation sans cliente identifiée (ADR 0013), avec un texte d'aide visible en permanence expliquant pourquoi → passe au Paiement
 
 #### Scanner (dialogue unique « Scanner ou saisir une carte », caméra réelle)
 - Atteint du bouton « Scanner » du ticket et de l'icône scan du panneau Remise
 - Cadre de visée ; message d'erreur affiché si la caméra est refusée
-- Deux champs sous le viseur : **code carte de fidélité** (→ identifie la cliente) et **code carte cadeau** (→ applique l'instrument prépayé) ; QR scanné routé selon ce que son code résout
+- Deux champs sous le viseur, **les deux identifient la cliente** : **code carte de fidélité** (→ résout la fiche) et **code carte cadeau** (→ résout la détentrice + applique la carte) ; QR scanné routé selon ce que son code résout ; carte cadeau sans détentrice connue → appliquée sans identifier
 - « Simuler la détection » (mode démo) → deux boutons « Fidélité » / « Carte cadeau »
-- Instruments **au porteur** : aucune vérification de titulaire, aucun rappel d'identité au moment de dépenser des points ; garde-fou = nom de la cliente lisible en tête de ticket
+- Jetons **au porteur** : aucune vérification de titulaire, aucun rappel d'identité bloquant au moment de dépenser des points ou un solde cadeau ; garde-fou = nom de la cliente lisible en tête de ticket + « Ce n'est pas la bonne cliente » pour détacher
 - Caméra refusée en pleine vente → panier et onglet intacts, message rassurant (« Caméra indisponible — saisissez le code ci-dessous »), champs déjà au premier plan
 - Code de fidélité sans correspondance → message clair, jamais un silence
 

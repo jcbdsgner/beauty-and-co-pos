@@ -134,7 +134,7 @@ Bureau taupe + feuille crème. Étape courante = `activeSale.step` : `"vente"` |
 | Remises | `DiscountSection` (+ `DiscountBreakdown`) | [`components/comptoir/discount-section.tsx`](../components/comptoir/discount-section.tsx) — carte cadeau, points, remise accordée (10 %/20 % + code manager) |
 | Étape paiement | `PaymentStep` | [`components/comptoir/payment-step.tsx`](../components/comptoir/payment-step.tsx) — tuiles Wave / Orange Money (logos) / Carte / Espèces, `NumericKeypad`, paiement mixte |
 | Étape reçu | `ReceiptStep` | [`components/comptoir/receipt-step.tsx`](../components/comptoir/receipt-step.tsx) — impression `react-to-print`, motif de remise bloquant post-paiement |
-| Scanner | `IdentifyDialog` | [`components/comptoir/identify-dialog.tsx`](../components/comptoir/identify-dialog.tsx) — dialogue unique : `<video>` réel + 2 champs code (carte de fidélité → identifie la cliente, carte cadeau → applique), mode démo (ADR 0013) |
+| Scanner | `IdentifyDialog` | [`components/comptoir/identify-dialog.tsx`](../components/comptoir/identify-dialog.tsx) — dialogue unique : `<video>` réel + 2 champs code, **les deux identifient la cliente** (fidélité → fiche ; carte cadeau → détentrice + application), repli au porteur, « Ce n'est pas la bonne cliente », mode démo (ADR 0013) |
 | Envoi reçu | `SendReceiptButtons` | [`components/comptoir/send-receipt-buttons.tsx`](../components/comptoir/send-receipt-buttons.tsx) — partagé avec Récap |
 
 ### Module « journee/ » (encaissement partagé)
