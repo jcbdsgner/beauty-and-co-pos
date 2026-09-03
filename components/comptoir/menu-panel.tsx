@@ -222,7 +222,7 @@ export function MenuPanel({ saleId }: { saleId: string }) {
                     {isProduit && (
                       <div
                         className={cn(
-                          "relative aspect-[5/3] w-full overflow-hidden rounded-t-[12px] bg-[var(--brand-cream)]",
+                          "relative aspect-[5/3] w-full overflow-hidden rounded-t-[12px] bg-white",
                           soldOut && "opacity-60 grayscale",
                         )}
                       >

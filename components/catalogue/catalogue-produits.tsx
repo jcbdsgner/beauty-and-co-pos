@@ -118,7 +118,7 @@ function ProductTile({ produit }: { produit: Produit }) {
   const low = !out && produit.stock <= 5;
   return (
     <div className="flex flex-col bg-white">
-      <div className="relative aspect-[4/3] bg-[var(--brand-cream)]">
+      <div className="relative aspect-[4/3] bg-white">
         {produit.image ? (
           <Image src={produit.image} alt={produit.name} fill sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw" className="object-contain p-3" />
         ) : (
