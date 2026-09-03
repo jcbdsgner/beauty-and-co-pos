@@ -27,12 +27,14 @@ Deux instruments doivent par ailleurs être « liés au système » sans que la 
 
 ### 3. Une seule entrée « Scanner ou saisir une carte » — les deux cartes identifient
 
-- L'ancien `ScannerDialog` (deux instances : « cliente » / « carte cadeau ») est remplacé par **un** `IdentifyDialog` : flux caméra réel + **deux champs de code** sous le viseur. **L'une comme l'autre carte identifie la cliente** — c'est le rôle premier du dialogue.
-  - **Code carte de fidélité** → résout la fiche via `loyaltyCode` (`BACO-FID-XXXX`) et l'attache à la vente.
-  - **Code carte cadeau** → résout la **détentrice** que la carte porte, attache sa fiche à la vente, **et** applique la carte au panier dans le même geste (identité + application).
+- L'ancien `ScannerDialog` (deux instances : « cliente » / « carte cadeau ») est remplacé par **un** `IdentifyDialog` : flux caméra réel + **un seul champ de code** sous le viseur. **L'une comme l'autre carte identifie la cliente** — c'est le rôle premier du dialogue ; le même champ prend un code de fidélité **ou** de carte cadeau.
+  - code **fidélité** (`BACO-FID-XXXX`) → résout la fiche via `loyaltyCode`, l'attache à la vente ;
+  - code **carte cadeau** → résout la **détentrice** que la carte porte, attache sa fiche, **et** applique la carte au panier dans le même geste (identité + application).
+  - Le routage se fait sur ce que le code résout — pas de choix à faire par la réceptionniste.
 - **Repli au porteur.** Une carte cadeau qui ne résout aucune détentrice (carte au porteur sans titulaire connu) s'**applique quand même** : la vente reste sans cliente si le panier n'a que des produits, le verrou du §1 n'est pas levé.
-- Un QR scanné est **routé** selon ce que son code résout : carte cadeau connue → identité + application ; sinon → identification par fidélité. Mode démo : deux boutons explicites (« Fidélité » / « Carte cadeau »).
-- Atteint depuis le bouton **« Scanner »** du ticket **et** l'icône scan du panneau Remise — un seul lieu (le champ code carte cadeau du panneau Remise reste comme saisie rapide de secours, cf. USERFLOW).
+- **La caméra lit les QR toute seule** (`BarcodeDetector` là où il existe — Chromium) : le QR détecté est routé comme un code saisi. Pas de bouton « simuler » ; en prototype, faute de carte portant un vrai code, n'importe quel QR lu vaut la carte de démonstration.
+- **Bouton « Annuler »** explicite (le dialogue ne se ferme ni au clic sur l'overlay ni à Échap).
+- Atteint depuis le bouton **« Scanner »** du ticket **et** l'icône scan du panneau Remise (le champ code carte cadeau du panneau Remise reste comme saisie rapide de secours, cf. USERFLOW).
 - **Jeton au porteur, garde-fou par lisibilité.** Présenter la carte (ou taper son code) suffit — on **ne vérifie pas** que le porteur est la « vraie » titulaire, ni pour la fidélité ni pour la carte cadeau (offerte par nature). Le garde-fou est la **lisibilité** : le nom + l'initiale de la cliente s'affichent en tête de ticket dès l'identification, confrontés de visu à la personne en face. Le bouton **« Retirer »** de la ligne cliente du ticket détache la fiche (une carte cadeau appliquée reste). Pas de PIN, pas de rappel d'identité bloquant au moment de dépenser des points ou un solde cadeau (écarté explicitement — friction sans valeur au comptoir).
 
 ### 4. Application d'une carte cadeau : ajustable, comme les points
@@ -55,7 +57,7 @@ Une carte cadeau appliquée n'est plus consommée « au maximum » en silence. D
 - `lib/data/clientele.ts` : `loyaltyCode` sur les 9 fiches de démo + `clientByLoyaltyCode`.
 - `lib/data/types.ts` : `CarteCadeau` gagne `kind` (`montant` | `prestations`), `serviceIds?`, `holderClientId?` ; `Sale.giftCardApplied` gagne `kind`, `serviceIds?`, `appliedAmount?`, `coveredServiceIds?`.
 - `lib/store/app-store.ts` : `applyGiftCard` attache le `holderClientId` de la carte si la vente n'a pas déjà de cliente ; nouvelle action `setGiftCardAdjustment` ; `computeTotals` clampe la carte au montant choisi (montant) ou à la valeur des prestations cochées présentes au panier (prestations), reliquat = solde − appliqué.
-- `components/comptoir/` : `identify-dialog.tsx` — copy (les deux cartes identifient) ; `discount-section.tsx` — `AppliedGiftCard` : champ montant ajustable ou cases à cocher des prestations couvertes ; `discount-breakdown.tsx` — mention « (prestations) ». Le détachement d'une fiche mal identifiée passe par le « Retirer » existant de la ligne cliente du ticket.
+- `components/comptoir/` : `identify-dialog.tsx` — un seul champ de code routé par ce qu'il résout, lecture QR par `BarcodeDetector`, plus de boutons démo, bouton « Annuler » ; `discount-section.tsx` — `AppliedGiftCard` : champ montant ajustable ou cases à cocher des prestations couvertes ; `discount-breakdown.tsx` — mention « (prestations) ». Le détachement d'une fiche mal identifiée passe par le « Retirer » existant de la ligne cliente du ticket.
 - `lib/data/cartes-cadeaux.ts` : `kind` sur les cartes de démo, `holderClientId` sur deux cartes retrait, une carte `prestations` de démo (`BACO-DUO-EVASION`).
 - `CONTEXT.md` : **Carte de fidélité** et **Carte cadeau** — les deux sont des jetons d'identification ; **Carte cadeau** — application ajustable (montant ou prestations) ; entrée **Encaisser** amendée (cliente facultative en vente de produits).
 - `docs/USERFLOW.md` : section Comptoir — « Encaisser » conditionnel, Scanner unifié qui identifie via les deux cartes, ajustement de la carte cadeau dans la Remise.

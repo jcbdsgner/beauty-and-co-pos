@@ -300,14 +300,15 @@ Comptoir (déployé)
   - le pied de ticket et le reçu **ventilent** les lignes de remise, jamais un total « Remises » agrégé
 - « Encaisser » (désactivé + texte d'aide tant que panier vide, **ou** panier avec prestation sans cliente identifiée — ADR 0013) → Paiement
 
-Scanner (dialogue unique « Scanner ou saisir une carte », caméra réelle — atteint du bouton « Scanner » du ticket ET de l'icône scan du panneau Remise)
+Identifier la cliente (dialogue unique, caméra réelle — atteint du bouton « Scanner » du ticket ET de l'icône scan du panneau Remise)
 - cadre de visée, erreur caméra affichée si besoin
-- sous le viseur, **deux champs de code**. **Les deux identifient la cliente** : **carte de fidélité** (→ résout la fiche via `loyaltyCode`, l'attache) et **carte cadeau** (→ résout la **détentrice** que la carte porte, attache sa fiche, **et** applique la carte au panier). Un QR scanné est routé selon ce que son code résout (carte cadeau connue → identité + application, sinon → fidélité)
+- sous le viseur, **un seul champ de code**, routé par ce qu'il résout : code **fidélité** → attache la fiche via `loyaltyCode` ; code **carte cadeau** → attache la **détentrice** que la carte porte **et** applique la carte au panier. Rien à choisir.
+- la **caméra lit les QR toute seule** (`BarcodeDetector`, Chromium) ; le QR lu est routé comme un code saisi. Pas de bouton « simuler » — en prototype, n'importe quel QR vaut la carte de démonstration.
+- **bouton « Annuler »** (le dialogue ne se ferme pas à l'overlay/Échap)
 - repli **au porteur** : une carte cadeau sans détentrice connue s'applique quand même, sans identifier — la vente reste sans cliente si le panier n'a que des produits
-- « Simuler la détection » (mode démo) → deux boutons explicites, « Fidélité » / « Carte cadeau »
 - jetons **au porteur** : les présenter suffit, aucune vérification de titulaire, aucun rappel d'identité bloquant au moment de dépenser des points ou un solde cadeau ; garde-fou = nom de la cliente lisible en tête de ticket + le **« Retirer »** de la ligne cliente du ticket (détache la fiche, garde la carte cadeau appliquée) (ADR 0013)
-- [ Caméra refuse l'accès en pleine vente → le panier et l'onglet en cours restent strictement intacts ; message rassurant (« Caméra indisponible — saisissez le code ci-dessous ») avec les champs déjà au premier plan, jamais un blocage qui force à fermer l'onglet ]
-- [ Code de fidélité qui ne correspond à aucune fiche → message clair (« Ce code de fidélité n'est reconnu pour aucune cliente — utilisez la recherche par nom »), jamais un silence ]
+- [ Caméra refuse l'accès en pleine vente → le panier et l'onglet en cours restent strictement intacts ; message discret (« Caméra indisponible — saisissez le code »), le champ reste au premier plan, jamais un blocage qui force à fermer l'onglet ]
+- [ Code qui ne résout ni une carte ni une fiche → message clair (« Code non reconnu — vérifiez-le ou cherchez la cliente par son nom »), jamais un silence ]
 
 Paiement (dans le Comptoir déployé)
 - À payer affiché en évidence ; si une remise s'applique, le sous-total barré + le total des remises sont rappelés dessous
@@ -331,7 +332,7 @@ Reçu (dans le Comptoir déployé)
 
 **Assignation praticienne retirée du panier** : le panier ne porte plus d'assignation par ligne. La praticienne d'une vente est celle du rendez-vous d'origine (via « Encaisser ») ou aucune pour une vente au comptoir ; le Récap des ventes ventile sur cette base.
 
-**Décisions actées** : le rendu de monnaie sur les paiements impliquant Espèces est une **capacité nouvelle** ; l'auto-remplissage du panier depuis un rendez-vous est explicite (message dans le panier) ; le scan ne s'applique plus jamais sans étape de confirmation, y compris la carte cadeau ; la carte cadeau devient un instrument prépayé (reliquat conservé, cf. ADR 0002) ; la « remise manager » devient une remise réceptionniste bornée à 10 % au code personnel, 20 % avec un code manager ponctuel, motif obligatoire (cf. ADR 0003, 0008) ; un reçu imprimable existe enfin ; l'identification de la cliente devient **conditionnelle** (facultative en vente de produits, obligatoire dès qu'une prestation est au panier) et le scan cliente + scan carte cadeau fusionnent en **un seul dialogue** à deux champs de code (ADR 0013).
+**Décisions actées** : le rendu de monnaie sur les paiements impliquant Espèces est une **capacité nouvelle** ; l'auto-remplissage du panier depuis un rendez-vous est explicite (message dans le panier) ; le scan ne s'applique plus jamais sans étape de confirmation, y compris la carte cadeau ; la carte cadeau devient un instrument prépayé (reliquat conservé, cf. ADR 0002) ; la « remise manager » devient une remise réceptionniste bornée à 10 % au code personnel, 20 % avec un code manager ponctuel, motif obligatoire (cf. ADR 0003, 0008) ; un reçu imprimable existe enfin ; l'identification de la cliente devient **conditionnelle** (facultative en vente de produits, obligatoire dès qu'une prestation est au panier) et le scan cliente + scan carte cadeau fusionnent en **un seul dialogue** à un seul champ de code (ADR 0013).
 
 ### Fonctionnalités par écran
 
@@ -356,14 +357,14 @@ Reçu (dans le Comptoir déployé)
   - remise accordée : code manager requis de 10 à 20 % des prestations, refus explicite au-delà de 20 % ; motif demandé après l'encaissement, jamais avant
 - « Encaisser » : désactivé tant que le panier est vide, ou qu'il contient une prestation sans cliente identifiée (ADR 0013), avec un texte d'aide visible en permanence expliquant pourquoi → passe au Paiement
 
-#### Scanner (dialogue unique « Scanner ou saisir une carte », caméra réelle)
+#### Identifier la cliente (dialogue unique, caméra réelle)
 - Atteint du bouton « Scanner » du ticket et de l'icône scan du panneau Remise
-- Cadre de visée ; message d'erreur affiché si la caméra est refusée
-- Deux champs sous le viseur, **les deux identifient la cliente** : **code carte de fidélité** (→ résout la fiche) et **code carte cadeau** (→ résout la détentrice + applique la carte) ; QR scanné routé selon ce que son code résout ; carte cadeau sans détentrice connue → appliquée sans identifier
-- « Simuler la détection » (mode démo) → deux boutons « Fidélité » / « Carte cadeau »
+- Cadre de visée ; la caméra lit les QR toute seule (`BarcodeDetector`)
+- **Un seul champ de code**, routé par ce qu'il résout : fidélité → fiche ; carte cadeau → détentrice + application ; carte cadeau sans détentrice connue → appliquée sans identifier. Le QR lu suit le même routage (en prototype, n'importe quel QR vaut la carte de démo)
+- **Bouton « Annuler »**
 - Jetons **au porteur** : aucune vérification de titulaire, aucun rappel d'identité bloquant au moment de dépenser des points ou un solde cadeau ; garde-fou = nom de la cliente lisible en tête de ticket + « Retirer » sur la ligne cliente pour détacher
-- Caméra refusée en pleine vente → panier et onglet intacts, message rassurant (« Caméra indisponible — saisissez le code ci-dessous »), champs déjà au premier plan
-- Code de fidélité sans correspondance → message clair, jamais un silence
+- Caméra refusée → message discret (« Caméra indisponible — saisissez le code »), le champ reste utilisable ; panier et onglet intacts
+- Code sans correspondance → message clair, jamais un silence
 
 #### Paiement
 - Total à payer affiché en évidence ; sous-total barré + total des remises rappelés si une remise s'applique

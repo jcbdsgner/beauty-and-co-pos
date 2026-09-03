@@ -1,95 +1,126 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Gift, ScanLine, Star } from "lucide-react";
 import { Dialog } from "@/components/ui/molecules/dialog";
-import { CloseButton } from "@/components/ui/atoms/icon-button";
 import { Button } from "@/components/ui/atoms/button";
 import { TextInput } from "@/components/ui/atoms/text-input";
-import { Alert } from "@/components/ui/molecules/alert";
 import { useAppData } from "@/components/providers/app-data-provider";
-import { clientByLoyaltyCode, clientFullName } from "@/lib/data/clientele";
+import { clientByLoyaltyCode } from "@/lib/data/clientele";
 import { carteCadeauByCode } from "@/lib/data/cartes-cadeaux";
 import type { Sale } from "@/lib/data/types";
 
-/** Demo payloads for "Simuler la détection" — one per card kind, always explicitly labelled demo. */
-const DEMO_LOYALTY = "BACO-FID-1042"; // Awa Sarr
-const DEMO_GIFT = "BACO-SOIN-8000"; // carte en montant, détentrice Coumba Thiam
+/** Prototype: no real card carries a resolvable QR payload, so any QR the camera reads stands in
+ *  for this sample loyalty card. Replaced by a real lookup once cards are printed with real codes. */
+const DEMO_QR_FALLBACK = "BACO-FID-1042"; // Awa Sarr
+
+type DetectedBarcode = { rawValue: string };
+type BarcodeDetectorLike = { detect(source: CanvasImageSource): Promise<DetectedBarcode[]> };
 
 /**
  * One dialog, reached from the ticket's "Scanner" and from the Remise panel's scan icon. A real
- * `<video>` feed behind a viewfinder, and below it two code fields — BOTH identify the cliente
- * (ADR 0013):
- *  · carte de fidélité → resolves the fiche via `loyaltyCode`, attaches it;
- *  · carte cadeau → `applyGiftCard` attaches the card's holder fiche (if any) AND applies the
- *    card; a card that resolves no holder still applies (bearer fallback). The applied amount /
- *    covered prestations are then adjusted in the Remise panel.
- * Possession of the card is the authorisation — a bearer credential, never a password. A wrong
- * identification is undone from the ticket ("Retirer" on the cliente row). A scanned QR is
- * routed by what its payload resolves to.
+ * `<video>` feed behind a viewfinder, and a single code field below it — the same field takes a
+ * carte de fidélité code or a carte cadeau code, routed by what the code resolves to (ADR 0013):
+ *  · loyalty code → attaches the cliente fiche;
+ *  · gift-card code → `applyGiftCard` attaches the card's holder (if any) AND applies the card.
+ * The camera reads QR codes on its own (BarcodeDetector where available); in this prototype any
+ * QR read stands in for the sample card. A wrong identification is undone from the ticket
+ * ("Retirer" on the cliente row).
  */
 export function IdentifyDialog({ open, sale, onClose }: { open: boolean; sale: Sale; onClose: () => void }) {
   const { clients, updateSale, applyGiftCard } = useAppData();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [cameraError, setCameraError] = useState(false);
-  const [loyaltyInput, setLoyaltyInput] = useState("");
-  const [giftInput, setGiftInput] = useState("");
+  const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    let stream: MediaStream | null = null;
-    navigator.mediaDevices
-      ?.getUserMedia({ video: true })
-      .then((s) => {
-        stream = s;
-        if (videoRef.current) videoRef.current.srcObject = s;
-        setCameraError(false);
-      })
-      .catch(() => setCameraError(true));
-    return () => stream?.getTracks().forEach((t) => t.stop());
-  }, [open]);
-
   const saleId = sale.id;
-  const identifiedClient = sale.clientId ? clients.find((c) => c.id === sale.clientId) : undefined;
 
-  function identifyByLoyalty(raw: string) {
-    const client = clientByLoyaltyCode(clients, raw);
-    if (!client) {
-      setError("Ce code de fidélité n'est reconnu pour aucune cliente — utilisez la recherche par nom.");
+  function resolve(raw: string, fromScan: boolean) {
+    const value = raw.trim();
+    if (!value) return;
+    setError(null);
+
+    if (carteCadeauByCode(value)) {
+      const res = applyGiftCard(saleId, value);
+      if (res.ok) onClose();
+      else setError(res.message);
       return;
     }
-    updateSale(saleId, { clientId: client.id });
-    onClose();
-  }
 
-  function applyGift(raw: string) {
-    const res = applyGiftCard(saleId, raw);
-    if (res.ok) {
+    const client = clientByLoyaltyCode(clients, value);
+    if (client) {
+      updateSale(saleId, { clientId: client.id });
       onClose();
       return;
     }
-    setError(res.message);
+
+    if (fromScan) {
+      // Any QR read counts in the prototype — fall back to the sample loyalty card.
+      const demo = clientByLoyaltyCode(clients, DEMO_QR_FALLBACK);
+      if (demo) {
+        updateSale(saleId, { clientId: demo.id });
+        onClose();
+        return;
+      }
+    }
+
+    setError("Code non reconnu — vérifiez-le ou cherchez la cliente par son nom.");
   }
 
-  // A scanned QR could be either card — route by what the payload resolves to.
-  function routeScan(raw: string) {
-    if (carteCadeauByCode(raw)) applyGift(raw);
-    else identifyByLoyalty(raw);
-  }
+  // Camera + QR polling. BarcodeDetector is Chromium-only; without it the field is the way in.
+  useEffect(() => {
+    if (!open) return;
+    let stream: MediaStream | null = null;
+    let timer: ReturnType<typeof setInterval> | null = null;
+    let stopped = false;
+
+    const DetectorCtor = (window as unknown as { BarcodeDetector?: new (o: { formats: string[] }) => BarcodeDetectorLike })
+      .BarcodeDetector;
+    const detector = DetectorCtor ? new DetectorCtor({ formats: ["qr_code"] }) : null;
+
+    navigator.mediaDevices
+      ?.getUserMedia({ video: { facingMode: "environment" } })
+      .then((s) => {
+        if (stopped) {
+          s.getTracks().forEach((t) => t.stop());
+          return;
+        }
+        stream = s;
+        if (videoRef.current) videoRef.current.srcObject = s;
+        setCameraError(false);
+        if (!detector) return;
+        timer = setInterval(async () => {
+          const v = videoRef.current;
+          if (!v || v.readyState < 2) return;
+          try {
+            const hits = await detector.detect(v);
+            if (hits[0]?.rawValue) {
+              if (timer) clearInterval(timer);
+              resolve(hits[0].rawValue, true);
+            }
+          } catch {
+            /* a single failed frame is fine — keep polling */
+          }
+        }, 400);
+      })
+      .catch(() => setCameraError(true));
+
+    return () => {
+      stopped = true;
+      if (timer) clearInterval(timer);
+      stream?.getTracks().forEach((t) => t.stop());
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   return (
     <Dialog open={open} labelledBy="identify-title" className="max-w-sm rounded-3xl p-6">
-      <CloseButton onClick={onClose} />
       <h2
         id="identify-title"
         className="font-[family-name:var(--font-heading)] font-semibold text-xl text-[var(--color-gray-900)]"
       >
-        Scanner ou saisir une carte
+        Identifier la cliente
       </h2>
-      <p className="mt-1 text-sm text-[var(--color-gray-500)]">
-        Carte de fidélité ou carte cadeau — l&apos;une comme l&apos;autre identifie la cliente.
-      </p>
 
       <div className="relative mt-4 flex aspect-square items-center justify-center overflow-hidden rounded-2xl bg-[var(--color-gray-900)]">
         <video ref={videoRef} autoPlay muted playsInline className="absolute inset-0 size-full object-cover opacity-80" />
@@ -104,79 +135,36 @@ export function IdentifyDialog({ open, sale, onClose }: { open: boolean; sale: S
         </svg>
       </div>
 
-      {cameraError && (
-        <Alert tone="error" title="Caméra indisponible — saisissez le code ci-dessous." className="mt-4" />
-      )}
+      <p className="mt-3 text-center text-xs text-[var(--color-gray-400)]">
+        {cameraError ? "Caméra indisponible — saisissez le code ci-dessous." : "Présentez le QR de la carte, ou saisissez son code."}
+      </p>
 
-      <p className="mt-4 text-center text-xs font-semibold tracking-wide text-[var(--color-gray-400)] uppercase">Mode démo</p>
-      <div className="mt-2 flex gap-2">
-        <Button variant="dark" size="sm" className="flex-1" onClick={() => routeScan(DEMO_LOYALTY)}>
-          <ScanLine className="size-4" />
-          Fidélité
+      <form
+        className="mt-4 flex gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          resolve(code, false);
+        }}
+      >
+        <TextInput
+          size="compact"
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          placeholder="Code de la carte"
+          autoCapitalize="characters"
+          spellCheck={false}
+          aria-label="Code de la carte de fidélité ou de la carte cadeau"
+        />
+        <Button type="submit" variant="brand" size="sm" className="shrink-0" disabled={!code.trim()}>
+          Valider
         </Button>
-        <Button variant="dark" size="sm" className="flex-1" onClick={() => routeScan(DEMO_GIFT)}>
-          <ScanLine className="size-4" />
-          Carte cadeau
-        </Button>
-      </div>
-
-      <div className="mt-5 flex flex-col gap-4">
-        <section>
-          <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold tracking-wide text-[var(--color-gray-500)] uppercase">
-            <Star className="size-3.5" /> Code carte de fidélité
-          </p>
-          <div className="flex gap-2">
-            <TextInput
-              size="compact"
-              value={loyaltyInput}
-              onChange={(e) => setLoyaltyInput(e.target.value)}
-              placeholder="BACO-FID-0000"
-              autoCapitalize="characters"
-              spellCheck={false}
-            />
-            <Button
-              variant="brand"
-              size="sm"
-              className="shrink-0"
-              disabled={!loyaltyInput.trim()}
-              onClick={() => identifyByLoyalty(loyaltyInput)}
-            >
-              Identifier
-            </Button>
-          </div>
-        </section>
-
-        <section>
-          <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold tracking-wide text-[var(--color-gray-500)] uppercase">
-            <Gift className="size-3.5" /> Code carte cadeau
-          </p>
-          <div className="flex gap-2">
-            <TextInput
-              size="compact"
-              value={giftInput}
-              onChange={(e) => setGiftInput(e.target.value)}
-              placeholder="BACO-GIFT-00000"
-              autoCapitalize="characters"
-              spellCheck={false}
-            />
-            <Button
-              variant="brand"
-              size="sm"
-              className="shrink-0"
-              disabled={!giftInput.trim()}
-              onClick={() => applyGift(giftInput)}
-            >
-              Appliquer
-            </Button>
-          </div>
-        </section>
-      </div>
+      </form>
 
       {error && <p className="mt-3 text-sm font-medium text-destructive">{error}</p>}
 
-      {identifiedClient && (
-        <p className="mt-3 text-sm text-[var(--color-success)]">Cliente identifiée : {clientFullName(identifiedClient)}.</p>
-      )}
+      <Button variant="outline" size="default" className="mt-5 w-full" onClick={onClose}>
+        Annuler
+      </Button>
     </Dialog>
   );
 }
