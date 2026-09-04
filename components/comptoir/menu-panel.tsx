@@ -2,7 +2,20 @@
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
-import { Check, Users } from "lucide-react";
+import {
+  Baby,
+  Bath,
+  Check,
+  Feather,
+  Flower2,
+  Hand,
+  LayoutGrid,
+  type LucideIcon,
+  Scissors,
+  Smile,
+  Sparkles,
+  Users,
+} from "lucide-react";
 import { SegmentedToggle } from "@/components/ui/molecules/segmented-toggle";
 import { SearchInput } from "@/components/ui/atoms/search-input";
 import { PhotoPlaceholder } from "@/components/ui/atoms/photo-placeholder";
@@ -16,13 +29,27 @@ import { cn, formatFcfa } from "@/lib/utils";
 type MenuMode = "services" | "produits" | "boissons";
 
 /**
- * Barre de catégories horizontale (maquette Figma node 130:2) — le rail vertical a disparu.
- * Deux niveaux : la rangée du haut porte les grandes catégories (Coiffure, Manucure / Pédicure,
- * Onglerie…) ; sélectionner une catégorie assez profonde (Coiffure) déplie une seconde rangée de
- * ses sous-catégories. Promouvoir directement les sous-catégories de Coiffure au premier niveau
- * enfouissait toutes les autres grandes catégories hors de vue. En Produits, la rangée du haut
- * porte les gammes Kérastase. Le Bar (Boissons) n'a pas de barre. L'escargot b&co coiffe la barre.
+ * Deux niveaux de catégories. Les grandes catégories (Coiffure, Spa, Onglerie…) sont des blocs
+ * empilés dans un rail vertical à gauche de la zone menu, chacun avec son icône. Sélectionner une
+ * catégorie assez profonde (Coiffure) déplie ses sous-catégories en boutons qui reviennent à la
+ * ligne au-dessus de la grille — aucune barre à faire défiler. Promouvoir directement les
+ * sous-catégories de Coiffure au premier niveau enfouissait toutes les autres grandes catégories.
+ * En Produits, le rail porte les gammes Kérastase. Le Bar (Boissons) n'a pas de rail.
+ * L'escargot b&co coiffe le rail.
  */
+
+/** Icône par grande catégorie de prestations (clé de filtre `c:<id>` ou `all`). */
+const CATEGORY_ICON: Record<string, LucideIcon> = {
+  all: LayoutGrid,
+  "c:coiffure": Scissors,
+  "c:manucure-pedicure": Hand,
+  "c:onglerie": Sparkles,
+  "c:spa": Flower2,
+  "c:soin-du-visage": Smile,
+  "c:epilation": Feather,
+  "c:mini-co-hair": Baby,
+  "c:mini-co-spa": Bath,
+};
 type Filter = {
   key: string;
   label: string;
@@ -143,46 +170,51 @@ export function MenuPanel({ saleId }: { saleId: string }) {
         />
       </div>
 
-      {/* Barre de catégories — pas pour le Bar. Rangée du haut = grandes catégories ; une seconde
-          rangée déplie les sous-catégories de la catégorie choisie (Coiffure). Chaque rangée défile
-          à l'horizontale, dégradé de fondu à droite. */}
-      {topFilters.length > 1 && (
-        <div className="flex shrink-0 flex-col gap-2">
-          <div className="flex items-center gap-3">
+      {/* Corps : rail des grandes catégories à gauche (blocs verticaux + icône), sous-catégories
+          qui reviennent à la ligne + grille à droite. Pas de rail pour le Bar. */}
+      <div className="flex min-h-0 flex-1 gap-4">
+        {topFilters.length > 1 && (
+          <div className="flex w-[184px] shrink-0 flex-col gap-1.5 overflow-y-auto pr-0.5">
             <Image
               src="/images/brand/escargot.svg"
               alt=""
               aria-hidden
               width={64}
               height={64}
-              className="size-16 shrink-0 object-contain"
+              className="mb-1 ml-1 size-12 shrink-0 object-contain"
             />
-            <div className="-mx-1 flex flex-1 gap-2 overflow-x-auto px-1 py-1 [scrollbar-width:thin] [-webkit-mask-image:linear-gradient(to_right,transparent,#000_12px,#000_calc(100%_-_32px),transparent)]">
-              {topFilters.map((f) => {
-                const active = f.key === activeFilter.key || f.key === openParentKey;
-                return (
-                  <button
-                    key={f.key}
-                    type="button"
-                    onClick={() => setFilterKey(f.key)}
-                    aria-pressed={active}
-                    className={cn(
-                      "inline-flex h-14 shrink-0 items-center gap-1.5 rounded-full px-5 text-[15px] font-medium transition active:scale-[0.97]",
-                      active
-                        ? "bg-[var(--core-brand-color)] text-[var(--on-core-brand-color)]"
-                        : "border border-border bg-white text-[var(--color-gray-600)] hover:bg-[var(--color-gray-50)]",
-                    )}
-                  >
-                    {active && <Check aria-hidden className="size-3.5" strokeWidth={2.75} />}
-                    {f.label}
-                  </button>
-                );
-              })}
-            </div>
+            {topFilters.map((f) => {
+              const active = f.key === activeFilter.key || f.key === openParentKey;
+              const Icon = CATEGORY_ICON[f.key];
+              return (
+                <button
+                  key={f.key}
+                  type="button"
+                  onClick={() => setFilterKey(f.key)}
+                  aria-pressed={active}
+                  className={cn(
+                    "flex shrink-0 items-center gap-2.5 rounded-2xl border px-3.5 py-3 text-left text-[13.5px] leading-[1.15] font-medium transition active:scale-[0.98]",
+                    active
+                      ? "border-transparent bg-[var(--core-brand-color)] text-[var(--on-core-brand-color)]"
+                      : "border-border bg-white text-[var(--color-gray-700)] hover:bg-[var(--color-gray-50)]",
+                  )}
+                >
+                  {Icon ? (
+                    <Icon aria-hidden className="size-[18px] shrink-0" strokeWidth={1.75} />
+                  ) : (
+                    <span aria-hidden className="size-[18px] shrink-0" />
+                  )}
+                  <span>{f.label}</span>
+                </button>
+              );
+            })}
           </div>
+        )}
 
+        <div className="flex min-h-0 flex-1 flex-col gap-3">
+          {/* Sous-catégories (Coiffure) — boutons qui reviennent à la ligne, aucun défilement. */}
           {subFilters && (
-            <div className="-mx-1 ml-[76px] flex gap-2 overflow-x-auto px-1 py-1 [scrollbar-width:thin] [-webkit-mask-image:linear-gradient(to_right,transparent,#000_12px,#000_calc(100%_-_32px),transparent)]">
+            <div className="flex shrink-0 flex-wrap gap-2">
               {subFilters.map((f) => {
                 const active = f.key === activeFilter.key;
                 return (
@@ -192,7 +224,7 @@ export function MenuPanel({ saleId }: { saleId: string }) {
                     onClick={() => setFilterKey(f.key)}
                     aria-pressed={active}
                     className={cn(
-                      "inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full px-4 text-[14px] font-medium transition active:scale-[0.97]",
+                      "inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-[13.5px] font-medium transition active:scale-[0.97]",
                       active
                         ? "bg-[var(--brand-taupe-muted)] text-white"
                         : "border border-border bg-white text-[var(--color-gray-600)] hover:bg-[var(--color-gray-50)]",
@@ -205,109 +237,109 @@ export function MenuPanel({ saleId }: { saleId: string }) {
               })}
             </div>
           )}
-        </div>
-      )}
 
-      {/* Grille */}
-      <div className="min-h-0 flex-1 overflow-y-auto pb-2">
-        {filtered.length === 0 ? (
-          <p className="py-16 text-center text-sm text-[var(--color-gray-500)]">
-            {mode === "services"
-              ? "Aucune prestation ne correspond."
-              : mode === "boissons"
-                ? "Aucune boisson ne correspond."
-                : "Aucun produit ne correspond."}
-          </p>
-        ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
-            {filtered.map((item) => {
-              const inCart = countByRef[item.id] ?? 0;
-              const isProduit = !("durationMinutes" in item);
-              // Les boissons du Bar ne portent pas de stock affiché (un bar ne compte pas au verre).
-              const tracksStock = "stock" in item && item.categoryId !== "boissons";
-              const remaining = tracksStock ? item.stock - inCart : null;
-              const soldOut = remaining !== null && remaining <= 0;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  disabled={soldOut}
-                  onClick={() =>
-                    addCartLine(saleId, {
-                      refId: item.id,
-                      kind: isProduit ? "produit" : "service",
-                      name: item.name,
-                      unitPrice: item.price,
-                    })
-                  }
-                  title={item.name}
-                  className={cn(
-                    "relative flex min-h-[120px] flex-col rounded-[14px] border-2 text-left transition active:scale-[0.96]",
-                    soldOut
-                      ? "cursor-not-allowed border-border bg-[var(--color-gray-50)]"
-                      : inCart > 0
-                        ? "border-[var(--brand-taupe-muted)] bg-[var(--board-taupe-plaque)]"
-                        : "border-border bg-white hover:border-[var(--brand-taupe-muted)]/40",
-                  )}
-                >
-                  {inCart > 0 && (
-                    <span className="absolute top-1.5 right-1.5 z-10 flex h-6 min-w-6 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-bold text-primary-foreground tabular-nums shadow-sm">
-                      {inCart}
-                    </span>
-                  )}
-                  {isProduit && (
-                    <div
+          {/* Grille */}
+          <div className="min-h-0 flex-1 overflow-y-auto pb-2">
+            {filtered.length === 0 ? (
+              <p className="py-16 text-center text-sm text-[var(--color-gray-500)]">
+                {mode === "services"
+                  ? "Aucune prestation ne correspond."
+                  : mode === "boissons"
+                    ? "Aucune boisson ne correspond."
+                    : "Aucun produit ne correspond."}
+              </p>
+            ) : (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 2xl:grid-cols-4">
+                {filtered.map((item) => {
+                  const inCart = countByRef[item.id] ?? 0;
+                  const isProduit = !("durationMinutes" in item);
+                  // Les boissons du Bar ne portent pas de stock affiché (un bar ne compte pas au verre).
+                  const tracksStock = "stock" in item && item.categoryId !== "boissons";
+                  const remaining = tracksStock ? item.stock - inCart : null;
+                  const soldOut = remaining !== null && remaining <= 0;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      disabled={soldOut}
+                      onClick={() =>
+                        addCartLine(saleId, {
+                          refId: item.id,
+                          kind: isProduit ? "produit" : "service",
+                          name: item.name,
+                          unitPrice: item.price,
+                        })
+                      }
+                      title={item.name}
                       className={cn(
-                        "relative aspect-[5/3] w-full overflow-hidden rounded-t-[12px] bg-white",
-                        soldOut && "opacity-60 grayscale",
+                        "relative flex min-h-[120px] flex-col rounded-[14px] border-2 text-left transition active:scale-[0.96]",
+                        soldOut
+                          ? "cursor-not-allowed border-border bg-[var(--color-gray-50)]"
+                          : inCart > 0
+                            ? "border-[var(--brand-taupe-muted)] bg-[var(--board-taupe-plaque)]"
+                            : "border-border bg-white hover:border-[var(--brand-taupe-muted)]/40",
                       )}
                     >
-                      {"image" in item && item.image ? (
-                        <Image src={item.image} alt="" fill sizes="200px" className="object-contain p-1.5" />
-                      ) : (
-                        <PhotoPlaceholder className="size-full rounded-none border-0 bg-transparent" label="Photo" />
+                      {inCart > 0 && (
+                        <span className="absolute top-1.5 right-1.5 z-10 flex h-6 min-w-6 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-bold text-primary-foreground tabular-nums shadow-sm">
+                          {inCart}
+                        </span>
                       )}
-                    </div>
-                  )}
-                  <div className="flex flex-1 flex-col justify-between gap-2 p-3.5">
-                    <span className="line-clamp-3 text-[13px] leading-snug font-semibold text-[var(--color-gray-900)]">
-                      {item.name}
-                    </span>
-                    <span className="flex flex-col gap-1">
-                      <span className="flex items-baseline justify-between gap-1.5">
-                        <span className="text-[17px] font-bold text-[var(--button-2-color)] tabular-nums">
-                          {formatFcfa(item.price)}
-                        </span>
-                        <span className="flex items-center gap-1.5 text-[11px] font-medium text-[var(--color-gray-500)] tabular-nums">
-                          {"twoPractitionersEligible" in item && item.twoPractitionersEligible && (
-                            <span title="Réalisable à deux praticiennes" className="flex items-center gap-0.5">
-                              <Users aria-hidden className="size-3" />2
-                            </span>
-                          )}
-                          {"durationMinutes" in item && <span>{item.durationMinutes} min</span>}
-                        </span>
-                      </span>
-                      {remaining !== null && (
-                        <span
+                      {isProduit && (
+                        <div
                           className={cn(
-                            "text-[11px] font-semibold tabular-nums",
-                            soldOut
-                              ? "text-[var(--color-error)]"
-                              : remaining <= 5
-                                ? "text-[var(--board-amber)]"
-                                : "text-[var(--color-gray-500)]",
+                            "relative aspect-[5/3] w-full overflow-hidden rounded-t-[12px] bg-white",
+                            soldOut && "opacity-60 grayscale",
                           )}
                         >
-                          {soldOut ? "Rupture" : `${remaining} en stock`}
-                        </span>
+                          {"image" in item && item.image ? (
+                            <Image src={item.image} alt="" fill sizes="200px" className="object-contain p-1.5" />
+                          ) : (
+                            <PhotoPlaceholder className="size-full rounded-none border-0 bg-transparent" label="Photo" />
+                          )}
+                        </div>
                       )}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
+                      <div className="flex flex-1 flex-col justify-between gap-2 p-3.5">
+                        <span className="line-clamp-3 text-[13px] leading-snug font-semibold text-[var(--color-gray-900)]">
+                          {item.name}
+                        </span>
+                        <span className="flex flex-col gap-1">
+                          <span className="flex items-baseline justify-between gap-1.5">
+                            <span className="text-[17px] font-bold text-[var(--button-2-color)] tabular-nums">
+                              {formatFcfa(item.price)}
+                            </span>
+                            <span className="flex items-center gap-1.5 text-[11px] font-medium text-[var(--color-gray-500)] tabular-nums">
+                              {"twoPractitionersEligible" in item && item.twoPractitionersEligible && (
+                                <span title="Réalisable à deux praticiennes" className="flex items-center gap-0.5">
+                                  <Users aria-hidden className="size-3" />2
+                                </span>
+                              )}
+                              {"durationMinutes" in item && <span>{item.durationMinutes} min</span>}
+                            </span>
+                          </span>
+                          {remaining !== null && (
+                            <span
+                              className={cn(
+                                "text-[11px] font-semibold tabular-nums",
+                                soldOut
+                                  ? "text-[var(--color-error)]"
+                                  : remaining <= 5
+                                    ? "text-[var(--board-amber)]"
+                                    : "text-[var(--color-gray-500)]",
+                              )}
+                            >
+                              {soldOut ? "Rupture" : `${remaining} en stock`}
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
