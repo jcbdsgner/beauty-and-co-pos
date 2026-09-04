@@ -24,7 +24,7 @@ function currentMinute(): number {
 }
 
 /**
- * « Le jour » sur l'Accueil (Figma 156-69) — la journée en cartes chronologiques : une carte par
+ * « Le jour » sur l'Accueil (Figma 156-72) — la journée en cartes chronologiques : une carte par
  * réservation, heure · payeuse · prestations, « Voir les détails » + « Encaisser ». Volontairement
  * plus simple que la `DayList` du Planning (pas de rail, pas de filet « maintenant », pas de
  * dépliage des prestations) : l'Accueil trie, le Planning est l'établi. Elles pourront reconverger

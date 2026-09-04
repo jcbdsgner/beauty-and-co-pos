@@ -2,11 +2,13 @@
 
 import { useRef } from "react";
 import Link from "next/link";
-import { ChevronRight, Printer } from "lucide-react";
+import { ChevronRight, Printer, ScanLine } from "lucide-react";
 import { useReactToPrint } from "react-to-print";
 import { Badge } from "@/components/ui/atoms/badge";
 import { Button } from "@/components/ui/atoms/button";
 import { Card } from "@/components/ui/atoms/card";
+import { IconButton } from "@/components/ui/atoms/icon-button";
+import { TextInput } from "@/components/ui/atoms/text-input";
 import { Legend } from "@/components/ui/board";
 import { GiftCard } from "@/components/shared/gift-card";
 import { useAppData } from "@/components/providers/app-data-provider";
@@ -29,7 +31,7 @@ function daysWaiting(orderedAt: string): number {
 }
 
 /**
- * « Cartes cadeaux » sur l'Accueil (Figma 156-69) — un aperçu compact de la file de préparation
+ * « Cartes cadeaux » sur l'Accueil (Figma 156-72) — un aperçu compact de la file de préparation
  * (docs/adr/0012) : les commandes les plus anciennes en cartes côte à côte, l'action suivante sur
  * chacune (imprimer, puis remettre / expédier). La file complète reste `/cartes-cadeaux`. La
  * section disparaît quand il n'y a rien à préparer — l'Accueil reste calme.
@@ -82,21 +84,22 @@ function GiftCardMiniCard({ order }: { order: GiftCardOrder }) {
   const printed = order.status === "imprimee";
   const isLivraison = order.fulfillment === "livraison";
   const stale = daysWaiting(order.orderedAt) >= STALE_DAYS;
+  // Once a retrait order is printed, the physical card sits at the counter — the header switches
+  // from the order code to the buyer's name (who to look for) and the body from contact details
+  // to the card's own code, ready to check against what's in hand. Livraison never hands anything
+  // over in person, so it keeps showing where the card is headed either way.
+  const showCodeField = printed && !isLivraison;
 
-  const who = isLivraison ? (order.recipientName ?? "Destinataire") : buyerName;
-  const contact = isLivraison
-    ? [order.recipientPhone, order.deliveryAddress].filter(Boolean).join(" · ")
-    : printed && buyer
-      ? `Retrait au comptoir · prévenir au ${buyer.phone}`
-      : "Retrait au comptoir";
+  const recipient = order.recipientName ?? "Destinataire";
+  const identityLine = isLivraison
+    ? [recipient, order.recipientPhone].filter(Boolean).join(" - ")
+    : [buyerName, buyer?.phone].filter(Boolean).join(" - ");
+  const secondaryLine = isLivraison ? order.deliveryAddress : buyer?.email;
 
   return (
     <Card className="relative flex flex-1 basis-[300px] flex-col overflow-hidden">
       {/* reserved amber signal slot — a card that has waited too long holds the edge */}
-      <span
-        aria-hidden
-        className={cn("absolute inset-y-0 left-0 w-[3px]", stale ? "bg-warning" : "bg-transparent")}
-      />
+      <span aria-hidden className={cn("absolute inset-y-0 left-0 w-1", stale ? "bg-warning" : "bg-transparent")} />
 
       {/* Off-screen print target — react-to-print reads the live DOM, so keep it mounted. */}
       <div aria-hidden className="pointer-events-none fixed -left-[9999px] top-0">
@@ -105,42 +108,65 @@ function GiftCardMiniCard({ order }: { order: GiftCardOrder }) {
         </div>
       </div>
 
-      <div className="flex flex-col gap-2.5 p-4">
+      <div className="flex flex-col gap-1 border-b border-base-300 px-4 py-2.5">
         <div className="flex items-center justify-between gap-2">
           <Badge variant={isLivraison ? "info" : "neutral"}>{isLivraison ? "Livraison" : "Retrait"}</Badge>
-          <span className="truncate text-[13px] font-semibold tabular-nums text-base-content/60">{order.code}</span>
-        </div>
-
-        <div className="flex min-w-0 flex-col gap-0.5">
-          <span className="truncate font-[family-name:var(--font-heading)] text-[15px] font-semibold text-base-content">
-            {who}
+          <span className="truncate text-[15px] font-semibold text-base-content">
+            {showCodeField ? buyerName : order.code}
           </span>
-          <span className="line-clamp-2 text-[13px] leading-snug text-base-content/55">{contact}</span>
         </div>
 
-        {printed ? (
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full"
-            onClick={() => markGiftCardOrderHandedOver(order.id)}
-          >
-            {isLivraison ? "Marquer comme expédiée" : "Marquer comme remise"}
-          </Button>
-        ) : (
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full"
-            icon={<Printer className="size-4" />}
-            onClick={() => {
-              print();
-              printGiftCardOrder(order.id);
-            }}
-          >
-            Imprimer
-          </Button>
-        )}
+        <div className="flex flex-col gap-3">
+          {showCodeField ? (
+            <div className="flex items-start gap-3">
+              <TextInput
+                size="compact"
+                readOnly
+                tabIndex={-1}
+                value={order.code}
+                aria-label="Code de la carte cadeau"
+                className="flex-1 text-base-content/50"
+              />
+              <IconButton
+                aria-label="Scanner ou saisir une carte"
+                className="size-11 shrink-0 rounded-full border border-border text-secondary transition active:scale-90 hover:border-secondary hover:bg-accent"
+              >
+                <ScanLine aria-hidden className="size-4" />
+              </IconButton>
+            </div>
+          ) : (
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <span className="truncate text-[15px] font-semibold text-base-content">{identityLine}</span>
+              {secondaryLine && (
+                <span className="line-clamp-2 text-[13px] leading-snug text-base-content/55">{secondaryLine}</span>
+              )}
+            </div>
+          )}
+
+          {printed ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={() => markGiftCardOrderHandedOver(order.id)}
+            >
+              {isLivraison ? "Marquer comme expédiée" : "Marquer comme remis"}
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              icon={<Printer className="size-4" />}
+              onClick={() => {
+                print();
+                printGiftCardOrder(order.id);
+              }}
+            >
+              Imprimer
+            </Button>
+          )}
+        </div>
       </div>
     </Card>
   );

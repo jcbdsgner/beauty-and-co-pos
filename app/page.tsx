@@ -18,7 +18,7 @@ function todayISO(): string {
 }
 
 /**
- * Accueil — l'écran d'atterrissage (Figma 156-69). Deux sections seulement : « Cartes cadeaux »,
+ * Accueil — l'écran d'atterrissage (Figma 156-72). Deux sections seulement : « Cartes cadeaux »,
  * un aperçu de la file de préparation (docs/adr/0012), qui s'efface quand il n'y a rien ; puis
  * « Le jour », la journée en cartes chronologiques par réservation (docs/adr/0014) — une ligne =
  * une payeuse, triée par heure. Plus de bloc de compteurs : la journée est là, la file a son lien.
