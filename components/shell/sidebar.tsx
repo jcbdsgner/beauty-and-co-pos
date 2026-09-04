@@ -36,10 +36,10 @@ export function Sidebar() {
   const [switchOpen, setSwitchOpen] = useState(false);
 
   return (
-    <aside className="flex h-screen w-[260px] shrink-0 flex-col border-r border-[var(--color-gray-200)] bg-white">
+    <aside className="flex h-screen w-[260px] shrink-0 flex-col border-r border-base-300 bg-base-100">
       <div className="flex flex-col items-center gap-2 px-6 pt-8 pb-6">
         <Logo className="relative h-16 w-16 shrink-0" />
-        <p className="text-xs font-semibold tracking-wide text-[var(--color-gray-400)] uppercase">Point de vente</p>
+        <p className="text-xs font-semibold tracking-wide text-base-content/45 uppercase">Point de vente</p>
       </div>
 
       <nav className="flex flex-col gap-1 px-4">
@@ -51,14 +51,14 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-2xl px-4 py-3 text-[15px] font-medium transition active:scale-[0.98]",
-                active ? "bg-[var(--brand-rose-soft)] text-[var(--brand-taupe-muted)]" : "text-[var(--color-gray-500)] hover:bg-[var(--color-gray-50)]",
+                "flex items-center gap-3 rounded-field px-4 py-3 text-[15px] font-medium transition active:scale-[0.98]",
+                active ? "bg-primary/10 font-semibold text-primary" : "text-base-content/60 hover:bg-base-200",
               )}
             >
               <Icon className="size-5" />
               <span className="flex-1">{item.label}</span>
               {item.href === "/messages" && unreadCount > 0 && (
-                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--board-amber)] px-1 text-[11px] font-semibold text-white tabular-nums">
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-warning px-1 text-[11px] font-semibold text-warning-content tabular-nums">
                   {unreadCount}
                 </span>
               )}
@@ -73,12 +73,12 @@ export function Sidebar() {
           trigger={
             <button
               type="button"
-              className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition hover:bg-[var(--color-gray-50)] active:scale-[0.98]"
+              className="flex w-full items-center gap-3 rounded-field px-3 py-2.5 text-left transition hover:bg-base-200 active:scale-[0.98]"
             >
               <Avatar initial={currentUser.initial} size={36} className="bg-accent font-semibold text-secondary" />
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-semibold text-[var(--color-gray-900)]">{currentUser.name}</span>
-                <span className="block text-xs text-[var(--color-gray-500)]">{ROLE_LABEL[currentUser.role]}</span>
+                <span className="block truncate text-sm font-semibold text-base-content">{currentUser.name}</span>
+                <span className="block text-xs text-base-content/55">{ROLE_LABEL[currentUser.role]}</span>
               </span>
             </button>
           }

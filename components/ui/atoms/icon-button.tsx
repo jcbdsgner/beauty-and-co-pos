@@ -24,7 +24,7 @@ export function CloseButton({ className, "aria-label": ariaLabel = "Fermer", ...
     <IconButton
       aria-label={ariaLabel}
       className={cn(
-        "absolute top-2 right-2 size-12 rounded-lg text-xl leading-none text-[var(--color-gray-400)] transition active:scale-90 active:bg-black/[.06] hover:bg-black/[.03] hover:text-[var(--color-gray-500)]",
+        "absolute top-2 right-2 size-12 rounded-field text-xl leading-none text-base-content/45 transition active:scale-90 active:bg-base-content/[.06] hover:bg-base-content/[.03] hover:text-base-content/60",
         className,
       )}
       {...rest}

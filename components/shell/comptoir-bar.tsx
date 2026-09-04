@@ -30,11 +30,11 @@ export function ComptoirBar() {
 
   if (openSales.length === 0) {
     return (
-      <div className="shrink-0 border-t border-[var(--color-gray-200)] bg-[var(--brand-cream)] px-6 py-3">
+      <div className="shrink-0 border-t border-base-300 bg-base-200 px-6 py-3">
         <button
           type="button"
           onClick={() => openNewTab()}
-          className="flex h-[60px] w-full items-center justify-center gap-2.5 rounded-full bg-primary text-[17px] font-semibold text-primary-foreground shadow-[0px_1px_3px_0px_rgba(0,0,0,0.12)] transition active:scale-[0.99] hover:opacity-95"
+          className="btn btn-primary btn-lg w-full text-[17px]"
         >
           Nouvelle vente
         </button>
@@ -50,14 +50,14 @@ export function ComptoirBar() {
     <button
       type="button"
       onClick={deployComptoir}
-      className="flex h-[76px] w-full shrink-0 items-center gap-4 bg-[var(--pos-accent-dark)] px-6 text-left text-white shadow-[0_-8px_30px_rgba(0,0,0,0.12)] transition active:scale-[0.997] hover:brightness-[1.06]"
+      className="flex h-[76px] w-full shrink-0 items-center gap-4 bg-primary px-6 text-left text-primary-content shadow-[0_-8px_30px_rgba(0,0,0,0.12)] transition active:scale-[0.997] hover:brightness-[1.06]"
     >
       <ShoppingCart aria-hidden className="size-5 shrink-0" />
       <span className="flex min-w-0 flex-1 flex-col leading-tight">
         <span className="truncate text-sm font-semibold">
           {activeClient ? clientFullName(activeClient) : "Vente sans cliente"}
         </span>
-        <span className="text-xs text-white/60">
+        <span className="text-xs text-primary-content/70">
           {openSales.length > 1 ? `${openSales.length} ventes ouvertes` : "1 vente ouverte"}
         </span>
       </span>

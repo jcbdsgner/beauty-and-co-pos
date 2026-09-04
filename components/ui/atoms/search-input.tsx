@@ -6,25 +6,14 @@ type SearchInputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, "type"
 };
 
 /**
- * Rounded-full, not the rounded-xl of a form TextInput — search is a different kind of field
- * (filtering a list you're already looking at, not filling out a record), and its own silhouette
- * means a search bar never reads as "a required field I haven't finished." 56px tall.
+ * daisyUI `input` with a leading search glyph. 56px tall — a filter field you tap into, not a
+ * required record field.
  */
 export function SearchInput({ className, ...rest }: SearchInputProps) {
   return (
-    <div
-      className={cn(
-        "flex h-14 items-center gap-2 rounded-full border border-border bg-white px-4 text-[var(--color-gray-400)] transition",
-        "focus-within:border-ring focus-within:ring-4 focus-within:ring-ring/15",
-        className,
-      )}
-    >
-      <Search aria-hidden className="size-4 shrink-0" />
-      <input
-        type="search"
-        className="w-full bg-transparent text-[15px] text-[var(--color-gray-900)] placeholder:text-[var(--color-gray-400)] focus:outline-none"
-        {...rest}
-      />
-    </div>
+    <label className={cn("input input-md w-full items-center gap-2 bg-base-100", className)}>
+      <Search aria-hidden className="size-4 shrink-0 text-base-content/45" />
+      <input type="search" className="grow bg-transparent text-[15px] focus:outline-none" {...rest} />
+    </label>
   );
 }

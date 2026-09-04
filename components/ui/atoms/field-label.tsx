@@ -4,9 +4,9 @@ type FieldLabelVariant = "eyebrow" | "plain";
 
 const VARIANT_CLASS: Record<FieldLabelVariant, string> = {
   // Uppercase tracked eyebrow — a form-section heading (e.g. "Identité", "Points fidélité").
-  eyebrow: "text-xs font-semibold tracking-wide text-[var(--color-gray-500)] uppercase",
+  eyebrow: "text-xs font-semibold tracking-wide text-base-content/55 uppercase",
   // Plain sentence-case label sitting directly above its control (e.g. "Client *", "Service *").
-  plain: "block text-sm font-medium text-[var(--color-gray-600)]",
+  plain: "block text-sm font-medium text-base-content/70",
 };
 
 type FieldLabelProps = {

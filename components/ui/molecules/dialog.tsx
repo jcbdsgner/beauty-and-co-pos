@@ -51,17 +51,17 @@ export function Dialog({ open, labelledBy, role = "dialog", variant = "center", 
             onPointerDownOutside={(e) => e.preventDefault()}
             onInteractOutside={(e) => e.preventDefault()}
             className={cn(
-              "w-full bg-white shadow-[0px_24px_64px_-12px_rgba(0,0,0,0.35)] focus:outline-none",
+              "w-full bg-base-100 text-base-content shadow-[0px_24px_64px_-12px_rgba(0,0,0,0.35)] focus:outline-none",
               "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
               "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
-              sheet ? "rounded-t-[28px] sm:rounded-[28px]" : "rounded-[28px]",
+              sheet ? "rounded-t-[var(--radius-box)] sm:rounded-[var(--radius-box)]" : "rounded-[var(--radius-box)]",
               className,
             )}
           >
             <VisuallyHidden>
               <DialogPrimitive.Title>Boîte de dialogue</DialogPrimitive.Title>
             </VisuallyHidden>
-            {sheet && <div aria-hidden className="mx-auto mt-3 h-1.5 w-10 shrink-0 rounded-full bg-border" />}
+            {sheet && <div aria-hidden className="mx-auto mt-3 h-1.5 w-10 shrink-0 rounded-full bg-base-300" />}
             {children}
           </DialogPrimitive.Content>
         </div>

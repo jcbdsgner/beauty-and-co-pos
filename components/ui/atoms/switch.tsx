@@ -12,9 +12,8 @@ type SwitchProps = {
 };
 
 /**
- * Radix Switch under the hood, but the pressable area is a 56px square (the counter tap target),
- * with the visual track (h-7/w-12) centered inside it — the pill looks the same size relationship
- * as a mouse-first switch while the tappable area never shrinks to it. Taupe = on (emphasis hue).
+ * Radix Switch under the hood; the pressable area is a 56px square (the counter tap target) with
+ * a daisyUI-style track centred inside it. Brand colour = on.
  */
 export function Switch({ checked, onChange, label, disabled, className }: SwitchProps) {
   return (
@@ -31,11 +30,11 @@ export function Switch({ checked, onChange, label, disabled, className }: Switch
       <span
         className={cn(
           "relative h-7 w-12 rounded-full transition-colors",
-          "bg-[var(--color-gray-300)] group-data-[state=checked]:bg-secondary",
-          "group-focus-visible:ring-4 group-focus-visible:ring-ring/25",
+          "bg-base-300 group-data-[state=checked]:bg-primary",
+          "group-focus-visible:outline-2 group-focus-visible:outline-offset-2 group-focus-visible:outline-primary",
         )}
       >
-        <SwitchPrimitive.Thumb className="absolute top-0.5 left-0.5 size-6 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-5" />
+        <SwitchPrimitive.Thumb className="absolute top-0.5 left-0.5 size-6 rounded-full bg-base-100 shadow transition-transform data-[state=checked]:translate-x-5" />
       </span>
     </SwitchPrimitive.Root>
   );

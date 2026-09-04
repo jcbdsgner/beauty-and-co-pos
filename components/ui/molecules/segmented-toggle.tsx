@@ -28,12 +28,12 @@ export function SegmentedToggle({ options, value, onChange, className }: Segment
 
   return (
     <div
-      className={cn("relative grid rounded-full bg-muted p-1", className)}
+      className={cn("relative grid rounded-selector bg-base-200 p-1", className)}
       style={{ gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))` }}
     >
       <span
         aria-hidden
-        className="absolute top-1 bottom-1 rounded-full bg-white shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1)] transition-[left] duration-200 ease-out"
+        className="absolute top-1 bottom-1 rounded-[calc(var(--radius-selector)-0.25rem)] bg-base-100 shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1)] transition-[left] duration-200 ease-out"
         style={{ left: `calc(${index} * (100% / ${count}))`, width: `calc(100% / ${count})` }}
       />
       {options.map((option) => {
@@ -45,8 +45,8 @@ export function SegmentedToggle({ options, value, onChange, className }: Segment
             onClick={() => onChange(option.value)}
             aria-pressed={active}
             className={cn(
-              "relative z-10 flex h-12 items-center justify-center gap-1.5 rounded-full px-5 text-[15px] font-semibold transition active:scale-[0.97] outline-none",
-              active ? "text-[var(--color-gray-900)]" : "text-[var(--color-gray-500)] hover:text-[var(--color-gray-700)]",
+              "relative z-10 flex h-12 items-center justify-center gap-1.5 rounded-selector px-5 text-[15px] font-semibold transition active:scale-[0.97] outline-none",
+              active ? "text-base-content" : "text-base-content/55 hover:text-base-content/80",
             )}
           >
             {option.icon}

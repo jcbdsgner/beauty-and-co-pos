@@ -8,13 +8,13 @@ type SeparatorProps = {
   className?: string;
 };
 
-/** Hairline divider — the same `--color-gray-200` border used everywhere else, exposed as a standalone rule. */
+/** Hairline divider — the same `base-300` rule used everywhere else, exposed standalone. */
 export function Separator({ orientation = "horizontal", className }: SeparatorProps) {
   return (
     <SeparatorPrimitive.Root
       orientation={orientation}
       className={cn(
-        "shrink-0 bg-[var(--color-gray-200)]",
+        "shrink-0 bg-base-300",
         orientation === "horizontal" ? "h-px w-full" : "h-full w-px",
         className,
       )}

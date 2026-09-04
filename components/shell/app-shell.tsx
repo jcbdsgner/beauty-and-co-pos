@@ -10,7 +10,7 @@ import { ComptoirPanel } from "@/components/comptoir/comptoir-panel";
  */
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-screen bg-[var(--brand-cream)]">
+    <div className="flex h-screen bg-base-200">
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="min-h-0 flex-1 overflow-y-auto scroll-pt-24">

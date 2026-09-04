@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 type SkeletonProps = React.HTMLAttributes<HTMLDivElement>;
 
-/** Loading placeholder block — a pulsing flat fill, same rounding language as Card (rounded-2xl by default). */
+/** Loading placeholder block — daisyUI `skeleton` (pulsing flat fill), box radius by default. */
 export function Skeleton({ className, ...rest }: SkeletonProps) {
-  return <div className={cn("animate-pulse rounded-2xl bg-[var(--color-gray-100)]", className)} {...rest} />;
+  return <div className={cn("skeleton rounded-box", className)} {...rest} />;
 }

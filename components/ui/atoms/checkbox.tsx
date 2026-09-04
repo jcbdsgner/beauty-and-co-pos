@@ -15,17 +15,17 @@ type CheckboxProps = {
 };
 
 /**
- * The whole row is the control (min-h-14, padded, presses with active:bg) whether or not a
- * visible label is passed — no bare 20px square to miss on a touchscreen. An unlabeled checkbox
- * still requires a real aria-label.
+ * The whole row is the control (min-h-14, padded, presses with active:bg) — no bare square to
+ * miss on a touchscreen. The box takes daisyUI's `checkbox` shape/size; Radix drives the checked
+ * state.
  */
 export function Checkbox({ checked, onChange, label, "aria-label": ariaLabel, id, disabled, className }: CheckboxProps) {
   return (
     <label
       htmlFor={id}
       className={cn(
-        "flex min-h-14 items-center gap-3 rounded-xl px-1 text-[15px] text-[var(--color-gray-700)] transition",
-        disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer active:bg-[var(--color-gray-50)]",
+        "flex min-h-14 items-center gap-3 rounded-field px-1 text-[15px] text-base-content transition",
+        disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer active:bg-base-200",
         className,
       )}
     >
@@ -36,13 +36,12 @@ export function Checkbox({ checked, onChange, label, "aria-label": ariaLabel, id
         disabled={disabled}
         aria-label={label ? undefined : ariaLabel}
         className={cn(
-          "flex size-7 shrink-0 items-center justify-center rounded-lg border-2 border-[var(--color-gray-300)] bg-white transition",
+          "checkbox checkbox-primary size-7 shrink-0",
           "data-[state=checked]:border-primary data-[state=checked]:bg-primary",
-          "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/25",
         )}
       >
         <CheckboxPrimitive.Indicator>
-          <Check aria-hidden className="size-4 text-primary-foreground" strokeWidth={3} />
+          <Check aria-hidden className="size-4 text-primary-content" strokeWidth={3} />
         </CheckboxPrimitive.Indicator>
       </CheckboxPrimitive.Root>
       {label}

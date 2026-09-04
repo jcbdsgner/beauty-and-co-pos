@@ -6,19 +6,15 @@ type SpinnerProps = {
   label?: string;
 };
 
-const SIZE_CLASS = { sm: "size-4 border-2", md: "size-6 border-2", lg: "size-9 border-[3px]" };
+const SIZE_CLASS = { sm: "loading-sm", md: "loading-md", lg: "loading-lg" };
 
-/** Indeterminate loading indicator — a taupe arc on a soft track, no brand gradient. */
+/** Indeterminate loading indicator — daisyUI `loading loading-spinner`, in the brand colour. */
 export function Spinner({ size = "md", className, label = "Chargement…" }: SpinnerProps) {
   return (
     <span
       role="status"
       aria-label={label}
-      className={cn(
-        "inline-block animate-spin rounded-full border-[var(--color-gray-200)] border-t-[var(--brand-taupe-muted)]",
-        SIZE_CLASS[size],
-        className,
-      )}
+      className={cn("loading loading-spinner text-primary", SIZE_CLASS[size], className)}
     />
   );
 }

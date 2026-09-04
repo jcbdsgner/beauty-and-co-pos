@@ -6,9 +6,9 @@ import { cn } from "@/lib/utils";
 type Tone = "danger" | "neutral" | "success";
 
 const TONE: Record<Tone, { icon: typeof AlertTriangle; iconClass: string; defaultConfirmVariant: ButtonVariant }> = {
-  danger: { icon: AlertTriangle, iconClass: "bg-[var(--color-error-soft)] text-[var(--color-error)]", defaultConfirmVariant: "danger" },
-  neutral: { icon: HelpCircle, iconClass: "bg-[var(--color-gray-100)] text-[var(--color-gray-600)]", defaultConfirmVariant: "dark" },
-  success: { icon: Send, iconClass: "bg-[var(--brand-rose-soft)] text-[var(--brand-taupe-muted)]", defaultConfirmVariant: "brand" },
+  danger: { icon: AlertTriangle, iconClass: "bg-error/10 text-error", defaultConfirmVariant: "danger" },
+  neutral: { icon: HelpCircle, iconClass: "bg-base-200 text-base-content/70", defaultConfirmVariant: "dark" },
+  success: { icon: Send, iconClass: "bg-primary/10 text-primary", defaultConfirmVariant: "brand" },
 };
 
 type ConfirmDialogProps = {
@@ -46,10 +46,10 @@ export function ConfirmDialog({
         <span className={cn("flex size-12 items-center justify-center rounded-full", iconClass)}>
           <Icon aria-hidden className="size-6" />
         </span>
-        <h2 id="confirm-dialog-title" className="font-[family-name:var(--font-heading)] font-semibold text-lg text-[var(--color-gray-900)]">
+        <h2 id="confirm-dialog-title" className="font-[family-name:var(--font-heading)] font-semibold text-lg text-base-content">
           {title}
         </h2>
-        {description && <p className="text-sm text-[var(--color-gray-500)]">{description}</p>}
+        {description && <p className="text-sm text-base-content/60">{description}</p>}
       </div>
       <div className="mt-6 flex gap-3">
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1">

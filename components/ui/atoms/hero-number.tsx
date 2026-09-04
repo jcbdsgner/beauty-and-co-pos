@@ -13,16 +13,16 @@ type HeroNumberProps = {
 export function HeroNumber({ label, value, hint, align = "left", size = "md", className }: HeroNumberProps) {
   return (
     <div className={cn(align === "center" && "text-center", className)}>
-      {label && <p className="text-xs font-semibold tracking-wide text-[var(--color-gray-500)] uppercase">{label}</p>}
+      {label && <p className="text-xs font-semibold tracking-wide text-base-content/55 uppercase">{label}</p>}
       <p
         className={cn(
-          "font-[family-name:var(--font-heading)] font-semibold leading-none text-[var(--color-gray-900)]",
+          "font-[family-name:var(--font-heading)] font-semibold leading-none text-base-content tabular-nums",
           size === "lg" ? "text-5xl" : "text-3xl",
         )}
       >
         {value}
       </p>
-      {hint && <p className="mt-1 text-sm text-[var(--color-gray-500)]">{hint}</p>}
+      {hint && <p className="mt-1 text-sm text-base-content/55">{hint}</p>}
     </div>
   );
 }

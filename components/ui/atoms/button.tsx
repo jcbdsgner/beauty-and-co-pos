@@ -3,9 +3,8 @@ import { ArrowUpRight } from "lucide-react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-// No gradient variant, deliberately — flat brand fills only (DESIGN.md Flat-Fill Rule).
-// Two-hue system: `brand` = rose (light/primary action), `dark` = taupe (the one most-frequent
-// action on a screen). Semantic fills (success/info/danger) stay separate from the accent.
+// daisyUI `btn` base. One brand colour (#886666) carries every accent role, so `brand` and
+// `dark` are the primary / neutral daisyUI buttons; semantic fills stay separate.
 export type ButtonVariant =
   | "brand"
   | "dark"
@@ -16,43 +15,35 @@ export type ButtonVariant =
   | "danger"
   | "danger-outline";
 
-const AMBIENT = "shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]";
-
 export const buttonVariants = cva(
   // Touch-first counter station: every tap gets a felt press (active:scale — hover never
-  // registers on a touchscreen), and a disabled control stays a legible muted fill
-  // (DESIGN.md Disabled-Is-Not-Invisible Rule), never the opacity wash that erodes contrast.
+  // registers on a touchscreen); a disabled control stays a legible muted fill, never an
+  // opacity wash.
   cn(
-    "inline-flex shrink-0 items-center justify-center gap-2 rounded-full font-[450] whitespace-nowrap transition",
-    "outline-none focus-visible:ring-4 focus-visible:ring-ring/20 focus-visible:border-ring",
+    "btn font-semibold normal-case",
+    "focus-visible:outline-2 focus-visible:outline-offset-2",
     "active:scale-[0.97]",
-    "disabled:pointer-events-none disabled:scale-100 disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none disabled:border-transparent",
-    "aria-disabled:pointer-events-none aria-disabled:scale-100 aria-disabled:bg-muted aria-disabled:text-muted-foreground aria-disabled:shadow-none",
+    "disabled:!bg-base-200 disabled:!text-base-content/40 disabled:!border-transparent disabled:!shadow-none disabled:scale-100",
+    "aria-disabled:pointer-events-none aria-disabled:!bg-base-200 aria-disabled:!text-base-content/40 aria-disabled:scale-100",
   ),
   {
     variants: {
       variant: {
-        brand: cn("bg-primary text-primary-foreground hover:opacity-90", AMBIENT),
-        dark: cn("bg-secondary text-secondary-foreground hover:opacity-90", AMBIENT),
-        // taupe text (not the lighter rose #a27576) so an outline button clears WCAG AA on white.
-        outline:
-          "bg-white border border-[var(--brand-color-1)] text-[var(--brand-taupe-muted)] hover:bg-[var(--color-gray-50)]",
-        lilac: cn("bg-[var(--brand-lilac)] text-[var(--text-secondary)] hover:opacity-90", AMBIENT),
-        success: cn("bg-[var(--color-success)] text-white hover:opacity-90", AMBIENT),
-        info: cn("bg-[var(--color-info)] text-white hover:opacity-90", AMBIENT),
-        danger: cn("bg-destructive text-destructive-foreground hover:opacity-90", AMBIENT),
-        "danger-outline":
-          "bg-white border border-border text-destructive hover:bg-[var(--color-error-soft)]",
+        brand: "btn-primary",
+        dark: "btn-neutral",
+        outline: "btn-outline border-base-300 text-secondary hover:!bg-base-200 hover:!border-base-300 hover:!text-secondary",
+        lilac: "border-transparent bg-[var(--brand-lilac)] text-[var(--text-secondary)] hover:brightness-95",
+        success: "btn-success",
+        info: "btn-info",
+        danger: "btn-error",
+        "danger-outline": "btn-outline btn-error",
       },
       size: {
-        // 56px — the default primary tap target for the counter (DESIGN.md → 56 min, 60 ideal).
-        default: "h-14 px-5 text-[17px]",
-        // 60px — hero actions ("Encaisser", "Nouvelle Vente").
-        xl: "h-[60px] px-6 text-[17px]",
-        // 44px — a secondary action packed into a dense row (still the old touch minimum).
-        sm: "h-11 px-4 text-[15px]",
-        // square icon-only, 56px.
-        icon: "size-14",
+        // daisyUI heights scale from --size-field (0.35rem): md ≈ 56px, lg ≈ 67px, sm ≈ 45px.
+        default: "btn-md text-[17px]",
+        xl: "btn-lg text-[17px]",
+        sm: "btn-sm text-[15px]",
+        icon: "btn-md btn-square",
       },
     },
     defaultVariants: { variant: "brand", size: "default" },
