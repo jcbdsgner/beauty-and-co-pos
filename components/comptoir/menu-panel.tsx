@@ -25,12 +25,12 @@ type MenuMode = "services" | "produits" | "boissons";
 
 /**
  * Deux niveaux de catégories. Les grandes catégories (Coiffure, Spa, Onglerie…) sont des blocs
- * empilés dans un rail vertical à gauche de la zone menu, chacun avec son icône. Sélectionner une
- * catégorie assez profonde (Coiffure) déplie ses sous-catégories en boutons qui reviennent à la
- * ligne au-dessus de la grille — aucune barre à faire défiler. Promouvoir directement les
- * sous-catégories de Coiffure au premier niveau enfouissait toutes les autres grandes catégories.
- * En Produits, le rail porte les gammes Kérastase. Le Bar (Boissons) n'a pas de rail.
- * L'escargot b&co coiffe le rail.
+ * carrés en grille 2 colonnes dans un rail vertical à gauche de la zone menu, icône en haut,
+ * libellé en bas. Sélectionner une catégorie assez profonde (Coiffure) déplie ses sous-catégories
+ * en boutons qui reviennent à la ligne au-dessus de la grille — aucune barre à faire défiler.
+ * Promouvoir directement les sous-catégories de Coiffure au premier niveau enfouissait toutes les
+ * autres grandes catégories. En Produits, le rail porte les gammes Kérastase. Le Bar (Boissons)
+ * n'a pas de rail.
  */
 
 /** Icône par grande catégorie de prestations (clé de filtre `c:<id>` ou `all`). Mini&Co reprend
@@ -171,15 +171,7 @@ export function MenuPanel({ saleId }: { saleId: string }) {
           qui reviennent à la ligne + grille à droite. Pas de rail pour le Bar. */}
       <div className="flex min-h-0 flex-1 gap-4">
         {topFilters.length > 1 && (
-          <div className="flex w-[184px] shrink-0 flex-col gap-1.5 overflow-y-auto pr-0.5">
-            <Image
-              src="/images/brand/escargot.svg"
-              alt=""
-              aria-hidden
-              width={64}
-              height={64}
-              className="mb-1 ml-1 size-12 shrink-0 object-contain"
-            />
+          <div className="grid w-[184px] shrink-0 auto-rows-min grid-cols-2 gap-1.5 overflow-y-auto pr-0.5">
             {topFilters.map((f) => {
               const active = f.key === activeFilter.key || f.key === openParentKey;
               const Icon = CATEGORY_ICON[f.key];
@@ -190,16 +182,16 @@ export function MenuPanel({ saleId }: { saleId: string }) {
                   onClick={() => setFilterKey(f.key)}
                   aria-pressed={active}
                   className={cn(
-                    "flex shrink-0 items-center gap-2.5 rounded-2xl border px-3.5 py-3 text-left text-[13.5px] leading-[1.15] font-medium transition active:scale-[0.98]",
+                    "flex aspect-square shrink-0 flex-col items-center justify-center gap-1.5 rounded-2xl border p-2 text-center text-[12px] leading-[1.15] font-medium transition active:scale-[0.98]",
                     active
                       ? "border-transparent bg-primary text-primary-content"
                       : "border-border bg-white text-base-content/80 hover:bg-base-200",
                   )}
                 >
                   {Icon ? (
-                    <Icon className="size-[18px] shrink-0" />
+                    <Icon className="size-5 shrink-0" />
                   ) : (
-                    <span aria-hidden className="size-[18px] shrink-0" />
+                    <span aria-hidden className="size-5 shrink-0" />
                   )}
                   <span>{f.label}</span>
                 </button>
