@@ -25,18 +25,18 @@ export function Accordion({ items, type = "single", className }: AccordionProps)
         <AccordionPrimitive.Item
           key={item.value}
           value={item.value}
-          className="overflow-hidden rounded-2xl border border-[var(--color-gray-200)] bg-white"
+          className="overflow-hidden rounded-2xl border border-base-300 bg-white"
         >
           <AccordionPrimitive.Header>
-            <AccordionPrimitive.Trigger className="group flex min-h-14 w-full items-center justify-between gap-3 p-4 text-left font-semibold text-[var(--color-gray-900)] transition active:bg-[var(--color-gray-50)]">
+            <AccordionPrimitive.Trigger className="group flex min-h-14 w-full items-center justify-between gap-3 p-4 text-left font-semibold text-base-content transition active:bg-base-200">
               {item.title}
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[var(--color-gray-100)] text-[var(--color-gray-500)] transition-transform duration-200 group-data-[state=open]:rotate-45">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-base-200 text-base-content/55 transition-transform duration-200 group-data-[state=open]:rotate-45">
                 <Plus aria-hidden className="size-4" />
               </span>
             </AccordionPrimitive.Trigger>
           </AccordionPrimitive.Header>
           <AccordionPrimitive.Content className="overflow-hidden data-[state=open]:animate-[accordion-down_200ms_ease-out] data-[state=closed]:animate-[accordion-up_200ms_ease-out]">
-            <div className="border-t border-[var(--color-gray-200)] p-4 text-sm text-[var(--color-gray-600)]">{item.content}</div>
+            <div className="border-t border-base-300 p-4 text-sm text-base-content/70">{item.content}</div>
           </AccordionPrimitive.Content>
         </AccordionPrimitive.Item>
       ))}

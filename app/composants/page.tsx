@@ -68,12 +68,12 @@ const COMPONENT_COUNT = 50;
 function Swatch({ name, varName, fg = "#171717" }: { name: string; varName: string; fg?: string }) {
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex h-16 items-end rounded-2xl border border-[var(--color-gray-200)] p-2" style={{ background: `var(${varName})` }}>
+      <div className="flex h-16 items-end rounded-2xl border border-base-300 p-2" style={{ background: `var(${varName})` }}>
         <span className="rounded-full bg-white/70 px-2 py-0.5 text-[10px] font-medium" style={{ color: fg }}>
           {varName}
         </span>
       </div>
-      <p className="text-xs font-medium text-[var(--color-gray-600)]">{name}</p>
+      <p className="text-xs font-medium text-base-content/70">{name}</p>
     </div>
   );
 }
@@ -81,14 +81,14 @@ function Swatch({ name, varName, fg = "#171717" }: { name: string; varName: stri
 function Specimen({ label, sample, className }: { label: string; sample: string; className: string }) {
   return (
     <div className="flex flex-col gap-1">
-      <p className="text-xs font-semibold tracking-wide text-[var(--color-gray-400)] uppercase">{label}</p>
+      <p className="text-xs font-semibold tracking-wide text-base-content/45 uppercase">{label}</p>
       <p className={className}>{sample}</p>
     </div>
   );
 }
 
 function SubHeading({ children }: { children: React.ReactNode }) {
-  return <h3 className="font-[family-name:var(--font-heading)] font-bold text-lg text-[var(--color-gray-900)]">{children}</h3>;
+  return <h3 className="font-[family-name:var(--font-heading)] font-bold text-lg text-base-content">{children}</h3>;
 }
 
 type Row = { id: string; name: string; category: string; stock: number; price: string };
@@ -98,7 +98,7 @@ const TABLE_ROWS: Row[] = [
   { id: "3", name: "Crème Hydratante Visage", category: "Soins", stock: 0, price: "15 500 F" },
 ];
 const TABLE_COLUMNS: DataTableColumn<Row>[] = [
-  { key: "name", header: "Produit", render: (r) => <span className="font-medium text-[var(--color-gray-900)]">{r.name}</span> },
+  { key: "name", header: "Produit", render: (r) => <span className="font-medium text-base-content">{r.name}</span> },
   { key: "category", header: "Catégorie", render: (r) => r.category },
   { key: "stock", header: "Stock", align: "right", render: (r) => (r.stock === 0 ? <Badge variant="error">Rupture</Badge> : r.stock) },
   { key: "price", header: "Prix", align: "right", render: (r) => <span className="font-semibold">{r.price}</span> },
@@ -135,12 +135,12 @@ export default function DesignSystemPage() {
             action={<Badge variant="dark">v3 · base shadcn · {COMPONENT_COUNT} composants</Badge>}
           />
 
-          <nav className="sticky top-0 z-10 -mx-8 flex gap-2 border-b border-[var(--color-gray-200)] bg-[var(--brand-cream)]/95 px-8 py-3 backdrop-blur-sm">
+          <nav className="sticky top-0 z-10 -mx-8 flex gap-2 border-b border-base-300 bg-base-200/95 px-8 py-3 backdrop-blur-sm">
             {SECTIONS.map((s) => (
               <a
                 key={s.id}
                 href={`#${s.id}`}
-                className="rounded-full px-4 py-2 text-sm font-medium text-[var(--color-gray-600)] transition hover:bg-[var(--color-gray-100)]"
+                className="rounded-full px-4 py-2 text-sm font-medium text-base-content/70 transition hover:bg-base-200"
               >
                 {s.label}
               </a>
@@ -173,11 +173,11 @@ export default function DesignSystemPage() {
             <Card className="p-6">
               <FieldLabel className="mb-4">Typographie</FieldLabel>
               <div className="flex flex-col gap-4">
-                <Specimen label="Titre écran · Cabinet Grotesk 700" sample="Bonjour, Propriétaire" className="font-[family-name:var(--font-heading)] font-bold text-3xl text-[var(--color-gray-900)]" />
-                <Specimen label="Accent · Benedict" sample="privé" className="font-[family-name:var(--font-display)] text-2xl text-[var(--brand-taupe-muted)]" />
-                <Specimen label="Titre section · Cabinet Grotesk 600" sample="Gestion Produits" className="text-xl font-semibold text-[var(--color-gray-900)]" />
-                <Specimen label="Corps · Cabinet Grotesk 450" sample="Trouvez un client existant ou ajoutez un nouveau profil." className="text-[15px] text-[var(--color-gray-700)]" />
-                <Specimen label="Label · uppercase tracked" sample="REVENUS DU JOUR" className="text-xs font-semibold tracking-wide text-[var(--color-gray-500)] uppercase" />
+                <Specimen label="Titre écran · Cabinet Grotesk 700" sample="Bonjour, Propriétaire" className="font-[family-name:var(--font-heading)] font-bold text-3xl text-base-content" />
+                <Specimen label="Accent · Benedict" sample="privé" className="font-[family-name:var(--font-display)] text-2xl text-primary" />
+                <Specimen label="Titre section · Cabinet Grotesk 600" sample="Gestion Produits" className="text-xl font-semibold text-base-content" />
+                <Specimen label="Corps · Cabinet Grotesk 450" sample="Trouvez un client existant ou ajoutez un nouveau profil." className="text-[15px] text-base-content/80" />
+                <Specimen label="Label · uppercase tracked" sample="REVENUS DU JOUR" className="text-xs font-semibold tracking-wide text-base-content/55 uppercase" />
               </div>
             </Card>
           </section>
@@ -192,7 +192,7 @@ export default function DesignSystemPage() {
                 <FieldLabel>Logo</FieldLabel>
               </div>
               <div className="flex flex-col items-center gap-2">
-                <Avatar initial="P" size={56} className="bg-[var(--brand-rose-soft)] text-lg font-semibold text-[var(--brand-taupe-muted)]" />
+                <Avatar initial="P" size={56} className="bg-accent text-lg font-semibold text-primary" />
                 <FieldLabel>Avatar</FieldLabel>
               </div>
               <div className="flex flex-col items-center gap-2">
@@ -217,12 +217,12 @@ export default function DesignSystemPage() {
                 </Button>
               </div>
               <div className="flex flex-wrap items-center gap-3">
-                <IconButton aria-label="Notifications" className="size-10 rounded-full text-[var(--color-gray-500)] hover:bg-[var(--color-gray-100)]">
+                <IconButton aria-label="Notifications" className="size-10 rounded-full text-base-content/55 hover:bg-base-200">
                   <BellIcon />
                 </IconButton>
                 <RoundStepButton direction="decrement" onClick={() => {}} ariaLabel="Diminuer" />
                 <RoundStepButton direction="increment" onClick={() => {}} ariaLabel="Augmenter" />
-                <div className="relative h-10 w-40 rounded-2xl border border-[var(--color-gray-200)]">
+                <div className="relative h-10 w-40 rounded-2xl border border-base-300">
                   <CloseButton className="static translate-0" />
                 </div>
                 <Tooltip content="Action rapide">
@@ -302,7 +302,7 @@ export default function DesignSystemPage() {
               </div>
             </Card>
 
-            <Card className="flex flex-wrap gap-4 p-6 text-[var(--brand-taupe-muted)]">
+            <Card className="flex flex-wrap gap-4 p-6 text-primary">
               <HomeIcon />
               <CalendarIcon />
               <PeopleIcon />
@@ -344,9 +344,9 @@ export default function DesignSystemPage() {
                 value={tabValue}
                 onChange={setTabValue}
                 items={[
-                  { value: "apercu", label: "Aperçu", content: <p className="text-sm text-[var(--color-gray-600)]">Contenu de l&apos;onglet Aperçu.</p> },
-                  { value: "historique", label: "Historique", content: <p className="text-sm text-[var(--color-gray-600)]">Contenu de l&apos;onglet Historique.</p> },
-                  { value: "notes", label: "Notes", content: <p className="text-sm text-[var(--color-gray-600)]">Contenu de l&apos;onglet Notes.</p> },
+                  { value: "apercu", label: "Aperçu", content: <p className="text-sm text-base-content/70">Contenu de l&apos;onglet Aperçu.</p> },
+                  { value: "historique", label: "Historique", content: <p className="text-sm text-base-content/70">Contenu de l&apos;onglet Historique.</p> },
+                  { value: "notes", label: "Notes", content: <p className="text-sm text-base-content/70">Contenu de l&apos;onglet Notes.</p> },
                 ]}
               />
             </Card>
@@ -405,11 +405,11 @@ export default function DesignSystemPage() {
             <Card className="flex flex-wrap items-center gap-4 p-6">
               <FieldLabel>Popover, DropdownMenu, Dialog, ConfirmDialog, Toast</FieldLabel>
               <Popover trigger={<Button variant="outline">Ouvrir Popover</Button>}>
-                <p className="w-48 text-sm text-[var(--color-gray-700)]">Contenu flottant ancré au déclencheur.</p>
+                <p className="w-48 text-sm text-base-content/80">Contenu flottant ancré au déclencheur.</p>
               </Popover>
               <DropdownMenu
                 trigger={
-                  <IconButton aria-label="Actions" className="size-10 rounded-full border border-[var(--color-gray-200)] text-[var(--color-gray-600)] hover:bg-[var(--color-gray-50)]">
+                  <IconButton aria-label="Actions" className="size-10 rounded-full border border-base-300 text-base-content/70 hover:bg-base-200">
                     <Copy className="size-4" />
                   </IconButton>
                 }
@@ -534,8 +534,8 @@ export default function DesignSystemPage() {
                   footer={
                     <>
                       <div className="mb-3 flex items-end justify-between">
-                        <span className="text-xs font-semibold tracking-wide text-[var(--color-gray-500)] uppercase">Total</span>
-                        <span className="font-[family-name:var(--font-heading)] font-semibold text-2xl text-[var(--color-gray-900)]">45 000 F</span>
+                        <span className="text-xs font-semibold tracking-wide text-base-content/55 uppercase">Total</span>
+                        <span className="font-[family-name:var(--font-heading)] font-semibold text-2xl text-base-content">45 000 F</span>
                       </div>
                       <Button variant="brand" className="w-full">
                         Encaisser
@@ -543,7 +543,7 @@ export default function DesignSystemPage() {
                     </>
                   }
                 >
-                  <div className="flex flex-col gap-3 text-sm text-[var(--color-gray-700)]">
+                  <div className="flex flex-col gap-3 text-sm text-base-content/80">
                     <p>Coloration — 25 000 F</p>
                     <Separator />
                     <p>Manucure russe — 20 000 F</p>
@@ -585,7 +585,7 @@ export default function DesignSystemPage() {
 
             <Card className="p-6">
               <FieldLabel className="mb-3">BoardHeader (avec retour + action)</FieldLabel>
-              <div className="rounded-2xl border border-dashed border-[var(--color-gray-200)] p-4">
+              <div className="rounded-2xl border border-dashed border-base-300 p-4">
                 <BoardHeader
                   section="Gestion Produits"
                   backHref="#"
@@ -602,10 +602,10 @@ export default function DesignSystemPage() {
       </div>
 
       <Dialog open={dialogOpen} labelledBy="showcase-dialog-title" className="max-w-md rounded-3xl p-6">
-        <h2 id="showcase-dialog-title" className="font-[family-name:var(--font-heading)] font-semibold text-xl text-[var(--color-gray-900)]">
+        <h2 id="showcase-dialog-title" className="font-[family-name:var(--font-heading)] font-semibold text-xl text-base-content">
           Dialog
         </h2>
-        <p className="mt-2 text-sm text-[var(--color-gray-600)]">
+        <p className="mt-2 text-sm text-base-content/70">
           Coquille structurelle partagée par toutes les modales de l&apos;app — recentrée, avec overlay et aria wiring.
         </p>
         <div className="mt-6 flex gap-3">

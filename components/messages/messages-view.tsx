@@ -42,9 +42,9 @@ function MessagesViewInner() {
       {selectedConv ? (
         <ConversationPanel key={selectedConv.id} conversationId={selectedConv.id} />
       ) : (
-        <div className="flex h-full flex-col items-center justify-center gap-2 rounded-[14px] border border-[var(--board-groove)] bg-white text-center">
+        <div className="flex h-full flex-col items-center justify-center gap-2 rounded-[14px] border border-base-300 bg-white text-center">
           <Legend>Aucune conversation ouverte</Legend>
-          <p className="max-w-xs text-sm text-[var(--color-gray-500)]">
+          <p className="max-w-xs text-sm text-base-content/55">
             Choisissez une conversation dans la liste pour voir le fil et répondre à la cliente.
           </p>
         </div>

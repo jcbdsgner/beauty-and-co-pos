@@ -82,9 +82,9 @@ export default function RecapVentesPage() {
       render: (s) => {
         const { totalDiscount } = computeTotals(s);
         return totalDiscount > 0 ? (
-          <span className="tabular-nums text-[var(--color-success)]">−{formatFcfa(totalDiscount)}</span>
+          <span className="tabular-nums text-success">−{formatFcfa(totalDiscount)}</span>
         ) : (
-          <span className="text-[var(--color-gray-300)]">—</span>
+          <span className="text-base-content/30">—</span>
         );
       },
     },
@@ -92,7 +92,7 @@ export default function RecapVentesPage() {
       key: "total",
       header: "Total",
       align: "right",
-      render: (s) => <span className="font-semibold text-[var(--button-2-color)] tabular-nums">{formatFcfa(computeTotals(s).total)}</span>,
+      render: (s) => <span className="font-semibold text-primary tabular-nums">{formatFcfa(computeTotals(s).total)}</span>,
     },
   ];
 
@@ -116,30 +116,30 @@ export default function RecapVentesPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="rounded-2xl border border-border bg-white p-5">
-              <p className="mb-3 text-xs font-semibold tracking-wide text-[var(--color-gray-500)] uppercase">Par mode de paiement</p>
+              <p className="mb-3 text-xs font-semibold tracking-wide text-base-content/55 uppercase">Par mode de paiement</p>
               <ul className="flex flex-col gap-2">
                 {MODE_ORDER.filter((m) => byMode.has(m)).map((m) => (
                   <li key={m} className="flex items-center justify-between text-sm">
-                    <span className="text-[var(--color-gray-700)]">{MODE_LABEL[m]}</span>
-                    <span className="font-semibold text-[var(--color-gray-900)] tabular-nums">{formatFcfa(byMode.get(m) ?? 0)}</span>
+                    <span className="text-base-content/80">{MODE_LABEL[m]}</span>
+                    <span className="font-semibold text-base-content tabular-nums">{formatFcfa(byMode.get(m) ?? 0)}</span>
                   </li>
                 ))}
               </ul>
             </div>
             <div className="rounded-2xl border border-border bg-white p-5">
-              <p className="mb-3 text-xs font-semibold tracking-wide text-[var(--color-gray-500)] uppercase">Par praticienne</p>
+              <p className="mb-3 text-xs font-semibold tracking-wide text-base-content/55 uppercase">Par praticienne</p>
               {byStaff.size === 0 ? (
-                <p className="text-sm text-[var(--color-gray-400)]">Aucune vente sur la période.</p>
+                <p className="text-sm text-base-content/45">Aucune vente sur la période.</p>
               ) : (
                 <ul className="flex flex-col gap-2">
                   {[...byStaff.entries()]
                     .sort((a, b) => b[1] - a[1])
                     .map(([id, amount]) => (
                       <li key={id} className="flex items-center justify-between text-sm">
-                        <span className="text-[var(--color-gray-700)]">
+                        <span className="text-base-content/80">
                           {id === "__none__" ? "Sans rendez-vous" : (praticiennes.find((p) => p.id === id)?.name ?? "—")}
                         </span>
-                        <span className="font-semibold text-[var(--color-gray-900)] tabular-nums">{formatFcfa(Math.round(amount))}</span>
+                        <span className="font-semibold text-base-content tabular-nums">{formatFcfa(Math.round(amount))}</span>
                       </li>
                     ))}
                 </ul>
@@ -152,7 +152,7 @@ export default function RecapVentesPage() {
       )}
 
       {abandonnees.length > 0 && (
-        <p className="flex items-center gap-2 text-sm text-[var(--color-gray-500)]">
+        <p className="flex items-center gap-2 text-sm text-base-content/55">
           <Badge variant="neutral">{abandonnees.length}</Badge>
           vente{abandonnees.length > 1 ? "s" : ""} abandonnée{abandonnees.length > 1 ? "s" : ""} — non comptée{abandonnees.length > 1 ? "s" : ""} dans le total encaissé.
         </p>

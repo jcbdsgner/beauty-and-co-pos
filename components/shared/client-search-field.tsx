@@ -68,12 +68,12 @@ export function ClientSearchField({ selectedClientId, onSelect, placeholder = "C
             className={cn(
               "flex h-14 w-full items-center gap-2 rounded-xl border px-4 text-left text-[15px] transition outline-none focus-visible:ring-4 focus-visible:ring-ring/15",
               selected
-                ? "border-border bg-white text-[var(--color-gray-900)]"
-                : "border-dashed border-secondary/40 bg-white text-[var(--color-gray-400)]",
+                ? "border-border bg-white text-base-content"
+                : "border-dashed border-secondary/40 bg-white text-base-content/45",
               className,
             )}
           >
-            <Search aria-hidden className="size-4 shrink-0 text-[var(--color-gray-400)]" />
+            <Search aria-hidden className="size-4 shrink-0 text-base-content/45" />
             {selected ? clientFullName(selected) : placeholder}
             {required && !selected && <span className="text-destructive">*</span>}
           </button>
@@ -90,7 +90,7 @@ export function ClientSearchField({ selectedClientId, onSelect, placeholder = "C
             <CommandInput value={query} onValueChange={setQuery} placeholder="Nom ou téléphone…" autoFocus />
             <CommandList>
               {results.length === 0 ? (
-                <p className="px-4 py-6 text-center text-sm text-[var(--color-gray-500)]">Aucune cliente trouvée.</p>
+                <p className="px-4 py-6 text-center text-sm text-base-content/55">Aucune cliente trouvée.</p>
               ) : (
                 results.map((c) => (
                   <CommandItem
@@ -126,7 +126,7 @@ export function ClientSearchField({ selectedClientId, onSelect, placeholder = "C
                 {trimmedQuery ? <>Ajouter «&nbsp;{trimmedQuery}&nbsp;» comme nouvelle cliente</> : "Créer une nouvelle cliente"}
               </CommandItem>
               {clients.length > 0 && query.trim() === "" && (
-                <p className="mt-1.5 px-3 pb-1 text-xs text-[var(--color-gray-400)]">{clients.length} clientes au répertoire.</p>
+                <p className="mt-1.5 px-3 pb-1 text-xs text-base-content/45">{clients.length} clientes au répertoire.</p>
               )}
             </CommandList>
           </Command>

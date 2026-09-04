@@ -4,8 +4,8 @@ import type { RelanceChannel } from "@/lib/data/types";
 
 const GLYPH: Record<RelanceChannel, { Icon: typeof Mail; color: string; label: string }> = {
   whatsapp: { Icon: MessageCircle, color: "text-[#25D366]", label: "WhatsApp" },
-  sms: { Icon: MessageSquare, color: "text-[var(--color-info)]", label: "SMS" },
-  email: { Icon: Mail, color: "text-[var(--color-gray-400)]", label: "Email" },
+  sms: { Icon: MessageSquare, color: "text-info", label: "SMS" },
+  email: { Icon: Mail, color: "text-base-content/45", label: "Email" },
 };
 
 /** Which channel a thread runs on — a coloured lucide glyph, reused in the inbox row and the

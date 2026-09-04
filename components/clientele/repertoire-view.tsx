@@ -43,8 +43,8 @@ function TierFlag({ tier }: { tier: Cliente["tier"] }) {
     <span
       className={
         tier === "vip"
-          ? "rounded-[6px] bg-[var(--brand-lilac)] px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.08em] text-[var(--text-secondary)]"
-          : "rounded-[6px] bg-[var(--brand-taupe-muted)] px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.08em] text-white"
+          ? "rounded-[6px] bg-[var(--brand-lilac)] px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.08em] text-base-content/70"
+          : "rounded-[6px] bg-primary px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.08em] text-white"
       }
     >
       {TIER_LABEL[tier]}
@@ -129,7 +129,7 @@ export function RepertoireView() {
         }
         actions={
           !opts?.trailing && (
-            <span className="text-sm font-semibold tabular-nums text-[var(--color-gray-900)]">{formatFcfa(c.totalSpent)}</span>
+            <span className="text-sm font-semibold tabular-nums text-base-content">{formatFcfa(c.totalSpent)}</span>
           )
         }
         href={`/clientele/${c.id}`}

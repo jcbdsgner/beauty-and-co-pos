@@ -32,7 +32,9 @@
   --color-secondary-content: #ffffff;
   --color-accent: #f3eeee;
   --color-accent-content: #5c4444;
-  --color-neutral: #2a2320;
+  /* dark chrome (toasts, tooltips, the one dark CTA) stays in the warm taupe family —
+     no cold near-black, no second hue. */
+  --color-neutral: #3a2d2d;
   --color-neutral-content: #f6f3f2;
 
   /* Status — meaning stays conventional, amber = the single "needs you" signal */
@@ -111,8 +113,8 @@
   --color-gray-50: #f9fafb;
 
   /* « Le Tableau » chrome kept alive for Planning / Fiche / sheets until their pass */
-  --board-slate: #2a2320;
-  --board-slate-line: #4a3f3a;
+  --board-slate: #3a2d2d;
+  --board-slate-line: #574545;
   --board-groove: #e6dedd;
   --board-amber: #b5590a;
   --board-amber-soft: #fdf0e3;

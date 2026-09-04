@@ -36,13 +36,13 @@ export function SaleTabsBar() {
               className={cn(
                 "group flex h-14 shrink-0 items-center gap-1.5 rounded-t-2xl px-4 text-sm font-semibold transition",
                 active
-                  ? "relative z-10 -mb-0.5 bg-[var(--brand-cream)] text-[var(--color-gray-900)]"
+                  ? "relative z-10 -mb-0.5 bg-base-200 text-base-content"
                   : "bg-white/10 text-white/70 hover:bg-white/15 hover:text-white",
               )}
             >
               <button type="button" onClick={() => switchTab(tab.id)} className="flex flex-col items-start leading-tight active:scale-[0.97]">
                 <span>{tab.label}</span>
-                <span className={cn("text-[11px] font-medium tabular-nums", active ? "text-[var(--color-gray-500)]" : "text-white/70")}>
+                <span className={cn("text-[11px] font-medium tabular-nums", active ? "text-base-content/55" : "text-white/70")}>
                   {total > 0 ? formatFcfa(total) : "—"}
                 </span>
               </button>
@@ -53,7 +53,7 @@ export function SaleTabsBar() {
                 className={cn(
                   "flex size-11 shrink-0 items-center justify-center rounded-full transition active:scale-90",
                   active
-                    ? "text-[var(--color-gray-400)] hover:bg-[var(--color-error-soft)] hover:text-destructive"
+                    ? "text-base-content/45 hover:bg-error/10 hover:text-destructive"
                     : "text-white/60 opacity-0 group-hover:opacity-100 hover:bg-white/10",
                 )}
               >

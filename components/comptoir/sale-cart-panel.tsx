@@ -43,10 +43,10 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
     <div className="flex h-full flex-col overflow-hidden rounded-[14px] border border-border bg-white">
       {/* Head */}
       <div className="relative shrink-0 overflow-hidden border-b border-border px-5 pt-5 pb-4">
-        <BrandMark className="pointer-events-none absolute -top-8 -right-6 size-32 text-[var(--brand-rose-soft)]" />
+        <BrandMark className="pointer-events-none absolute -top-8 -right-6 size-32 text-accent" />
         <div className="relative flex items-baseline justify-between">
-          <p className="font-[family-name:var(--font-heading)] font-bold text-lg text-[var(--color-gray-900)]">Ticket</p>
-          <span className="text-xs font-semibold tracking-[0.12em] text-[var(--color-gray-500)] uppercase tabular-nums">
+          <p className="font-[family-name:var(--font-heading)] font-bold text-lg text-base-content">Ticket</p>
+          <span className="text-xs font-semibold tracking-[0.12em] text-base-content/55 uppercase tabular-nums">
             {itemCount} {itemCount > 1 ? "articles" : "article"}
           </span>
         </div>
@@ -60,12 +60,12 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
               </span>
               <span className="min-w-0 flex-1">
                 <span className="flex items-center gap-1.5">
-                  <span className="truncate font-[family-name:var(--font-heading)] font-semibold text-[15px] text-[var(--color-gray-900)]">
+                  <span className="truncate font-[family-name:var(--font-heading)] font-semibold text-[15px] text-base-content">
                     {clientFullName(client)}
                   </span>
                   {client.tier && <Badge {...TIER_BADGE[client.tier]}>{TIER_BADGE[client.tier].label}</Badge>}
                 </span>
-                <span className="block truncate text-xs text-[var(--color-gray-500)]">{client.phone}</span>
+                <span className="block truncate text-xs text-base-content/55">{client.phone}</span>
               </span>
               <button
                 type="button"
@@ -81,7 +81,7 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
                 <Button
                   variant="outline"
                   size="default"
-                  className={cn("flex-1", needsClient && "border-[var(--board-amber)] text-[var(--board-amber)]")}
+                  className={cn("flex-1", needsClient && "border-warning text-warning")}
                   icon={<ScanLine className="size-4" />}
                   onClick={onOpenScanner}
                 >
@@ -97,8 +97,8 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
                       className={cn(
                         "flex size-14 shrink-0 items-center justify-center rounded-full border bg-white transition active:scale-[0.97]",
                         needsClient
-                          ? "border-[var(--board-amber)] text-[var(--board-amber)]"
-                          : "border-[var(--brand-color-1)] text-[var(--brand-taupe-muted)] hover:bg-[var(--color-gray-50)]",
+                          ? "border-warning text-warning"
+                          : "border-base-300 text-primary hover:bg-base-200",
                       )}
                     >
                       <Search aria-hidden className="size-5" />
@@ -107,19 +107,19 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
                 />
               </div>
               {needsClient && (
-                <p className="text-xs font-medium text-[var(--board-amber)]">
+                <p className="text-xs font-medium text-warning">
                   Cliente requise : le panier contient une prestation.
                 </p>
               )}
               {clientOptional && (
-                <p className="text-xs text-[var(--color-gray-500)]">
+                <p className="text-xs text-base-content/55">
                   Cliente facultative — à ajouter pour la fidélité ou une carte cadeau.
                 </p>
               )}
             </div>
           )}
           {originReservation && (
-            <p className="mt-2 rounded-lg bg-[var(--color-success-soft)] px-3 py-1.5 text-xs font-medium text-[var(--color-success)]">
+            <p className="mt-2 rounded-lg bg-success/10 px-3 py-1.5 text-xs font-medium text-success">
               {originReservation.rendezVous.filter((rv) => rv.status !== "annule").length > 1
                 ? "Prestations de la réservation ajoutées."
                 : "Prestation du rendez-vous ajoutée."}
@@ -133,8 +133,8 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
         {isEmpty ? (
           <div className="flex h-full flex-col items-center justify-center gap-2 py-10 text-center">
             <BrandMark className="size-10 text-border" />
-            <p className="text-sm font-medium text-[var(--color-gray-500)]">Aucune prestation</p>
-            <p className="text-xs text-[var(--color-gray-500)]">Touchez une prestation dans le menu.</p>
+            <p className="text-sm font-medium text-base-content/55">Aucune prestation</p>
+            <p className="text-xs text-base-content/55">Touchez une prestation dans le menu.</p>
           </div>
         ) : (
           <>
@@ -145,16 +145,16 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
               return (
               <li key={line.id} className="animate-line-in py-3.5">
                 {line.kind === "produit" && line.qty >= maxQty && (
-                  <p className="mb-1 text-xs font-medium text-[var(--board-amber)]">Stock atteint — {maxQty} en rayon.</p>
+                  <p className="mb-1 text-xs font-medium text-warning">Stock atteint — {maxQty} en rayon.</p>
                 )}
                 <div className="flex items-start justify-between gap-3">
                   <span className="min-w-0 flex-1">
-                    <span className="block text-[15px] font-semibold text-[var(--color-gray-900)]">{line.name}</span>
+                    <span className="block text-[15px] font-semibold text-base-content">{line.name}</span>
                     {line.beneficiary && (
-                      <span className="block text-xs font-medium text-[var(--brand-taupe-muted)]">pour {line.beneficiary}</span>
+                      <span className="block text-xs font-medium text-primary">pour {line.beneficiary}</span>
                     )}
                   </span>
-                  <span className="shrink-0 text-[15px] font-semibold text-[var(--button-2-color)] tabular-nums">
+                  <span className="shrink-0 text-[15px] font-semibold text-primary tabular-nums">
                     {formatFcfa(line.unitPrice * line.qty)}
                   </span>
                 </div>
@@ -167,17 +167,17 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
                       onClick={() => updateCartQty(sale.id, line.id, Math.max(1, line.qty - 1))}
                       disabled={line.qty <= 1}
                       aria-label={`Moins — ${line.name}`}
-                      className="flex size-14 items-center justify-center rounded-full text-[var(--color-gray-600)] transition active:scale-90 disabled:opacity-30"
+                      className="flex size-14 items-center justify-center rounded-full text-base-content/70 transition active:scale-90 disabled:opacity-30"
                     >
                       <Minus aria-hidden className="size-4" />
                     </button>
-                    <span className="w-7 text-center text-[15px] font-bold text-[var(--color-gray-900)] tabular-nums">{line.qty}</span>
+                    <span className="w-7 text-center text-[15px] font-bold text-base-content tabular-nums">{line.qty}</span>
                     <button
                       type="button"
                       onClick={() => updateCartQty(sale.id, line.id, Math.min(maxQty, line.qty + 1))}
                       disabled={line.qty >= maxQty}
                       aria-label={`Plus — ${line.name}`}
-                      className="flex size-14 items-center justify-center rounded-full text-[var(--color-gray-600)] transition active:scale-90 disabled:opacity-30"
+                      className="flex size-14 items-center justify-center rounded-full text-base-content/70 transition active:scale-90 disabled:opacity-30"
                     >
                       <Plus aria-hidden className="size-4" />
                     </button>
@@ -188,7 +188,7 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
                   <IconButton
                     onClick={() => removeCartLine(sale.id, line.id)}
                     aria-label={`Retirer ${line.name}`}
-                    className="size-14 shrink-0 rounded-full text-[var(--color-gray-500)] transition active:scale-90 hover:bg-[var(--color-error-soft)] hover:text-destructive"
+                    className="size-14 shrink-0 rounded-full text-base-content/55 transition active:scale-90 hover:bg-error/10 hover:text-destructive"
                   >
                     <Trash2 aria-hidden className="size-4" />
                   </IconButton>
@@ -201,7 +201,7 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
           {/* Fills the gap under a short list with context the receptionist can use with the
               cliente in front of her, rather than leaving dead space above the total. */}
           {client && (client.lastVisit || client.points > 0) && (
-            <div className="mt-3 flex flex-col gap-1 rounded-[10px] border border-[var(--board-groove)] bg-[var(--brand-cream)] px-3.5 py-3 text-xs text-[var(--color-gray-500)]">
+            <div className="mt-3 flex flex-col gap-1 rounded-[10px] border border-base-300 bg-base-200 px-3.5 py-3 text-xs text-base-content/55">
               {client.lastVisit && (
                 <div className="flex items-center justify-between">
                   <span>Dernière visite</span>
@@ -224,12 +224,12 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
 
         {totals.totalDiscount > 0 && (
           <div className="mb-2 flex flex-col gap-0.5 text-sm">
-            <div className="flex justify-between text-[var(--color-gray-500)]">
+            <div className="flex justify-between text-base-content/55">
               <span>Sous-total</span>
               <span className="tabular-nums">{formatFcfa(totals.subtotal)}</span>
             </div>
             {totals.grantedDiscount > 0 && (
-              <div className="flex justify-between text-[var(--color-success)]">
+              <div className="flex justify-between text-success">
                 <span>
                   Remise accordée
                   {sale.discountGranted?.mode === "pourcentage" && ` (${sale.discountGranted.value} %)`}
@@ -238,13 +238,13 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
               </div>
             )}
             {totals.loyaltyDiscount > 0 && (
-              <div className="flex justify-between text-[var(--color-success)]">
+              <div className="flex justify-between text-success">
                 <span>Points fidélité ({sale.loyaltyPointsUsed} pts)</span>
                 <span className="tabular-nums">−{formatFcfa(totals.loyaltyDiscount)}</span>
               </div>
             )}
             {totals.giftCardDiscount > 0 && (
-              <div className="flex justify-between text-[var(--color-success)]">
+              <div className="flex justify-between text-success">
                 <span>Carte cadeau</span>
                 <span className="tabular-nums">−{formatFcfa(totals.giftCardDiscount)}</span>
               </div>
@@ -253,10 +253,10 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
         )}
 
         <div className="mb-3 flex items-end justify-between">
-          <span className="pb-1.5 text-xs font-semibold tracking-[0.12em] text-[var(--color-gray-500)] uppercase">Total</span>
+          <span className="pb-1.5 text-xs font-semibold tracking-[0.12em] text-base-content/55 uppercase">Total</span>
           <span
             key={totals.total}
-            className="animate-total-pulse origin-right font-[family-name:var(--font-heading)] font-semibold text-[2.75rem] leading-none text-[var(--color-gray-900)] tabular-nums tracking-[0.01em]"
+            className="animate-total-pulse origin-right font-[family-name:var(--font-heading)] font-semibold text-[2.75rem] leading-none text-base-content tabular-nums tracking-[0.01em]"
           >
             {formatFcfa(totals.total)}
           </span>
@@ -268,7 +268,7 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
           className={cn(
             "w-full",
             !canCheckout &&
-              "disabled:bg-[var(--brand-rose-soft)] disabled:text-[var(--brand-taupe-muted)] disabled:opacity-100",
+              "disabled:bg-accent disabled:text-primary disabled:opacity-100",
           )}
           disabled={!canCheckout}
           icon={canCheckout ? undefined : <Lock className="size-4" />}

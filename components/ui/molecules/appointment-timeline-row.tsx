@@ -26,17 +26,17 @@ export function AppointmentTimelineRow({ start, end, clientName, clientInitial, 
   const body = (
     <>
       <div className="w-16 shrink-0 text-right">
-        <p className="font-[family-name:var(--font-heading)] font-semibold text-lg leading-none text-[var(--color-gray-900)] tabular-nums">{start}</p>
-        <p className="mt-1 text-xs text-[var(--color-gray-400)] tabular-nums">{end}</p>
+        <p className="font-[family-name:var(--font-heading)] font-semibold text-lg leading-none text-base-content tabular-nums">{start}</p>
+        <p className="mt-1 text-xs text-base-content/45 tabular-nums">{end}</p>
       </div>
       <span className="relative flex w-3 shrink-0 justify-center self-stretch">
         <span className="w-px bg-border" />
-        <span className={cn("absolute top-1.5 size-2.5 rounded-full ring-4 ring-[var(--brand-cream)]", cancelled ? "bg-[var(--color-gray-300)]" : "bg-secondary")} />
+        <span className={cn("absolute top-1.5 size-2.5 rounded-full ring-4 ring-base-200", cancelled ? "bg-base-content/30" : "bg-secondary")} />
       </span>
       <Avatar initial={clientInitial} size={40} className="mt-0.5 shrink-0 bg-accent text-sm font-semibold text-secondary" />
       <div className="min-w-0 flex-1">
-        <p className="truncate font-[family-name:var(--font-heading)] font-semibold text-[15px] text-[var(--color-gray-900)]">{clientName}</p>
-        <p className="truncate text-sm text-[var(--color-gray-500)]">{service} · {staffName}</p>
+        <p className="truncate font-[family-name:var(--font-heading)] font-semibold text-[15px] text-base-content">{clientName}</p>
+        <p className="truncate text-sm text-base-content/55">{service} · {staffName}</p>
       </div>
     </>
   );

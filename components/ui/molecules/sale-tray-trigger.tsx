@@ -26,8 +26,8 @@ export function SaleTrayTrigger({ itemCount, total, onClick, className }: SaleTr
       className={cn(
         "inline-flex items-center gap-2.5 rounded-full px-5 py-3 text-[15px] font-semibold shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] transition active:scale-[0.97]",
         hasSales
-          ? "bg-[var(--pos-accent-dark)] text-white hover:opacity-90"
-          : "border border-[var(--color-gray-200)] bg-white text-[var(--color-gray-500)]",
+          ? "bg-primary text-white hover:opacity-90"
+          : "border border-base-300 bg-white text-base-content/55",
         className,
       )}
     >

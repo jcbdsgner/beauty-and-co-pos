@@ -132,7 +132,7 @@ export function FideliteView({ clientId }: FideliteViewProps) {
             >
               WhatsApp
             </Button>
-            {!client.whatsapp && <p className="mt-1 text-center text-xs text-[var(--color-gray-400)]">Pas de WhatsApp</p>}
+            {!client.whatsapp && <p className="mt-1 text-center text-xs text-base-content/45">Pas de WhatsApp</p>}
           </div>
           <div>
             <Button
@@ -145,7 +145,7 @@ export function FideliteView({ clientId }: FideliteViewProps) {
             >
               Email
             </Button>
-            {!client.email && <p className="mt-1 text-center text-xs text-[var(--color-gray-400)]">Pas d&rsquo;email</p>}
+            {!client.email && <p className="mt-1 text-center text-xs text-base-content/45">Pas d&rsquo;email</p>}
           </div>
           <Button variant="dark" size="sm" icon={<Download className="size-4" />} onClick={handleDownload} className="w-full">
             Télécharger

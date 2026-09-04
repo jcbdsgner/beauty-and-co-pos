@@ -195,8 +195,8 @@ export function MenuPanel({ saleId }: { saleId: string }) {
                   className={cn(
                     "flex shrink-0 items-center gap-2.5 rounded-2xl border px-3.5 py-3 text-left text-[13.5px] leading-[1.15] font-medium transition active:scale-[0.98]",
                     active
-                      ? "border-transparent bg-[var(--core-brand-color)] text-[var(--on-core-brand-color)]"
-                      : "border-border bg-white text-[var(--color-gray-700)] hover:bg-[var(--color-gray-50)]",
+                      ? "border-transparent bg-primary text-primary-content"
+                      : "border-border bg-white text-base-content/80 hover:bg-base-200",
                   )}
                 >
                   {Icon ? (
@@ -226,8 +226,8 @@ export function MenuPanel({ saleId }: { saleId: string }) {
                     className={cn(
                       "inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-[13.5px] font-medium transition active:scale-[0.97]",
                       active
-                        ? "bg-[var(--brand-taupe-muted)] text-white"
-                        : "border border-border bg-white text-[var(--color-gray-600)] hover:bg-[var(--color-gray-50)]",
+                        ? "bg-primary text-white"
+                        : "border border-border bg-white text-base-content/70 hover:bg-base-200",
                     )}
                   >
                     {active && <Check aria-hidden className="size-3.5" strokeWidth={2.75} />}
@@ -241,7 +241,7 @@ export function MenuPanel({ saleId }: { saleId: string }) {
           {/* Grille */}
           <div className="min-h-0 flex-1 overflow-y-auto pb-2">
             {filtered.length === 0 ? (
-              <p className="py-16 text-center text-sm text-[var(--color-gray-500)]">
+              <p className="py-16 text-center text-sm text-base-content/55">
                 {mode === "services"
                   ? "Aucune prestation ne correspond."
                   : mode === "boissons"
@@ -274,10 +274,10 @@ export function MenuPanel({ saleId }: { saleId: string }) {
                       className={cn(
                         "relative flex min-h-[120px] flex-col rounded-[14px] border-2 text-left transition active:scale-[0.96]",
                         soldOut
-                          ? "cursor-not-allowed border-border bg-[var(--color-gray-50)]"
+                          ? "cursor-not-allowed border-border bg-base-200"
                           : inCart > 0
-                            ? "border-[var(--brand-taupe-muted)] bg-[var(--board-taupe-plaque)]"
-                            : "border-border bg-white hover:border-[var(--brand-taupe-muted)]/40",
+                            ? "border-primary bg-primary/10"
+                            : "border-border bg-white hover:border-primary/40",
                       )}
                     >
                       {inCart > 0 && (
@@ -300,15 +300,15 @@ export function MenuPanel({ saleId }: { saleId: string }) {
                         </div>
                       )}
                       <div className="flex flex-1 flex-col justify-between gap-2 p-3.5">
-                        <span className="line-clamp-3 text-[13px] leading-snug font-semibold text-[var(--color-gray-900)]">
+                        <span className="line-clamp-3 text-[13px] leading-snug font-semibold text-base-content">
                           {item.name}
                         </span>
                         <span className="flex flex-col gap-1">
                           <span className="flex items-baseline justify-between gap-1.5">
-                            <span className="text-[17px] font-bold text-[var(--button-2-color)] tabular-nums">
+                            <span className="text-[17px] font-bold text-primary tabular-nums">
                               {formatFcfa(item.price)}
                             </span>
-                            <span className="flex items-center gap-1.5 text-[11px] font-medium text-[var(--color-gray-500)] tabular-nums">
+                            <span className="flex items-center gap-1.5 text-[11px] font-medium text-base-content/55 tabular-nums">
                               {"twoPractitionersEligible" in item && item.twoPractitionersEligible && (
                                 <span title="Réalisable à deux praticiennes" className="flex items-center gap-0.5">
                                   <Users aria-hidden className="size-3" />2
@@ -322,10 +322,10 @@ export function MenuPanel({ saleId }: { saleId: string }) {
                               className={cn(
                                 "text-[11px] font-semibold tabular-nums",
                                 soldOut
-                                  ? "text-[var(--color-error)]"
+                                  ? "text-error"
                                   : remaining <= 5
-                                    ? "text-[var(--board-amber)]"
-                                    : "text-[var(--color-gray-500)]",
+                                    ? "text-warning"
+                                    : "text-base-content/55",
                               )}
                             >
                               {soldOut ? "Rupture" : `${remaining} en stock`}

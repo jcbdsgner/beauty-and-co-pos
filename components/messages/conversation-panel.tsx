@@ -55,8 +55,8 @@ export function ConversationPanel({ conversationId }: { conversationId: string }
 
   if (!conv || !client) {
     return (
-      <div className="flex h-full items-center justify-center rounded-[14px] border border-[var(--board-groove)] bg-white">
-        <p className="text-sm text-[var(--color-gray-500)]">Conversation introuvable.</p>
+      <div className="flex h-full items-center justify-center rounded-[14px] border border-base-300 bg-white">
+        <p className="text-sm text-base-content/55">Conversation introuvable.</p>
       </div>
     );
   }
@@ -71,18 +71,18 @@ export function ConversationPanel({ conversationId }: { conversationId: string }
   }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-[14px] border border-[var(--board-groove)] bg-white">
+    <div className="flex h-full flex-col overflow-hidden rounded-[14px] border border-base-300 bg-white">
       {/* Header */}
       <div className="flex shrink-0 items-center gap-3 border-b border-border px-5 py-3.5">
         <Avatar initial={clientInitial(client)} size={40} className="bg-accent font-semibold text-secondary" />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="truncate font-[family-name:var(--font-heading)] font-semibold text-[15px] text-[var(--color-gray-900)]">
+            <span className="truncate font-[family-name:var(--font-heading)] font-semibold text-[15px] text-base-content">
               {clientFullName(client)}
             </span>
             {client.tier && <Badge {...TIER_BADGE[client.tier]}>{TIER_BADGE[client.tier].label}</Badge>}
           </div>
-          <div className="mt-0.5 flex items-center gap-1.5 text-xs text-[var(--color-gray-500)]">
+          <div className="mt-0.5 flex items-center gap-1.5 text-xs text-base-content/55">
             <ChannelGlyph channel={conv.channel} className="size-3.5" />
             <span>{STATE_LABEL[conv.state]}</span>
           </div>
@@ -184,7 +184,7 @@ function Composer({
 }) {
   if (state === "direction") {
     return (
-      <div className="shrink-0 border-t border-border bg-[var(--color-gray-50)] p-4 text-center text-sm text-[var(--color-gray-500)]">
+      <div className="shrink-0 border-t border-border bg-base-200 p-4 text-center text-sm text-base-content/55">
         Cette conversation a été transférée à la direction. Elle se poursuit hors de l&apos;app.
       </div>
     );
@@ -192,8 +192,8 @@ function Composer({
 
   if (state === "auto" || state === "conseillere") {
     return (
-      <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border bg-[var(--color-gray-50)] p-4">
-        <p className="text-sm text-[var(--color-gray-500)]">La Conseillère tient cette conversation.</p>
+      <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border bg-base-200 p-4">
+        <p className="text-sm text-base-content/55">La Conseillère tient cette conversation.</p>
         <Button variant="brand" size="sm" onClick={onTakeOver}>
           Prendre la conversation
         </Button>
@@ -228,21 +228,21 @@ function Composer({
 function RelanceCard({ message }: { message: Message }) {
   const style = message.styleId ? styleById(message.styleId) : undefined;
   return (
-    <div className="rounded-[10px] border border-[var(--board-groove)] bg-[var(--brand-cream)] px-4 py-3">
+    <div className="rounded-[10px] border border-base-300 bg-base-200 px-4 py-3">
       <Legend>
         Relance {message.relanceType ? RELANCE_TYPE_LABEL[message.relanceType].toLowerCase() : ""} · envoyée{" "}
         {FULL_DATE_FMT.format(new Date(message.at))}
       </Legend>
-      <p className="mt-1.5 whitespace-pre-line text-sm text-[var(--color-gray-900)]">{message.body}</p>
+      <p className="mt-1.5 whitespace-pre-line text-sm text-base-content">{message.body}</p>
       {message.discountLabel && (
         <div className="mt-2">
           <FlipChip value={message.discountLabel} tone="neutral" />
         </div>
       )}
       {style && (
-        <p className="mt-2 text-xs text-[var(--color-gray-500)]">Style recommandé : {style.name}</p>
+        <p className="mt-2 text-xs text-base-content/55">Style recommandé : {style.name}</p>
       )}
-      <p className="mt-2 text-[11px] text-[var(--color-gray-400)]">Votre conseillère beauté · Beauty and Co</p>
+      <p className="mt-2 text-[11px] text-base-content/45">Votre conseillère beauté · Beauty and Co</p>
     </div>
   );
 }
@@ -253,7 +253,7 @@ function PendingRelance({ message, paused }: { message: Message; paused: boolean
   return (
     <div
       className={cn(
-        "rounded-[10px] border border-dashed border-[var(--board-groove)] bg-[var(--brand-cream)] px-4 py-3 text-sm text-[var(--color-gray-500)] opacity-70",
+        "rounded-[10px] border border-dashed border-base-300 bg-base-200 px-4 py-3 text-sm text-base-content/55 opacity-70",
       )}
     >
       {paused ? (

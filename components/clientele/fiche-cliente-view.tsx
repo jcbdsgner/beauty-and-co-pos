@@ -119,7 +119,7 @@ export function FicheClienteView({ clientId }: { clientId: string }) {
       {/* Bandeau d'identité collant — la plaque ardoise de la cliente. Isolé dans son propre contexte
           d'empilement et sorti du flux `gap` : au scroll il couvre proprement le contenu qui passe
           dessous, sans bande morte ni coin de plaque qui dépasse. */}
-      <div className="sticky top-0 z-30 isolate -mx-8 -mt-8 mb-6 border-b border-[var(--board-slate-line)] bg-[var(--board-slate)] px-8 py-4 shadow-[0_12px_24px_-14px_rgba(0,0,0,0.55)]">
+      <div className="sticky top-0 z-30 isolate -mx-8 -mt-8 mb-6 border-b border-white/15 bg-neutral px-8 py-4 shadow-[0_12px_24px_-14px_rgba(0,0,0,0.55)]">
         <Link
           href="/clientele"
           className="mb-2 inline-flex h-8 items-center gap-1.5 rounded-full border border-white/20 bg-white/5 px-3 text-xs font-medium text-white/70 transition hover:bg-white/10 hover:text-white"
@@ -157,7 +157,7 @@ export function FicheClienteView({ clientId }: { clientId: string }) {
         {/* Le maintenant */}
         <div className="flex flex-col gap-6">
           <Board legend="Valeur cliente">
-            <div className="grid grid-cols-3 gap-px bg-[var(--board-groove)]">
+            <div className="grid grid-cols-3 gap-px bg-base-300">
               {[
                 { k: "Total dépensé", v: formatFcfa(client.totalSpent) },
                 { k: "Visites", v: String(client.totalVisits) },
@@ -165,11 +165,11 @@ export function FicheClienteView({ clientId }: { clientId: string }) {
               ].map((m) => (
                 <div key={m.k} className="bg-white px-4 py-4">
                   <Legend>{m.k}</Legend>
-                  <p className="mt-1 font-[family-name:var(--font-heading)] text-lg font-semibold tabular-nums text-[var(--color-gray-900)]">{m.v}</p>
+                  <p className="mt-1 font-[family-name:var(--font-heading)] text-lg font-semibold tabular-nums text-base-content">{m.v}</p>
                 </div>
               ))}
             </div>
-            <p className="px-4 py-3 text-sm text-[var(--color-gray-500)]">
+            <p className="px-4 py-3 text-sm text-base-content/55">
               {client.lastVisit ? `Dernière visite ${client.lastVisit}.` : "Aucune visite enregistrée."}{" "}
               {"L'historique détaillé arrivera avec les ventes réelles."}
             </p>
@@ -181,7 +181,7 @@ export function FicheClienteView({ clientId }: { clientId: string }) {
               lastMessages.length > 0 && (
                 <a
                   href={`/messages?client=${client.id}`}
-                  className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--brand-taupe-muted)] underline underline-offset-2"
+                  className="text-xs font-semibold uppercase tracking-[0.1em] text-primary underline underline-offset-2"
                 >
                   Voir les échanges
                 </a>
@@ -208,7 +208,7 @@ export function FicheClienteView({ clientId }: { clientId: string }) {
 
           <Board legend="Notes">
             {client.internalNotes && (
-              <div className="max-h-48 overflow-y-auto whitespace-pre-line border-b border-[var(--board-groove)] bg-black/[0.015] px-4 py-3 text-sm text-[var(--color-gray-700)]">
+              <div className="max-h-48 overflow-y-auto whitespace-pre-line border-b border-base-300 bg-black/[0.015] px-4 py-3 text-sm text-base-content/80">
                 {client.internalNotes}
               </div>
             )}
@@ -231,7 +231,7 @@ export function FicheClienteView({ clientId }: { clientId: string }) {
                   Ajouter
                 </Button>
               </div>
-              <p className="text-xs text-[var(--color-gray-400)]">
+              <p className="text-xs text-base-content/45">
                 {noteTarget === "interne"
                   ? "Rangée dans le journal interne de la fiche."
                   : `Ajoutée à la préférence « ${PREFERENCE_DOMAIN_LABEL[noteTarget as PreferenceDomain]} ».`}
@@ -246,7 +246,7 @@ export function FicheClienteView({ clientId }: { clientId: string }) {
           <Board legend="Carte de fidélité">
             <div className="flex items-center justify-between gap-4 p-4">
               <div className="flex flex-col gap-2">
-                <p className="text-sm text-[var(--color-gray-500)]">{"Le QR d'identification de la cliente."}</p>
+                <p className="text-sm text-base-content/55">{"Le QR d'identification de la cliente."}</p>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" icon={<Printer className="size-4" />} onClick={() => window.print()}>
                     Imprimer
@@ -265,7 +265,7 @@ export function FicheClienteView({ clientId }: { clientId: string }) {
             legendRight={
               <IconButton
                 aria-label="Modifier les coordonnées"
-                className="size-10 rounded-full text-[var(--color-gray-500)] transition active:scale-90 hover:bg-accent"
+                className="size-10 rounded-full text-base-content/55 transition active:scale-90 hover:bg-accent"
                 onClick={() => setEditCoordOpen(true)}
               >
                 <Pencil className="size-4" />
@@ -285,12 +285,12 @@ export function FicheClienteView({ clientId }: { clientId: string }) {
                   onClick={() => router.push(`/planning?staff=${preferredStaff.id}`)}
                   className="flex items-center gap-3 text-left"
                 >
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--color-gray-100)] text-[var(--color-gray-500)]">
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-base-200 text-base-content/55">
                     <Sparkles className="size-4" />
                   </span>
                   <span className="min-w-0">
                     <Legend>Praticienne préférée</Legend>
-                    <span className="flex items-center gap-1 text-sm text-[var(--brand-taupe-muted)] underline underline-offset-2">
+                    <span className="flex items-center gap-1 text-sm text-primary underline underline-offset-2">
                       {preferredStaff.name}
                       <ChevronRight className="size-3.5" />
                     </span>
@@ -305,7 +305,7 @@ export function FicheClienteView({ clientId }: { clientId: string }) {
             legendRight={
               <IconButton
                 aria-label="Modifier les préférences beauté"
-                className="size-10 rounded-full text-[var(--color-gray-500)] transition active:scale-90 hover:bg-accent"
+                className="size-10 rounded-full text-base-content/55 transition active:scale-90 hover:bg-accent"
                 onClick={() => setEditPrefOpen(true)}
               >
                 <Pencil className="size-4" />
@@ -313,7 +313,7 @@ export function FicheClienteView({ clientId }: { clientId: string }) {
             }
           >
             {hasPreferences ? (
-              <div className="flex flex-col divide-y divide-[var(--board-groove)] text-sm">
+              <div className="flex flex-col divide-y divide-base-300 text-sm">
                 {(client.hairType || client.colorReference) && (
                   <div className="flex flex-col gap-3 p-4">
                     <Pref label="Type de cheveux" value={client.hairType} />
@@ -327,7 +327,7 @@ export function FicheClienteView({ clientId }: { clientId: string }) {
                   return (
                     <div key={domain} className="flex flex-col gap-2 p-4">
                       <Legend>{PREFERENCE_DOMAIN_LABEL[domain]}</Legend>
-                      {note && <p className="whitespace-pre-line text-[var(--color-gray-800)]">{note}</p>}
+                      {note && <p className="whitespace-pre-line text-base-content/90">{note}</p>}
                       {photos.length > 0 && (
                         <div className="flex flex-wrap gap-2">
                           {photos.map((ref) => (
@@ -359,10 +359,10 @@ export function FicheClienteView({ clientId }: { clientId: string }) {
 function Row({ icon, label, value }: { icon: React.ReactNode; label: string; value?: string }) {
   return (
     <div className="flex items-start gap-3">
-      <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--color-gray-100)] text-[var(--color-gray-500)]">{icon}</span>
+      <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-base-200 text-base-content/55">{icon}</span>
       <div className="min-w-0">
         <Legend>{label}</Legend>
-        <p className={cn("truncate text-sm", value ? "text-[var(--color-gray-900)]" : "text-[var(--color-gray-400)]")}>{value ?? "Non renseigné"}</p>
+        <p className={cn("truncate text-sm", value ? "text-base-content" : "text-base-content/45")}>{value ?? "Non renseigné"}</p>
       </div>
     </div>
   );
@@ -373,7 +373,7 @@ function Pref({ label, value }: { label: string; value?: string }) {
   return (
     <div>
       <Legend>{label}</Legend>
-      <p className="mt-0.5 text-[var(--color-gray-800)]">{value}</p>
+      <p className="mt-0.5 text-base-content/90">{value}</p>
     </div>
   );
 }

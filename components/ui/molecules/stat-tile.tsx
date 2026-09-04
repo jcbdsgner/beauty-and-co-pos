@@ -4,11 +4,11 @@ import { Card } from "@/components/ui/atoms/card";
 type StatTileTone = "neutral" | "success" | "warning" | "info" | "error";
 
 const TONE_CLASS: Record<StatTileTone, string> = {
-  neutral: "text-[var(--color-gray-900)]",
-  success: "text-[var(--color-success)]",
-  warning: "text-[var(--color-warning)]",
-  info: "text-[var(--color-info)]",
-  error: "text-[var(--color-error)]",
+  neutral: "text-base-content",
+  success: "text-success",
+  warning: "text-warning",
+  info: "text-info",
+  error: "text-error",
 };
 
 type StatTileProps = {
@@ -26,12 +26,12 @@ type StatTileProps = {
 export function StatTile({ value, label, icon, tone = "neutral", hint, className }: StatTileProps) {
   return (
     <Card className={cn("flex flex-col gap-1 p-5", className)}>
-      <p className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-[var(--color-gray-500)] uppercase">
+      <p className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-base-content/55 uppercase">
         {icon}
         {label}
       </p>
       <p className={cn("font-[family-name:var(--font-heading)] font-semibold text-[2.25rem] leading-none tabular-nums", TONE_CLASS[tone])}>{value}</p>
-      {hint && <p className="text-xs text-[var(--color-gray-400)]">{hint}</p>}
+      {hint && <p className="text-xs text-base-content/45">{hint}</p>}
     </Card>
   );
 }
@@ -64,11 +64,11 @@ export function StatBand({ items, className }: { items: StatBandItem[]; classNam
       {items.map((item, i) => {
         const inner = (
           <>
-            <p className="text-xs font-semibold tracking-wide text-[var(--color-gray-500)] uppercase">{item.label}</p>
+            <p className="text-xs font-semibold tracking-wide text-base-content/55 uppercase">{item.label}</p>
             <p className={cn("mt-1.5 font-[family-name:var(--font-heading)] font-semibold text-[2.5rem] leading-none tabular-nums", TONE_CLASS[item.tone ?? "neutral"])}>
               {item.value}
             </p>
-            {item.hint && <p className="mt-1 text-xs text-[var(--color-gray-400)]">{item.hint}</p>}
+            {item.hint && <p className="mt-1 text-xs text-base-content/45">{item.hint}</p>}
           </>
         );
         const cls = "flex flex-col justify-center px-6 py-6 text-left transition";

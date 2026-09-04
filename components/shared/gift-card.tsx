@@ -13,12 +13,12 @@ export function GiftCard({ code, balance, className }: GiftCardProps) {
   return (
     <div
       className={cn(
-        "relative aspect-[1.6/1] w-full overflow-hidden rounded-3xl bg-[var(--brand-taupe-muted)] p-6 text-white shadow-[0px_4px_16px_0px_rgba(0,0,0,0.12)]",
+        "relative aspect-[1.6/1] w-full overflow-hidden rounded-3xl bg-primary p-6 text-white shadow-[0px_4px_16px_0px_rgba(0,0,0,0.12)]",
         className,
       )}
     >
-      <div aria-hidden className="absolute -top-10 -right-10 size-40 rounded-full bg-[var(--core-brand-color)]/20" />
-      <div aria-hidden className="absolute -bottom-14 -left-8 size-32 rounded-full bg-[var(--core-brand-color)]/10" />
+      <div aria-hidden className="absolute -top-10 -right-10 size-40 rounded-full bg-primary/20" />
+      <div aria-hidden className="absolute -bottom-14 -left-8 size-32 rounded-full bg-primary/10" />
 
       <div className="relative flex h-full flex-col justify-between">
         <div>

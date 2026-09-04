@@ -117,14 +117,14 @@ export function IdentifyDialog({ open, sale, onClose }: { open: boolean; sale: S
     <Dialog open={open} labelledBy="identify-title" className="max-w-sm rounded-3xl p-6">
       <h2
         id="identify-title"
-        className="font-[family-name:var(--font-heading)] font-semibold text-xl text-[var(--color-gray-900)]"
+        className="font-[family-name:var(--font-heading)] font-semibold text-xl text-base-content"
       >
         Identifier la cliente
       </h2>
 
-      <div className="relative mt-4 flex aspect-square items-center justify-center overflow-hidden rounded-2xl bg-[var(--color-gray-900)]">
+      <div className="relative mt-4 flex aspect-square items-center justify-center overflow-hidden rounded-2xl bg-base-content">
         <video ref={videoRef} autoPlay muted playsInline className="absolute inset-0 size-full object-cover opacity-80" />
-        <svg viewBox="0 0 200 200" className="relative size-3/4 text-[var(--core-brand-color)]">
+        <svg viewBox="0 0 200 200" className="relative size-3/4 text-primary">
           <path
             d="M16 16 L16 56 M16 16 L56 16 M184 16 L144 16 M184 16 L184 56 M16 184 L16 144 M16 184 L56 184 M184 184 L184 144 M184 184 L144 184"
             stroke="currentColor"
@@ -135,7 +135,7 @@ export function IdentifyDialog({ open, sale, onClose }: { open: boolean; sale: S
         </svg>
       </div>
 
-      <p className="mt-3 text-center text-xs text-[var(--color-gray-400)]">
+      <p className="mt-3 text-center text-xs text-base-content/45">
         {cameraError ? "Caméra indisponible — saisissez le code ci-dessous." : "Présentez le QR de la carte, ou saisissez son code."}
       </p>
 

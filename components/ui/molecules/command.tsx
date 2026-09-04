@@ -21,11 +21,11 @@ export function Command({ className, ...props }: React.ComponentProps<typeof Com
 
 export function CommandInput({ className, ...props }: React.ComponentProps<typeof CommandPrimitive.Input>) {
   return (
-    <div className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4 text-[var(--color-gray-400)]">
+    <div className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4 text-base-content/45">
       <Search aria-hidden className="size-4 shrink-0" />
       <CommandPrimitive.Input
         className={cn(
-          "h-full w-full bg-transparent text-[15px] text-[var(--color-gray-900)] placeholder:text-[var(--color-gray-400)] focus:outline-none",
+          "h-full w-full bg-transparent text-[15px] text-base-content placeholder:text-base-content/45 focus:outline-none",
           className,
         )}
         {...props}
@@ -46,7 +46,7 @@ export function CommandList({ className, ...props }: React.ComponentProps<typeof
 export function CommandEmpty({ className, ...props }: React.ComponentProps<typeof CommandPrimitive.Empty>) {
   return (
     <CommandPrimitive.Empty
-      className={cn("px-4 py-8 text-center text-sm text-[var(--color-gray-500)]", className)}
+      className={cn("px-4 py-8 text-center text-sm text-base-content/55", className)}
       {...props}
     />
   );
@@ -56,7 +56,7 @@ export function CommandGroup({ className, ...props }: React.ComponentProps<typeo
   return (
     <CommandPrimitive.Group
       className={cn(
-        "overflow-hidden p-1 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:pb-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:tracking-wide [&_[cmdk-group-heading]]:text-[var(--color-gray-500)] [&_[cmdk-group-heading]]:uppercase",
+        "overflow-hidden p-1 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:pb-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:tracking-wide [&_[cmdk-group-heading]]:text-base-content/55 [&_[cmdk-group-heading]]:uppercase",
         className,
       )}
       {...props}
@@ -68,7 +68,7 @@ export function CommandItem({ className, ...props }: React.ComponentProps<typeof
   return (
     <CommandPrimitive.Item
       className={cn(
-        "flex min-h-14 cursor-pointer items-center gap-3 rounded-xl px-3 text-[15px] text-[var(--color-gray-800)] outline-none",
+        "flex min-h-14 cursor-pointer items-center gap-3 rounded-xl px-3 text-[15px] text-base-content/90 outline-none",
         "data-[selected=true]:bg-accent data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-40",
         className,
       )}

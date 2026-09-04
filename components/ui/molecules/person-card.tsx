@@ -32,7 +32,7 @@ export function PersonCard({ initial, name, meta, badge, trailing, online, onCli
     >
       <span className="relative shrink-0">
         <Avatar initial={initial} size={52} className="bg-accent text-lg font-semibold text-secondary" />
-        {online && <span className="absolute right-0 bottom-0 size-3.5 rounded-full border-2 border-white bg-[var(--color-success)]" />}
+        {online && <span className="absolute right-0 bottom-0 size-3.5 rounded-full border-2 border-white bg-success" />}
         {badge && (
           <span className="absolute -top-1.5 -left-1.5">
             <Badge variant={badge.variant} className="px-1.5 py-0.5 text-[10px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.15)]">
@@ -42,10 +42,10 @@ export function PersonCard({ initial, name, meta, badge, trailing, online, onCli
         )}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate font-[family-name:var(--font-heading)] font-semibold text-[15px] text-[var(--color-gray-900)]">{name}</span>
-        {meta && <span className="mt-0.5 block truncate text-sm text-[var(--color-gray-500)]">{meta}</span>}
+        <span className="block truncate font-[family-name:var(--font-heading)] font-semibold text-[15px] text-base-content">{name}</span>
+        {meta && <span className="mt-0.5 block truncate text-sm text-base-content/55">{meta}</span>}
       </span>
-      {trailing && <span className="shrink-0 text-xs font-medium text-[var(--color-gray-400)] tabular-nums">{trailing}</span>}
+      {trailing && <span className="shrink-0 text-xs font-medium text-base-content/45 tabular-nums">{trailing}</span>}
     </Comp>
   );
 }

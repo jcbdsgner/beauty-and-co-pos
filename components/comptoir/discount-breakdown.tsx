@@ -13,7 +13,7 @@ export function DiscountBreakdown({ sale, className }: { sale: Sale; className?:
   if (t.totalDiscount <= 0) return null;
 
   return (
-    <div className={cn("flex flex-col gap-1 text-[var(--color-success)]", className)}>
+    <div className={cn("flex flex-col gap-1 text-success", className)}>
       {t.grantedDiscount > 0 && (
         <div className="flex justify-between gap-3">
           <span>
@@ -40,10 +40,10 @@ export function DiscountBreakdown({ sale, className }: { sale: Sale; className?:
         </div>
       )}
       {sale.discountGranted?.reason && (
-        <p className="text-xs text-[var(--color-gray-500)]">Motif de la remise : {sale.discountGranted.reason}</p>
+        <p className="text-xs text-base-content/55">Motif de la remise : {sale.discountGranted.reason}</p>
       )}
       {t.giftCardRemaining > 0 && (
-        <p className="text-xs text-[var(--color-gray-500)]">Reste {formatFcfa(t.giftCardRemaining)} sur la carte cadeau.</p>
+        <p className="text-xs text-base-content/55">Reste {formatFcfa(t.giftCardRemaining)} sur la carte cadeau.</p>
       )}
     </div>
   );

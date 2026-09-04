@@ -66,8 +66,8 @@ function EditPreferencesForm({ client, onClose }: { client: Cliente; onClose: ()
 
   return (
     <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
-      <div className="flex items-start justify-between gap-4 border-b border-[var(--board-groove)] p-6 pb-4">
-        <h2 id="edit-preferences-title" className="font-[family-name:var(--font-heading)] text-xl font-semibold text-[var(--color-gray-900)]">
+      <div className="flex items-start justify-between gap-4 border-b border-base-300 p-6 pb-4">
+        <h2 id="edit-preferences-title" className="font-[family-name:var(--font-heading)] text-xl font-semibold text-base-content">
           Modifier les préférences beauté
         </h2>
         <CloseButton onClick={onClose} />
@@ -99,7 +99,7 @@ function EditPreferencesForm({ client, onClose }: { client: Cliente; onClose: ()
                     type="button"
                     onClick={() => removePhoto(domain, ref)}
                     aria-label="Retirer la photo"
-                    className="absolute -right-1.5 -top-1.5 flex size-5 items-center justify-center rounded-full bg-[var(--color-gray-900)] text-white"
+                    className="absolute -right-1.5 -top-1.5 flex size-5 items-center justify-center rounded-full bg-base-content text-white"
                   >
                     <X className="size-3" />
                   </button>
@@ -108,7 +108,7 @@ function EditPreferencesForm({ client, onClose }: { client: Cliente; onClose: ()
               <button
                 type="button"
                 onClick={() => addPhoto(domain)}
-                className="flex size-16 flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-[var(--color-gray-300)] text-[var(--color-gray-400)] transition hover:bg-accent"
+                className="flex size-16 flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-base-content/30 text-base-content/45 transition hover:bg-accent"
               >
                 <ImagePlus className="size-5" />
               </button>
@@ -117,7 +117,7 @@ function EditPreferencesForm({ client, onClose }: { client: Cliente; onClose: ()
         ))}
       </div>
 
-      <div className="flex gap-3 border-t border-[var(--board-groove)] p-6 pt-4">
+      <div className="flex gap-3 border-t border-base-300 p-6 pt-4">
         <Button type="button" variant="outline" onClick={onClose} className="flex-1">
           Annuler
         </Button>

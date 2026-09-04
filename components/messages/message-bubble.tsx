@@ -15,12 +15,12 @@ export function MessageBubble({ message }: { message: Message }) {
       <div
         className={cn(
           "max-w-[80%] rounded-2xl px-3.5 py-2.5 text-sm",
-          mine ? "bg-accent text-[var(--color-gray-900)]" : "border border-border bg-white text-[var(--color-gray-900)]",
+          mine ? "bg-accent text-base-content" : "border border-border bg-white text-base-content",
         )}
       >
         <p className="whitespace-pre-line">{message.body}</p>
       </div>
-      <span className="px-1 text-[11px] text-[var(--color-gray-400)]" title={FULL_DATE_FMT.format(new Date(message.at))}>
+      <span className="px-1 text-[11px] text-base-content/45" title={FULL_DATE_FMT.format(new Date(message.at))}>
         {message.sender === "conseillere" && "Conseillère · Beauty and Co · "}
         {TIME_FMT.format(new Date(message.at))}
       </span>

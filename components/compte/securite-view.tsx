@@ -69,7 +69,7 @@ export function SecuriteView() {
         <InputOtp value={confirm} onChange={(v) => { setConfirm(v); setError(null); }} ariaLabel="Confirmer le nouveau code" />
       </div>
 
-      {error && <p className="text-sm font-medium text-[var(--color-error)]">{error}</p>}
+      {error && <p className="text-sm font-medium text-error">{error}</p>}
 
       <div>
         <Button

@@ -45,7 +45,7 @@ function SwitchUserForm({ onClose }: { onClose: () => void }) {
   return (
     <>
       <CloseButton onClick={onClose} />
-      <h2 id="switch-user-title" className="font-[family-name:var(--font-heading)] font-semibold text-xl text-[var(--color-gray-900)]">
+      <h2 id="switch-user-title" className="font-[family-name:var(--font-heading)] font-semibold text-xl text-base-content">
         {picked ? `Code de ${picked.name}` : "Changer d'utilisateur"}
       </h2>
 
@@ -60,12 +60,12 @@ function SwitchUserForm({ onClose }: { onClose: () => void }) {
                   setError(null);
                 }}
                 disabled={u.id === currentUser.id}
-                className="flex w-full items-center gap-3 rounded-2xl border border-[var(--color-gray-200)] bg-white px-4 py-3 text-left transition active:scale-[0.98] hover:border-[var(--brand-taupe-muted)] disabled:opacity-40"
+                className="flex w-full items-center gap-3 rounded-2xl border border-base-300 bg-white px-4 py-3 text-left transition active:scale-[0.98] hover:border-primary disabled:opacity-40"
               >
                 <Avatar initial={u.initial} size={36} className="bg-accent font-semibold text-secondary" />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[15px] font-semibold text-[var(--color-gray-900)]">{u.name}</span>
-                  <span className="block text-xs text-[var(--color-gray-500)]">
+                  <span className="block truncate text-[15px] font-semibold text-base-content">{u.name}</span>
+                  <span className="block text-xs text-base-content/55">
                     {ROLE_LABEL[u.role]}
                     {u.id === currentUser.id && " · au poste"}
                   </span>
@@ -77,7 +77,7 @@ function SwitchUserForm({ onClose }: { onClose: () => void }) {
       ) : (
         <div className="mt-5 flex flex-col gap-4">
           <InputOtp value={pin} onChange={(v) => { setPin(v); setError(null); }} onComplete={confirm} ariaLabel={`Code de ${picked.name}`} />
-          {error && <p className="text-sm font-medium text-[var(--color-error)]">{error}</p>}
+          {error && <p className="text-sm font-medium text-error">{error}</p>}
           <div className="flex gap-3">
             <Button type="button" variant="outline" onClick={() => { setPickedId(null); setPin(""); setError(null); }} className="flex-1">
               Retour

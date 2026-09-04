@@ -32,7 +32,7 @@ export const buttonVariants = cva(
         brand: "btn-primary",
         dark: "btn-neutral",
         outline: "btn-outline border-base-300 text-secondary hover:!bg-base-200 hover:!border-base-300 hover:!text-secondary",
-        lilac: "border-transparent bg-[var(--brand-lilac)] text-[var(--text-secondary)] hover:brightness-95",
+        lilac: "border-transparent bg-[var(--brand-lilac)] text-base-content/70 hover:brightness-95",
         success: "btn-success",
         info: "btn-info",
         danger: "btn-error",

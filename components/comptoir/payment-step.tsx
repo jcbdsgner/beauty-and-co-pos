@@ -72,29 +72,29 @@ export function PaymentStep({ sale }: { sale: Sale }) {
 
   const ticketRecap = (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-white">
-      <p className="border-b border-border px-4 py-2.5 text-xs font-semibold tracking-wide text-[var(--color-gray-500)] uppercase">
+      <p className="border-b border-border px-4 py-2.5 text-xs font-semibold tracking-wide text-base-content/55 uppercase">
         {itemCount} {itemCount > 1 ? "articles" : "article"}
       </p>
       <ul className="flex max-h-[280px] flex-col divide-y divide-border overflow-y-auto">
         {sale.cart.map((line) => (
           <li key={line.id} className="flex items-start justify-between gap-3 px-4 py-2.5">
             <span className="min-w-0">
-              <span className="block text-sm font-medium text-[var(--color-gray-900)]">
+              <span className="block text-sm font-medium text-base-content">
                 {line.qty > 1 ? `${line.qty} × ` : ""}
                 {line.name}
               </span>
               {line.beneficiary && (
-                <span className="block text-xs text-[var(--brand-taupe-muted)]">pour {line.beneficiary}</span>
+                <span className="block text-xs text-primary">pour {line.beneficiary}</span>
               )}
             </span>
-            <span className="shrink-0 text-sm font-semibold tabular-nums text-[var(--color-gray-700)]">
+            <span className="shrink-0 text-sm font-semibold tabular-nums text-base-content/80">
               {formatFcfa(line.unitPrice * line.qty)}
             </span>
           </li>
         ))}
       </ul>
       {totals.totalDiscount > 0 && (
-        <p className="border-t border-border px-4 py-2 text-right text-sm text-[var(--color-success)]">
+        <p className="border-t border-border px-4 py-2 text-right text-sm text-success">
           remise −{formatFcfa(totals.totalDiscount)}
         </p>
       )}
@@ -107,16 +107,16 @@ export function PaymentStep({ sale }: { sale: Sale }) {
         {/* Left — who + amount + mode */}
         <div className="flex flex-col gap-6">
           <div>
-            <p className="text-xs font-semibold tracking-wide text-[var(--color-gray-500)] uppercase">
+            <p className="text-xs font-semibold tracking-wide text-base-content/55 uppercase">
               À payer{client ? ` — ${clientFullName(client)}` : ""}
             </p>
-            <p className="font-[family-name:var(--font-heading)] font-semibold text-[3.5rem] leading-none text-[var(--color-gray-900)] tabular-nums">
+            <p className="font-[family-name:var(--font-heading)] font-semibold text-[3.5rem] leading-none text-base-content tabular-nums">
               {formatFcfa(total)}
             </p>
             {totals.totalDiscount > 0 && (
-              <p className="mt-1.5 text-sm text-[var(--color-gray-500)]">
+              <p className="mt-1.5 text-sm text-base-content/55">
                 <span className="tabular-nums line-through">{formatFcfa(totals.subtotal)}</span>{" "}
-                <span className="font-medium text-[var(--color-success)]">
+                <span className="font-medium text-success">
                   · remise −{formatFcfa(totals.totalDiscount)}
                 </span>
               </p>
@@ -124,7 +124,7 @@ export function PaymentStep({ sale }: { sale: Sale }) {
           </div>
 
           <div>
-            <p className="mb-2 text-sm font-medium text-[var(--color-gray-600)]">Comment règle la cliente ?</p>
+            <p className="mb-2 text-sm font-medium text-base-content/70">Comment règle la cliente ?</p>
             <div className="grid max-w-md grid-cols-2 gap-4">
               {MODES.map((m) => {
                 const active = primaryMode === m.value;
@@ -150,7 +150,7 @@ export function PaymentStep({ sale }: { sale: Sale }) {
                         />
                       </span>
                     ) : (
-                      <span className="font-[family-name:var(--font-heading)] text-2xl font-bold text-[var(--color-gray-900)]">
+                      <span className="font-[family-name:var(--font-heading)] text-2xl font-bold text-base-content">
                         {m.label}
                       </span>
                     )}
@@ -160,12 +160,12 @@ export function PaymentStep({ sale }: { sale: Sale }) {
             </div>
           </div>
 
-          <label className="flex items-center gap-3 text-[15px] font-medium text-[var(--color-gray-700)]">
+          <label className="flex items-center gap-3 text-[15px] font-medium text-base-content/80">
             <input
               type="checkbox"
               checked={mixed}
               onChange={(e) => setMixed(e.target.checked)}
-              className="size-6 rounded border-2 border-[var(--color-gray-300)] accent-[var(--brand-taupe-muted)]"
+              className="size-6 rounded border-2 border-base-content/30 accent-primary"
             />
             Régler en deux fois
           </label>
@@ -173,7 +173,7 @@ export function PaymentStep({ sale }: { sale: Sale }) {
           {mixed && (
             <div className="flex flex-col gap-3 rounded-2xl bg-white p-4">
               <div className="flex items-center gap-2">
-                <span className="w-28 shrink-0 text-sm text-[var(--color-gray-600)]">{selectedMeta?.label ?? "1er mode"}</span>
+                <span className="w-28 shrink-0 text-sm text-base-content/70">{selectedMeta?.label ?? "1er mode"}</span>
                 <input
                   inputMode="numeric"
                   value={primaryAmount}
@@ -190,7 +190,7 @@ export function PaymentStep({ sale }: { sale: Sale }) {
                     onClick={() => setSecondaryMode(m.value)}
                     className={cn(
                       "rounded-full border px-3 py-1.5 text-xs font-medium transition active:scale-[0.97]",
-                      secondaryMode === m.value ? "border-secondary bg-accent text-secondary" : "border-border text-[var(--color-gray-600)]",
+                      secondaryMode === m.value ? "border-secondary bg-accent text-secondary" : "border-border text-base-content/70",
                     )}
                   >
                     {m.label}
@@ -198,7 +198,7 @@ export function PaymentStep({ sale }: { sale: Sale }) {
                 ))}
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-28 shrink-0 text-sm text-[var(--color-gray-600)]">{MODES.find((m) => m.value === secondaryMode)?.label ?? "2e mode"}</span>
+                <span className="w-28 shrink-0 text-sm text-base-content/70">{MODES.find((m) => m.value === secondaryMode)?.label ?? "2e mode"}</span>
                 <input
                   inputMode="numeric"
                   value={secondaryAmount}
@@ -208,8 +208,8 @@ export function PaymentStep({ sale }: { sale: Sale }) {
                 />
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-[var(--color-gray-500)]">Reste à répartir</span>
-                <span className={cn("font-semibold tabular-nums", balanced ? "text-[var(--color-success)]" : "text-destructive")}>
+                <span className="text-base-content/55">Reste à répartir</span>
+                <span className={cn("font-semibold tabular-nums", balanced ? "text-success" : "text-destructive")}>
                   {balanced ? "Réparti" : formatFcfa(Math.abs(remaining))}
                 </span>
               </div>
@@ -236,23 +236,23 @@ export function PaymentStep({ sale }: { sale: Sale }) {
           ) : involvesCash ? (
             <div className="flex flex-col gap-4">
               <div>
-                <p className="text-xs font-semibold tracking-wide text-[var(--color-gray-500)] uppercase">Montant reçu</p>
-                <p className="font-[family-name:var(--font-heading)] font-semibold text-3xl text-[var(--color-gray-900)] tabular-nums">
+                <p className="text-xs font-semibold tracking-wide text-base-content/55 uppercase">Montant reçu</p>
+                <p className="font-[family-name:var(--font-heading)] font-semibold text-3xl text-base-content tabular-nums">
                   {cashReceived ? formatFcfa(Number(cashReceived)) : "—"}
                 </p>
-                <p className="mt-0.5 text-sm text-[var(--color-gray-500)]">{selectedMeta?.hint}</p>
+                <p className="mt-0.5 text-sm text-base-content/55">{selectedMeta?.hint}</p>
               </div>
               <NumericKeypad value={cashReceived} onChange={setCashReceived} />
               <div
                 className={cn(
                   "rounded-2xl p-4 text-center",
-                  cashReceived ? "bg-[var(--color-success-soft)]" : "bg-[var(--color-gray-50)]",
+                  cashReceived ? "bg-success/10" : "bg-base-200",
                 )}
               >
                 <p
                   className={cn(
                     "text-xs font-semibold tracking-wide uppercase",
-                    cashReceived ? "text-[var(--color-success)]" : "text-[var(--color-gray-400)]",
+                    cashReceived ? "text-success" : "text-base-content/45",
                   )}
                 >
                   Rendu de monnaie
@@ -260,7 +260,7 @@ export function PaymentStep({ sale }: { sale: Sale }) {
                 <p
                   className={cn(
                     "font-[family-name:var(--font-heading)] font-semibold text-[2.5rem] leading-none tabular-nums",
-                    cashReceived ? "text-[var(--color-success)]" : "text-[var(--color-gray-400)]",
+                    cashReceived ? "text-success" : "text-base-content/45",
                   )}
                 >
                   {cashReceived ? formatFcfa(change) : "—"}
@@ -282,10 +282,10 @@ export function PaymentStep({ sale }: { sale: Sale }) {
                   {selectedMeta && <selectedMeta.icon aria-hidden className="size-7" />}
                 </span>
               )}
-              <p className="font-[family-name:var(--font-heading)] font-semibold text-xl text-[var(--color-gray-900)] tabular-nums">
+              <p className="font-[family-name:var(--font-heading)] font-semibold text-xl text-base-content tabular-nums">
                 {formatFcfa(total)} · {selectedMeta?.label}
               </p>
-              <p className="text-sm text-[var(--color-gray-500)]">{selectedMeta?.hint}</p>
+              <p className="text-sm text-base-content/55">{selectedMeta?.hint}</p>
             </div>
           )}
         </div>
@@ -302,7 +302,7 @@ export function PaymentStep({ sale }: { sale: Sale }) {
               Encaisser
             </Button>
             {disabledReason && (
-              <p className="text-center text-xs font-medium text-[var(--color-gray-500)]">{disabledReason}</p>
+              <p className="text-center text-xs font-medium text-base-content/55">{disabledReason}</p>
             )}
           </div>
         </div>

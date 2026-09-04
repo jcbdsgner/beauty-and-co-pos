@@ -18,15 +18,15 @@ export function Breadcrumb({ items, className }: BreadcrumbProps) {
         return (
           <span key={item.label} className="flex items-center gap-1.5">
             {item.href && !isLast ? (
-              <Link href={item.href} className="text-[var(--color-gray-500)] hover:text-[var(--brand-taupe-muted)]">
+              <Link href={item.href} className="text-base-content/55 hover:text-primary">
                 {item.label}
               </Link>
             ) : (
-              <span className={isLast ? "font-semibold text-[var(--color-gray-900)]" : "text-[var(--color-gray-500)]"}>
+              <span className={isLast ? "font-semibold text-base-content" : "text-base-content/55"}>
                 {item.label}
               </span>
             )}
-            {!isLast && <ChevronRight aria-hidden className="size-3.5 text-[var(--color-gray-300)]" />}
+            {!isLast && <ChevronRight aria-hidden className="size-3.5 text-base-content/30" />}
           </span>
         );
       })}

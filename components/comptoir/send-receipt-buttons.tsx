@@ -46,7 +46,7 @@ export function SendReceiptButtons({ client, className }: { client?: Cliente; cl
           </Button>
         </div>
         {noChannel && (
-          <p className="text-center text-xs text-[var(--color-gray-400)]">
+          <p className="text-center text-xs text-base-content/45">
             Aucune coordonnée enregistrée pour {who} — ajoutez un e-mail ou un WhatsApp sur sa fiche.
           </p>
         )}

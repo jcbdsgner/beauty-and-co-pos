@@ -22,39 +22,39 @@ export function ReceiptView({ sale }: { sale: Sale }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col items-center gap-2 rounded-3xl bg-[var(--brand-rose-soft)] p-6 text-center">
-        <CheckCircle2 aria-hidden className="size-10 text-[var(--color-success)]" />
-        <p className="font-semibold text-[var(--color-gray-900)]">Vente encaissée</p>
-        {client && <p className="text-sm text-[var(--color-gray-600)]">{clientFullName(client)}</p>}
+      <div className="flex flex-col items-center gap-2 rounded-3xl bg-accent p-6 text-center">
+        <CheckCircle2 aria-hidden className="size-10 text-success" />
+        <p className="font-semibold text-base-content">Vente encaissée</p>
+        {client && <p className="text-sm text-base-content/70">{clientFullName(client)}</p>}
       </div>
 
       <HeroNumber label="Total payé" value={formatFcfa(totals.total)} align="center" size="lg" />
 
-      <div className="flex flex-col gap-1 rounded-2xl border border-[var(--color-gray-200)] p-4 text-sm">
+      <div className="flex flex-col gap-1 rounded-2xl border border-base-300 p-4 text-sm">
         {sale.cart.map((line) => (
-          <div key={line.id} className="flex items-center justify-between text-[var(--color-gray-700)]">
+          <div key={line.id} className="flex items-center justify-between text-base-content/80">
             <span>
               {line.name} × {line.qty}
-              {line.beneficiary && <span className="text-[var(--color-gray-400)]"> · {line.beneficiary}</span>}
+              {line.beneficiary && <span className="text-base-content/45"> · {line.beneficiary}</span>}
             </span>
             <span>{formatFcfa(line.unitPrice * line.qty)}</span>
           </div>
         ))}
         {totals.totalDiscount > 0 && (
           <>
-            <div className="mt-2 flex items-center justify-between border-t border-[var(--color-gray-200)] pt-2 text-[var(--color-gray-500)]">
+            <div className="mt-2 flex items-center justify-between border-t border-base-300 pt-2 text-base-content/55">
               <span>Sous-total</span>
               <span className="tabular-nums">{formatFcfa(totals.subtotal)}</span>
             </div>
             <DiscountBreakdown sale={sale} />
-            <div className="flex items-center justify-between font-semibold text-[var(--color-gray-900)]">
+            <div className="flex items-center justify-between font-semibold text-base-content">
               <span>Total</span>
               <span className="tabular-nums">{formatFcfa(totals.total)}</span>
             </div>
           </>
         )}
         {sale.payment && (
-          <p className="mt-2 border-t border-[var(--color-gray-200)] pt-2 text-xs text-[var(--color-gray-500)]">
+          <p className="mt-2 border-t border-base-300 pt-2 text-xs text-base-content/55">
             {sale.payment.modes.map((m) => `${MODE_LABEL[m.mode]} · ${formatFcfa(m.amount)}`).join(" + ")}
           </p>
         )}

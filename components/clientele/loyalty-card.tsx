@@ -28,13 +28,13 @@ export function LoyaltyCard({ name, tier, points, clientId, className }: Loyalty
   return (
     <div
       className={cn(
-        "relative aspect-[1.6/1] w-full overflow-hidden rounded-3xl bg-[var(--brand-taupe-muted)] p-6 text-white shadow-[0px_4px_16px_0px_rgba(0,0,0,0.12)]",
+        "relative aspect-[1.6/1] w-full overflow-hidden rounded-3xl bg-primary p-6 text-white shadow-[0px_4px_16px_0px_rgba(0,0,0,0.12)]",
         className,
       )}
     >
       {/* Ambient rose accent shapes — flat fills only, no gradient, per DESIGN.md */}
-      <div aria-hidden className="absolute -top-10 -right-10 size-40 rounded-full bg-[var(--core-brand-color)]/20" />
-      <div aria-hidden className="absolute -bottom-14 -left-8 size-32 rounded-full bg-[var(--core-brand-color)]/10" />
+      <div aria-hidden className="absolute -top-10 -right-10 size-40 rounded-full bg-primary/20" />
+      <div aria-hidden className="absolute -bottom-14 -left-8 size-32 rounded-full bg-primary/10" />
 
       <div className="relative flex h-full flex-col justify-between">
         <div className="flex items-start justify-between">
@@ -60,7 +60,7 @@ export function LoyaltyCard({ name, tier, points, clientId, className }: Loyalty
           {/* Demo QR pattern — no real scan payload encoded, cf. component doc above */}
           <div aria-hidden className="grid shrink-0 grid-cols-6 gap-[2px] rounded-lg bg-white p-2">
             {cells.map((on, i) => (
-              <span key={i} className={cn("size-[5px]", on ? "bg-[var(--brand-taupe-muted)]" : "bg-transparent")} />
+              <span key={i} className={cn("size-[5px]", on ? "bg-primary" : "bg-transparent")} />
             ))}
           </div>
         </div>
@@ -89,11 +89,11 @@ export function DemoQrBlock({ seed, size = 72, className }: DemoQrBlockProps) {
   return (
     <div
       aria-hidden
-      className={cn("grid grid-cols-6 gap-[2px] rounded-lg border border-[var(--color-gray-200)] bg-white p-2", className)}
+      className={cn("grid grid-cols-6 gap-[2px] rounded-lg border border-base-300 bg-white p-2", className)}
       style={{ width: size, height: size }}
     >
       {cells.map((on, i) => (
-        <span key={i} className={cn("rounded-[1px]", on ? "bg-[var(--brand-taupe-muted)]" : "bg-transparent")} />
+        <span key={i} className={cn("rounded-[1px]", on ? "bg-primary" : "bg-transparent")} />
       ))}
     </div>
   );

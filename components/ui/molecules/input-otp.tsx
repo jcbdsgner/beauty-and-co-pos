@@ -49,12 +49,12 @@ function Slot({ char, isActive, hasFakeCaret }: SlotProps) {
   return (
     <div
       className={cn(
-        "relative flex h-14 w-12 items-center justify-center rounded-xl border text-xl font-semibold text-[var(--color-gray-900)] transition",
+        "relative flex h-14 w-12 items-center justify-center rounded-xl border text-xl font-semibold text-base-content transition",
         isActive ? "border-ring ring-4 ring-ring/15" : "border-border",
       )}
     >
       {char ?? ""}
-      {hasFakeCaret && <span className="pointer-events-none absolute h-6 w-px animate-pulse bg-[var(--color-gray-900)]" />}
+      {hasFakeCaret && <span className="pointer-events-none absolute h-6 w-px animate-pulse bg-base-content" />}
     </div>
   );
 }

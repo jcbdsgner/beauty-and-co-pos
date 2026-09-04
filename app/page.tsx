@@ -43,7 +43,7 @@ export default function AccueilPage() {
 
       {/* Le point du jour — deux repères, pas trois hero-metrics */}
       <Board legend="Le point du jour" tone="now">
-        <div className="flex divide-x divide-[var(--board-groove)]">
+        <div className="flex divide-x divide-base-300">
           <PointCell
             href="/cartes-cadeaux"
             label="Cartes à préparer"
@@ -117,15 +117,15 @@ function PointCell({
         <Legend>{label}</Legend>
         <span
           className={cn(
-            "mt-0.5 block font-[family-name:var(--font-heading)] text-lg font-semibold text-[var(--color-gray-900)]",
+            "mt-0.5 block font-[family-name:var(--font-heading)] text-lg font-semibold text-base-content",
             !muted && "tabular-nums",
-            muted && "text-[var(--color-gray-400)]",
+            muted && "text-base-content/45",
           )}
         >
           {value}
         </span>
       </span>
-      <span className="flex shrink-0 items-center gap-1 text-xs font-semibold uppercase tracking-[0.1em] text-[var(--brand-taupe-muted)]">
+      <span className="flex shrink-0 items-center gap-1 text-xs font-semibold uppercase tracking-[0.1em] text-primary">
         {hint}
         <ChevronRight className="size-3.5 transition group-hover:translate-x-0.5" />
       </span>

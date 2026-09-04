@@ -75,7 +75,7 @@ export function CatalogueProduits() {
       }
     >
       {subcats.length > 0 && (
-        <div className="border-b border-[var(--board-groove)] px-3 py-2">
+        <div className="border-b border-base-300 px-3 py-2">
           <ChipFilter options={subcatOptions} value={subcategory} onChange={setSubcategory} wrap={false} />
         </div>
       )}
@@ -85,7 +85,7 @@ export function CatalogueProduits() {
       ) : (
         <>
           {(lowCount > 0 || outCount > 0) && (
-            <div className="border-b border-[var(--board-groove)] bg-black/[0.02] px-4 py-2">
+            <div className="border-b border-base-300 bg-black/[0.02] px-4 py-2">
               <Legend>
                 {outCount > 0 && `${outCount} en rupture`}
                 {outCount > 0 && lowCount > 0 && " · "}
@@ -96,11 +96,11 @@ export function CatalogueProduits() {
           {groups.map((group) => (
             <div key={group.label ?? "all"}>
               {group.label && (
-                <div className="border-b border-[var(--board-groove)] bg-black/[0.02] px-4 py-2">
+                <div className="border-b border-base-300 bg-black/[0.02] px-4 py-2">
                   <Legend>{group.label} · {group.items.length}</Legend>
                 </div>
               )}
-              <div className="grid grid-cols-2 gap-px bg-[var(--board-groove)] md:grid-cols-3 xl:grid-cols-4">
+              <div className="grid grid-cols-2 gap-px bg-base-300 md:grid-cols-3 xl:grid-cols-4">
                 {group.items.map((produit) => (
                   <ProductTile key={produit.id} produit={produit} />
                 ))}
@@ -125,13 +125,13 @@ function ProductTile({ produit }: { produit: Produit }) {
           <PhotoPlaceholder className="size-full rounded-none border-0" label="Photo à venir" />
         )}
       </div>
-      <div className="flex flex-1 flex-col gap-1 border-t border-[var(--board-groove)] p-3">
-        <p className="line-clamp-2 text-sm font-semibold text-[var(--color-gray-900)]">{produit.name}</p>
-        <p className="text-sm font-semibold tabular-nums text-[var(--button-2-color)]">{formatFcfa(produit.price)}</p>
+      <div className="flex flex-1 flex-col gap-1 border-t border-base-300 p-3">
+        <p className="line-clamp-2 text-sm font-semibold text-base-content">{produit.name}</p>
+        <p className="text-sm font-semibold tabular-nums text-primary">{formatFcfa(produit.price)}</p>
         <span
           className={cn(
             "mt-auto pt-1 text-xs font-semibold tabular-nums",
-            out ? "text-[var(--color-error)]" : low ? "text-[var(--board-amber)]" : "text-[var(--color-gray-400)]",
+            out ? "text-error" : low ? "text-warning" : "text-base-content/45",
           )}
         >
           {out ? "Rupture de stock" : `${produit.stock} en stock`}

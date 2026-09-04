@@ -48,7 +48,7 @@ export function MessageInbox({ selectedClientId, onSelect, filterClientId, onFil
     });
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[14px] border border-[var(--board-groove)] bg-white">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[14px] border border-base-300 bg-white">
       <div className="flex shrink-0 flex-col gap-2 border-b border-border p-3">
         <ClientSearchField
           selectedClientId={filterClientId}
@@ -67,7 +67,7 @@ export function MessageInbox({ selectedClientId, onSelect, filterClientId, onFil
         {visible.length === 0 ? (
           <div className="flex flex-col items-center gap-1 px-6 py-14 text-center">
             <Legend>Aucun échange</Legend>
-            <p className="text-sm text-[var(--color-gray-500)]">Rien pour ce filtre.</p>
+            <p className="text-sm text-base-content/55">Rien pour ce filtre.</p>
           </div>
         ) : (
           <>
@@ -152,21 +152,21 @@ function InboxRow({
       onClick={onSelect}
       className={cn(
         "flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-left transition active:scale-[0.99]",
-        selected ? "bg-accent" : "hover:bg-[var(--color-gray-50)]",
+        selected ? "bg-accent" : "hover:bg-base-200",
       )}
     >
       <Avatar initial={initial} size={40} className="bg-accent font-semibold text-secondary" />
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-1.5">
-          <span className="truncate font-[family-name:var(--font-heading)] text-[15px] font-semibold text-[var(--color-gray-900)]">
+          <span className="truncate font-[family-name:var(--font-heading)] text-[15px] font-semibold text-base-content">
             {name}
           </span>
-          {conv.unread && <span aria-label="Non lu" className="size-2 shrink-0 rounded-full bg-[var(--board-amber)]" />}
+          {conv.unread && <span aria-label="Non lu" className="size-2 shrink-0 rounded-full bg-warning" />}
         </span>
-        <span className="line-clamp-1 text-[13px] text-[var(--color-gray-500)]">{subtitle}</span>
+        <span className="line-clamp-1 text-[13px] text-base-content/55">{subtitle}</span>
       </span>
       <span className="flex shrink-0 flex-col items-end gap-1">
-        <span className="flex items-center gap-1.5 text-[11px] text-[var(--color-gray-400)] tabular-nums">
+        <span className="flex items-center gap-1.5 text-[11px] text-base-content/45 tabular-nums">
           {stamp}
           <ChannelGlyph channel={conv.channel} className="size-3.5" />
         </span>

@@ -35,13 +35,13 @@ export function RadioGroup({ options, value, onChange, className }: RadioGroupPr
           >
             <RadioGroupPrimitive.Item
               value={option.value}
-              className="flex size-7 shrink-0 items-center justify-center rounded-full border-2 border-[var(--color-gray-300)] transition data-[state=checked]:border-secondary outline-none focus-visible:ring-4 focus-visible:ring-ring/25"
+              className="flex size-7 shrink-0 items-center justify-center rounded-full border-2 border-base-content/30 transition data-[state=checked]:border-secondary outline-none focus-visible:ring-4 focus-visible:ring-ring/25"
             >
               <RadioGroupPrimitive.Indicator className="size-3 rounded-full bg-secondary" />
             </RadioGroupPrimitive.Item>
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-semibold text-[var(--color-gray-900)]">{option.label}</span>
-              {option.hint && <span className="block text-xs text-[var(--color-gray-500)]">{option.hint}</span>}
+              <span className="block text-sm font-semibold text-base-content">{option.label}</span>
+              {option.hint && <span className="block text-xs text-base-content/55">{option.hint}</span>}
             </span>
           </label>
         );

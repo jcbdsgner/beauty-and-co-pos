@@ -55,36 +55,36 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
     <div className="mx-auto flex h-full max-w-md flex-col items-center gap-5 overflow-y-auto px-6 py-10 text-center">
       <span className="relative flex size-20 items-center justify-center">
         <BrandMark variant="fill" className="absolute inset-0 size-full" />
-        <Check aria-hidden className="relative size-9 text-[var(--on-core-brand-color)]" strokeWidth={2.5} />
+        <Check aria-hidden className="relative size-9 text-primary-content" strokeWidth={2.5} />
       </span>
 
       <div>
-        <p className="font-[family-name:var(--font-heading)] font-bold text-2xl text-[var(--color-gray-900)]">Vente encaissée</p>
-        {client && <p className="mt-0.5 text-sm text-[var(--color-gray-500)]">{clientFullName(client)}</p>}
+        <p className="font-[family-name:var(--font-heading)] font-bold text-2xl text-base-content">Vente encaissée</p>
+        {client && <p className="mt-0.5 text-sm text-base-content/55">{clientFullName(client)}</p>}
       </div>
 
-      <p className="font-[family-name:var(--font-heading)] font-semibold text-[3rem] leading-none text-[var(--color-gray-900)] tabular-nums">
+      <p className="font-[family-name:var(--font-heading)] font-semibold text-[3rem] leading-none text-base-content tabular-nums">
         {formatFcfa(totals.total)}
       </p>
 
       {/* Printable ticket */}
       <div
         ref={receiptRef}
-        className="w-full rounded-2xl border border-border bg-white p-4 text-left text-sm text-[var(--color-gray-800)] print:border-0"
+        className="w-full rounded-2xl border border-border bg-white p-4 text-left text-sm text-base-content/90 print:border-0"
       >
         <div className="mb-2 text-center">
           <p className="font-[family-name:var(--font-heading)] font-semibold text-base">Beauty and Co</p>
-          <p className="text-xs text-[var(--color-gray-500)]">
+          <p className="text-xs text-base-content/55">
             {sale.label} · {RECEIPT_DATE_FMT.format(new Date(sale.encaisseeAt ?? sale.createdAt))}
           </p>
-          {client && <p className="text-xs text-[var(--color-gray-500)]">Cliente : {clientFullName(client)}</p>}
+          {client && <p className="text-xs text-base-content/55">Cliente : {clientFullName(client)}</p>}
         </div>
         <div className="flex flex-col gap-1 border-t border-border pt-2">
           {sale.cart.map((line) => (
             <div key={line.id} className="flex justify-between">
               <span>
                 {line.name} × {line.qty}
-                {line.beneficiary && <span className="text-[var(--color-gray-400)]"> · {line.beneficiary}</span>}
+                {line.beneficiary && <span className="text-base-content/45"> · {line.beneficiary}</span>}
               </span>
               <span className="tabular-nums">{formatFcfa(line.unitPrice * line.qty)}</span>
             </div>
@@ -92,7 +92,7 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
         </div>
         {totals.totalDiscount > 0 && (
           <>
-            <div className="mt-1 flex justify-between border-t border-border pt-2 text-[var(--color-gray-500)]">
+            <div className="mt-1 flex justify-between border-t border-border pt-2 text-base-content/55">
               <span>Sous-total</span>
               <span className="tabular-nums">{formatFcfa(totals.subtotal)}</span>
             </div>
@@ -104,19 +104,19 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
           <span className="tabular-nums">{formatFcfa(totals.total)}</span>
         </div>
         {sale.payment && (
-          <p className="mt-1 text-xs text-[var(--color-gray-500)]">
+          <p className="mt-1 text-xs text-base-content/55">
             {sale.payment.modes.map((m) => `${MODE_LABEL[m.mode]} · ${formatFcfa(m.amount)}`).join("  +  ")}
           </p>
         )}
         {client && (
           <div className="mt-2 flex flex-col gap-0.5 border-t border-border pt-2 text-xs">
             <div className="flex justify-between">
-              <span className="text-[var(--color-gray-500)]">Points gagnés</span>
-              <span className="font-semibold tabular-nums text-[var(--color-success)]">+{sale.loyaltyPointsEarned ?? 0}</span>
+              <span className="text-base-content/55">Points gagnés</span>
+              <span className="font-semibold tabular-nums text-success">+{sale.loyaltyPointsEarned ?? 0}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[var(--color-gray-500)]">Nouveau solde</span>
-              <span className="font-semibold tabular-nums text-[var(--color-gray-800)]">{client.points} points</span>
+              <span className="text-base-content/55">Nouveau solde</span>
+              <span className="font-semibold tabular-nums text-base-content/90">{client.points} points</span>
             </div>
           </div>
         )}
@@ -157,12 +157,12 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
           </span>
           <h2
             id="motif-remise-title"
-            className="font-[family-name:var(--font-heading)] font-semibold text-lg text-[var(--color-gray-900)]"
+            className="font-[family-name:var(--font-heading)] font-semibold text-lg text-base-content"
           >
             Motif de la remise accordée
           </h2>
         </div>
-        <p className="mt-2 text-sm text-[var(--color-gray-500)]">
+        <p className="mt-2 text-sm text-base-content/55">
           {sale.discountGranted?.mode === "pourcentage"
             ? `${sale.discountGranted.value} % des prestations`
             : "Montant fixe"}{" "}

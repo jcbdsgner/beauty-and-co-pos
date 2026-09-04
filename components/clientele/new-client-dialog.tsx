@@ -115,7 +115,7 @@ export function NewClientDialog({ open, onClose, onCreated, initialValues }: New
       className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl p-6"
     >
       <CloseButton onClick={handleClose} />
-      <h2 id="new-client-title" className="font-[family-name:var(--font-heading)] font-semibold text-2xl text-[var(--color-gray-900)]">
+      <h2 id="new-client-title" className="font-[family-name:var(--font-heading)] font-semibold text-2xl text-base-content">
         Nouvelle cliente
       </h2>
 
@@ -170,7 +170,7 @@ export function NewClientDialog({ open, onClose, onCreated, initialValues }: New
               action={
                 <Link
                   href={`/clientele/${duplicate.id}`}
-                  className="shrink-0 text-sm font-semibold text-[var(--color-warning)] underline underline-offset-2"
+                  className="shrink-0 text-sm font-semibold text-warning underline underline-offset-2"
                 >
                   Voir la fiche existante
                 </Link>
@@ -189,7 +189,7 @@ export function NewClientDialog({ open, onClose, onCreated, initialValues }: New
               <TextInput value={form.colorReference} onChange={(e) => set("colorReference", e.target.value)} />
             </Field>
           </div>
-          <p className="text-xs text-[var(--color-gray-400)]">
+          <p className="text-xs text-base-content/45">
             Les préférences détaillées (onglerie, coiffure, spa, épilation, boisson) se renseignent ensuite sur la fiche.
           </p>
         </Card>

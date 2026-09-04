@@ -55,11 +55,11 @@ export function DatePicker({ value, onChange, placeholder = "Choisir une date", 
           type="button"
           className={cn(
             "flex h-14 w-full items-center gap-2 rounded-xl border border-border bg-white px-4 text-left text-[15px] transition focus:border-ring focus:ring-4 focus:ring-ring/15 focus:outline-none",
-            value ? "text-[var(--color-gray-900)]" : "text-[var(--color-gray-400)]",
+            value ? "text-base-content" : "text-base-content/45",
             className,
           )}
         >
-          <CalendarIcon aria-hidden className="size-4 shrink-0 text-[var(--color-gray-400)]" />
+          <CalendarIcon aria-hidden className="size-4 shrink-0 text-base-content/45" />
           {label}
         </button>
       </PopoverPrimitive.Trigger>
@@ -69,29 +69,29 @@ export function DatePicker({ value, onChange, placeholder = "Choisir une date", 
           sideOffset={8}
           // Widened from w-72: the day grid below needed 44px cells (touch minimum), which a
           // 288px-wide popover couldn't fit 7 of without shrinking them back under the minimum.
-          className="z-50 w-[23rem] rounded-2xl border border-[var(--color-gray-200)] bg-white p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.1)] focus:outline-none"
+          className="z-50 w-[23rem] rounded-2xl border border-base-300 bg-white p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.1)] focus:outline-none"
         >
           <div className="mb-3 flex items-center justify-between">
             <button
               type="button"
               aria-label="Mois précédent"
               onClick={() => setVisibleMonth(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() - 1, 1))}
-              className="flex size-12 items-center justify-center rounded-full text-[var(--color-gray-500)] transition active:scale-90 active:bg-muted hover:bg-muted"
+              className="flex size-12 items-center justify-center rounded-full text-base-content/55 transition active:scale-90 active:bg-muted hover:bg-muted"
             >
               <ChevronLeft aria-hidden className="size-4" />
             </button>
-            <p className="text-sm font-semibold text-[var(--color-gray-900)] capitalize">{monthLabel}</p>
+            <p className="text-sm font-semibold text-base-content capitalize">{monthLabel}</p>
             <button
               type="button"
               aria-label="Mois suivant"
               onClick={() => setVisibleMonth(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1))}
-              className="flex size-12 items-center justify-center rounded-full text-[var(--color-gray-500)] transition active:scale-90 active:bg-muted hover:bg-muted"
+              className="flex size-12 items-center justify-center rounded-full text-base-content/55 transition active:scale-90 active:bg-muted hover:bg-muted"
             >
               <ChevronRight aria-hidden className="size-4" />
             </button>
           </div>
 
-          <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-[var(--color-gray-400)]">
+          <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-base-content/45">
             {WEEKDAYS.map((w, i) => (
               <span key={i}>{w}</span>
             ))}
@@ -119,7 +119,7 @@ export function DatePicker({ value, onChange, placeholder = "Choisir une date", 
                       ? "bg-primary font-semibold text-primary-foreground"
                       : isToday
                         ? "font-semibold text-secondary"
-                        : "text-[var(--color-gray-700)] active:bg-accent hover:bg-accent",
+                        : "text-base-content/80 active:bg-accent hover:bg-accent",
                   )}
                 >
                   {day}

@@ -71,7 +71,7 @@ function CarouselArrow({ side, disabled, onClick }: { side: "left" | "right"; di
       disabled={disabled}
       aria-label={side === "left" ? "Précédent" : "Suivant"}
       className={cn(
-        "absolute top-1/2 z-10 flex size-11 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-white text-[var(--color-gray-600)] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1)] transition active:scale-90 disabled:pointer-events-none disabled:opacity-0",
+        "absolute top-1/2 z-10 flex size-11 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-white text-base-content/70 shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1)] transition active:scale-90 disabled:pointer-events-none disabled:opacity-0",
         side === "left" ? "-left-3" : "-right-3",
       )}
     >

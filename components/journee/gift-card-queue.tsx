@@ -96,14 +96,14 @@ function GiftCardQueueRow({ order }: { order: GiftCardOrder }) {
   return (
     <div
       className={cn(
-        "relative flex items-center gap-4 border-b border-[var(--board-groove)] px-4 py-2.5 last:border-b-0",
-        "min-h-[var(--board-lane-h)]",
+        "relative flex items-center gap-4 border-b border-base-300 px-4 py-2.5 last:border-b-0",
+        "min-h-14",
       )}
     >
       {/* reserved amber signal slot — a card that has waited too long holds the edge */}
       <span
         aria-hidden
-        className={cn("absolute inset-y-0 left-0 w-[3px]", stale ? "bg-[var(--board-amber)]" : "bg-transparent")}
+        className={cn("absolute inset-y-0 left-0 w-[3px]", stale ? "bg-warning" : "bg-transparent")}
       />
 
       {/* Off-screen print target — react-to-print reads the live DOM, so keep it mounted. */}
@@ -115,13 +115,13 @@ function GiftCardQueueRow({ order }: { order: GiftCardOrder }) {
 
       {/* figure column — amount over wait, aligned down the board */}
       <span className="flex w-[76px] shrink-0 flex-col leading-tight">
-        <span className="font-[family-name:var(--font-heading)] text-[15px] font-semibold tabular-nums text-[var(--color-gray-900)]">
+        <span className="font-[family-name:var(--font-heading)] text-[15px] font-semibold tabular-nums text-base-content">
           {formatFcfa(order.amount)}
         </span>
         <span
           className={cn(
             "text-[0.7rem] font-semibold tabular-nums",
-            stale ? "text-[var(--board-amber)]" : "text-[var(--color-gray-400)]",
+            stale ? "text-warning" : "text-base-content/45",
           )}
         >
           {waitLabel(days)}
@@ -131,7 +131,7 @@ function GiftCardQueueRow({ order }: { order: GiftCardOrder }) {
       {/* identity + hand-over target */}
       <span className="flex min-w-0 flex-1 flex-col gap-0.5 py-1.5">
         <span className="flex items-center gap-2">
-          <span className="truncate font-[family-name:var(--font-heading)] text-[15px] font-semibold text-[var(--color-gray-900)]">
+          <span className="truncate font-[family-name:var(--font-heading)] text-[15px] font-semibold text-base-content">
             {buyerName}
           </span>
           <Badge variant={isLivraison ? "info" : "neutral"}>{isLivraison ? "Livraison" : "Retrait"}</Badge>
@@ -139,16 +139,16 @@ function GiftCardQueueRow({ order }: { order: GiftCardOrder }) {
 
         {isLivraison ? (
           printed ? (
-            <span className="text-[13px] leading-snug text-[var(--color-gray-500)]">
-              <span className="text-[var(--color-gray-700)]">Livrer à {order.recipientName}</span>
+            <span className="text-[13px] leading-snug text-base-content/55">
+              <span className="text-base-content/80">Livrer à {order.recipientName}</span>
               {" — "}
               {order.recipientPhone} · {order.deliveryAddress}
             </span>
           ) : (
-            <span className="truncate text-[13px] text-[var(--color-gray-500)]">Pour {order.recipientName}</span>
+            <span className="truncate text-[13px] text-base-content/55">Pour {order.recipientName}</span>
           )
         ) : (
-          <span className="text-[13px] text-[var(--color-gray-500)]">
+          <span className="text-[13px] text-base-content/55">
             Retrait au comptoir
             {printed && buyer ? ` — prévenir au ${buyer.phone}` : ""}
           </span>

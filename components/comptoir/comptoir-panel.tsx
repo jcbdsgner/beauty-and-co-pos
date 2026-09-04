@@ -28,14 +28,14 @@ export function ComptoirPanel() {
   const step = activeSale?.step ?? "vente";
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col bg-[var(--pos-accent-dark)]">
+    <div className="fixed inset-0 z-40 flex flex-col bg-primary">
       {/* Taupe desk strip */}
       <div className="flex shrink-0 items-end justify-between gap-4 px-5 pt-3">
         <SaleTabsBar />
         <button
           type="button"
           onClick={collapseComptoir}
-          className="mb-2 flex h-12 shrink-0 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-[var(--brand-taupe-muted)] transition active:scale-[0.97] hover:bg-white/90"
+          className="mb-2 flex h-12 shrink-0 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-primary transition active:scale-[0.97] hover:bg-white/90"
         >
           <ChevronDown aria-hidden className="size-4" />
           Replier
@@ -43,12 +43,12 @@ export function ComptoirPanel() {
       </div>
 
       {/* Cream working sheet */}
-      <div className="min-h-0 flex-1 overflow-hidden rounded-t-2xl bg-[var(--brand-cream)]">
+      <div className="min-h-0 flex-1 overflow-hidden rounded-t-2xl bg-base-200">
         {!activeSale ? (
           <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
             <BrandMark className="size-12 text-border" />
-            <p className="font-[family-name:var(--font-heading)] font-semibold text-xl text-[var(--color-gray-900)]">Aucune vente ouverte</p>
-            <p className="text-sm text-[var(--color-gray-500)]">Ouvrez une vente pour commencer à encaisser.</p>
+            <p className="font-[family-name:var(--font-heading)] font-semibold text-xl text-base-content">Aucune vente ouverte</p>
+            <p className="text-sm text-base-content/55">Ouvrez une vente pour commencer à encaisser.</p>
             <Button variant="brand" size="default" icon={<Plus className="size-4" />} onClick={() => openNewTab()} className="mt-1">
               Nouvelle vente
             </Button>

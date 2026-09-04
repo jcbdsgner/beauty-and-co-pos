@@ -22,10 +22,10 @@ export function StyleDetailDialog({ style, onClose }: StyleDetailDialogProps) {
     <Dialog open labelledBy="planche-detail-title" className="relative w-full max-w-md overflow-hidden rounded-[14px] p-0">
       <CloseButton onClick={onClose} />
 
-      <div className="relative flex aspect-[4/3] items-center justify-center bg-[var(--brand-rose-soft)]">
-        <Icon aria-hidden className="size-16 text-[var(--brand-taupe-muted)]" />
+      <div className="relative flex aspect-[4/3] items-center justify-center bg-accent">
+        <Icon aria-hidden className="size-16 text-primary" />
         {style.trending && (
-          <span className="absolute left-3 top-3 rounded-[6px] bg-[var(--board-amber)] px-2 py-1 font-[family-name:var(--font-heading)] text-[0.6rem] font-bold uppercase tracking-[0.1em] text-white">
+          <span className="absolute left-3 top-3 rounded-[6px] bg-warning px-2 py-1 font-[family-name:var(--font-heading)] text-[0.6rem] font-bold uppercase tracking-[0.1em] text-white">
             Tendance
           </span>
         )}
@@ -33,10 +33,10 @@ export function StyleDetailDialog({ style, onClose }: StyleDetailDialogProps) {
 
       <div className="flex flex-col gap-3 p-6">
         <Legend>Planche</Legend>
-        <h2 id="planche-detail-title" className="font-[family-name:var(--font-heading)] text-xl font-semibold text-[var(--color-gray-900)]">
+        <h2 id="planche-detail-title" className="font-[family-name:var(--font-heading)] text-xl font-semibold text-base-content">
           {style.name}
         </h2>
-        <p className="text-2xl font-semibold tabular-nums text-[var(--button-2-color)]">{formatFcfa(style.price)}</p>
+        <p className="text-2xl font-semibold tabular-nums text-primary">{formatFcfa(style.price)}</p>
         <Button type="button" variant="outline" onClick={onClose} className="mt-2 w-full">
           Fermer
         </Button>

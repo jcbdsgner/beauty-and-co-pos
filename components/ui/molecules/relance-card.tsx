@@ -35,16 +35,16 @@ export function RelanceCard({ initial, name, context, message, statusLabel, stat
           <Avatar initial={initial} size={44} className="bg-accent font-semibold text-secondary" />
           <div>
             <span className="flex items-center gap-2">
-              <span className="font-[family-name:var(--font-heading)] font-semibold text-[15px] text-[var(--color-gray-900)]">{name}</span>
+              <span className="font-[family-name:var(--font-heading)] font-semibold text-[15px] text-base-content">{name}</span>
               {tierBadge && <Badge variant={tierBadge.variant}>{tierBadge.label}</Badge>}
             </span>
-            <p className="text-sm text-[var(--color-gray-500)]">{context}</p>
+            <p className="text-sm text-base-content/55">{context}</p>
           </div>
         </div>
         {statusLabel && <Badge variant={statusVariant}>{statusLabel}</Badge>}
       </div>
 
-      <blockquote className="rounded-2xl border-l-2 border-secondary/40 bg-[var(--color-gray-50)] px-4 py-3 text-sm text-[var(--color-gray-700)]">
+      <blockquote className="rounded-2xl border-l-2 border-secondary/40 bg-base-200 px-4 py-3 text-sm text-base-content/80">
         {message}
       </blockquote>
 

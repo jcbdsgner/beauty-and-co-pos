@@ -65,7 +65,7 @@ export function DataTable<T extends Record<string, unknown>>({ columns, rows, ro
         {columns.map((col) => (
           <span
             key={col.key}
-            className={cn("text-xs font-semibold tracking-wide text-[var(--color-gray-500)] uppercase", ALIGN_CLASS[col.align ?? "left"])}
+            className={cn("text-xs font-semibold tracking-wide text-base-content/55 uppercase", ALIGN_CLASS[col.align ?? "left"])}
           >
             {col.header}
           </span>
@@ -73,7 +73,7 @@ export function DataTable<T extends Record<string, unknown>>({ columns, rows, ro
       </div>
 
       {rows.length === 0 ? (
-        <p className="px-4 py-12 text-center text-sm text-[var(--color-gray-400)]">{emptyMessage}</p>
+        <p className="px-4 py-12 text-center text-sm text-base-content/45">{emptyMessage}</p>
       ) : (
         table.getRowModel().rows.map((row) => (
           <div
@@ -83,7 +83,7 @@ export function DataTable<T extends Record<string, unknown>>({ columns, rows, ro
             onClick={onRowClick ? () => onRowClick(row.original) : undefined}
             onKeyDown={onRowClick ? (e) => (e.key === "Enter" || e.key === " ") && onRowClick(row.original) : undefined}
             className={cn(
-              "grid min-h-16 items-center gap-2 border-b border-[var(--color-gray-100)] px-4 py-3 text-[15px] text-[var(--color-gray-800)] transition last:border-b-0",
+              "grid min-h-16 items-center gap-2 border-b border-base-200 px-4 py-3 text-[15px] text-base-content/90 transition last:border-b-0",
               onRowClick && "cursor-pointer outline-none hover:bg-accent/40 active:bg-accent/70 focus-visible:bg-accent/40",
             )}
             style={{ gridTemplateColumns: template }}

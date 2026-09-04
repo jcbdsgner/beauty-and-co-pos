@@ -46,12 +46,12 @@ export function FileUpload({ files, onAdd, onRemove, accept = "image/*", multipl
         }}
         className={cn(
           "flex min-h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-6 text-center transition active:scale-[0.99]",
-          dragOver ? "border-[var(--brand-taupe-muted)] bg-[var(--brand-rose-soft)]" : "border-[var(--color-gray-300)] bg-[var(--color-gray-50)]",
+          dragOver ? "border-primary bg-accent" : "border-base-content/30 bg-base-200",
         )}
       >
-        <UploadCloud aria-hidden className="size-8 text-[var(--brand-taupe-muted)]" />
-        <p className="text-sm font-semibold text-[var(--color-gray-700)]">Touchez pour choisir une photo</p>
-        <p className="text-xs text-[var(--color-gray-400)]">{hint}</p>
+        <UploadCloud aria-hidden className="size-8 text-primary" />
+        <p className="text-sm font-semibold text-base-content/80">Touchez pour choisir une photo</p>
+        <p className="text-xs text-base-content/45">{hint}</p>
         <input
           ref={inputRef}
           type="file"
@@ -65,12 +65,12 @@ export function FileUpload({ files, onAdd, onRemove, accept = "image/*", multipl
       {files.length > 0 && (
         <ul className="grid grid-cols-3 gap-3 sm:grid-cols-4">
           {files.map((file) => (
-            <li key={file.name} className="relative aspect-square overflow-hidden rounded-2xl border border-[var(--color-gray-200)] bg-white">
+            <li key={file.name} className="relative aspect-square overflow-hidden rounded-2xl border border-base-300 bg-white">
               {file.previewUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element -- local blob/object URL, not a Next Image asset
                 <img src={file.previewUrl} alt={file.name} className="size-full object-cover" />
               ) : (
-                <div className="flex size-full flex-col items-center justify-center gap-1 bg-[var(--color-gray-50)] text-[var(--color-gray-400)]">
+                <div className="flex size-full flex-col items-center justify-center gap-1 bg-base-200 text-base-content/45">
                   <ImageIcon aria-hidden className="size-6" />
                   <span className="px-1 text-center text-[10px] leading-tight truncate">{file.name}</span>
                 </div>
@@ -83,7 +83,7 @@ export function FileUpload({ files, onAdd, onRemove, accept = "image/*", multipl
                 type="button"
                 onClick={() => onRemove(file.name)}
                 aria-label={`Retirer ${file.name}`}
-                className="absolute top-1.5 right-1.5 flex size-7 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur transition active:scale-90 active:bg-[var(--color-error)]"
+                className="absolute top-1.5 right-1.5 flex size-7 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur transition active:scale-90 active:bg-error"
               >
                 <X aria-hidden className="size-4" />
               </button>

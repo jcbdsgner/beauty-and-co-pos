@@ -20,7 +20,7 @@ export function Popover({ trigger, children, align = "start", className }: Popov
           align={align}
           sideOffset={8}
           className={cn(
-            "z-50 rounded-2xl border border-[var(--color-gray-200)] bg-white p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.1)] focus:outline-none",
+            "z-50 rounded-2xl border border-base-300 bg-white p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.1)] focus:outline-none",
             className,
           )}
         >

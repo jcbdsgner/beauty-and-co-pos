@@ -24,7 +24,7 @@ const DOT_TONE: Record<string, string> = {
 };
 
 const FLAG_TONE: Record<string, string> = {
-  vip: "bg-[var(--brand-lilac)] text-[var(--text-secondary)] border-transparent",
+  vip: "bg-[var(--brand-lilac)] text-base-content/70 border-transparent",
   gold: "bg-primary text-primary-content border-transparent",
   silver: "bg-[var(--pos-tier-silver)] text-white border-transparent",
   brand: "bg-primary text-primary-content border-transparent",

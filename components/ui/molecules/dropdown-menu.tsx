@@ -35,7 +35,7 @@ export function DropdownMenu({ trigger, items, align = "end" }: DropdownMenuProp
                 onSelect={item.onSelect}
                 className={cn(
                   "flex min-h-14 cursor-pointer items-center gap-2.5 rounded-xl px-3 text-[15px] font-medium outline-none transition active:scale-[0.98] data-[highlighted]:bg-accent data-[disabled]:cursor-not-allowed data-[disabled]:opacity-40",
-                  item.tone === "danger" ? "text-destructive" : "text-[var(--color-gray-800)]",
+                  item.tone === "danger" ? "text-destructive" : "text-base-content/90",
                 )}
               >
                 {item.icon}

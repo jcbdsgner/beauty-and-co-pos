@@ -21,7 +21,7 @@ export function CatalogueBoissons() {
         <BoardEmpty title="Aucune boisson" hint="Le bar n'a rien à la carte pour le moment." />
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-px bg-[var(--board-groove)] md:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-px bg-base-300 md:grid-cols-3 xl:grid-cols-4">
             {boissons.map((b) => (
               <div key={b.id} className="flex flex-col bg-white">
                 <div className="relative aspect-[4/5] bg-white">
@@ -31,19 +31,19 @@ export function CatalogueBoissons() {
                     <PhotoPlaceholder className="size-full rounded-none border-0" label="Photo à venir" />
                   )}
                 </div>
-                <div className="flex flex-1 flex-col gap-1 border-t border-[var(--board-groove)] p-3">
-                  <p className="text-sm font-semibold text-[var(--color-gray-900)]">{b.name}</p>
+                <div className="flex flex-1 flex-col gap-1 border-t border-base-300 p-3">
+                  <p className="text-sm font-semibold text-base-content">{b.name}</p>
                   {b.description && (
-                    <p className="text-xs leading-snug text-[var(--color-gray-500)]">{b.description}</p>
+                    <p className="text-xs leading-snug text-base-content/55">{b.description}</p>
                   )}
-                  <p className="mt-auto pt-1 text-sm font-semibold tabular-nums text-[var(--button-2-color)]">
+                  <p className="mt-auto pt-1 text-sm font-semibold tabular-nums text-primary">
                     {formatFcfa(b.price)}
                   </p>
                 </div>
               </div>
             ))}
           </div>
-          <div className="border-t border-[var(--board-groove)] bg-black/[0.02] px-4 py-2 text-xs text-[var(--color-gray-500)]">
+          <div className="border-t border-base-300 bg-black/[0.02] px-4 py-2 text-xs text-base-content/55">
             Lait avec ou sans lactose au choix.
           </div>
         </>
