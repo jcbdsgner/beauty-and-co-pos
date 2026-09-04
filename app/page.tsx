@@ -1,34 +1,42 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
-import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/atoms/button";
-import { BoardHeader, Board, Legend, BoardEmpty } from "@/components/ui/board";
+import { BoardHeader, Legend } from "@/components/ui/board";
 import { AppointmentDetailSheet } from "@/components/planning/appointment-detail-sheet";
-import { DayList } from "@/components/planning/day-list";
+import { AccueilDayList } from "@/components/journee/accueil-day-list";
+import { AccueilGiftCards } from "@/components/journee/accueil-gift-cards";
 import { useEncaissement } from "@/components/journee/use-encaissement";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { BOOKING_URL, groupDayByReservation } from "@/lib/data/planning";
-import { cn } from "@/lib/utils";
 import type { RendezVous } from "@/lib/data/types";
 
+/** Today as "YYYY-MM-DD" (local). */
+function todayISO(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 /**
- * Accueil — l'écran d'atterrissage, langage « Le Tableau » (docs/adr/0005). Un point du jour calme
- * (pas de hero-metrics) et « Le jour » : la vue journée par réservation partagée avec le Planning
- * (docs/adr/0014) — une ligne = une payeuse, triée par heure.
+ * Accueil — l'écran d'atterrissage (Figma 156-69). Deux sections seulement : « Cartes cadeaux »,
+ * un aperçu de la file de préparation (docs/adr/0012), qui s'efface quand il n'y a rien ; puis
+ * « Le jour », la journée en cartes chronologiques par réservation (docs/adr/0014) — une ligne =
+ * une payeuse, triée par heure. Plus de bloc de compteurs : la journée est là, la file a son lien.
  */
 export default function AccueilPage() {
-  const { reservations, praticiennes, clients, giftCardOrders } = useAppData();
+  const { reservations, praticiennes, clients } = useAppData();
   const { requestEncaissement, encaissementDialog } = useEncaissement();
 
   const [detail, setDetail] = useState<RendezVous | null>(null);
 
-  const cartesAPreparer = giftCardOrders.filter(
-    (o) => o.status === "a_imprimer" || o.status === "imprimee",
-  ).length;
-
-  const reservationRows = useMemo(() => groupDayByReservation(reservations), [reservations]);
+  // « Le jour » = la journée en cours seulement. Le seed `RESERVATIONS` porte aujourd'hui par
+  // défaut ; la passe Planning y ajoute un champ `date` pour ses vues Semaine — on filtre donc
+  // sur le jour, sans dépendre de son helper `reservationDate` (pas encore committé).
+  const reservationRows = useMemo(() => {
+    const today = todayISO();
+    const todayOnly = reservations.filter((r) => ((r as { date?: string }).date ?? today) === today);
+    return groupDayByReservation(todayOnly);
+  }, [reservations]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -41,40 +49,24 @@ export default function AccueilPage() {
         }
       />
 
-      {/* Le point du jour — deux repères, pas trois hero-metrics */}
-      <Board legend="Le point du jour" tone="now">
-        <div className="flex divide-x divide-base-300">
-          <PointCell
-            href="/cartes-cadeaux"
-            label="Cartes à préparer"
-            value={cartesAPreparer > 0 ? String(cartesAPreparer) : "Aucune carte à préparer"}
-            hint="Ouvrir la file"
-            muted={cartesAPreparer === 0}
-          />
-          <PointCell
-            href="/planning"
-            label="Réservations du jour"
-            value={reservationRows.length > 0 ? String(reservationRows.length) : "Journée libre"}
-            hint="Ouvrir le planning"
-            muted={reservationRows.length === 0}
-          />
-        </div>
-      </Board>
+      <AccueilGiftCards />
 
-      {/* Le jour — la vue journée par réservation, partagée avec le Planning (docs/adr/0014) */}
-      <Board legend="Le jour">
+      <section>
+        <div className="mb-2 pl-1">
+          <Legend>Le jour</Legend>
+        </div>
         {reservationRows.length === 0 ? (
-          <BoardEmpty
-            title="Journée libre"
-            hint="Aucun rendez-vous aujourd'hui."
-            action={
-              <Button href="/planning" variant="outline">
-                Ouvrir le planning
-              </Button>
-            }
-          />
+          <div className="rounded-field border border-dashed border-base-300 px-4 py-12 text-center">
+            <p className="font-[family-name:var(--font-heading)] text-[15px] font-semibold text-base-content/60">
+              Journée libre
+            </p>
+            <p className="mt-1 text-sm text-base-content/45">Aucun rendez-vous aujourd&apos;hui.</p>
+            <Button href="/planning" variant="outline" size="sm" className="mt-4">
+              Ouvrir le planning
+            </Button>
+          </div>
         ) : (
-          <DayList
+          <AccueilDayList
             rows={reservationRows}
             clients={clients}
             praticiennes={praticiennes}
@@ -82,7 +74,7 @@ export default function AccueilPage() {
             onEncaisser={requestEncaissement}
           />
         )}
-      </Board>
+      </section>
 
       <AppointmentDetailSheet
         appointment={detail}
@@ -95,40 +87,5 @@ export default function AccueilPage() {
 
       {encaissementDialog}
     </div>
-  );
-}
-
-function PointCell({
-  href,
-  label,
-  value,
-  hint,
-  muted,
-}: {
-  href: string;
-  label: string;
-  value: string;
-  hint: string;
-  muted?: boolean;
-}) {
-  return (
-    <Link href={href} className="group flex flex-1 items-center justify-between gap-3 px-5 py-4 transition hover:bg-black/[0.02]">
-      <span className="min-w-0">
-        <Legend>{label}</Legend>
-        <span
-          className={cn(
-            "mt-0.5 block font-[family-name:var(--font-heading)] text-lg font-semibold text-base-content",
-            !muted && "tabular-nums",
-            muted && "text-base-content/45",
-          )}
-        >
-          {value}
-        </span>
-      </span>
-      <span className="flex shrink-0 items-center gap-1 text-xs font-semibold uppercase tracking-[0.1em] text-primary">
-        {hint}
-        <ChevronRight className="size-3.5 transition group-hover:translate-x-0.5" />
-      </span>
-    </Link>
   );
 }
