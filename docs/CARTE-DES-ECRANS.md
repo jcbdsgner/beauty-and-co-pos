@@ -14,7 +14,7 @@
 
 | Route | Fichier page | Écran | Rendu par |
 |---|---|---|---|
-| `/` | [`app/page.tsx`](../app/page.tsx) | **Accueil** — centre de pilotage du jour | inline (langage « Le Tableau ») |
+| `/` | [`app/page.tsx`](../app/page.tsx) | **Accueil** — centre de pilotage du jour | inline (cartes daisyUI — refonte Figma 156-69) |
 | `/recap-ventes` | [`app/recap-ventes/page.tsx`](../app/recap-ventes/page.tsx) | **Récap des ventes** | inline (`BoardHeader` + `DataTable`/`StatBand`) |
 | `/planning` | [`app/planning/page.tsx`](../app/planning/page.tsx) | **Planning** (groupé par praticienne) | [`components/planning/planning-board.tsx`](../components/planning/planning-board.tsx) |
 | `/equipe` | [`app/equipe/page.tsx`](../app/equipe/page.tsx) | **Équipe** = Planning sur la vue par praticienne | même `PlanningBoard` (`initialView="praticienne"`) |
@@ -53,9 +53,9 @@ Structure : `Sidebar` | ( page scrollable `max-w-6xl` + `ComptoirBar` ) + `Compt
 ## 3. Écrans de navigation, un par un
 
 ### Accueil — `/` — [`app/page.tsx`](../app/page.tsx)
-Landing. Langage « Le Tableau » (ADR 0005). `BoardHeader` avec une `action` : lien externe **« Créer un rendez-vous »** (`BOOKING_URL` de [`lib/data/planning.ts`](../lib/data/planning.ts), `Button external`) — 2ᵉ point d'entrée vers la plateforme de réservation, l'autre étant le pied du dialogue d'édition (ADR 0009). Deux `Board` (widget « Tournée du matin » retiré ADR 0011, section gift-cards inline retirée ADR 0012) :
-1. **Le point du jour** — 2 `PointCell` : **« Cartes à préparer »** (compteur `giftCardOrders` non résolus) → `/cartes-cadeaux`, **« Rendez-vous du jour »** → `/planning`. *(« Encaissé aujourd'hui » a quitté l'Accueil — reste via `/recap-ventes`.)*
-2. **Le jour** — `DayList` (une ligne = une réservation, triée par heure, dépliable en prestations), partagé avec le Planning (ADR 0014) ; bouton **Encaisser** par réservation. Pas de basculeur de vue ici (Accueil = vue chrono seule). Le compteur de RDV du jour ne vit que dans la cellule « Rendez-vous du jour » ci-dessus.
+Landing, refonte Figma 156-69 (base daisyUI, cartes — plus de `Board`/`Lane`). `BoardHeader` (titre + `action` : lien externe **« Créer un rendez-vous »**, `BOOKING_URL` de [`lib/data/planning.ts`](../lib/data/planning.ts), `Button external` — 2ᵉ point d'entrée vers la plateforme, l'autre étant le pied du dialogue d'édition, ADR 0009). Le bloc de compteurs « Le point du jour » est **retiré** (la journée est visible, la file a son lien). Deux sections :
+1. **Cartes cadeaux** — [`AccueilGiftCards`](../components/journee/accueil-gift-cards.tsx) : aperçu compact de la file de préparation (ADR 0012) — les 3 commandes non résolues les plus anciennes en cartes côte à côte (badge Retrait/Livraison, code, cible de remise, **bord ambre si ≥ 4 j**), action suivante sur chacune (**Imprimer** → **Marquer comme remise/expédiée**, mêmes actions store que la file). Lien **« Voir tout · N »** → `/cartes-cadeaux`. Section **masquée** quand il n'y a rien à préparer.
+2. **Le jour** — [`AccueilDayList`](../components/journee/accueil-day-list.tsx) : la journée en cartes chronologiques (une carte = une réservation, heure `start → end` · avatar + payeuse · prestations + praticienne(s), suffixe ambre « · à encaisser » si passé sans vente). Actions par carte : **Voir les détails** (`AppointmentDetailSheet`) + **Encaisser** / **Voir la vente** (`useEncaissement`). Filtré sur le jour courant. **Ne partage plus la `DayList` du Planning** (divergence assumée le temps de la passe daisyUI du Planning — pas de rail, pas de filet « maintenant », pas de dépliage). Vide → « Journée libre » + lien planning.
 - Dialogs : `AppointmentDetailSheet`, `encaissementDialog` via `useEncaissement`.
 
 ### Cartes cadeaux — `/cartes-cadeaux` — [`components/journee/gift-card-queue.tsx`](../components/journee/gift-card-queue.tsx) (ADR 0012)
