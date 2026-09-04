@@ -2,23 +2,18 @@
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
-import {
-  Baby,
-  Bath,
-  Check,
-  Feather,
-  Flower2,
-  Hand,
-  LayoutGrid,
-  type LucideIcon,
-  Scissors,
-  Smile,
-  Sparkles,
-  Users,
-} from "lucide-react";
+import { Check, LayoutGrid, type LucideIcon, Users } from "lucide-react";
 import { SegmentedToggle } from "@/components/ui/molecules/segmented-toggle";
 import { SearchInput } from "@/components/ui/atoms/search-input";
 import { PhotoPlaceholder } from "@/components/ui/atoms/photo-placeholder";
+import {
+  CoiffureIcon,
+  EpilationIcon,
+  ManucurePedicureIcon,
+  OnglerieIcon,
+  SoinVisageIcon,
+  SpaIcon,
+} from "@/components/ui/atoms/service-category-icons";
 import { PRODUCT_CATEGORIES, SERVICE_CATEGORIES, SERVICES } from "@/lib/data/menu";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { cn, formatFcfa } from "@/lib/utils";
@@ -38,17 +33,19 @@ type MenuMode = "services" | "produits" | "boissons";
  * L'escargot b&co coiffe le rail.
  */
 
-/** Icône par grande catégorie de prestations (clé de filtre `c:<id>` ou `all`). */
-const CATEGORY_ICON: Record<string, LucideIcon> = {
+/** Icône par grande catégorie de prestations (clé de filtre `c:<id>` ou `all`). Mini&Co reprend
+ *  l'icône de sa famille adulte (Hair → Coiffure, Spa → Spa), comme dans le catalogue b&co. */
+type CategoryIcon = LucideIcon | ((props: { className?: string }) => React.JSX.Element);
+const CATEGORY_ICON: Record<string, CategoryIcon> = {
   all: LayoutGrid,
-  "c:coiffure": Scissors,
-  "c:manucure-pedicure": Hand,
-  "c:onglerie": Sparkles,
-  "c:spa": Flower2,
-  "c:soin-du-visage": Smile,
-  "c:epilation": Feather,
-  "c:mini-co-hair": Baby,
-  "c:mini-co-spa": Bath,
+  "c:coiffure": CoiffureIcon,
+  "c:manucure-pedicure": ManucurePedicureIcon,
+  "c:onglerie": OnglerieIcon,
+  "c:spa": SpaIcon,
+  "c:soin-du-visage": SoinVisageIcon,
+  "c:epilation": EpilationIcon,
+  "c:mini-co-hair": CoiffureIcon,
+  "c:mini-co-spa": SpaIcon,
 };
 type Filter = {
   key: string;
@@ -200,7 +197,7 @@ export function MenuPanel({ saleId }: { saleId: string }) {
                   )}
                 >
                   {Icon ? (
-                    <Icon aria-hidden className="size-[18px] shrink-0" strokeWidth={1.75} />
+                    <Icon className="size-[18px] shrink-0" />
                   ) : (
                     <span aria-hidden className="size-[18px] shrink-0" />
                   )}
