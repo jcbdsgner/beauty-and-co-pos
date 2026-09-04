@@ -21,7 +21,7 @@ type StatTileProps = {
   className?: string;
 };
 
-/** Label leads (small, uppercase), the figure sits below in Cabinet Grotesk semibold at display scale, tabular
+/** Label leads (small, uppercase), the figure sits below in Outfit semibold at display scale, tabular
  *  digits so it doesn't jitter when it recomputes. */
 export function StatTile({ value, label, icon, tone = "neutral", hint, className }: StatTileProps) {
   return (

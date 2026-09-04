@@ -5,9 +5,9 @@ import { AppDataProvider } from "@/components/providers/app-data-provider";
 import { TooltipProvider } from "@/components/ui/atoms/tooltip";
 import { AppShell } from "@/components/shell/app-shell";
 
-const cabinetGrotesk = localFont({
-  src: "./fonts/CabinetGrotesk-Variable.woff2",
-  variable: "--font-cabinet-grotesk",
+const outfit = localFont({
+  src: "./fonts/Outfit-Variable.woff2",
+  variable: "--font-outfit",
   weight: "100 900",
 });
 
@@ -29,7 +29,7 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
-      className={`${cabinetGrotesk.variable} ${benedict.variable} h-full antialiased`}
+      className={`${outfit.variable} ${benedict.variable} h-full antialiased`}
     >
       <body className="min-h-full">
         <AppDataProvider>
