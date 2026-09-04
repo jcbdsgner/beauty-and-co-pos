@@ -43,7 +43,7 @@ export function ComptoirBar() {
   }
 
   const active = openSales.find((s) => s.id === activeSaleId) ?? openSales[0];
-  const activeTotal = computeTotals(active).total;
+  const activeTotal = computeTotals(active).amountDue;
   const activeClient = active.clientId ? clients.find((c) => c.id === active.clientId) : null;
 
   return (

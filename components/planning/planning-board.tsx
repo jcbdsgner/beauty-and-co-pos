@@ -2,35 +2,50 @@
 
 import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { MoreHorizontal, UserX, Eye, X } from "lucide-react";
-import { Avatar } from "@/components/ui/atoms/avatar";
+import { CalendarRange, ListChecks, X } from "lucide-react";
 import { Button } from "@/components/ui/atoms/button";
-import { IconButton } from "@/components/ui/atoms/icon-button";
 import { Switch } from "@/components/ui/atoms/switch";
-import { DropdownMenu } from "@/components/ui/molecules/dropdown-menu";
-import { BoardHeader, Board, Lane, FlipChip, Legend, WeekStrip, BoardEmpty, ChipFilter, type ChipTone, type LaneSignal } from "@/components/ui/board";
+import { SegmentedToggle } from "@/components/ui/molecules/segmented-toggle";
+import { BoardHeader, Board, WeekStrip, BoardEmpty, ChipFilter } from "@/components/ui/board";
 import { AppointmentDetailSheet } from "@/components/planning/appointment-detail-sheet";
 import { DayList } from "@/components/planning/day-list";
 import { DayGrid } from "@/components/planning/day-grid";
+import { WeekList } from "@/components/planning/week-list";
+import { WeekGrid } from "@/components/planning/week-grid";
 import { useEncaissement } from "@/components/journee/use-encaissement";
 import { useAppData } from "@/components/providers/app-data-provider";
-import { clientFullName } from "@/lib/data/clientele";
-import { cn } from "@/lib/utils";
-import { serviceById } from "@/lib/data/menu";
-import { appointmentEndTime, flattenRendezVous, groupDayByReservation, type RendezVousRow } from "@/lib/data/planning";
-import type { Praticienne, RendezVous } from "@/lib/data/types";
+import { dateISO, flattenRendezVous, groupDayByReservation, reservationDate, type RendezVousRow } from "@/lib/data/planning";
+import type { RendezVous, Role } from "@/lib/data/types";
 
 function sameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
-/** Les trois façons de regarder la journée (ADR 0014). Chronologique par réservation = défaut :
- *  la réceptionniste retrouve une cliente au comptoir sans la chercher dans 7 groupes. */
-export type PlanningView = "chrono" | "praticienne" | "grille";
+function startOfWeek(d: Date) {
+  const wd = (d.getDay() + 6) % 7;
+  const s = new Date(d);
+  s.setDate(d.getDate() - wd);
+  s.setHours(0, 0, 0, 0);
+  return s;
+}
+
+/**
+ * Le Planning est deux écrans derrière une bascule (demande utilisateur), × deux échelles de temps :
+ *  — vue « Rendez-vous » : la journée classée par le temps, une ligne = une réservation (payeuse),
+ *    l'écran de la réceptionniste qui encaisse (partage `DayList` avec l'Accueil, ADR 0014) ;
+ *  — vue « Planning » : la journée de chaque praticienne, grille heures × colonnes (`DayGrid`) ;
+ *  — période « Jour » (défaut) ou « Semaine » : les 7 jours empilés (`WeekList`) / une semaine en
+ *    grille pour une praticienne isolée + une matrice de charge pour l'équipe (`WeekGrid`).
+ * L'ex-sous-page Équipe = ce Planning ouvert sur la vue « Planning ». Langage « Le Tableau » (ADR 0005).
+ */
+export type PlanningView = "rendez-vous" | "planning";
+type PlanningPeriod = "jour" | "semaine";
 
 type PlanningBoardProps = { initialView?: PlanningView };
 
-export function PlanningBoard({ initialView = "chrono" }: PlanningBoardProps) {
+const ROLE_RANK: Partial<Record<Role, number>> = { coiffeuse: 0, estheticienne: 1 };
+
+export function PlanningBoard({ initialView = "rendez-vous" }: PlanningBoardProps) {
   return (
     <Suspense fallback={null}>
       <PlanningBoardInner initialView={initialView} />
@@ -42,150 +57,129 @@ function PlanningBoardInner({ initialView }: Required<PlanningBoardProps>) {
   const { reservations, praticiennes, clients, markStaffUnavailable } = useAppData();
   const { requestEncaissement, encaissementDialog } = useEncaissement();
   const searchParams = useSearchParams();
+  const staffParam = searchParams.get("staff");
 
+  const today = useMemo(() => new Date(), []);
   const [selectedDate, setSelectedDate] = useState(() => new Date());
-  const [view, setView] = useState<PlanningView>(initialView);
+  const [view, setView] = useState<PlanningView>(staffParam ? "planning" : initialView);
+  const [period, setPeriod] = useState<PlanningPeriod>("jour");
   const [showCancelled, setShowCancelled] = useState(false);
-  const [staffFilter, setStaffFilter] = useState<string | null>(() => searchParams.get("staff"));
-
+  const [soloStaffId, setSoloStaffId] = useState<string | null>(() => staffParam);
   const [detail, setDetail] = useState<RendezVous | null>(null);
 
-  const today = new Date();
   const isToday = sameDay(selectedDate, today);
+  const weekDays = useMemo(() => {
+    const s = startOfWeek(selectedDate);
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(s);
+      d.setDate(s.getDate() + i);
+      return d;
+    });
+  }, [selectedDate]);
 
-  // The mock only carries "today" — be honest rather than showing a silent empty board.
-  const dayReservations = useMemo(() => (isToday ? reservations : []), [isToday, reservations]);
+  const selectedISO = dateISO(selectedDate);
+  const dayReservations = useMemo(
+    () => reservations.filter((r) => reservationDate(r) === selectedISO),
+    [reservations, selectedISO],
+  );
 
-  // Coiffure + esthétique get a lane; ménage shows in the Équipe rail but never carries rendez-vous;
-  // accueil is off the planning entirely.
-  const schedulable = praticiennes.filter((p) => p.role !== "accueil" && p.role !== "menage");
-  const menageStaff = praticiennes.filter((p) => p.role === "menage");
+  // Coiffure + esthétique are schedulable; accueil + ménage never carry rendez-vous.
+  const schedulable = useMemo(
+    () =>
+      praticiennes
+        .filter((p) => p.role === "coiffeuse" || p.role === "estheticienne")
+        .sort((a, b) => ROLE_RANK[a.role]! - ROLE_RANK[b.role]! || a.name.localeCompare(b.name, "fr")),
+    [praticiennes],
+  );
   const workingStaff = schedulable.filter((p) => p.workingToday);
+  const gridStaff = soloStaffId ? workingStaff.filter((p) => p.id === soloStaffId) : workingStaff;
+  const soloStaff = soloStaffId ? praticiennes.find((p) => p.id === soloStaffId) ?? null : null;
 
   const onStaff = (r: RendezVousRow, id: string) => r.rv.staffId === id || r.rv.secondStaffId === id;
-  const touchesStaff = (rvs: RendezVous[], id: string) =>
-    rvs.some((rv) => rv.staffId === id || rv.secondStaffId === id);
-
-  const visibleStaff = staffFilter ? schedulable.filter((p) => p.id === staffFilter) : schedulable;
+  const touchesStaff = (rvs: RendezVous[], id: string) => rvs.some((rv) => rv.staffId === id || rv.secondStaffId === id);
 
   const rvRows = useMemo<RendezVousRow[]>(
     () =>
       flattenRendezVous(dayReservations).filter(
-        (r) =>
-          (showCancelled || r.rv.status !== "annule") &&
-          (!staffFilter || onStaff(r, staffFilter)),
+        (r) => (showCancelled || r.rv.status !== "annule") && (!soloStaffId || onStaff(r, soloStaffId)),
       ),
-    [dayReservations, showCancelled, staffFilter],
+    [dayReservations, showCancelled, soloStaffId],
   );
 
   const reservationRows = useMemo(() => {
-    const scoped = staffFilter
-      ? dayReservations.filter((res) => touchesStaff(res.rendezVous, staffFilter))
+    const scoped = soloStaffId
+      ? dayReservations.filter((res) => touchesStaff(res.rendezVous, soloStaffId))
       : dayReservations;
     return groupDayByReservation(scoped, { includeCancelled: showCancelled });
-  }, [dayReservations, staffFilter, showCancelled]);
+  }, [dayReservations, soloStaffId, showCancelled]);
 
-  const isEmpty = view === "chrono" ? reservationRows.length === 0 : rvRows.length === 0;
-
-  function apptLane(row: RendezVousRow, laneStaffId: string) {
-    const { rv, reservation } = row;
-    const payer = clients.find((c) => c.id === reservation.payerClientId);
-    const service = serviceById(rv.serviceId);
-    const staff = praticiennes.find((p) => p.id === rv.staffId);
-    const second = rv.secondStaffId ? praticiennes.find((p) => p.id === rv.secondStaffId) : null;
-    // When a two-practitioner rendez-vous is shown on the *second* practitioner's lane, the
-    // encaissement belongs to the primary lane only — this lane is read-only so the receptionist
-    // can't start (or think she double-started) the same sale twice.
-    const isSecondLane = Boolean(second && laneStaffId === rv.secondStaffId && laneStaffId !== rv.staffId);
-    const partnerName = isSecondLane ? staff?.name : second?.name;
-    const benef = rv.beneficiaryClientId
-      ? clients.find((c) => c.id === rv.beneficiaryClientId)?.lastName
-      : rv.beneficiaryName;
-    const absent =
-      (staff?.unavailableToday || (second && praticiennes.find((p) => p.id === second.id)?.unavailableToday)) &&
-      rv.status !== "annule";
-    const hasSale = Boolean(reservation.saleId);
-    const chip =
-      rv.status === "annule"
-        ? { value: "Annulé", tone: "void" as ChipTone }
-        : hasSale
-          ? { value: "En cours", tone: "signal" as ChipTone }
-          : null;
-    const signal: LaneSignal = absent ? "hold" : "none";
-    const siblingCount = reservation.rendezVous.filter((x) => x.status !== "annule").length - 1;
-
-    return (
-      <Lane
-        key={rv.id}
-        leading={
-          <span className="flex flex-col leading-tight">
-            <span>{rv.start}</span>
-            <span className="text-[0.7rem] font-normal text-[var(--color-gray-400)]">{appointmentEndTime(rv)}</span>
-          </span>
-        }
-        title={payer ? clientFullName(payer) : "Cliente"}
-        meta={
-          <span>
-            {service?.name ?? "Prestation"}
-            {benef ? ` · pour ${benef}` : ""}
-            {partnerName ? ` · à 2 avec ${partnerName}` : ""}
-            {siblingCount > 0 ? ` · +${siblingCount} sur la note` : ""}
-            {absent ? " · praticienne absente" : ""}
-          </span>
-        }
-        chip={chip && <FlipChip value={chip.value} tone={chip.tone} />}
-        struck={rv.status === "annule"}
-        signal={signal}
-        onSelect={() => setDetail(rv)}
-        actions={
-          rv.status !== "annule" &&
-          (isSecondLane ? (
-            <span className="text-xs font-medium tracking-[0.06em] text-[var(--color-gray-400)] uppercase">
-              {hasSale ? "En cours" : "Sur la note"}
-            </span>
-          ) : (
-            <Button size="sm" variant={hasSale ? "outline" : "dark"} onClick={() => requestEncaissement(reservation.id)}>
-              {hasSale ? "Voir la vente" : "Encaisser"}
-            </Button>
-          ))
-        }
-      />
-    );
-  }
-
-  const rail = (
-    <RosterRail
-      staff={visibleStaff}
-      menageStaff={staffFilter ? [] : menageStaff}
-      rows={rvRows}
-      selectedDate={selectedDate}
-      staffFilter={staffFilter}
-      onFilter={setStaffFilter}
-      onMarkAbsent={markStaffUnavailable}
-      onStaff={onStaff}
-    />
+  // Week feeds — WeekList / WeekGrid slice per calendar day themselves (via reservationDate).
+  const weekReservations = useMemo(
+    () => (soloStaffId ? reservations.filter((res) => touchesStaff(res.rendezVous, soloStaffId)) : reservations),
+    [reservations, soloStaffId],
+  );
+  const weekRvRows = useMemo(
+    () => flattenRendezVous(reservations).filter((r) => r.rv.status !== "annule"),
+    [reservations],
   );
 
-  let bodyContent: React.ReactNode;
-  if (!isToday) {
-    bodyContent = (
+  const rvCount = rvRows.filter((r) => r.rv.status !== "annule").length;
+  const isWeek = period === "semaine";
+
+  function pickDay(d: Date, staffId?: string) {
+    setSelectedDate(d);
+    setPeriod("jour");
+    if (staffId) setSoloStaffId(staffId);
+  }
+
+  let body: React.ReactNode;
+  if (isWeek && view === "rendez-vous") {
+    body = (
+      <WeekList
+        weekDays={weekDays}
+        today={today}
+        todayReservations={weekReservations}
+        includeCancelled={showCancelled}
+        clients={clients}
+        praticiennes={praticiennes}
+        onOpenReservation={setDetail}
+        onEncaisser={requestEncaissement}
+        onPickDay={(d) => pickDay(d)}
+      />
+    );
+  } else if (isWeek) {
+    body = (
+      <WeekGrid
+        weekDays={weekDays}
+        today={today}
+        todayRows={weekRvRows}
+        staff={workingStaff}
+        soloStaff={soloStaff}
+        clients={clients}
+        onOpenReservation={setDetail}
+        onPickDay={pickDay}
+        onClearSolo={() => setSoloStaffId(null)}
+      />
+    );
+  } else if (!isToday) {
+    body = (
       <BoardEmpty
         title="Aucun rendez-vous ce jour-là"
-        hint="Les données de démonstration ne couvrent qu'aujourd'hui — revenez au jour réel pour voir la journée."
+        hint="Les données de démonstration ne couvrent qu'aujourd'hui — revenez au jour réel, ou passez en vue Semaine."
         action={<Button variant="outline" onClick={() => setSelectedDate(new Date())}>{"Revenir à aujourd'hui"}</Button>}
       />
     );
   } else if (workingStaff.length === 0) {
-    bodyContent = <BoardEmpty title="Personne au planning ce jour-là" hint="Aucune praticienne ne travaille aujourd'hui." />;
-  } else if (isEmpty) {
-    bodyContent = (
+    body = <BoardEmpty title="Personne au planning ce jour-là" hint="Aucune praticienne ne travaille aujourd'hui." />;
+  } else if ((view === "rendez-vous" ? reservationRows.length : rvCount) === 0) {
+    body = (
       <BoardEmpty
-        title={staffFilter ? "Aucun rendez-vous pour cette praticienne" : "Journée libre"}
+        title={soloStaff ? `Journée libre pour ${soloStaff.name}` : "Journée libre"}
         hint="Les rendez-vous sont pris en ligne par les clientes — ils apparaissent ici une fois réservés."
       />
     );
-  } else if (view === "chrono") {
-    bodyContent = (
+  } else if (view === "rendez-vous") {
+    body = (
       <DayList
         rows={reservationRows}
         clients={clients}
@@ -194,32 +188,50 @@ function PlanningBoardInner({ initialView }: Required<PlanningBoardProps>) {
         onEncaisser={requestEncaissement}
       />
     );
-  } else if (view === "grille") {
-    bodyContent = <DayGrid rows={rvRows} staff={visibleStaff} clients={clients} onOpenReservation={setDetail} />;
   } else {
-    // "praticienne" — rendez-vous grain, one group per praticienne
-    bodyContent = visibleStaff
-      .map((p) => {
-        const items = rvRows.filter((r) => onStaff(r, p.id)).sort((a, b) => a.rv.start.localeCompare(b.rv.start));
-        if (items.length === 0) return null;
-        return (
-          <div key={p.id}>
-            <div className="border-b border-[var(--board-groove)] bg-black/[0.02] px-4 py-2">
-              <Legend>{p.name} · {items.length}</Legend>
-            </div>
-            {items.map((r) => apptLane(r, p.id))}
-          </div>
-        );
-      })
-      .filter(Boolean);
+    body = (
+      <DayGrid
+        rows={rvRows}
+        staff={gridStaff}
+        clients={clients}
+        soloStaffId={soloStaffId}
+        onOpenReservation={setDetail}
+        onSolo={setSoloStaffId}
+        onMarkAbsent={markStaffUnavailable}
+      />
+    );
   }
+
+  const boardLegend = isWeek
+    ? view === "rendez-vous"
+      ? "La semaine"
+      : soloStaff
+        ? undefined // WeekGrid solo carries its own "La semaine de {name}" header
+        : "Charge de l'équipe"
+    : view === "rendez-vous"
+      ? "Le jour"
+      : "L'équipe";
+
+  const shortMonth = (d: Date) => new Intl.DateTimeFormat("fr-FR", { month: "short" }).format(d).replace(".", "");
+  const legendRight = isWeek ? (
+    <span className="text-xs tabular-nums text-[var(--color-gray-400)]">
+      semaine du {weekDays[0].getDate()} {shortMonth(weekDays[0])} au {weekDays[6].getDate()} {shortMonth(weekDays[6])}
+    </span>
+  ) : isToday && workingStaff.length > 0 ? (
+    <span className="text-xs tabular-nums text-[var(--color-gray-400)]">
+      {view === "rendez-vous"
+        ? `${reservationRows.length} ${reservationRows.length > 1 ? "réservations" : "réservation"} · ${workingStaff.length} en poste`
+        : `${gridStaff.length} ${gridStaff.length > 1 ? "praticiennes" : "praticienne"} · ${rvCount} rdv`}
+    </span>
+  ) : undefined;
 
   return (
     <div className="flex flex-col gap-6">
       <BoardHeader
         section="Planning"
         reset={
-          !isToday && (
+          !isToday &&
+          !isWeek && (
             <Button variant="outline" size="sm" onClick={() => setSelectedDate(new Date())}>
               Aujourd&apos;hui
             </Button>
@@ -229,35 +241,45 @@ function PlanningBoardInner({ initialView }: Required<PlanningBoardProps>) {
 
       <WeekStrip selected={selectedDate} onSelect={setSelectedDate} />
 
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <ChipFilter
-          value={view}
-          onChange={(v) => setView(v as PlanningView)}
-          options={[
-            { value: "chrono", label: "Liste chronologique" },
-            { value: "praticienne", label: "Par praticienne" },
-            { value: "grille", label: "Grille calendrier" },
-          ]}
-        />
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <SegmentedToggle
+            value={view}
+            onChange={(v) => setView(v as PlanningView)}
+            options={[
+              { value: "rendez-vous", label: "Rendez-vous", icon: <ListChecks className="size-4" /> },
+              { value: "planning", label: "Planning", icon: <CalendarRange className="size-4" /> },
+            ]}
+          />
+          <ChipFilter
+            value={period}
+            onChange={(v) => setPeriod(v as PlanningPeriod)}
+            options={[
+              { value: "jour", label: "Jour" },
+              { value: "semaine", label: "Semaine" },
+            ]}
+          />
+        </div>
         <label className="flex items-center gap-2 text-sm text-[var(--color-gray-600)]">
           Afficher les annulés
           <Switch checked={showCancelled} onChange={setShowCancelled} label="Afficher les rendez-vous annulés" />
         </label>
       </div>
 
-      {staffFilter && (
+      {soloStaff && (
         <button
           type="button"
-          onClick={() => setStaffFilter(null)}
+          onClick={() => setSoloStaffId(null)}
           className="flex w-fit items-center gap-2 rounded-full bg-[var(--brand-taupe-muted)] px-3.5 py-2 text-sm font-medium text-white transition active:scale-[0.97]"
         >
-          {praticiennes.find((p) => p.id === staffFilter)?.name} · voir tout le monde
+          {soloStaff.name}
+          <span className="opacity-70">· voir toute l&apos;équipe</span>
           <X aria-hidden className="size-3.5" />
         </button>
       )}
 
-      <Board legend="Le jour" rail={rail} railWidth={280}>
-        {bodyContent}
+      <Board legend={boardLegend} legendRight={legendRight}>
+        {body}
       </Board>
 
       <AppointmentDetailSheet
@@ -270,134 +292,5 @@ function PlanningBoardInner({ initialView }: Required<PlanningBoardProps>) {
       />
       {encaissementDialog}
     </div>
-  );
-}
-
-/* ── Roster rail (the ex-Équipe sub-page, folded into the board's legend) ── */
-
-/** "09:00" → "9h", "18:30" → "18h30". */
-function shiftLabel(p: Praticienne) {
-  if (!p.shiftStart || !p.shiftEnd) return null;
-  const fmt = (t: string) => {
-    const [h, m] = t.split(":");
-    return m === "00" ? `${Number(h)}h` : `${Number(h)}h${m}`;
-  };
-  return `${fmt(p.shiftStart)}–${fmt(p.shiftEnd)}`;
-}
-
-function RosterRail({
-  staff,
-  menageStaff,
-  rows,
-  selectedDate,
-  staffFilter,
-  onFilter,
-  onMarkAbsent,
-  onStaff,
-}: {
-  staff: Praticienne[];
-  menageStaff: Praticienne[];
-  rows: RendezVousRow[];
-  selectedDate: Date;
-  staffFilter: string | null;
-  onFilter: (id: string | null) => void;
-  onMarkAbsent: (id: string) => void;
-  onStaff: (r: RendezVousRow, id: string) => boolean;
-}) {
-  const isToday = sameDay(selectedDate, new Date());
-  return (
-    <div className="flex flex-col">
-      <div className="border-b border-[var(--board-groove)] px-3 py-2">
-        <Legend>Équipe</Legend>
-      </div>
-      {staff.map((p) => {
-        const working = isToday && p.workingToday && !p.unavailableToday;
-        const count = rows.filter((r) => onStaff(r, p.id) && r.rv.status !== "annule").length;
-        const hours = shiftLabel(p);
-        const sub = p.unavailableToday
-          ? "Absente aujourd'hui"
-          : !p.workingToday
-            ? "Repos"
-            : hours
-              ? `${hours} · ${count} rdv`
-              : `${count} rdv`;
-        const off = !working;
-        return (
-          <div key={p.id} className={cnRail(staffFilter === p.id)}>
-            <button type="button" onClick={() => onFilter(staffFilter === p.id ? null : p.id)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
-              <Avatar
-                initial={p.initial}
-                size={28}
-                className={cnAvatar(off)}
-              />
-              <span className="min-w-0">
-                <span className={cn("block truncate text-sm font-semibold", off ? "text-[var(--color-gray-400)]" : "text-[var(--color-gray-900)]")}>{p.name}</span>
-                <span className="block text-[0.7rem] text-[var(--color-gray-400)] tabular-nums">{sub}</span>
-              </span>
-            </button>
-            <div className="flex shrink-0 items-center gap-0.5">
-              <DropdownMenu
-                align="end"
-                trigger={
-                  <IconButton aria-label={`Actions pour ${p.name}`} className="size-8 rounded-full text-[var(--color-gray-400)] hover:bg-black/[0.04]">
-                    <MoreHorizontal className="size-4" />
-                  </IconButton>
-                }
-                items={[
-                  {
-                    label: staffFilter === p.id ? "Voir tout le monde" : "Voir seule",
-                    icon: <Eye className="size-4" />,
-                    onSelect: () => onFilter(staffFilter === p.id ? null : p.id),
-                  },
-                  {
-                    label: "Marquer absente aujourd'hui",
-                    icon: <UserX className="size-4" />,
-                    tone: "danger",
-                    disabled: !working,
-                    onSelect: () => onMarkAbsent(p.id),
-                  },
-                ]}
-              />
-            </div>
-          </div>
-        );
-      })}
-
-      {menageStaff.length > 0 && (
-        <>
-          <div className="border-y border-[var(--board-groove)] bg-black/[0.02] px-3 py-1.5">
-            <Legend>Ménage</Legend>
-          </div>
-          {menageStaff.map((p) => {
-            const hours = shiftLabel(p);
-            return (
-              <div key={p.id} className="flex items-center gap-2 px-3 py-2.5 last:border-b-0">
-                <Avatar initial={p.initial} size={28} className="bg-[var(--color-gray-100)] text-[0.7rem] font-semibold text-[var(--color-gray-500)]" />
-                <span className="min-w-0">
-                  <span className="block truncate text-sm font-semibold text-[var(--color-gray-900)]">{p.name}</span>
-                  <span className="block text-[0.7rem] text-[var(--color-gray-400)] tabular-nums">
-                    {p.unavailableToday ? "Absente aujourd'hui" : !p.workingToday ? "Repos" : (hours ?? "Présente")}
-                  </span>
-                </span>
-              </div>
-            );
-          })}
-        </>
-      )}
-    </div>
-  );
-}
-
-function cnRail(active: boolean) {
-  return [
-    "flex items-center gap-1.5 border-b border-[var(--board-groove)] px-3 py-2.5 last:border-b-0 transition",
-    active ? "bg-[var(--brand-rose-soft)]" : "hover:bg-black/[0.02]",
-  ].join(" ");
-}
-
-function cnAvatar(off: boolean) {
-  return cn(
-    "text-[0.7rem] font-semibold",
-    off ? "bg-[var(--color-gray-100)] text-[var(--color-gray-400)]" : "bg-accent text-secondary",
   );
 }

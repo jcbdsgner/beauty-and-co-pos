@@ -35,7 +35,10 @@ export default function RecapVentesPage() {
   // to the same set rather than fabricating data. Known limit.
   const encaissees = sales.filter((s) => s.status === "encaissee");
   const abandonnees = sales.filter((s) => s.status === "abandonnee");
-  const total = encaissees.reduce((sum, s) => sum + computeTotals(s).total, 0);
+  // "Total encaissé" is cash actually handled at the counter today — an acompte settled earlier,
+  // elsewhere, doesn't belong in it (ADR 0015). Reconciles with `byMode` below, which sums the
+  // same `sale.payment.modes` amounts.
+  const total = encaissees.reduce((sum, s) => sum + computeTotals(s).amountDue, 0);
   const panierMoyen = encaissees.length > 0 ? Math.round(total / encaissees.length) : 0;
 
   const byMode = new Map<PaymentMode, number>();
@@ -45,6 +48,8 @@ export default function RecapVentesPage() {
   // in proportion to each prestation's price. Walk-in sales with no réservation → "Sans rendez-vous".
   const byStaff = new Map<string, number>();
   for (const s of encaissees) {
+    // Attribution reflects the value of what she delivered, not cash timing — kept on `total`
+    // (not `amountDue`) so an acompte paid days earlier doesn't shrink her figures.
     const t = computeTotals(s).total;
     const reservation = s.originReservationId ? reservations.find((r) => r.id === s.originReservationId) : undefined;
     const live = reservation?.rendezVous.filter((rv) => rv.status !== "annule") ?? [];
@@ -92,7 +97,7 @@ export default function RecapVentesPage() {
       key: "total",
       header: "Total",
       align: "right",
-      render: (s) => <span className="font-semibold text-primary tabular-nums">{formatFcfa(computeTotals(s).total)}</span>,
+      render: (s) => <span className="font-semibold text-primary tabular-nums">{formatFcfa(computeTotals(s).amountDue)}</span>,
     },
   ];
 

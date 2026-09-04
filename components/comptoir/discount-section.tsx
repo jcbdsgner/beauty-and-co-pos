@@ -1,28 +1,27 @@
 "use client";
 
 import { useState } from "react";
-import { Gift, Percent, ScanLine, ShieldCheck, Star, X } from "lucide-react";
+import { ChevronDown, Gift, Percent, ScanLine, ShieldCheck, Star } from "lucide-react";
 import { Badge } from "@/components/ui/atoms/badge";
 import { Button } from "@/components/ui/atoms/button";
 import { IconButton } from "@/components/ui/atoms/icon-button";
 import { TextInput } from "@/components/ui/atoms/text-input";
 import { RoundStepButton } from "@/components/ui/atoms/round-step-button";
 import { Checkbox } from "@/components/ui/atoms/checkbox";
-import { Dialog } from "@/components/ui/molecules/dialog";
 import { InputOtp } from "@/components/ui/molecules/input-otp";
 import { Pills } from "@/components/ui/molecules/pills";
 import { SegmentedToggle } from "@/components/ui/molecules/segmented-toggle";
 import { useAppData, computeTotals } from "@/components/providers/app-data-provider";
 import { MAX_REMISE_PCT, RECEPTIONIST_MAX_PCT } from "@/lib/store/app-store";
 import { serviceById } from "@/lib/data/menu";
-import { formatFcfa } from "@/lib/utils";
+import { cn, formatFcfa } from "@/lib/utils";
 import type { RemiseMode, Sale } from "@/lib/data/types";
 
 /**
- * Discounts live in a dedicated panel, not squeezed into the ticket: the ticket foot is reserved
- * for the total + Encaisser, and a receptionist reaches for a discount rarely enough that a
- * surface with room to breathe (three clearly separated blocks) beats a cramped inline accordion.
- * The ticket only ever shows a one-line summary of what's applied.
+ * Discounts unfold inline at the foot of the ticket, right above the total — a caissier reaches
+ * for them mid-transaction with the cliente in front of her, so a popup that hides the rest of
+ * the panier is more friction than it's worth. Collapsed, it's a one-line trigger with a summary
+ * badge; open, it stacks the three mechanisms in place.
  *
  * Three mechanisms, all stackable, all able to bring the total to 0 F:
  *  · a gift card (prepaid — unused value stays on the card),
@@ -41,38 +40,32 @@ export function DiscountSection({ sale, onOpenScanner }: { sale: Sale; onOpenSca
   const hasDiscount = totals.totalDiscount > 0;
 
   return (
-    <>
+    <div className="mb-3 rounded-[10px] border border-border">
       <button
         type="button"
-        onClick={() => setOpen(true)}
-        className="mb-3 flex min-h-14 w-full items-center justify-between gap-2 rounded-[10px] border border-border px-4 text-[15px] font-medium text-base-content/70 transition active:scale-[0.99] hover:border-secondary/50 outline-none focus-visible:ring-4 focus-visible:ring-ring/15"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex min-h-14 w-full items-center justify-between gap-2 px-4 text-[15px] font-medium text-base-content/70 transition active:scale-[0.99] outline-none focus-visible:ring-4 focus-visible:ring-ring/15"
       >
         <span className="flex items-center gap-2">
           <Percent aria-hidden className="size-4 text-secondary" />
           {hasDiscount ? "Modifier la remise" : "Ajouter une remise"}
         </span>
-        {hasDiscount ? (
-          <Badge variant="success">−{formatFcfa(totals.totalDiscount)}</Badge>
-        ) : (
-          <span className="text-xs text-base-content/55">Carte cadeau · points · remise</span>
-        )}
+        <span className="flex items-center gap-2">
+          {hasDiscount ? (
+            <Badge variant="success">−{formatFcfa(totals.totalDiscount)}</Badge>
+          ) : (
+            <span className="text-xs text-base-content/55">Carte cadeau · points · remise</span>
+          )}
+          <ChevronDown
+            aria-hidden
+            className={cn("size-4 shrink-0 text-base-content/45 transition-transform", open && "rotate-180")}
+          />
+        </span>
       </button>
 
-      <Dialog open={open} labelledBy="remise-title" className="max-w-lg p-6">
-        <div className="flex items-start justify-between gap-3">
-          <h2 id="remise-title" className="font-[family-name:var(--font-heading)] font-semibold text-xl text-base-content">
-            Remise
-          </h2>
-          <IconButton
-            aria-label="Fermer"
-            onClick={() => setOpen(false)}
-            className="-m-2 size-11 rounded-full text-base-content/45 transition active:scale-90 hover:bg-base-200"
-          >
-            <X aria-hidden className="size-5" />
-          </IconButton>
-        </div>
-
-        <div className="mt-5 flex flex-col gap-6">
+      {open && (
+        <div className="flex max-h-[55vh] flex-col gap-6 overflow-y-auto border-t border-border px-4 pt-4 pb-4">
           {/* Gift card */}
           <section>
             <SectionLabel icon={<Gift className="size-3.5" />}>Carte cadeau</SectionLabel>
@@ -152,12 +145,8 @@ export function DiscountSection({ sale, onOpenScanner }: { sale: Sale; onOpenSca
           {/* Receptionist-granted discount */}
           <GrantedDiscountBlock sale={sale} />
         </div>
-
-        <Button variant="brand" size="default" className="mt-6 w-full" onClick={() => setOpen(false)}>
-          Terminé{hasDiscount ? ` · −${formatFcfa(totals.totalDiscount)}` : ""}
-        </Button>
-      </Dialog>
-    </>
+      )}
+    </div>
   );
 }
 

@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/atoms/badge";
 import { BrandMark } from "@/components/ui/atoms/brand-mark";
 import { ClientSearchField } from "@/components/shared/client-search-field";
 import { DiscountSection } from "@/components/comptoir/discount-section";
+import { DiscountBreakdown } from "@/components/comptoir/discount-breakdown";
+import { DepositLine } from "@/components/comptoir/deposit-line";
 import { useAppData, computeTotals, saleNeedsClient } from "@/components/providers/app-data-provider";
 import { clientFullName, clientInitial } from "@/lib/data/clientele";
 import { cn, formatFcfa } from "@/lib/utils";
@@ -222,43 +224,36 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
       <div className="shrink-0 border-t border-border bg-white px-5 pt-3 pb-5">
         {!isEmpty && <DiscountSection sale={sale} onOpenScanner={onOpenScanner} />}
 
-        {totals.totalDiscount > 0 && (
+        {(totals.totalDiscount > 0 || totals.depositPaid > 0) && (
           <div className="mb-2 flex flex-col gap-0.5 text-sm">
-            <div className="flex justify-between text-base-content/55">
-              <span>Sous-total</span>
-              <span className="tabular-nums">{formatFcfa(totals.subtotal)}</span>
-            </div>
-            {totals.grantedDiscount > 0 && (
-              <div className="flex justify-between text-success">
-                <span>
-                  Remise accordée
-                  {sale.discountGranted?.mode === "pourcentage" && ` (${sale.discountGranted.value} %)`}
-                </span>
-                <span className="tabular-nums">−{formatFcfa(totals.grantedDiscount)}</span>
+            {totals.totalDiscount > 0 && (
+              <div className="flex justify-between text-base-content/55">
+                <span>Sous-total</span>
+                <span className="tabular-nums">{formatFcfa(totals.subtotal)}</span>
               </div>
             )}
-            {totals.loyaltyDiscount > 0 && (
-              <div className="flex justify-between text-success">
-                <span>Points fidélité ({sale.loyaltyPointsUsed} pts)</span>
-                <span className="tabular-nums">−{formatFcfa(totals.loyaltyDiscount)}</span>
-              </div>
-            )}
-            {totals.giftCardDiscount > 0 && (
-              <div className="flex justify-between text-success">
-                <span>Carte cadeau</span>
-                <span className="tabular-nums">−{formatFcfa(totals.giftCardDiscount)}</span>
-              </div>
+            <DiscountBreakdown sale={sale} />
+            {totals.depositPaid > 0 && (
+              <>
+                <div className="flex justify-between text-base-content/55">
+                  <span>Total</span>
+                  <span className="tabular-nums">{formatFcfa(totals.total)}</span>
+                </div>
+                <DepositLine sale={sale} />
+              </>
             )}
           </div>
         )}
 
         <div className="mb-3 flex items-end justify-between">
-          <span className="pb-1.5 text-xs font-semibold tracking-[0.12em] text-base-content/55 uppercase">Total</span>
+          <span className="pb-1.5 text-xs font-semibold tracking-[0.12em] text-base-content/55 uppercase">
+            {totals.depositPaid > 0 ? "Reste à encaisser" : "Total"}
+          </span>
           <span
-            key={totals.total}
+            key={totals.amountDue}
             className="animate-total-pulse origin-right font-[family-name:var(--font-heading)] font-semibold text-[2.75rem] leading-none text-base-content tabular-nums tracking-[0.01em]"
           >
-            {formatFcfa(totals.total)}
+            {formatFcfa(totals.amountDue)}
           </span>
         </div>
 

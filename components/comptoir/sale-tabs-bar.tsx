@@ -29,7 +29,10 @@ export function SaleTabsBar() {
       <div className="flex items-end gap-1">
         {tabs.map((tab) => {
           const active = tab.id === activeSaleId;
-          const { total } = computeTotals(tab);
+          // The tab's running figure is what's left to collect on that basket, not its full value
+          // — same as the ticket foot and payment step (an acompte already settled elsewhere
+          // shrinks it, ADR 0015).
+          const { amountDue } = computeTotals(tab);
           return (
             <div
               key={tab.id}
@@ -43,7 +46,7 @@ export function SaleTabsBar() {
               <button type="button" onClick={() => switchTab(tab.id)} className="flex flex-col items-start leading-tight active:scale-[0.97]">
                 <span>{tab.label}</span>
                 <span className={cn("text-[11px] font-medium tabular-nums", active ? "text-base-content/55" : "text-white/70")}>
-                  {total > 0 ? formatFcfa(total) : "—"}
+                  {amountDue > 0 ? formatFcfa(amountDue) : "—"}
                 </span>
               </button>
               <button

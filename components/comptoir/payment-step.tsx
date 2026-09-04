@@ -6,6 +6,7 @@ import { Banknote, Check, CreditCard, Smartphone, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/atoms/button";
 import { NumericKeypad } from "@/components/ui/molecules/numeric-keypad";
 import { computeTotals, useAppData } from "@/components/providers/app-data-provider";
+import { DepositLine } from "@/components/comptoir/deposit-line";
 import { clientFullName } from "@/lib/data/clientele";
 import { cn, formatFcfa } from "@/lib/utils";
 import type { PaymentMode, Sale } from "@/lib/data/types";
@@ -29,7 +30,7 @@ const MODES: {
 export function PaymentStep({ sale }: { sale: Sale }) {
   const { confirmPayment, updateSale, clients } = useAppData();
   const totals = computeTotals(sale);
-  const { total } = totals;
+  const { total, amountDue, depositPaid } = totals;
   const client = sale.clientId ? clients.find((c) => c.id === sale.clientId) : undefined;
   const itemCount = sale.cart.reduce((n, l) => n + l.qty, 0);
   const [primaryMode, setPrimaryMode] = useState<PaymentMode | null>(null);
@@ -40,9 +41,9 @@ export function PaymentStep({ sale }: { sale: Sale }) {
   const [cashReceived, setCashReceived] = useState("");
 
   const involvesCash = primaryMode === "especes" || (mixed && secondaryMode === "especes");
-  const remaining = mixed ? total - (Number(primaryAmount) || 0) - (Number(secondaryAmount) || 0) : 0;
+  const remaining = mixed ? amountDue - (Number(primaryAmount) || 0) - (Number(secondaryAmount) || 0) : 0;
   const balanced = mixed ? remaining === 0 : true;
-  const cashDue = mixed ? Number(secondaryMode === "especes" ? secondaryAmount : primaryAmount) || 0 : total;
+  const cashDue = mixed ? Number(secondaryMode === "especes" ? secondaryAmount : primaryAmount) || 0 : amountDue;
   const cashEnough = !involvesCash || Number(cashReceived) >= cashDue;
   const change = involvesCash && cashReceived ? Math.max(0, Number(cashReceived) - cashDue) : 0;
 
@@ -66,7 +67,7 @@ export function PaymentStep({ sale }: { sale: Sale }) {
           { mode: primaryMode, amount: Number(primaryAmount) },
           { mode: secondaryMode, amount: Number(secondaryAmount) },
         ]
-      : [{ mode: primaryMode, amount: total }];
+      : [{ mode: primaryMode, amount: amountDue }];
     confirmPayment(sale.id, modes);
   }
 
@@ -98,6 +99,7 @@ export function PaymentStep({ sale }: { sale: Sale }) {
           remise −{formatFcfa(totals.totalDiscount)}
         </p>
       )}
+      <DepositLine sale={sale} className="border-t border-border px-4 py-2 text-sm" />
     </div>
   );
 
@@ -108,10 +110,10 @@ export function PaymentStep({ sale }: { sale: Sale }) {
         <div className="flex flex-col gap-6">
           <div>
             <p className="text-xs font-semibold tracking-wide text-base-content/55 uppercase">
-              À payer{client ? ` — ${clientFullName(client)}` : ""}
+              {depositPaid > 0 ? "Reste à encaisser" : "À payer"}{client ? ` — ${clientFullName(client)}` : ""}
             </p>
             <p className="font-[family-name:var(--font-heading)] font-semibold text-[3.5rem] leading-none text-base-content tabular-nums">
-              {formatFcfa(total)}
+              {formatFcfa(amountDue)}
             </p>
             {totals.totalDiscount > 0 && (
               <p className="mt-1.5 text-sm text-base-content/55">
@@ -119,6 +121,12 @@ export function PaymentStep({ sale }: { sale: Sale }) {
                 <span className="font-medium text-success">
                   · remise −{formatFcfa(totals.totalDiscount)}
                 </span>
+              </p>
+            )}
+            {depositPaid > 0 && (
+              <p className="mt-1.5 text-sm text-base-content/55">
+                Total {formatFcfa(total)}{" "}
+                <span className="font-medium text-success">· acompte versé −{formatFcfa(depositPaid)}</span>
               </p>
             )}
           </div>
@@ -283,7 +291,7 @@ export function PaymentStep({ sale }: { sale: Sale }) {
                 </span>
               )}
               <p className="font-[family-name:var(--font-heading)] font-semibold text-xl text-base-content tabular-nums">
-                {formatFcfa(total)} · {selectedMeta?.label}
+                {formatFcfa(amountDue)} · {selectedMeta?.label}
               </p>
               <p className="text-sm text-base-content/55">{selectedMeta?.hint}</p>
             </div>

@@ -3,6 +3,7 @@ import { HeroNumber } from "@/components/ui/atoms/hero-number";
 import { StatTile, StatTileRow } from "@/components/ui/molecules/stat-tile";
 import { computeTotals, useAppData } from "@/components/providers/app-data-provider";
 import { DiscountBreakdown } from "@/components/comptoir/discount-breakdown";
+import { DepositLine } from "@/components/comptoir/deposit-line";
 import { SendReceiptButtons } from "@/components/comptoir/send-receipt-buttons";
 import { clientFullName } from "@/lib/data/clientele";
 import { formatFcfa } from "@/lib/utils";
@@ -28,7 +29,7 @@ export function ReceiptView({ sale }: { sale: Sale }) {
         {client && <p className="text-sm text-base-content/70">{clientFullName(client)}</p>}
       </div>
 
-      <HeroNumber label="Total payé" value={formatFcfa(totals.total)} align="center" size="lg" />
+      <HeroNumber label="Total payé" value={formatFcfa(totals.amountDue)} align="center" size="lg" />
 
       <div className="flex flex-col gap-1 rounded-2xl border border-base-300 p-4 text-sm">
         {sale.cart.map((line) => (
@@ -50,6 +51,19 @@ export function ReceiptView({ sale }: { sale: Sale }) {
             <div className="flex items-center justify-between font-semibold text-base-content">
               <span>Total</span>
               <span className="tabular-nums">{formatFcfa(totals.total)}</span>
+            </div>
+          </>
+        )}
+        {totals.depositPaid > 0 && (
+          <>
+            <div className="mt-2 flex items-center justify-between border-t border-base-300 pt-2 text-base-content/55">
+              <span>Total</span>
+              <span className="tabular-nums">{formatFcfa(totals.total)}</span>
+            </div>
+            <DepositLine sale={sale} />
+            <div className="flex items-center justify-between font-semibold text-base-content">
+              <span>Reste à encaisser</span>
+              <span className="tabular-nums">{formatFcfa(totals.amountDue)}</span>
             </div>
           </>
         )}

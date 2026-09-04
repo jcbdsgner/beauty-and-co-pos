@@ -1,9 +1,9 @@
 import { PlanningBoard } from "@/components/planning/planning-board";
 
 /**
- * Équipe — la sous-page est fondue dans le Planning (docs/adr/0005) : le roster est le rail de
- * légende du tableau. Cette route ouvre le Planning sur la vue par praticienne.
+ * Équipe — plus de sous-page distincte : le roster est l'écran « Planning » du Planning (la
+ * grille heures × praticiennes). Cette route ouvre le Planning directement sur cette bascule.
  */
 export default function EquipePage() {
-  return <PlanningBoard initialView="praticienne" />;
+  return <PlanningBoard initialView="planning" />;
 }

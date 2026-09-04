@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/atoms/textarea";
 import { Dialog } from "@/components/ui/molecules/dialog";
 import { computeTotals, useAppData } from "@/components/providers/app-data-provider";
 import { DiscountBreakdown } from "@/components/comptoir/discount-breakdown";
+import { DepositLine } from "@/components/comptoir/deposit-line";
 import { SendReceiptButtons } from "@/components/comptoir/send-receipt-buttons";
 import { clientFullName } from "@/lib/data/clientele";
 import { formatFcfa } from "@/lib/utils";
@@ -64,7 +65,7 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
       </div>
 
       <p className="font-[family-name:var(--font-heading)] font-semibold text-[3rem] leading-none text-base-content tabular-nums">
-        {formatFcfa(totals.total)}
+        {formatFcfa(totals.amountDue)}
       </p>
 
       {/* Printable ticket */}
@@ -103,6 +104,15 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
           <span>Total</span>
           <span className="tabular-nums">{formatFcfa(totals.total)}</span>
         </div>
+        {totals.depositPaid > 0 && (
+          <>
+            <DepositLine sale={sale} className="mt-1" />
+            <div className="mt-1 flex justify-between border-t border-border pt-2 font-semibold">
+              <span>Reste à encaisser</span>
+              <span className="tabular-nums">{formatFcfa(totals.amountDue)}</span>
+            </div>
+          </>
+        )}
         {sale.payment && (
           <p className="mt-1 text-xs text-base-content/55">
             {sale.payment.modes.map((m) => `${MODE_LABEL[m.mode]} · ${formatFcfa(m.amount)}`).join("  +  ")}

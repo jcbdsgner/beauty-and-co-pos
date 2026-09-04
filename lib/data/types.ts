@@ -128,8 +128,15 @@ export type Reservation = {
   payerClientId: string;
   source: ReservationSource;
   rendezVous: RendezVous[];
+  /** Calendar day of the passage, "YYYY-MM-DD". Absent ⇒ today (walk-ins noted at the counter,
+   *  legacy seed) — read it through `reservationDate()`, never the raw field. */
+  date?: string;
   /** Set once "Encaisser" opens a sale for this réservation — the "En cours" relation, not a status. */
   saleId?: string;
+  /** What the cliente already paid on the external platform when she booked, in FCFA — arrives
+   *  verbatim like the rest of the réservation, never entered or edited in this app. Deducted from
+   *  the sale's total at the counter (see `Sale.depositPaid`, ADR 0015). Absent ⇒ no acompte. */
+  depositPaid?: number;
   createdAt?: string;
 };
 
@@ -274,6 +281,9 @@ export type Sale = {
   step: SaleStep;
   /** The réservation this sale was opened from, via "Encaisser". Absent for a walk-in sale. */
   originReservationId?: string;
+  /** Copied from `Reservation.depositPaid` when the sale opens — not an acquittable Remise (it
+   *  doesn't change the sale's value), just what's left to ask for at the counter. See ADR 0015. */
+  depositPaid?: number;
   payment?: { modes: { mode: PaymentMode; amount: number }[] };
   loyaltyPointsEarned?: number;
   createdAt: string;

@@ -126,6 +126,11 @@ export const MAX_REMISE_PCT = 20;
  * MAX_REMISE_PCT; (2) loyalty points; (3) the gift card last, clamped to whatever is still owed so
  * its unused value (`giftCardRemaining`) stays on the card. Used by the cart, payment step, receipt
  * and the header pastille.
+ *
+ * `depositPaid` (an acompte already settled on the external platform, ADR 0015) is deducted last,
+ * *after* the discount chain — it isn't a Remise, it doesn't change what the sale is worth, only
+ * how much of it is still to be asked for (`amountDue`). Points earned at `confirmPayment` are
+ * still computed against `total`, not `amountDue` — the cliente bought the full sale.
  */
 export function computeTotals(sale: Sale) {
   const prestations = sale.cart.filter((l) => l.kind === "service").reduce((sum, l) => sum + l.unitPrice * l.qty, 0);
@@ -165,6 +170,9 @@ export function computeTotals(sale: Sale) {
   const total = beforeGiftCard - giftCardDiscount;
   const totalDiscount = grantedDiscount + loyaltyDiscount + giftCardDiscount;
 
+  const depositPaid = sale.depositPaid ?? 0;
+  const amountDue = Math.max(0, total - depositPaid);
+
   return {
     subtotal,
     prestations,
@@ -178,6 +186,8 @@ export function computeTotals(sale: Sale) {
     receptionistMaxDiscount,
     totalDiscount,
     total,
+    depositPaid,
+    amountDue,
   };
 }
 
@@ -440,6 +450,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       if (reservation) {
         sale.clientId = reservation.payerClientId;
         sale.originReservationId = reservation.id;
+        if (reservation.depositPaid) sale.depositPaid = reservation.depositPaid;
 
         // One cart line per prestation planifiée. Merge identical lines (same service, same
         // bénéficiaire) into a quantity so a repeated prestation stays one row.
