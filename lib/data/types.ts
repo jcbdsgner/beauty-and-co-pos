@@ -90,11 +90,11 @@ export type ProductCategory = {
 
 export type Produit = {
   id: string;
-  /** One of `PRODUCT_CATEGORIES` — a brand: "kerastase", "saryna-keys", "nefertiti", "autres".
+  /** One of `PRODUCT_CATEGORIES` — a brand: "kerastase", "saryna-keys", "nefertiti", "beccy-wave", "autres".
    *  Never "boissons" — bar drinks are a `Boisson`, their own family (ADR 0016). */
   categoryId: string;
   /** Range within the category — e.g. a Kérastase gamme ("Nutritive", "Chronologiste"). Mirrors
-   *  `Service.subcategory`. Absent for a category that doesn't split (Saryna Keys, Nefertiti, Autres). */
+   *  `Service.subcategory`. Absent for a category that doesn't split (Saryna Keys, Nefertiti, Beccy Wave, Autres). */
   subcategory?: string;
   name: string;
   price: number;

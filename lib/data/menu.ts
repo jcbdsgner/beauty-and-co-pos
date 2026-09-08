@@ -154,6 +154,7 @@ export const PRODUCT_CATEGORIES: ProductCategory[] = [
   { id: "kerastase", name: "Kérastase" },
   { id: "saryna-keys", name: "Saryna Keys" },
   { id: "nefertiti", name: "Nefertiti" },
+  { id: "beccy-wave", name: "Beccy Wave" },
   { id: "autres", name: "Autres" },
 ];
 

@@ -162,7 +162,7 @@ Actions clés : `addClient`/`updateClient`, `cancelAppointment`/`rescheduleRende
 | `types.ts` | Modèle conceptuel partagé (`Praticienne`, `Cliente`, `Reservation`, `RendezVous`, `Sale`, `CartLine`, `Conversation`, `Message`, `Style`, `PreferenceDomain`…). |
 | `clientele.ts` | `CLIENTS` + `clientFullName`/`clientInitial`/`searchClients`. |
 | `planning.ts` | `RESERVATIONS` (réservations « du jour ») + `flattenRendezVous`, `reservationById`, `appointmentEndTime`, `timeToMinutes`. |
-| `menu.ts` | `SERVICES` (verbatim du catalogue b&co), `PRODUITS`, `SERVICE_CATEGORIES`, `PRODUCT_CATEGORIES` (marques : Kérastase, Saryna Keys, Nefertiti, Autres), `KERASTASE_GAMMES`, `serviceById`. |
+| `menu.ts` | `SERVICES` (verbatim du catalogue b&co), `PRODUITS`, `SERVICE_CATEGORIES`, `PRODUCT_CATEGORIES` (marques : Kérastase, Saryna Keys, Nefertiti, Beccy Wave, Autres), `KERASTASE_GAMMES`, `serviceById`. |
 | `boissons.ts` | `BOISSONS` — le Bar b&co (type `Boisson`, sans catégorie ni stock, ADR 0016). |
 | `praticiennes.ts` | `PRATICIENNES` (roster + horaires du jour). |
 | `conversations.ts` | `CONVERSATIONS` (9 fils de démo, ADR 0011) + `conversationByClientId` / `conversationById`. |

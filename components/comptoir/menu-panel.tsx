@@ -21,7 +21,7 @@ import { cn, formatFcfa } from "@/lib/utils";
 import type { Boisson, CartLine, Produit, Service } from "@/lib/data/types";
 
 /** Trois familles encaissables, comme les volets du Catalogue : prestations, revente par marque
- *  (Kérastase, Saryna Keys, Nefertiti, Autres), et le Bar. Produits par défaut — une vente ouverte
+ *  (Kérastase, Saryna Keys, Nefertiti, Beccy Wave, Autres), et le Bar. Produits par défaut — une vente ouverte
  *  à froid est de la revente (ADR 0013) ; les prestations n'arrivent que d'une réservation. */
 type MenuMode = "services" | "produits" | "boissons";
 
@@ -33,7 +33,7 @@ const LINE_KIND: Record<MenuMode, CartLine["kind"]> = {
 
 /**
  * Deux niveaux de catégories. Les grandes catégories (Coiffure, Spa, Onglerie… côté prestations ;
- * Kérastase, Saryna Keys, Nefertiti, Autres côté produits) sont des blocs carrés en grille 2
+ * Kérastase, Saryna Keys, Nefertiti, Beccy Wave, Autres côté produits) sont des blocs carrés en grille 2
  * colonnes dans un rail vertical à gauche de la zone menu, icône en haut (prestations) ou libellé
  * seul (produits — pas de marque à illustrer). Sélectionner une catégorie assez profonde (Coiffure,
  * Kérastase) déplie ses sous-catégories en boutons qui reviennent à la ligne au-dessus de la grille

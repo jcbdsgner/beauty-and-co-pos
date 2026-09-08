@@ -77,7 +77,7 @@ L'état d'un fil dont la dernière réponse de la cliente n'a pas encore été v
 _Avoid_: Nouveau, En attente, Notification
 
 **Menu**:
-La liste de tout ce que la réceptionniste peut mettre dans un panier et encaisser. On le parcourt dans le panneau de gauche du Comptoir via trois onglets — **Prestations · Produits · Boissons** — qui reprennent les volets du Catalogue. Chaque onglet a son rail de catégories à gauche : les **Prestations** par grande catégorie (Coiffure et ses familles, Spa…), les **Produits** par catégorie (**Kérastase** et ses gammes, **Saryna Keys**, **Nefertiti**, **Autres**), les **Boissons** sans catégorie. Édité hors de cette app — point-de-vente ne fait que le lire.
+La liste de tout ce que la réceptionniste peut mettre dans un panier et encaisser. On le parcourt dans le panneau de gauche du Comptoir via trois onglets — **Prestations · Produits · Boissons** — qui reprennent les volets du Catalogue. Chaque onglet a son rail de catégories à gauche : les **Prestations** par grande catégorie (Coiffure et ses familles, Spa…), les **Produits** par catégorie (**Kérastase** et ses gammes, **Saryna Keys**, **Nefertiti**, **Beccy Wave**, **Autres**), les **Boissons** sans catégorie. Édité hors de cette app — point-de-vente ne fait que le lire.
 _Avoid_: Catalogue (réservé au module de consultation ci-dessous), Carte (ambigu avec carte de fidélité / carte cadeau), Tarifs (réducteur), Services (ancien libellé de l'onglet Prestations)
 
 **Prestation**:
@@ -85,7 +85,7 @@ Un soin réalisé au salon (coiffure, manucure, spa…). Porte une **catégorie*
 _Avoid_: Service, Soin (générique), Acte
 
 **Produit**:
-Un article de revente (soin capillaire, huile, flacon…). Rangé dans une **catégorie** — **Kérastase** (subdivisée en **gammes** : Nutritive, Chronologiste, Blond Absolu…), **Saryna Keys**, **Nefertiti**, **Autres** — jamais sous « boissons ». Porte un **stock**, décrémenté à chaque vente ; un produit à zéro ne peut plus être ajouté au panier. Jamais remisé par une remise accordée.
+Un article de revente (soin capillaire, huile, flacon…). Rangé dans une **catégorie** — **Kérastase** (subdivisée en **gammes** : Nutritive, Chronologiste, Blond Absolu…), **Saryna Keys**, **Nefertiti**, **Beccy Wave**, **Autres** — jamais sous « boissons ». Porte un **stock**, décrémenté à chaque vente ; un produit à zéro ne peut plus être ajouté au panier. Jamais remisé par une remise accordée.
 _Avoid_: Article, Revente (désigne le rayon, pas l'unité)
 
 **Boisson**:

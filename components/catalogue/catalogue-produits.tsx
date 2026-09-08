@@ -15,7 +15,7 @@ import type { Produit } from "@/lib/data/types";
  * Comptoir) — on regarde juste ce qu'il reste en rayon. Le stock lu vient du store, donc il
  * reflète les ventes de la session.
  *
- * Deux niveaux : une catégorie (Kérastase, Saryna Keys, Nefertiti, Autres) et, pour Kérastase, ses
+ * Deux niveaux : une catégorie (Kérastase, Saryna Keys, Nefertiti, Beccy Wave, Autres) et, pour Kérastase, ses
  * gammes. Même principe que « coiffure » et ses sous-catégories côté prestations.
  */
 const GAMME_ORDER = new Map(KERASTASE_GAMMES.map((g, i) => [g as string, i]));

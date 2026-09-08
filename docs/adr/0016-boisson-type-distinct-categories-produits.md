@@ -14,8 +14,8 @@ rail du Comptoir, volet Catalogue, filtre « Tout ». Le stock des boissons éta
 mais jamais affiché (« un bar ne se compte pas au verre »).
 
 Par ailleurs le rayon revente ne comptait qu'une marque (Kérastase). Le salon en vend
-désormais plusieurs (**Saryna Keys**, **Nefertiti**, un fourre-tout **Autres**), et veut les
-choisir au comptoir comme on choisit une grande catégorie de prestation.
+désormais plusieurs (**Saryna Keys**, **Nefertiti**, **Beccy Wave**, un fourre-tout **Autres**),
+et veut les choisir au comptoir comme on choisit une grande catégorie de prestation.
 
 ## Décision
 
@@ -32,9 +32,9 @@ choisir au comptoir comme on choisit une grande catégorie de prestation.
 
 ### 2. Catégories de produits par marque
 
-- `PRODUCT_CATEGORIES` = `kerastase`, `saryna-keys`, `nefertiti`, `autres` (ordre d'affichage,
+- `PRODUCT_CATEGORIES` = `kerastase`, `saryna-keys`, `nefertiti`, `beccy-wave`, `autres` (ordre d'affichage,
   « Autres » en dernier). Plus de `boissons` dans la liste.
-- **Kérastase** garde ses **gammes** en sous-catégories (`KERASTASE_GAMMES`). Les trois autres
+- **Kérastase** garde ses **gammes** en sous-catégories (`KERASTASE_GAMMES`). Les quatre autres
   catégories n'ont pas de sous-niveau.
 
 ### 3. Menu : trois onglets, rail à deux niveaux pour les produits
@@ -42,12 +42,12 @@ choisir au comptoir comme on choisit une grande catégorie de prestation.
 - L'onglet est relabellé **« Prestations »** (valeur interne inchangée) ; les trois onglets sont
   **Prestations · Produits · Boissons**.
 - Le rail des **Produits** passe au même composant à deux niveaux que les Prestations : blocs de
-  catégorie dans le rail vertical (Kérastase, Saryna Keys, Nefertiti, Autres), et Kérastase
+  catégorie dans le rail vertical (Kérastase, Saryna Keys, Nefertiti, Beccy Wave, Autres), et Kérastase
   déplie ses gammes en pastilles au-dessus de la grille. **Blocs en texte seul** — pas de
   pictogramme (aucune marque disponible, et le rail gère déjà l'absence d'icône).
 - Les **Boissons** n'ont pas de rail.
 - Le volet **Produits** du Catalogue garde ses chips (catégorie + gamme), qui passent à l'échelle
-  des quatre catégories.
+  des cinq catégories.
 
 ## Conséquences
 
@@ -60,7 +60,7 @@ choisir au comptoir comme on choisit une grande catégorie de prestation.
   `confirmPayment` ne décrémente que les `kind: "produit"`.
 - `components/comptoir/menu-panel.tsx` : `productFilterTree()` bâti comme `serviceFilterTree()` ;
   onglet « Prestations » ; grille des boissons depuis `BOISSONS`.
-- `components/catalogue/catalogue-produits.tsx` : quatre catégories ; `catalogue-boissons.tsx`
+- `components/catalogue/catalogue-produits.tsx` : cinq catégories ; `catalogue-boissons.tsx`
   lit `BOISSONS`.
 - `CONTEXT.md` : entrées **Prestation**, **Produit**, **Boisson** ajoutées ; **Menu**, **Catalogue**,
   **Encaisser** amendées.
