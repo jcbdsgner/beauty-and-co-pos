@@ -246,4 +246,12 @@ export const PRODUITS: Produit[] = [
   { id: "k-elixir-oil-30ml", categoryId: "kerastase", subcategory: "Elixir Ultime", name: "K Elixir Oil 30ml", price: 26000, stock: 24, active: true, image: "/images/produits/k-elixir-oil-30ml.jpg" },
   { id: "ker-elixir-ult-bain-250ml", categoryId: "kerastase", subcategory: "Elixir Ultime", name: "Ker Elixir ULT Bain 250ml", price: 23000, stock: 0, active: true, image: "/images/produits/ker-elixir-ult-bain-250ml.jpg" },
   { id: "ker-elixir-ult-masque-200ml", categoryId: "kerastase", subcategory: "Elixir Ultime", name: "Ker Elixir ULT Masque 200ml", price: 42000, stock: 34, active: true, image: "/images/produits/ker-elixir-ult-masque-200ml.jpg" },
+  { id: "antiseptique-saryna-keys", categoryId: "saryna-keys", name: "Antisceptique Saryna Keys", price: 3000, stock: 24, active: true, image: "/images/produits/antiseptique-saryna-keys.jpg" },
+  { id: "damage-repair-oil-saryna-keys", categoryId: "saryna-keys", name: "Damage repair oil Saryna Keys", price: 30000, stock: 16, active: true, image: "/images/produits/damage-repair-oil-saryna-keys.jpg" },
+  { id: "nefertiti-kinky-straight", categoryId: "nefertiti", name: "Nefertiti Kinky Straight", price: 125000, stock: 5, active: true, image: "/images/produits/nefertiti-kinky-straight.jpg" },
+  { id: "hd-lace-frontal-nefertiti-kinky-straight", categoryId: "nefertiti", name: "HD lace frontal Nefertiti Kinky straight", price: 210000, stock: 3, active: true, image: "/images/produits/hd-lace-frontal-nefertiti-kinky-straight.jpg" },
+  { id: "ready-made-ponytail-beccy-wave", categoryId: "beccy-wave", name: "Ready made ponytail Beccy wave", price: 125000, stock: 4, active: true, image: "/images/produits/ready-made-ponytail-beccy-wave.jpg" },
+  { id: "becky-wave-raw-hair", categoryId: "beccy-wave", name: "Becky wave raw hair", price: 78900, stock: 6, active: true, image: "/images/produits/becky-wave-raw-hair.jpg" },
+  { id: "correcteur-fluide-swiss-perfection-haute-couvrance", categoryId: "autres", name: "Correcteur Fluide « Swiss Perfection » – Haute Couvrance", price: 38500, stock: 14, active: true, image: "/images/produits/correcteur-fluide-swiss-perfection-haute-couvrance.jpg" },
+  { id: "peigne-bijou-eclat-de-mariee-finition-or-rose", categoryId: "autres", name: "Peigne Bijou « Éclat de Mariée » – Finition Or Rose", price: 26000, stock: 10, active: true, image: "/images/produits/peigne-bijou-eclat-de-mariee-finition-or-rose.jpg" },
 ];
