@@ -88,7 +88,7 @@ Modèle : un unique arbre de composants avec une machine à états `browse → p
   - scan carte cadeau → toujours la carte `BACO-GIFT-25000`, appliquée immédiatement (saute l'étape code + OK)
 
 ### 2.4 Catalogue (`category-rail.tsx`, `full-catalog.tsx`, `service-catalog.tsx`)
-- Toggle **Services / Produits** **[OK]** — réinitialise la navigation catalogue.
+- Onglets **Prestations / Produits / Boissons** **[OK]** — réinitialise la navigation catalogue.
 - Recherche texte live, placeholder contextuel **[OK]**.
 - Vue « Tous » (aucune catégorie sélectionnée, pas de recherche) : services groupés par sous-catégorie, tuiles cliquables → ajout direct au panier **[OK]**.
 - Grille de catégories (icônes dessinées, compteur par catégorie) **[OK]** — 8 catégories Services (107 prestations réelles importées du site vitrine b&co).

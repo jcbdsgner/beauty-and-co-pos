@@ -90,9 +90,11 @@ export type ProductCategory = {
 
 export type Produit = {
   id: string;
+  /** One of `PRODUCT_CATEGORIES` — a brand: "kerastase", "saryna-keys", "nefertiti", "autres".
+   *  Never "boissons" — bar drinks are a `Boisson`, their own family (ADR 0016). */
   categoryId: string;
   /** Range within the category — e.g. a Kérastase gamme ("Nutritive", "Chronologiste"). Mirrors
-   *  `Service.subcategory`. Absent for products a category doesn't split (bar drinks). */
+   *  `Service.subcategory`. Absent for a category that doesn't split (Saryna Keys, Nefertiti, Autres). */
   subcategory?: string;
   name: string;
   price: number;
@@ -103,7 +105,24 @@ export type Produit = {
   importedAbroad?: boolean;
   /** Optional product photo (path under /public). Absent → a placeholder tile. */
   image?: string;
-  /** Short blurb — used by bar drinks (catégorie « boissons »), where the composition matters. */
+  /** Short blurb. */
+  description?: string;
+};
+
+/**
+ * A drink from the Bar Beauty & Co — its own family, neither a Prestation nor a Produit (ADR 0016).
+ * No category, no stock ("un bar ne se compte pas au verre"). Cashed in like the rest and counts
+ * toward loyalty points earned, but is never in a discount's base. Same references as the b&co
+ * booking platform's bar menu.
+ */
+export type Boisson = {
+  id: string;
+  name: string;
+  price: number;
+  active: boolean;
+  /** Optional photo (path under /public). Absent → a placeholder tile. */
+  image?: string;
+  /** Composition — shown to the cliente while she waits. */
   description?: string;
 };
 
@@ -236,8 +255,8 @@ export type GiftCardOrder = {
 
 export type CartLine = {
   id: string;
-  refId: string; // service or produit id
-  kind: "service" | "produit";
+  refId: string; // service, produit or boisson id
+  kind: "service" | "produit" | "boisson";
   name: string;
   unitPrice: number;
   qty: number;

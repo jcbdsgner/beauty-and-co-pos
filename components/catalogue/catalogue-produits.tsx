@@ -15,23 +15,20 @@ import type { Produit } from "@/lib/data/types";
  * Comptoir) — on regarde juste ce qu'il reste en rayon. Le stock lu vient du store, donc il
  * reflète les ventes de la session.
  *
- * Deux niveaux : une catégorie (Kérastase, d'autres à venir) et ses sous-catégories — pour
- * Kérastase, les gammes. Même principe que « coiffure » et ses sous-catégories côté prestations.
+ * Deux niveaux : une catégorie (Kérastase, Saryna Keys, Nefertiti, Autres) et, pour Kérastase, ses
+ * gammes. Même principe que « coiffure » et ses sous-catégories côté prestations.
  */
 const GAMME_ORDER = new Map(KERASTASE_GAMMES.map((g, i) => [g as string, i]));
 
 export function CatalogueProduits() {
   const { produits } = useAppData();
 
-  const categories = useMemo(() => PRODUCT_CATEGORIES.filter((c) => c.id !== "boissons"), []);
+  const categories = PRODUCT_CATEGORIES;
   const [categoryId, setCategoryId] = useState<string>(categories.length === 1 ? categories[0].id : "toutes");
   const [subcategory, setSubcategory] = useState<string>("toutes");
 
-  // Le Bar (catégorie « boissons ») a son propre volet — ici on ne montre que le rayon revente.
-  const inScope = useMemo(
-    () => produits.filter((p) => p.active && p.categoryId !== "boissons"),
-    [produits],
-  );
+  // Le Bar a son propre volet — ici, uniquement le rayon revente.
+  const inScope = useMemo(() => produits.filter((p) => p.active), [produits]);
   const catScoped = categoryId === "toutes" ? inScope : inScope.filter((p) => p.categoryId === categoryId);
 
   const subcats = useMemo(() => {

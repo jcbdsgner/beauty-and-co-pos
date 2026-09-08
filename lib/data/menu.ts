@@ -148,13 +148,17 @@ export function serviceById(id: string) {
   return SERVICES.find((s) => s.id === id);
 }
 
+/** Les catégories de produits — des marques. Ordre d'affichage, « Autres » en dernier. Les
+ *  boissons ne sont pas là : c'est leur propre famille (`Boisson`, ADR 0016). */
 export const PRODUCT_CATEGORIES: ProductCategory[] = [
   { id: "kerastase", name: "Kérastase" },
-  { id: "boissons", name: "Boissons" },
+  { id: "saryna-keys", name: "Saryna Keys" },
+  { id: "nefertiti", name: "Nefertiti" },
+  { id: "autres", name: "Autres" },
 ];
 
 /** Les gammes Kérastase — sous-catégories de la catégorie « kerastase » (comme les sous-catégories
- *  de « coiffure » côté prestations). Ordre d'affichage. */
+ *  de « coiffure » côté prestations). Ordre d'affichage. Seule « kerastase » a des sous-catégories. */
 export const KERASTASE_GAMMES = [
   "Nutritive",
   "Genesis",
@@ -241,13 +245,4 @@ export const PRODUITS: Produit[] = [
   { id: "k-elixir-oil-30ml", categoryId: "kerastase", subcategory: "Elixir Ultime", name: "K Elixir Oil 30ml", price: 26000, stock: 24, active: true, image: "/images/produits/k-elixir-oil-30ml.jpg" },
   { id: "ker-elixir-ult-bain-250ml", categoryId: "kerastase", subcategory: "Elixir Ultime", name: "Ker Elixir ULT Bain 250ml", price: 23000, stock: 0, active: true, image: "/images/produits/ker-elixir-ult-bain-250ml.jpg" },
   { id: "ker-elixir-ult-masque-200ml", categoryId: "kerastase", subcategory: "Elixir Ultime", name: "Ker Elixir ULT Masque 200ml", price: 42000, stock: 34, active: true, image: "/images/produits/ker-elixir-ult-masque-200ml.jpg" },
-
-  // BOISSONS — Bar Beauty & Co (données b&co lib/data/bar-beauty.ts)
-  { id: "boisson-pure-glow", categoryId: "boissons", name: "Pure Glow", price: 4500, stock: 32, active: true, description: "Collagène, passion, orange amer, ruby grape", image: "/images/boissons/pure-glow.jpg" },
-  { id: "boisson-dragon-mystic", categoryId: "boissons", name: "Dragon Mystic", price: 4500, stock: 28, active: true, description: "Dragon fruit, timer berry, eau pétillante", image: "/images/boissons/dragon-mystic.jpg" },
-  { id: "boisson-pause-tropical", categoryId: "boissons", name: "Pause Tropical", price: 4500, stock: 24, active: true, description: "Magnésium, ananas, menthe, citron", image: "/images/boissons/pause-tropical.jpg" },
-  { id: "boisson-eclat-matcha", categoryId: "boissons", name: "L'Éclat Matcha", price: 4500, stock: 30, active: true, description: "Matcha fraise ou vanille au choix", image: "/images/boissons/eclat-matcha.jpg" },
-  { id: "boisson-ice-coffee-caramel", categoryId: "boissons", name: "Ice Coffee Caramel", price: 4500, stock: 26, active: true, description: "Caramel, expresso, lait au choix", image: "/images/boissons/ice-coffee-caramel.jpg" },
-  { id: "boisson-soin-glace-ice-tea", categoryId: "boissons", name: "Soin Glacé Ice Tea", price: 3500, stock: 35, active: true, description: "Pêche citron", image: "/images/boissons/soin-glace-ice-tea.jpg" },
-  { id: "boisson-pretty-latte", categoryId: "boissons", name: "Pretty Latte", price: 3900, stock: 22, active: true, description: "Lait froid ou chaud au choix et garniture au choix (caramel, vanille, cookies, spéculos)" },
 ];

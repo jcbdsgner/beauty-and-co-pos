@@ -3,17 +3,16 @@
 import Image from "next/image";
 import { Board, BoardEmpty } from "@/components/ui/board";
 import { PhotoPlaceholder } from "@/components/ui/atoms/photo-placeholder";
-import { useAppData } from "@/components/providers/app-data-provider";
+import { BOISSONS } from "@/lib/data/boissons";
 import { formatFcfa } from "@/lib/utils";
 
 /**
  * Boissons — le Bar Beauty & Co, en lecture : chaque boisson avec sa photo, sa composition et son
  * prix. On feuillette avec la cliente pendant qu'elle patiente ; l'ajout au panier se fait au
- * Comptoir (catégorie « Boissons » du Menu). Les mêmes références que la prise de RDV b&co.
+ * Comptoir (onglet « Boissons » du Menu). Les mêmes références que la prise de RDV b&co.
  */
 export function CatalogueBoissons() {
-  const { produits } = useAppData();
-  const boissons = produits.filter((p) => p.active && p.categoryId === "boissons");
+  const boissons = BOISSONS.filter((b) => b.active);
 
   return (
     <Board legend={`${boissons.length} boisson${boissons.length > 1 ? "s" : ""}`} tone="plain">

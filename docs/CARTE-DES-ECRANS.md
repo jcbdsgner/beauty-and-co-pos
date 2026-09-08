@@ -129,7 +129,7 @@ Bureau taupe + feuille crème. Étape courante = `activeSale.step` : `"vente"` |
 | Étape / zone | Composant | Fichier |
 |---|---|---|
 | Barre d'onglets de vente | `SaleTabsBar` | [`components/comptoir/sale-tabs-bar.tsx`](../components/comptoir/sale-tabs-bar.tsx) |
-| Panneau menu (gauche) | `MenuPanel` | [`components/comptoir/menu-panel.tsx`](../components/comptoir/menu-panel.tsx) — services/produits, catégories, recherche |
+| Panneau menu (gauche) | `MenuPanel` | [`components/comptoir/menu-panel.tsx`](../components/comptoir/menu-panel.tsx) — onglets Prestations/Produits/Boissons, rail de catégories (2 niveaux), recherche |
 | Ticket (droite) | `SaleCartPanel` | [`components/comptoir/sale-cart-panel.tsx`](../components/comptoir/sale-cart-panel.tsx) — cliente en tête, lignes, total, Encaisser |
 | Remises | `DiscountSection` (+ `DiscountBreakdown`) | [`components/comptoir/discount-section.tsx`](../components/comptoir/discount-section.tsx) — carte cadeau, points, remise accordée (10 %/20 % + code manager) |
 | Étape paiement | `PaymentStep` | [`components/comptoir/payment-step.tsx`](../components/comptoir/payment-step.tsx) — tuiles Wave / Orange Money (logos) / Carte / Espèces, `NumericKeypad`, paiement mixte |
@@ -162,7 +162,8 @@ Actions clés : `addClient`/`updateClient`, `cancelAppointment`/`rescheduleRende
 | `types.ts` | Modèle conceptuel partagé (`Praticienne`, `Cliente`, `Reservation`, `RendezVous`, `Sale`, `CartLine`, `Conversation`, `Message`, `Style`, `PreferenceDomain`…). |
 | `clientele.ts` | `CLIENTS` + `clientFullName`/`clientInitial`/`searchClients`. |
 | `planning.ts` | `RESERVATIONS` (réservations « du jour ») + `flattenRendezVous`, `reservationById`, `appointmentEndTime`, `timeToMinutes`. |
-| `menu.ts` | `SERVICES` (verbatim du catalogue b&co), `PRODUITS`, `SERVICE_CATEGORIES`, `PRODUCT_CATEGORIES`, `serviceById`. |
+| `menu.ts` | `SERVICES` (verbatim du catalogue b&co), `PRODUITS`, `SERVICE_CATEGORIES`, `PRODUCT_CATEGORIES` (marques : Kérastase, Saryna Keys, Nefertiti, Autres), `KERASTASE_GAMMES`, `serviceById`. |
+| `boissons.ts` | `BOISSONS` — le Bar b&co (type `Boisson`, sans catégorie ni stock, ADR 0016). |
 | `praticiennes.ts` | `PRATICIENNES` (roster + horaires du jour). |
 | `conversations.ts` | `CONVERSATIONS` (9 fils de démo, ADR 0011) + `conversationByClientId` / `conversationById`. |
 | `styles.ts` | `STYLES` (Catalogue → Les Planches). |
@@ -204,6 +205,6 @@ Tokens de marque : [`app/globals.css`](../app/globals.css) — `--core-brand-col
 | Nouvelle vente / barre du comptoir | [`components/shell/comptoir-bar.tsx`](../components/shell/comptoir-bar.tsx) |
 | Sidebar / navigation / menu identité | [`components/shell/sidebar.tsx`](../components/shell/sidebar.tsx) |
 | Profil, PIN, changer d'utilisateur | `app/compte/page.tsx` + `components/compte/*` ; `lib/session.ts` |
-| Menu des prestations / prix / durées | [`lib/data/menu.ts`](../lib/data/menu.ts) (verbatim b&co) |
+| Menu des prestations / prix / durées | [`lib/data/menu.ts`](../lib/data/menu.ts) (verbatim b&co) ; boissons du Bar → [`lib/data/boissons.ts`](../lib/data/boissons.ts) |
 | Un composant UI (bouton, dialog, tableau…) | [`components/ui/`](../components/ui/) — vitrine `/composants` |
 | Couleurs / typo / tokens | [`app/globals.css`](../app/globals.css), [`../DESIGN.md`](../DESIGN.md) |

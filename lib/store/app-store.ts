@@ -135,7 +135,10 @@ export const MAX_REMISE_PCT = 20;
 export function computeTotals(sale: Sale) {
   const prestations = sale.cart.filter((l) => l.kind === "service").reduce((sum, l) => sum + l.unitPrice * l.qty, 0);
   const produits = sale.cart.filter((l) => l.kind === "produit").reduce((sum, l) => sum + l.unitPrice * l.qty, 0);
-  const subtotal = prestations + produits;
+  // Les boissons du Bar comptent dans le total (et les points gagnés) mais jamais dans l'assiette
+  // d'une remise — comme les produits (ADR 0016).
+  const boissons = sale.cart.filter((l) => l.kind === "boisson").reduce((sum, l) => sum + l.unitPrice * l.qty, 0);
+  const subtotal = prestations + produits + boissons;
 
   const maxGrantedDiscount = Math.round((prestations * MAX_REMISE_PCT) / 100);
   const receptionistMaxDiscount = Math.round((prestations * RECEPTIONIST_MAX_PCT) / 100);
@@ -177,6 +180,7 @@ export function computeTotals(sale: Sale) {
     subtotal,
     prestations,
     produits,
+    boissons,
     grantedDiscount,
     loyaltyDiscount,
     giftCardDiscount,

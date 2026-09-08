@@ -15,22 +15,29 @@ import {
   SpaIcon,
 } from "@/components/ui/atoms/service-category-icons";
 import { PRODUCT_CATEGORIES, SERVICE_CATEGORIES, SERVICES } from "@/lib/data/menu";
+import { BOISSONS } from "@/lib/data/boissons";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { cn, formatFcfa } from "@/lib/utils";
+import type { Boisson, CartLine, Produit, Service } from "@/lib/data/types";
 
-/** Trois grandes familles encaissables, comme les volets du Catalogue : prestations, revente
- *  (Kérastase & co), et le Bar. Produits par défaut — une vente ouverte à froid est de la
- *  revente (ADR 0013) ; les prestations n'arrivent que d'une réservation. */
+/** Trois familles encaissables, comme les volets du Catalogue : prestations, revente par marque
+ *  (Kérastase, Saryna Keys, Nefertiti, Autres), et le Bar. Produits par défaut — une vente ouverte
+ *  à froid est de la revente (ADR 0013) ; les prestations n'arrivent que d'une réservation. */
 type MenuMode = "services" | "produits" | "boissons";
 
+const LINE_KIND: Record<MenuMode, CartLine["kind"]> = {
+  services: "service",
+  produits: "produit",
+  boissons: "boisson",
+};
+
 /**
- * Deux niveaux de catégories. Les grandes catégories (Coiffure, Spa, Onglerie…) sont des blocs
- * carrés en grille 2 colonnes dans un rail vertical à gauche de la zone menu, icône en haut,
- * libellé en bas. Sélectionner une catégorie assez profonde (Coiffure) déplie ses sous-catégories
- * en boutons qui reviennent à la ligne au-dessus de la grille — aucune barre à faire défiler.
- * Promouvoir directement les sous-catégories de Coiffure au premier niveau enfouissait toutes les
- * autres grandes catégories. En Produits, le rail porte les gammes Kérastase. Le Bar (Boissons)
- * n'a pas de rail.
+ * Deux niveaux de catégories. Les grandes catégories (Coiffure, Spa, Onglerie… côté prestations ;
+ * Kérastase, Saryna Keys, Nefertiti, Autres côté produits) sont des blocs carrés en grille 2
+ * colonnes dans un rail vertical à gauche de la zone menu, icône en haut (prestations) ou libellé
+ * seul (produits — pas de marque à illustrer). Sélectionner une catégorie assez profonde (Coiffure,
+ * Kérastase) déplie ses sous-catégories en boutons qui reviennent à la ligne au-dessus de la grille
+ * — aucune barre à faire défiler. Le Bar (Boissons) n'a pas de rail.
  */
 
 /** Icône par grande catégorie de prestations (clé de filtre `c:<id>` ou `all`). Mini&Co reprend
@@ -57,7 +64,7 @@ type Filter = {
 /** Rangée du haut + sous-rangées dépliables, indexées par la clé de la grande catégorie. */
 type FilterTree = { top: Filter[]; subsByParent: Record<string, Filter[]> };
 
-const ALL: Filter = { key: "all", label: "Tout", match: (c) => c !== "boissons" };
+const ALL: Filter = { key: "all", label: "Tout", match: () => true };
 const catFilter = (id: string, label: string): Filter => ({ key: `c:${id}`, label, match: (c) => c === id });
 const subFilter = (label: string): Filter => ({ key: `s:${label}`, label, match: (_c, s) => s === label });
 
@@ -68,13 +75,18 @@ function subcategoriesOf(items: ReadonlyArray<{ categoryId: string; subcategory?
   return [...seen];
 }
 
-function serviceFilterTree(): FilterTree {
+/** Arbre de filtres à deux niveaux, commun aux prestations et aux produits : une rangée de grandes
+ *  catégories, et pour chacune qui a plus d'une sous-catégorie, sa rangée dépliable. */
+function categoryFilterTree(
+  categories: ReadonlyArray<{ id: string; name: string }>,
+  items: ReadonlyArray<{ categoryId: string; subcategory?: string }>,
+): FilterTree {
   const top: Filter[] = [ALL];
   const subsByParent: Record<string, Filter[]> = {};
-  for (const cat of SERVICE_CATEGORIES) {
+  for (const cat of categories) {
     const parent = catFilter(cat.id, cat.name);
     top.push(parent);
-    const subs = subcategoriesOf(SERVICES, cat.id);
+    const subs = subcategoriesOf(items, cat.id);
     // Une seule sous-catégorie ne mérite pas sa rangée : la grande catégorie suffit.
     if (subs.length > 1) {
       subsByParent[parent.key] = [{ ...parent, label: "Tout" }, ...subs.map(subFilter)];
@@ -96,18 +108,18 @@ export function MenuPanel({ saleId }: { saleId: string }) {
     return m;
   }, [sales, saleId]);
 
-  const items = mode === "services" ? SERVICES : produits;
+  const items: ReadonlyArray<Service | Produit | Boisson> =
+    mode === "services" ? SERVICES : mode === "produits" ? produits : BOISSONS;
 
   const { top: topFilters, subsByParent } = useMemo<FilterTree>(() => {
-    if (mode === "services") return serviceFilterTree();
-    if (mode === "produits") {
-      const source = produits as ReadonlyArray<{ categoryId: string; subcategory?: string }>;
-      const hasKerastase = PRODUCT_CATEGORIES.some((c) => c.id === "kerastase");
-      const ranges = hasKerastase ? subcategoriesOf(source, "kerastase") : [];
-      return { top: [ALL, ...ranges.map(subFilter)], subsByParent: {} };
-    }
+    if (mode === "services") return categoryFilterTree(SERVICE_CATEGORIES, SERVICES);
+    if (mode === "produits") return categoryFilterTree(PRODUCT_CATEGORIES, produits);
     return { top: [], subsByParent: {} };
   }, [mode, produits]);
+
+  // Pictos sur le rail des prestations seulement — les catégories de produits sont des marques,
+  // affichées en texte seul.
+  const railHasIcons = topFilters.some((f) => CATEGORY_ICON[f.key]);
 
   // La grande catégorie dépliée : celle qui est sélectionnée, ou le parent de la sous-catégorie active.
   const openParentKey = useMemo(() => {
@@ -129,8 +141,8 @@ export function MenuPanel({ saleId }: { saleId: string }) {
     if (!item.active) return false;
     const q = query.trim().toLowerCase();
     if (q && !item.name.toLowerCase().includes(q)) return false;
-    if (mode === "boissons") return item.categoryId === "boissons";
-    const sub = "subcategory" in item ? ((item as { subcategory?: string }).subcategory) : undefined;
+    if (mode === "boissons" || !("categoryId" in item)) return mode === "boissons";
+    const sub = "subcategory" in item ? item.subcategory : undefined;
     return activeFilter.match(item.categoryId, sub);
   });
 
@@ -148,7 +160,7 @@ export function MenuPanel({ saleId }: { saleId: string }) {
         <SegmentedToggle
           className="shrink-0"
           options={[
-            { value: "services", label: "Services" },
+            { value: "services", label: "Prestations" },
             { value: "produits", label: "Produits" },
             { value: "boissons", label: "Boissons" },
           ]}
@@ -190,9 +202,9 @@ export function MenuPanel({ saleId }: { saleId: string }) {
                 >
                   {Icon ? (
                     <Icon className="size-5 shrink-0" />
-                  ) : (
+                  ) : railHasIcons ? (
                     <span aria-hidden className="size-5 shrink-0" />
-                  )}
+                  ) : null}
                   <span>{f.label}</span>
                 </button>
               );
@@ -241,9 +253,10 @@ export function MenuPanel({ saleId }: { saleId: string }) {
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 2xl:grid-cols-4">
                 {filtered.map((item) => {
                   const inCart = countByRef[item.id] ?? 0;
-                  const isProduit = !("durationMinutes" in item);
-                  // Les boissons du Bar ne portent pas de stock affiché (un bar ne compte pas au verre).
-                  const tracksStock = "stock" in item && item.categoryId !== "boissons";
+                  // Produit et Boisson affichent une vignette photo ; seule la prestation ne l'a pas.
+                  const showsImage = !("durationMinutes" in item);
+                  // Les boissons du Bar ne portent pas de stock (un bar ne compte pas au verre).
+                  const tracksStock = "stock" in item;
                   const remaining = tracksStock ? item.stock - inCart : null;
                   const soldOut = remaining !== null && remaining <= 0;
                   return (
@@ -254,7 +267,7 @@ export function MenuPanel({ saleId }: { saleId: string }) {
                       onClick={() =>
                         addCartLine(saleId, {
                           refId: item.id,
-                          kind: isProduit ? "produit" : "service",
+                          kind: LINE_KIND[mode],
                           name: item.name,
                           unitPrice: item.price,
                         })
@@ -274,7 +287,7 @@ export function MenuPanel({ saleId }: { saleId: string }) {
                           {inCart}
                         </span>
                       )}
-                      {isProduit && (
+                      {showsImage && (
                         <div
                           className={cn(
                             "relative aspect-[5/3] w-full overflow-hidden rounded-t-[12px] bg-white",
