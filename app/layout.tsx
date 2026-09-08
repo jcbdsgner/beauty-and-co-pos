@@ -15,11 +15,6 @@ const poppins = localFont({
   variable: "--font-poppins",
 });
 
-const benedict = localFont({
-  src: "./fonts/Benedict-Regular.otf",
-  variable: "--font-benedict",
-});
-
 export const metadata: Metadata = {
   title: "Point de vente — Beauty and Co",
   description: "Plateforme de point de vente Beauty and Co.",
@@ -33,7 +28,7 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
-      className={`${poppins.variable} ${benedict.variable} h-full antialiased`}
+      className={`${poppins.variable} h-full antialiased`}
     >
       <body className="min-h-full">
         <AppDataProvider>

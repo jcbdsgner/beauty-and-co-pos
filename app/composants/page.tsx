@@ -174,7 +174,6 @@ export default function DesignSystemPage() {
               <FieldLabel className="mb-4">Typographie</FieldLabel>
               <div className="flex flex-col gap-4">
                 <Specimen label="Titre écran · Poppins 700" sample="Bonjour, Propriétaire" className="font-[family-name:var(--font-heading)] font-bold text-3xl text-base-content" />
-                <Specimen label="Accent · Benedict" sample="privé" className="font-[family-name:var(--font-display)] text-2xl text-primary" />
                 <Specimen label="Titre section · Poppins 600" sample="Gestion Produits" className="text-xl font-semibold text-base-content" />
                 <Specimen label="Corps · Poppins 400" sample="Trouvez un client existant ou ajoutez un nouveau profil." className="text-[15px] text-base-content/80" />
                 <Specimen label="Label · uppercase tracked" sample="REVENUS DU JOUR" className="text-xs font-semibold tracking-wide text-base-content/55 uppercase" />
