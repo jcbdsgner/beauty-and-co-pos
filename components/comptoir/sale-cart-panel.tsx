@@ -222,7 +222,7 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
 
       {/* Foot */}
       <div className="shrink-0 border-t border-border bg-white px-5 pt-3 pb-5">
-        {!isEmpty && <DiscountSection sale={sale} onOpenScanner={onOpenScanner} />}
+        {!isEmpty && <DiscountSection sale={sale} />}
 
         {(totals.totalDiscount > 0 || totals.depositPaid > 0) && (
           <div className="mb-2 flex flex-col gap-0.5 text-sm">

@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Card } from "@/components/ui/atoms/card";
 import { Avatar } from "@/components/ui/atoms/avatar";
 import { Button } from "@/components/ui/atoms/button";
-import { FieldLabel } from "@/components/ui/atoms/field-label";
 import { SwitchUserDialog } from "@/components/compte/switch-user-dialog";
 import { useSession } from "@/lib/session";
 import { ROLE_LABEL } from "@/lib/data/utilisateurs";
@@ -26,18 +25,6 @@ export function ProfilView() {
       </Card>
 
       <div>
-        <FieldLabel variant="plain" className="mb-1.5">
-          Mon code
-        </FieldLabel>
-        <p className="font-[family-name:var(--font-heading)] text-xl font-semibold tracking-[0.2em] text-base-content">
-          {currentUser.code}
-        </p>
-        <p className="mt-1 text-sm text-base-content/55">
-          Identifie qui a accordé une remise sur un ticket. Il est attribué par la direction et ne se modifie pas ici.
-        </p>
-      </div>
-
-      <div className="border-t border-base-300 pt-6">
         <Button type="button" variant="outline" onClick={() => setSwitchOpen(true)} className="w-auto">
           Changer d&apos;utilisateur
         </Button>

@@ -6,15 +6,10 @@ import { RESERVATIONS, reservationById, timeToMinutes } from "@/lib/data/plannin
 import { PRODUITS, serviceById } from "@/lib/data/menu";
 import { PRATICIENNES } from "@/lib/data/praticiennes";
 import { CONVERSATIONS } from "@/lib/data/conversations";
-import {
-  CARTES_CADEAUX,
-  GIFT_CARD_ORDERS,
-  carteCadeauByCode,
-  giftCardExpiryLabel,
-  normalizeGiftCardCode,
-} from "@/lib/data/cartes-cadeaux";
+import { CARTES_CADEAUX, GIFT_CARD_ORDERS, giftCardForClient } from "@/lib/data/cartes-cadeaux";
 import { formatFcfa } from "@/lib/utils";
 import type {
+  CarteCadeau,
   CartLine,
   Cliente,
   Conversation,
@@ -93,7 +88,6 @@ function emptySale(label: string): Sale {
     label,
     clientId: null,
     cart: [],
-    giftCardCode: "",
     giftCardApplied: null,
     loyaltyPointsUsed: 0,
     discountGranted: null,
@@ -101,6 +95,31 @@ function emptySale(label: string): Sale {
     step: "vente",
     createdAt: new Date().toISOString(),
   };
+}
+
+/** The `giftCardApplied` shape for a card, with every portion left at its default (spend it all). */
+function giftCardAppliedFrom(card: CarteCadeau): NonNullable<Sale["giftCardApplied"]> {
+  return card.kind === "prestations"
+    ? {
+        code: card.code,
+        balance: card.balance,
+        kind: "prestations",
+        serviceIds: card.serviceIds ?? [],
+        coveredServiceIds: card.serviceIds ?? [],
+      }
+    : { code: card.code, balance: card.balance, kind: "montant" };
+}
+
+/**
+ * Realign `sale.giftCardApplied` with whatever card the sale's cliente holds (ADR 0013): identify
+ * a cliente and her active card links itself; remove her (or swap to a cliente with no card) and it
+ * leaves. Called only when `clientId` actually changes — a card the receptionist cleared by hand
+ * while the same cliente stays identified is left cleared.
+ */
+function syncGiftCardToClient(sale: Sale): Sale {
+  const held = giftCardForClient(sale.clientId);
+  if (held?.code === sale.giftCardApplied?.code) return sale;
+  return { ...sale, giftCardApplied: held ? giftCardAppliedFrom(held) : null };
 }
 
 /**
@@ -114,7 +133,7 @@ export function saleNeedsClient(sale: Sale) {
   return sale.cart.some((l) => l.kind === "service");
 }
 
-/** The most a receptionist can knock off with her own code alone, as a share of the prestations. */
+/** The most a receptionist can knock off on her own — no code required — as a share of the prestations. */
 export const RECEPTIONIST_MAX_PCT = 10;
 /** The absolute ceiling on a granted discount — reachable only with a manager code (ADR 0008). */
 export const MAX_REMISE_PCT = 20;
@@ -262,7 +281,6 @@ export type AppState = {
   addCartLine: (saleId: string, line: Omit<CartLine, "id" | "qty">) => void;
   updateCartQty: (saleId: string, lineId: string, qty: number) => void;
   removeCartLine: (saleId: string, lineId: string) => void;
-  applyGiftCard: (saleId: string, code: string) => { ok: boolean; message: string };
   /** Adjust how much of an applied gift card this ticket consumes:
    *  - a `montant` card → `appliedAmount` (clamped to [0, balance]);
    *  - a `prestations` card → `coveredServiceIds` (subset of the card's prestations). */
@@ -270,12 +288,11 @@ export type AppState = {
     saleId: string,
     patch: { appliedAmount?: number; coveredServiceIds?: string[] },
   ) => void;
-  /** Validate a receptionist's personal code and attach a discretionary discount: ≤ 10 % of the
-   *  prestations with her code alone, up to 20 % with a `managerCode` (ADR 0008). The `reason` is
-   *  captured later, after the sale is cashed in. */
+  /** Attach a discretionary discount to a sale: ≤ 10 % of the prestations with no code at all,
+   *  up to 20 % only with a `managerCode` (ADR 0008). The `reason` is captured later, after the
+   *  sale is cashed in. */
   grantDiscount: (
     saleId: string,
-    code: string,
     mode: RemiseMode,
     value: number,
     managerCode?: string,
@@ -499,10 +516,14 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
     }
 
+    // A sale opened straight onto a cliente (from a réservation, or from her fiche) links her
+    // gift card right away — same rule as identifying her later (ADR 0013).
+    const opened = syncGiftCardToClient(sale);
+
     set((s) => ({
-      sales: [...s.sales, sale],
-      openTabIds: [...s.openTabIds, sale.id],
-      activeSaleId: sale.id,
+      sales: [...s.sales, opened],
+      openTabIds: [...s.openTabIds, opened.id],
+      activeSaleId: opened.id,
       comptoirDeployed: true,
     }));
   },
@@ -524,7 +545,16 @@ export const useAppStore = create<AppState>((set, get) => ({
       };
     }),
 
-  updateSale: (saleId, patch) => set((s) => ({ sales: s.sales.map((sale) => (sale.id === saleId ? { ...sale, ...patch } : sale)) })),
+  updateSale: (saleId, patch) =>
+    set((s) => ({
+      sales: s.sales.map((sale) => {
+        if (sale.id !== saleId) return sale;
+        const next = { ...sale, ...patch };
+        // Identifying (or changing) the cliente re-links her gift card; the patch may also set the
+        // card itself (e.g. "Retirer"), which we leave untouched.
+        return "clientId" in patch && !("giftCardApplied" in patch) ? syncGiftCardToClient(next) : next;
+      }),
+    })),
 
   addCartLine: (saleId, line) =>
     set((s) => {
@@ -554,55 +584,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       sales: s.sales.map((sale) => (sale.id === saleId ? { ...sale, cart: sale.cart.filter((l) => l.id !== lineId) } : sale)),
     })),
 
-  applyGiftCard: (saleId, code) => {
-    const normalized = normalizeGiftCardCode(code);
-    if (!normalized) return { ok: false, message: "Saisissez ou scannez le code de la carte." };
-    const card = carteCadeauByCode(normalized);
-    if (!card) return { ok: false, message: "Ce code n'est pas reconnu — vérifiez-le ou continuez sans remise." };
-    if (card.status === "used") return { ok: false, message: "Cette carte a déjà été utilisée." };
-    if (card.status === "expired") {
-      const on = giftCardExpiryLabel(card);
-      return { ok: false, message: on ? `Cette carte a expiré le ${on}.` : "Cette carte a expiré." };
-    }
-    if (card.balance <= 0) return { ok: false, message: "Cette carte n'a plus de solde." };
-    const sale = get().sales.find((s) => s.id === saleId);
-    const replaced = sale?.giftCardApplied;
-
-    const applied: NonNullable<Sale["giftCardApplied"]> =
-      card.kind === "prestations"
-        ? {
-            code: card.code,
-            balance: card.balance,
-            kind: "prestations",
-            serviceIds: card.serviceIds ?? [],
-            coveredServiceIds: card.serviceIds ?? [],
-          }
-        : { code: card.code, balance: card.balance, kind: "montant" };
-
-    const patch: Partial<Sale> = { giftCardApplied: applied, giftCardCode: "" };
-
-    // Both cards identify (ADR 0013): a card that names a holder attaches her fiche — unless the
-    // sale already has a cliente, which always wins (she's the one in front).
-    let identified: Cliente | undefined;
-    if (card.holderClientId && !sale?.clientId) {
-      identified = get().clients.find((c) => c.id === card.holderClientId);
-      if (identified) patch.clientId = identified.id;
-    }
-
-    get().updateSale(saleId, patch);
-
-    const head =
-      replaced && replaced.code !== card.code
-        ? `Remplace la carte « ${replaced.code} ».`
-        : `Carte « ${card.code} » appliquée.`;
-    const idNote = identified ? ` Cliente identifiée : ${identified.firstName} ${identified.lastName}.` : "";
-    const kindNote =
-      card.kind === "prestations"
-        ? " Carte prestations — ajustez les soins couverts dans la Remise."
-        : ` Solde ${formatFcfa(card.balance)} — ajustez le montant appliqué dans la Remise.`;
-    return { ok: true, message: head + idNote + kindNote };
-  },
-
   setGiftCardAdjustment: (saleId, patch) =>
     set((s) => ({
       sales: s.sales.map((sale) => {
@@ -620,9 +601,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       }),
     })),
 
-  grantDiscount: (saleId, code, mode, value, managerCode) => {
-    const trimmed = code.trim();
-    if (trimmed.length < 4) return { ok: false, message: "Entrez votre code réceptionniste." };
+  grantDiscount: (saleId, mode, value, managerCode) => {
     const sale = get().sales.find((s) => s.id === saleId);
     if (!sale) return { ok: false, message: "Vente introuvable." };
     const { prestations, maxGrantedDiscount, receptionistMaxDiscount } = computeTotals(sale);
@@ -653,7 +632,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       discountGranted: {
         mode,
         value,
-        grantedByCode: trimmed.toUpperCase(),
         ...(requestedPct > RECEPTIONIST_MAX_PCT && mgr ? { managerCode: mgr } : {}),
         reason: null,
       },

@@ -4,6 +4,17 @@ status: accepted
 
 # Nouvelle vente : identification de la cliente conditionnelle, une seule entrée scan/code
 
+> **Révision (carte cadeau).** Le §3 faisait de la carte cadeau un **jeton à scanner ou
+> saisir**, au même titre que la carte de fidélité. Ce n'est plus le cas : une carte cadeau
+> ne se scanne ni ne se tape **nulle part** dans l'app. Elle est **rattachée à la fiche de
+> sa détentrice** (`holderClientId`) et se **lie d'elle-même** à la vente dès que cette
+> cliente est identifiée — par sa carte de fidélité, par la recherche par nom, ou parce que
+> la vente vient d'une réservation à son nom. Conséquence assumée : une carte cadeau **au
+> porteur** (sans détentrice connue) ou présentée par un tiers **n'est plus encaissable**
+> dans ce prototype. Le §3 ci-dessous se lit désormais « la carte de fidélité identifie ; la
+> carte cadeau de la cliente identifiée se lie ensuite toute seule » ; le §4 (ajustement de
+> la portion appliquée) est inchangé.
+
 ## Contexte
 
 Le parcours d'encaissement demandait **toujours** une cliente identifiée : « Encaisser » restait bloqué tant que `sale.clientId` était nul, y compris pour une bouteille de shampoing payée cash. L'identification n'était pas non plus une étape de cadrage — la cliente se renseignait souvent en dernier, avant de buter sur le verrou.
@@ -53,11 +64,12 @@ Une carte cadeau appliquée n'est plus consommée « au maximum » en silence. D
 
 ## Conséquences
 
-- Store : `saleNeedsClient` exporté (+ ré-export via `app-data-provider`). `addClient` génère `loyaltyCode` ; `Omit` de `addClient` étendu. `applyGiftCard` attache aussi `clientId` si la carte résout une détentrice et que la vente n'en a pas déjà une. Nouveau réglage de la portion appliquée (montant ou prestations) sur `sale.giftCardApplied`.
+- Store : `saleNeedsClient` exporté (+ ré-export via `app-data-provider`). `addClient` génère `loyaltyCode` ; `Omit` de `addClient` étendu. Nouveau réglage de la portion appliquée (montant ou prestations) sur `sale.giftCardApplied`.
+  - **Révision carte cadeau** : `applyGiftCard(saleId, code)` **supprimé**. À la place `giftCardForClient(clientId)` (`lib/data/cartes-cadeaux.ts`) + `syncGiftCardToClient(sale)` (store) : dès que `sale.clientId` change (via `updateSale`) ou qu'une vente s'ouvre sur une cliente (`openNewTab`), la carte active de la détentrice se pose sur `sale.giftCardApplied` ; retirer la cliente retire la carte. Une carte que la réceptionniste enlève à la main (bouton « Retirer » de la ligne carte) reste enlevée tant que la même cliente est identifiée. Champ `Sale.giftCardCode` retiré.
 - `lib/data/clientele.ts` : `loyaltyCode` sur les 9 fiches de démo + `clientByLoyaltyCode`.
 - `lib/data/types.ts` : `CarteCadeau` gagne `kind` (`montant` | `prestations`), `serviceIds?`, `holderClientId?` ; `Sale.giftCardApplied` gagne `kind`, `serviceIds?`, `appliedAmount?`, `coveredServiceIds?`.
 - `lib/store/app-store.ts` : `applyGiftCard` attache le `holderClientId` de la carte si la vente n'a pas déjà de cliente ; nouvelle action `setGiftCardAdjustment` ; `computeTotals` clampe la carte au montant choisi (montant) ou à la valeur des prestations cochées présentes au panier (prestations), reliquat = solde − appliqué.
-- `components/comptoir/` : `identify-dialog.tsx` — un seul champ de code routé par ce qu'il résout, lecture QR par `BarcodeDetector`, plus de boutons démo, bouton « Annuler » ; `discount-section.tsx` — `AppliedGiftCard` : champ montant ajustable ou cases à cocher des prestations couvertes ; `discount-breakdown.tsx` — mention « (prestations) ». Le détachement d'une fiche mal identifiée passe par le « Retirer » existant de la ligne cliente du ticket.
+- `components/comptoir/` : `identify-dialog.tsx` — un seul champ de code, lecture QR par `BarcodeDetector`, plus de boutons démo, bouton « Annuler » (**révision** : le champ ne prend plus qu'un code de **carte de fidélité** ; la branche carte cadeau est retirée) ; `discount-section.tsx` — `AppliedGiftCard` : champ montant ajustable ou cases à cocher des prestations couvertes (**révision** : plus de champ de saisie / icône scan de carte cadeau — la section n'affiche que la carte déjà liée, ajustable et retirable ; `DiscountSection` perd la prop `onOpenScanner`) ; `discount-breakdown.tsx` — mention « (prestations) ». Le détachement d'une fiche mal identifiée passe par le « Retirer » existant de la ligne cliente du ticket.
 - `lib/data/cartes-cadeaux.ts` : `kind` sur les cartes de démo, `holderClientId` sur deux cartes retrait, une carte `prestations` de démo (`BACO-DUO-EVASION`).
 - `CONTEXT.md` : **Carte de fidélité** et **Carte cadeau** — les deux sont des jetons d'identification ; **Carte cadeau** — application ajustable (montant ou prestations) ; entrée **Encaisser** amendée (cliente facultative en vente de produits).
 - `docs/USERFLOW.md` : section Comptoir — « Encaisser » conditionnel, Scanner unifié qui identifie via les deux cartes, ajustement de la carte cadeau dans la Remise.

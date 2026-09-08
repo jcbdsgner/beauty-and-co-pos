@@ -131,10 +131,10 @@ Bureau taupe + feuille crème. Étape courante = `activeSale.step` : `"vente"` |
 | Barre d'onglets de vente | `SaleTabsBar` | [`components/comptoir/sale-tabs-bar.tsx`](../components/comptoir/sale-tabs-bar.tsx) |
 | Panneau menu (gauche) | `MenuPanel` | [`components/comptoir/menu-panel.tsx`](../components/comptoir/menu-panel.tsx) — onglets Prestations/Produits/Boissons, rail de catégories (2 niveaux), recherche |
 | Ticket (droite) | `SaleCartPanel` | [`components/comptoir/sale-cart-panel.tsx`](../components/comptoir/sale-cart-panel.tsx) — cliente en tête, lignes, total, Encaisser |
-| Remises | `DiscountSection` (+ `DiscountBreakdown`) | [`components/comptoir/discount-section.tsx`](../components/comptoir/discount-section.tsx) — carte cadeau, points, remise accordée (10 %/20 % + code manager) |
+| Remises | `DiscountSection` (+ `DiscountBreakdown`) | [`components/comptoir/discount-section.tsx`](../components/comptoir/discount-section.tsx) — carte cadeau auto-liée (ajustable/retirable, pas de saisie), points, remise accordée (≤ 10 % sans code, ≤ 20 % + code manager) |
 | Étape paiement | `PaymentStep` | [`components/comptoir/payment-step.tsx`](../components/comptoir/payment-step.tsx) — tuiles Wave / Orange Money (logos) / Carte / Espèces, `NumericKeypad`, paiement mixte |
 | Étape reçu | `ReceiptStep` | [`components/comptoir/receipt-step.tsx`](../components/comptoir/receipt-step.tsx) — impression `react-to-print`, motif de remise bloquant post-paiement |
-| Scanner | `IdentifyDialog` | [`components/comptoir/identify-dialog.tsx`](../components/comptoir/identify-dialog.tsx) — `<video>` réel + lecture QR (`BarcodeDetector`) + **un seul champ code** routé par ce qu'il résout (fidélité → fiche ; carte cadeau → détentrice + application ; repli au porteur), bouton « Annuler » (ADR 0013) |
+| Scanner | `IdentifyDialog` | [`components/comptoir/identify-dialog.tsx`](../components/comptoir/identify-dialog.tsx) — `<video>` réel + lecture QR (`BarcodeDetector`) + **un seul champ code de fidélité** → attache la fiche (sa carte cadeau se lie ensuite d'elle-même), bouton « Annuler » (ADR 0013) |
 | Envoi reçu | `SendReceiptButtons` | [`components/comptoir/send-receipt-buttons.tsx`](../components/comptoir/send-receipt-buttons.tsx) — partagé avec Récap |
 
 ### Module « journee/ » (encaissement partagé)
@@ -153,7 +153,7 @@ State : `clients`, `reservations`, `praticiennes`, `produits`, `sales`, `openTab
 `comptoirDeployed`, `recentClientIds`, `conversations`.
 Actions clés : `addClient`/`updateClient`, `cancelAppointment`/`rescheduleRendezVous`/`updateRendezVous`/`addRendezVous`/`removeRendezVous`, `markStaffUnavailable`,
 `deployComptoir`/`collapseComptoir`, `openNewTab`(prefill résa)/`switchTab`/`closeTab`,
-`addCartLine`/`updateCartQty`/`removeCartLine`, `applyGiftCard`, `grantDiscount`/`setDiscountReason`, `setLoyaltyPointsUsed`, `confirmPayment`.
+`addCartLine`/`updateCartQty`/`removeCartLine`, `setGiftCardAdjustment` (la carte se lie seule via `updateSale`/`openNewTab` → `syncGiftCardToClient`, cf. `giftCardForClient`), `grantDiscount`/`setDiscountReason`, `setLoyaltyPointsUsed`, `confirmPayment`.
 - **`computeTotals(sale)`** — pure, ligne 112 : ordre remise accordée → points → carte cadeau. Constantes `RECEPTIONIST_MAX_PCT = 10`, `MAX_REMISE_PCT = 20`.
 
 ### Données mock — [`lib/data/`](../lib/data/)

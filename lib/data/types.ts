@@ -188,18 +188,17 @@ export type PaymentMode = "wave" | "orange_money" | "especes" | "carte";
 
 /** How a receptionist-granted discount is expressed. `pourcentage` is a share of the prestations
  *  total (services only, products excluded); `montant` is a flat FCFA cut. Capped at
- *  `RECEPTIONIST_MAX_PCT` (10 %) with the receptionist's own code, up to `MAX_REMISE_PCT` (20 %)
- *  with a manager code — see the store. */
+ *  `RECEPTIONIST_MAX_PCT` (10 %) with no code, up to `MAX_REMISE_PCT` (20 %) with a manager
+ *  code — see the store. */
 export type RemiseMode = "montant" | "pourcentage";
 
 export type RemiseAccordee = {
   mode: RemiseMode;
   /** FCFA when `mode === "montant"`, a 1–20 percentage when `mode === "pourcentage"`. */
   value: number;
-  /** The receptionist's personal code — identifies who authorised the discount. */
-  grantedByCode: string;
-  /** A manager's one-off code, present only when the discount went past 10 % of the prestations.
-   *  Not verified (mock) — kept on the sale for traceability. See ADR 0008. */
+  /** A manager's one-off code, present only when the discount went past 10 % of the prestations —
+   *  the receptionist grants everything up to 10 % with no code at all. Not verified (mock) — kept
+   *  on the sale for traceability. See ADR 0008. */
   managerCode?: string;
   /** Free-text justification, captured after the sale is cashed in (never before). */
   reason: string | null;
@@ -273,10 +272,9 @@ export type Sale = {
   label: string;
   clientId: string | null;
   cart: CartLine[];
-  /** Pending code being typed or scanned, before it's validated and applied. */
-  giftCardCode: string;
-  /** A validated gift card attached to the sale. `balance` is the card's stored value. How much of
-   *  it this sale consumes is derived in `computeTotals` and is adjustable at the counter:
+  /** The gift card auto-linked to the sale the moment the cliente is identified (ADR 0013) — she
+   *  holds it on her fiche, there is nothing to scan or type. `balance` is the card's stored value.
+   *  How much of it this sale consumes is derived in `computeTotals` and is adjustable at the counter:
    *  - `montant` card → `appliedAmount` caps how much of the balance to spend (default: all);
    *  - `prestations` card → `coveredServiceIds` is which of the card's prestations to honour on
    *    this ticket (default: all of the card's prestations that are in the cart).

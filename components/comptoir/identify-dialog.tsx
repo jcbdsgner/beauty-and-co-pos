@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/atoms/button";
 import { TextInput } from "@/components/ui/atoms/text-input";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { clientByLoyaltyCode } from "@/lib/data/clientele";
-import { carteCadeauByCode } from "@/lib/data/cartes-cadeaux";
 import type { Sale } from "@/lib/data/types";
 
 /** Prototype: no real card carries a resolvable QR payload, so any QR the camera reads stands in
@@ -17,17 +16,15 @@ type DetectedBarcode = { rawValue: string };
 type BarcodeDetectorLike = { detect(source: CanvasImageSource): Promise<DetectedBarcode[]> };
 
 /**
- * One dialog, reached from the ticket's "Scanner" and from the Remise panel's scan icon. A real
- * `<video>` feed behind a viewfinder, and a single code field below it — the same field takes a
- * carte de fidélité code or a carte cadeau code, routed by what the code resolves to (ADR 0013):
- *  · loyalty code → attaches the cliente fiche;
- *  · gift-card code → `applyGiftCard` attaches the card's holder (if any) AND applies the card.
+ * One dialog, reached from the ticket's "Scanner". A real `<video>` feed behind a viewfinder, and a
+ * single code field below it for a carte de fidélité code → attaches the cliente fiche. Her gift
+ * card, if any, then links itself to the sale off her fiche (ADR 0013) — nothing to scan for it.
  * The camera reads QR codes on its own (BarcodeDetector where available); in this prototype any
  * QR read stands in for the sample card. A wrong identification is undone from the ticket
  * ("Retirer" on the cliente row).
  */
 export function IdentifyDialog({ open, sale, onClose }: { open: boolean; sale: Sale; onClose: () => void }) {
-  const { clients, updateSale, applyGiftCard } = useAppData();
+  const { clients, updateSale } = useAppData();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [cameraError, setCameraError] = useState(false);
   const [code, setCode] = useState("");
@@ -39,13 +36,6 @@ export function IdentifyDialog({ open, sale, onClose }: { open: boolean; sale: S
     const value = raw.trim();
     if (!value) return;
     setError(null);
-
-    if (carteCadeauByCode(value)) {
-      const res = applyGiftCard(saleId, value);
-      if (res.ok) onClose();
-      else setError(res.message);
-      return;
-    }
 
     const client = clientByLoyaltyCode(clients, value);
     if (client) {
@@ -136,7 +126,7 @@ export function IdentifyDialog({ open, sale, onClose }: { open: boolean; sale: S
       </div>
 
       <p className="mt-3 text-center text-xs text-base-content/45">
-        {cameraError ? "Caméra indisponible — saisissez le code ci-dessous." : "Présentez le QR de la carte, ou saisissez son code."}
+        {cameraError ? "Caméra indisponible — saisissez le code ci-dessous." : "Présentez le QR de la carte de fidélité, ou saisissez son code."}
       </p>
 
       <form
@@ -153,7 +143,7 @@ export function IdentifyDialog({ open, sale, onClose }: { open: boolean; sale: S
           placeholder="Code de la carte"
           autoCapitalize="characters"
           spellCheck={false}
-          aria-label="Code de la carte de fidélité ou de la carte cadeau"
+          aria-label="Code de la carte de fidélité"
         />
         <Button type="submit" variant="brand" size="sm" className="shrink-0" disabled={!code.trim()}>
           Valider

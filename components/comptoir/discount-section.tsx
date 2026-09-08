@@ -1,14 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Gift, Percent, ScanLine, ShieldCheck, Star } from "lucide-react";
+import { ChevronDown, Gift, Percent, ShieldCheck, Star } from "lucide-react";
 import { Badge } from "@/components/ui/atoms/badge";
 import { Button } from "@/components/ui/atoms/button";
-import { IconButton } from "@/components/ui/atoms/icon-button";
 import { TextInput } from "@/components/ui/atoms/text-input";
 import { RoundStepButton } from "@/components/ui/atoms/round-step-button";
 import { Checkbox } from "@/components/ui/atoms/checkbox";
-import { InputOtp } from "@/components/ui/molecules/input-otp";
 import { Pills } from "@/components/ui/molecules/pills";
 import { SegmentedToggle } from "@/components/ui/molecules/segmented-toggle";
 import { useAppData, computeTotals } from "@/components/providers/app-data-provider";
@@ -24,15 +22,14 @@ import type { RemiseMode, Sale } from "@/lib/data/types";
  * badge; open, it stacks the three mechanisms in place.
  *
  * Three mechanisms, all stackable, all able to bring the total to 0 F:
- *  · a gift card (prepaid — unused value stays on the card),
+ *  · a gift card — auto-linked from the cliente's fiche (ADR 0013), only its portion is adjusted here,
  *  · loyalty points,
- *  · a discretionary discount the receptionist grants with her own code, ≤ 20 % of the prestations.
+ *  · a discretionary discount the receptionist grants on her own up to 10 % of the prestations,
+ *    or up to 20 % with a manager code.
  */
-export function DiscountSection({ sale, onOpenScanner }: { sale: Sale; onOpenScanner: () => void }) {
-  const { applyGiftCard, setGiftCardAdjustment, setLoyaltyPointsUsed, updateSale, clients } = useAppData();
+export function DiscountSection({ sale }: { sale: Sale }) {
+  const { setGiftCardAdjustment, setLoyaltyPointsUsed, updateSale, clients } = useAppData();
   const [open, setOpen] = useState(false);
-  const [giftCardCode, setGiftCardCode] = useState("");
-  const [giftCardMsg, setGiftCardMsg] = useState<string | null>(null);
 
   const client = sale.clientId ? clients.find((c) => c.id === sale.clientId) : undefined;
   const redeemable = client ? Math.floor(client.points / 100) * 100 : 0;
@@ -66,45 +63,18 @@ export function DiscountSection({ sale, onOpenScanner }: { sale: Sale; onOpenSca
 
       {open && (
         <div className="flex max-h-[55vh] flex-col gap-6 overflow-y-auto border-t border-border px-4 pt-4 pb-4">
-          {/* Gift card */}
-          <section>
-            <SectionLabel icon={<Gift className="size-3.5" />}>Carte cadeau</SectionLabel>
-            <div className="flex gap-2">
-              <TextInput
-                size="compact"
-                value={giftCardCode}
-                onChange={(e) => setGiftCardCode(e.target.value)}
-                placeholder="BACO-GIFT-25000"
-                autoCapitalize="characters"
-                spellCheck={false}
+          {/* Gift card — auto-linked from the cliente's fiche; only its portion is adjusted here */}
+          {sale.giftCardApplied && (
+            <section>
+              <SectionLabel icon={<Gift className="size-3.5" />}>Carte cadeau</SectionLabel>
+              <AppliedGiftCard
+                sale={sale}
+                totals={totals}
+                onAdjust={(p) => setGiftCardAdjustment(sale.id, p)}
+                onRemove={() => updateSale(sale.id, { giftCardApplied: null })}
               />
-              <IconButton
-                onClick={onOpenScanner}
-                aria-label="Scanner ou saisir une carte"
-                className="size-11 shrink-0 rounded-full border border-border text-secondary transition active:scale-90 hover:border-secondary hover:bg-accent"
-              >
-                <ScanLine aria-hidden className="size-4" />
-              </IconButton>
-              <Button
-                variant="brand"
-                size="sm"
-                disabled={!giftCardCode.trim()}
-                onClick={() => {
-                  const res = applyGiftCard(sale.id, giftCardCode);
-                  setGiftCardMsg(res.message);
-                  if (res.ok) setGiftCardCode("");
-                }}
-                className="shrink-0"
-              >
-                Appliquer
-              </Button>
-            </div>
-            {sale.giftCardApplied ? (
-              <AppliedGiftCard sale={sale} totals={totals} onAdjust={(p) => setGiftCardAdjustment(sale.id, p)} onRemove={() => updateSale(sale.id, { giftCardApplied: null })} />
-            ) : (
-              giftCardMsg && <p className="mt-1 text-xs font-medium text-destructive">{giftCardMsg}</p>
-            )}
-          </section>
+            </section>
+          )}
 
           {/* Loyalty points */}
           {client && redeemable > 0 && (
@@ -238,17 +208,15 @@ function SectionLabel({ icon, children }: { icon: React.ReactNode; children: Rea
 const PCT_PRESETS = [5, 10, 15, MAX_REMISE_PCT];
 
 /**
- * The receptionist authenticates with her personal code, then sets the discount as a flat amount
- * or a percentage of the prestations. Her code alone covers up to 10 %; between 10 and 20 % she
- * must also enter a manager code (ADR 0008). Over 20 % is refused. The *reason* is not asked now:
- * it's captured right after the sale is cashed in.
+ * The receptionist sets the discount as a flat amount or a percentage of the prestations, with no
+ * code of her own — up to 10 %. Between 10 and 20 % she must enter a manager code (ADR 0008). Over
+ * 20 % is refused. The *reason* is not asked now: it's captured right after the sale is cashed in.
  */
 function GrantedDiscountBlock({ sale }: { sale: Sale }) {
   const { grantDiscount, updateSale } = useAppData();
   const totals = computeTotals(sale);
   const granted = sale.discountGranted;
 
-  const [code, setCode] = useState("");
   const [mode, setMode] = useState<RemiseMode>("pourcentage");
   const [pct, setPct] = useState(10);
   const [montant, setMontant] = useState("");
@@ -266,15 +234,12 @@ function GrantedDiscountBlock({ sale }: { sale: Sale }) {
       ? Math.round((totals.prestations * Math.min(pct, MAX_REMISE_PCT)) / 100)
       : Math.min(Number(montant) || 0, totals.maxGrantedDiscount);
   const canApply =
-    code.trim().length >= 4 && value > 0 && totals.prestations > 0 && !overCeiling && (!needsManager || managerOk);
+    value > 0 && totals.prestations > 0 && !overCeiling && (!needsManager || managerOk);
 
   function apply() {
-    const res = grantDiscount(sale.id, code, mode, value, needsManager ? managerCode : undefined);
+    const res = grantDiscount(sale.id, mode, value, needsManager ? managerCode : undefined);
     setMsg(res.message);
-    if (res.ok) {
-      setCode("");
-      setManagerCode("");
-    }
+    if (res.ok) setManagerCode("");
   }
 
   if (granted) {
@@ -296,8 +261,7 @@ function GrantedDiscountBlock({ sale }: { sale: Sale }) {
             </button>
           </div>
           <p className="mt-0.5 text-success/85">
-            Code {granted.grantedByCode}
-            {granted.managerCode ? " · validée par code manager" : ""} · motif demandé après l&apos;encaissement
+            {granted.managerCode ? "Validée par code manager · " : ""}motif demandé après l&apos;encaissement
           </p>
         </div>
       </section>
@@ -306,20 +270,9 @@ function GrantedDiscountBlock({ sale }: { sale: Sale }) {
 
   return (
     <section>
-      <SectionLabel icon={<ShieldCheck className="size-3.5" />}>Remise accordée (réceptionniste)</SectionLabel>
+      <SectionLabel icon={<ShieldCheck className="size-3.5" />}>Remise accordée</SectionLabel>
 
       <div className="flex flex-col gap-3 rounded-xl border border-border p-3">
-        <div>
-          <p className="mb-1.5 text-xs text-base-content/55">Votre code personnel</p>
-          <InputOtp
-            value={code}
-            onChange={setCode}
-            length={4}
-            pattern="^[A-Za-z0-9]*$"
-            ariaLabel="Code réceptionniste"
-          />
-        </div>
-
         <div>
           <p className="mb-1.5 text-xs text-base-content/55">Type de remise</p>
           <SegmentedToggle
@@ -341,7 +294,7 @@ function GrantedDiscountBlock({ sale }: { sale: Sale }) {
               options={PCT_PRESETS.map((p) => ({ value: String(p), label: `${p} %` }))}
             />
             <p className="mt-1 text-[11px] text-base-content/45">
-              Jusqu&apos;à {RECEPTIONIST_MAX_PCT} % avec votre code · jusqu&apos;à {MAX_REMISE_PCT} % avec un code manager
+              Jusqu&apos;à {RECEPTIONIST_MAX_PCT} % sans code · jusqu&apos;à {MAX_REMISE_PCT} % avec un code manager
             </p>
           </div>
         ) : (
@@ -355,7 +308,7 @@ function GrantedDiscountBlock({ sale }: { sale: Sale }) {
               className="text-right tabular-nums"
             />
             <p className="mt-1 text-xs text-base-content/55">
-              Jusqu&apos;à {formatFcfa(totals.receptionistMaxDiscount)} avec votre code · {formatFcfa(totals.maxGrantedDiscount)} ({MAX_REMISE_PCT} %) avec un code manager
+              Jusqu&apos;à {formatFcfa(totals.receptionistMaxDiscount)} sans code · {formatFcfa(totals.maxGrantedDiscount)} ({MAX_REMISE_PCT} %) avec un code manager
             </p>
           </div>
         )}

@@ -8,8 +8,9 @@ import type { CarteCadeau, GiftCardOrder } from "@/lib/data/types";
    ──────────────────────────────────────────────────────────────────────────── */
 
 export const CARTES_CADEAUX: CarteCadeau[] = [
-  // Montant cards — a free balance to spend. Some carry a holder (identify at the counter), some
-  // are pure bearer cards (offered to someone not on file).
+  // Montant cards — a free balance to spend. A card with a `holderClientId` auto-links to that
+  // cliente's sale once she's identified (ADR 0013); a pure bearer card can't be redeemed at the
+  // counter any more, only prepared in the gift-card queue.
   { code: "BACO-GIFT-25000", balance: 25000, status: "active", kind: "montant" },
   { code: "BACO-GIFT-30000", balance: 30000, status: "active", kind: "montant" },
   { code: "BACO-GIFT-50000", balance: 50000, status: "active", kind: "montant" },
@@ -91,22 +92,19 @@ export const GIFT_CARD_ORDERS: GiftCardOrder[] = [
   },
 ];
 
-export function normalizeGiftCardCode(raw: string) {
-  return raw.trim().toUpperCase();
-}
-
-export function carteCadeauByCode(raw: string): CarteCadeau | undefined {
-  const code = normalizeGiftCardCode(raw);
-  return CARTES_CADEAUX.find((c) => c.code === code);
-}
-
-const GIFT_CARD_DATE_FMT = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric" });
-
-/** French-formatted expiry date for the "carte expirée" message, or null if unknown. */
-export function giftCardExpiryLabel(card: CarteCadeau): string | null {
-  if (!card.expiresOn) return null;
-  const d = new Date(card.expiresOn);
-  return Number.isNaN(d.getTime()) ? null : GIFT_CARD_DATE_FMT.format(d);
+/**
+ * The active gift card a cliente holds, if any — the one auto-linked to her sale the moment she's
+ * identified at the counter (ADR 0013). A `montant` card wins over a `prestations` card, and a
+ * higher balance breaks any further tie; cards with no balance left are skipped.
+ */
+export function giftCardForClient(clientId: string | null | undefined): CarteCadeau | undefined {
+  if (!clientId) return undefined;
+  return CARTES_CADEAUX.filter(
+    (c) => c.holderClientId === clientId && c.status === "active" && c.balance > 0,
+  ).sort((a, b) => {
+    if (a.kind !== b.kind) return a.kind === "montant" ? -1 : 1;
+    return b.balance - a.balance;
+  })[0];
 }
 
 export function giftCardOrderById(id: string): GiftCardOrder | undefined {

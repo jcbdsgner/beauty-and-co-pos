@@ -176,7 +176,7 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
           {sale.discountGranted?.mode === "pourcentage"
             ? `${sale.discountGranted.value} % des prestations`
             : "Montant fixe"}{" "}
-          · −{formatFcfa(totals.grantedDiscount)} · code {sale.discountGranted?.grantedByCode}
+          · −{formatFcfa(totals.grantedDiscount)}
           {sale.discountGranted?.managerCode ? ` · code manager ${sale.discountGranted.managerCode}` : ""}. Indiquez
           pourquoi cette remise a été accordée — elle apparaîtra dans le récap des ventes.
         </p>
