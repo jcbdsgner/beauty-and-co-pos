@@ -29,7 +29,7 @@ Internal operational tool, not a market-facing product — no competitive positi
 
 ## Capabilities and Constraints
 
-- Real catalogue, a verbatim mirror of the b&co booking catalogue (`b&co/lib/data/booking-services.ts` → `lib/data/menu.ts`): 107 prestations across 8 categories (Coiffure, Manucure/Pédicure, Onglerie, Spa & Massages, Soins Visage, Épilation, Mini&Co · Hair, Mini&Co · Spa), each with name, price, duration, category + subcategory, and a `twoPractitionersEligible` flag (shown as a "2" pill in the Menu).
+- Real catalogue, mirrored from the b&co booking catalogue (`b&co/lib/data/booking-services.ts` → `lib/data/menu.ts`): 107 prestations across 7 Menu categories (Coiffure, Manucure/Pédicure, Onglerie, Spa & Massages, Soins Visage, Épilation, Mini&Co), each with name, price, duration, category + subcategory, and a `twoPractitionersEligible` flag (shown as a "2" pill in the Menu). Prices, durations, ids and the "à 2" flag are verbatim; the only structural divergence is Mini&Co, which the Menu groups as one category with two subcategories (Hair, Spa) where b&co splits it into two booking categories.
 - Separate "Produits" tab (retail items) — currently mock data, no real source exists yet.
 - Client identification: search/select from a client list, or scan a loyalty-card QR (camera-based; QR decoding itself is not wired to real payload data yet — a "simuler la détection" stand-in).
 - Cart mechanics to preserve: per-line quantity, promo code, manager discount code, loyalty-points redemption, running subtotal/discount/total, checkout requires a client to be selected.

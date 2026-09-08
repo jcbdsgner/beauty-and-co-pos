@@ -4,7 +4,8 @@ import type { Produit, ProductCategory, Service, ServiceCategory } from "@/lib/d
  * The Menu — the prestations and produits a receptionist can put in a panier and encaisser.
  * Édité hors de cette app : the prestation list mirrors, verbatim (ids, libellés, prix, durées,
  * éligibilité « à 2 »), the shared Beauty and Co booking catalogue (`b&co/lib/data/booking-services.ts`).
- * point-de-vente ne fait que la lire.
+ * point-de-vente ne fait que la lire. Seule divergence de structure : Mini&Co est ici UNE catégorie
+ * à deux sous-catégories (Hair, Spa) là où b&co la scinde en deux catégories de réservation.
  */
 
 export const SERVICE_CATEGORIES: ServiceCategory[] = [
@@ -14,8 +15,7 @@ export const SERVICE_CATEGORIES: ServiceCategory[] = [
   { id: "spa", name: "Spa & Massages" },
   { id: "soin-du-visage", name: "Soins Visage" },
   { id: "epilation", name: "Épilation" },
-  { id: "mini-co-hair", name: "Mini&Co · Hair" },
-  { id: "mini-co-spa", name: "Mini&Co · Spa" },
+  { id: "mini-co", name: "Mini&Co" },
 ];
 
 export const SERVICES: Service[] = [
@@ -129,19 +129,19 @@ export const SERVICES: Service[] = [
   { id: "epilation-soin-vagifacial", categoryId: "epilation", name: "SOIN VAGIFACIAL", price: 34000, durationMinutes: 35, twoPractitionersEligible: false, active: true },
   { id: "epilation-soin-vagifacial-maillot-integral", categoryId: "epilation", name: "SOIN VAGIFACIAL+ MAILLOT INTEGRAL", price: 49000, durationMinutes: 60, twoPractitionersEligible: false, active: true },
 
-  // HAIR
-  { id: "mini-co-mini-hair-treat-mini-co", categoryId: "mini-co-hair", name: "MINI HAIR TREAT (Mini&co)", price: 28000, durationMinutes: 90, twoPractitionersEligible: true, active: true },
-  { id: "mini-co-mini-hair-treat-braids-mini-co", categoryId: "mini-co-hair", name: "MINI HAIR TREAT+ BRAIDS (Mini&co)", price: 46000, durationMinutes: 180, twoPractitionersEligible: true, active: true },
-  { id: "mini-co-supplement-coiffure-enfant", categoryId: "mini-co-hair", name: "SUPPLEMENT COIFFURE ENFANT", price: 10000, durationMinutes: 50, twoPractitionersEligible: false, active: true },
-  { id: "mini-co-definition-boucles-enfant", categoryId: "mini-co-hair", name: "DEFINITION BOUCLES ENFANT", price: 9000, durationMinutes: 30, twoPractitionersEligible: false, active: true },
-  { id: "mini-co-defaire-tresses-enfant", categoryId: "mini-co-hair", name: "DEFAIRE TRESSES ENFANT", price: 5000, durationMinutes: 45, twoPractitionersEligible: true, active: true },
-  { id: "mini-co-coupe-pointes-enfants-mini-co", categoryId: "mini-co-hair", name: "COUPE POINTES ENFANTS (Mini&co)", price: 9000, durationMinutes: 25, twoPractitionersEligible: false, active: true },
-  { id: "mini-co-supplement-brushing-enfant", categoryId: "mini-co-hair", name: "SUPPLEMENT BRUSHING ENFANT", price: 9000, durationMinutes: 60, twoPractitionersEligible: false, active: true },
-  { id: "mini-co-supplements-tresses-enfants-mini-and-co", categoryId: "mini-co-hair", name: "SUPPLÉMENTS TRESSES ENFANTS MINI AND CO", price: 19000, durationMinutes: 60, twoPractitionersEligible: true, active: true },
+  // MINI&CO — Hair
+  { id: "mini-co-mini-hair-treat-mini-co", categoryId: "mini-co", subcategory: "Hair", name: "MINI HAIR TREAT (Mini&co)", price: 28000, durationMinutes: 90, twoPractitionersEligible: true, active: true },
+  { id: "mini-co-mini-hair-treat-braids-mini-co", categoryId: "mini-co", subcategory: "Hair", name: "MINI HAIR TREAT+ BRAIDS (Mini&co)", price: 46000, durationMinutes: 180, twoPractitionersEligible: true, active: true },
+  { id: "mini-co-supplement-coiffure-enfant", categoryId: "mini-co", subcategory: "Hair", name: "SUPPLEMENT COIFFURE ENFANT", price: 10000, durationMinutes: 50, twoPractitionersEligible: false, active: true },
+  { id: "mini-co-definition-boucles-enfant", categoryId: "mini-co", subcategory: "Hair", name: "DEFINITION BOUCLES ENFANT", price: 9000, durationMinutes: 30, twoPractitionersEligible: false, active: true },
+  { id: "mini-co-defaire-tresses-enfant", categoryId: "mini-co", subcategory: "Hair", name: "DEFAIRE TRESSES ENFANT", price: 5000, durationMinutes: 45, twoPractitionersEligible: true, active: true },
+  { id: "mini-co-coupe-pointes-enfants-mini-co", categoryId: "mini-co", subcategory: "Hair", name: "COUPE POINTES ENFANTS (Mini&co)", price: 9000, durationMinutes: 25, twoPractitionersEligible: false, active: true },
+  { id: "mini-co-supplement-brushing-enfant", categoryId: "mini-co", subcategory: "Hair", name: "SUPPLEMENT BRUSHING ENFANT", price: 9000, durationMinutes: 60, twoPractitionersEligible: false, active: true },
+  { id: "mini-co-supplements-tresses-enfants-mini-and-co", categoryId: "mini-co", subcategory: "Hair", name: "SUPPLÉMENTS TRESSES ENFANTS MINI AND CO", price: 19000, durationMinutes: 60, twoPractitionersEligible: true, active: true },
 
-  // MINI SPA
-  { id: "mini-co-mini-jely-manucure", categoryId: "mini-co-spa", name: "MINI JELLY MANUCURE", price: 12000, durationMinutes: 30, twoPractitionersEligible: true, active: true },
-  { id: "mini-co-mini-cutie-pedicure", categoryId: "mini-co-spa", name: "MINI CUTIE PÉDICURE", price: 15000, durationMinutes: 35, twoPractitionersEligible: true, active: true },
+  // MINI&CO — Spa
+  { id: "mini-co-mini-jely-manucure", categoryId: "mini-co", subcategory: "Spa", name: "MINI JELLY MANUCURE", price: 12000, durationMinutes: 30, twoPractitionersEligible: true, active: true },
+  { id: "mini-co-mini-cutie-pedicure", categoryId: "mini-co", subcategory: "Spa", name: "MINI CUTIE PÉDICURE", price: 15000, durationMinutes: 35, twoPractitionersEligible: true, active: true },
 ];
 
 export function serviceById(id: string) {

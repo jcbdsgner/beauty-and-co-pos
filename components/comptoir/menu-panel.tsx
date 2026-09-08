@@ -40,8 +40,8 @@ const LINE_KIND: Record<MenuMode, CartLine["kind"]> = {
  * — aucune barre à faire défiler. Le Bar (Boissons) n'a pas de rail.
  */
 
-/** Icône par grande catégorie de prestations (clé de filtre `c:<id>` ou `all`). Mini&Co reprend
- *  l'icône de sa famille adulte (Hair → Coiffure, Spa → Spa), comme dans le catalogue b&co. */
+/** Icône par grande catégorie de prestations (clé de filtre `c:<id>` ou `all`). Mini&Co est une
+ *  seule catégorie (sous-catégories Hair / Spa) et reprend l'icône Coiffure de sa famille adulte. */
 type CategoryIcon = LucideIcon | ((props: { className?: string }) => React.JSX.Element);
 const CATEGORY_ICON: Record<string, CategoryIcon> = {
   all: LayoutGrid,
@@ -51,8 +51,7 @@ const CATEGORY_ICON: Record<string, CategoryIcon> = {
   "c:spa": SpaIcon,
   "c:soin-du-visage": SoinVisageIcon,
   "c:epilation": EpilationIcon,
-  "c:mini-co-hair": CoiffureIcon,
-  "c:mini-co-spa": SpaIcon,
+  "c:mini-co": CoiffureIcon,
 };
 type Filter = {
   key: string;
