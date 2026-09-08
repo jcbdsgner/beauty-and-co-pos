@@ -77,23 +77,42 @@ export function PaymentStep({ sale }: { sale: Sale }) {
         {itemCount} {itemCount > 1 ? "articles" : "article"}
       </p>
       <ul className="flex max-h-[280px] flex-col divide-y divide-border overflow-y-auto">
-        {sale.cart.map((line) => (
-          <li key={line.id} className="flex items-start justify-between gap-3 px-4 py-2.5">
-            <span className="min-w-0">
-              <span className="block text-sm font-medium text-base-content">
-                {line.qty > 1 ? `${line.qty} × ` : ""}
-                {line.name}
+        {sale.cart.map((line) => {
+          const coveredHere = totals.coveredAmountByService[line.refId] ?? 0;
+          const net = Math.max(0, line.unitPrice * line.qty - coveredHere);
+          return (
+            <li key={line.id} className="flex items-start justify-between gap-3 px-4 py-2.5">
+              <span className="min-w-0">
+                <span className="block text-sm font-medium text-base-content">
+                  {line.qty > 1 ? `${line.qty} × ` : ""}
+                  {line.name}
+                </span>
+                {line.beneficiary && (
+                  <span className="block text-xs text-primary">pour {line.beneficiary}</span>
+                )}
+                {coveredHere > 0 && <span className="block text-xs font-medium text-success">Déjà payé</span>}
               </span>
-              {line.beneficiary && (
-                <span className="block text-xs text-primary">pour {line.beneficiary}</span>
-              )}
-            </span>
-            <span className="shrink-0 text-sm font-semibold tabular-nums text-base-content/80">
-              {formatFcfa(line.unitPrice * line.qty)}
-            </span>
-          </li>
-        ))}
+              <span className="shrink-0 text-right text-sm font-semibold tabular-nums">
+                {coveredHere > 0 ? (
+                  <>
+                    <span className="mr-1.5 text-xs font-normal text-base-content/45 line-through">
+                      {formatFcfa(line.unitPrice * line.qty)}
+                    </span>
+                    <span className="text-success">{formatFcfa(net)}</span>
+                  </>
+                ) : (
+                  <span className="text-base-content/80">{formatFcfa(line.unitPrice * line.qty)}</span>
+                )}
+              </span>
+            </li>
+          );
+        })}
       </ul>
+      {totals.coverageDiscount > 0 && (
+        <p className="border-t border-border px-4 py-2 text-right text-sm text-success">
+          déjà payé −{formatFcfa(totals.coverageDiscount)}
+        </p>
+      )}
       {totals.totalDiscount > 0 && (
         <p className="border-t border-border px-4 py-2 text-right text-sm text-success">
           remise −{formatFcfa(totals.totalDiscount)}
@@ -115,11 +134,12 @@ export function PaymentStep({ sale }: { sale: Sale }) {
             <p className="font-[family-name:var(--font-heading)] font-semibold text-[3.5rem] leading-none text-base-content tabular-nums">
               {formatFcfa(amountDue)}
             </p>
-            {totals.totalDiscount > 0 && (
+            {(totals.totalDiscount > 0 || totals.coverageDiscount > 0) && (
               <p className="mt-1.5 text-sm text-base-content/55">
                 <span className="tabular-nums line-through">{formatFcfa(totals.subtotal)}</span>{" "}
                 <span className="font-medium text-success">
-                  · remise −{formatFcfa(totals.totalDiscount)}
+                  {totals.coverageDiscount > 0 && `· déjà payé −${formatFcfa(totals.coverageDiscount)}`}
+                  {totals.totalDiscount > 0 && ` · remise −${formatFcfa(totals.totalDiscount)}`}
                 </span>
               </p>
             )}

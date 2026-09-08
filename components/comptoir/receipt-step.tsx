@@ -91,7 +91,7 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
             </div>
           ))}
         </div>
-        {totals.totalDiscount > 0 && (
+        {(totals.totalDiscount > 0 || totals.coverageDiscount > 0) && (
           <>
             <div className="mt-1 flex justify-between border-t border-border pt-2 text-base-content/55">
               <span>Sous-total</span>

@@ -41,7 +41,7 @@ export function ReceiptView({ sale }: { sale: Sale }) {
             <span>{formatFcfa(line.unitPrice * line.qty)}</span>
           </div>
         ))}
-        {totals.totalDiscount > 0 && (
+        {(totals.totalDiscount > 0 || totals.coverageDiscount > 0) && (
           <>
             <div className="mt-2 flex items-center justify-between border-t border-base-300 pt-2 text-base-content/55">
               <span>Sous-total</span>

@@ -8,6 +8,7 @@ import { BrandMark } from "@/components/ui/atoms/brand-mark";
 import { ClientSearchField } from "@/components/shared/client-search-field";
 import { DiscountSection } from "@/components/comptoir/discount-section";
 import { DiscountBreakdown } from "@/components/comptoir/discount-breakdown";
+import { CoverageSection } from "@/components/comptoir/coverage-section";
 import { DepositLine } from "@/components/comptoir/deposit-line";
 import { useAppData, computeTotals, saleNeedsClient } from "@/components/providers/app-data-provider";
 import { clientFullName, clientInitial } from "@/lib/data/clientele";
@@ -144,6 +145,7 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
             {sale.cart.map((line) => {
               const maxQty =
                 line.kind === "produit" ? (produits.find((p) => p.id === line.refId)?.stock ?? 20) : 20;
+              const coveredHere = totals.coveredAmountByService[line.refId] ?? 0;
               return (
               <li key={line.id} className="animate-line-in py-3.5">
                 {line.kind === "produit" && line.qty >= maxQty && (
@@ -155,10 +157,24 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
                     {line.beneficiary && (
                       <span className="block text-xs font-medium text-primary">pour {line.beneficiary}</span>
                     )}
+                    {coveredHere > 0 && (
+                      <span className="block text-xs font-medium text-success">Déjà payé</span>
+                    )}
                   </span>
-                  <span className="shrink-0 text-[15px] font-semibold text-primary tabular-nums">
-                    {formatFcfa(line.unitPrice * line.qty)}
-                  </span>
+                  {coveredHere > 0 ? (
+                    <span className="shrink-0 text-right tabular-nums">
+                      <span className="block text-xs text-base-content/45 line-through">
+                        {formatFcfa(line.unitPrice * line.qty)}
+                      </span>
+                      <span className="block text-[15px] font-semibold text-success">
+                        {formatFcfa(Math.max(0, line.unitPrice * line.qty - coveredHere))}
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="shrink-0 text-[15px] font-semibold text-primary tabular-nums">
+                      {formatFcfa(line.unitPrice * line.qty)}
+                    </span>
+                  )}
                 </div>
 
                 <div className="mt-2 flex items-center gap-2">
@@ -205,11 +221,12 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
 
       {/* Foot */}
       <div className="shrink-0 border-t border-border bg-white px-5 pt-3 pb-5">
+        {!isEmpty && <CoverageSection sale={sale} />}
         {!isEmpty && <DiscountSection sale={sale} />}
 
-        {(totals.totalDiscount > 0 || totals.depositPaid > 0) && (
+        {(totals.totalDiscount > 0 || totals.coverageDiscount > 0 || totals.depositPaid > 0) && (
           <div className="mb-2 flex flex-col gap-0.5 text-sm">
-            {totals.totalDiscount > 0 && (
+            {(totals.totalDiscount > 0 || totals.coverageDiscount > 0) && (
               <div className="flex justify-between text-base-content/55">
                 <span>Sous-total</span>
                 <span className="tabular-nums">{formatFcfa(totals.subtotal)}</span>

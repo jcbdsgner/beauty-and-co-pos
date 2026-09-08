@@ -252,6 +252,64 @@ export type GiftCardOrder = {
   deliveryAddress?: string;
 };
 
+/* ── Forfaits, Abonnements & Packs (ADR 0017) — instruments prépayés b&co, décomptés au comptoir ── */
+
+/**
+ * L'engagement d'une cliente envers un Forfait, souscrit sur la plateforme b&co — jamais créé au
+ * comptoir. Chaque cycle réglé rend à nouveau disponibles toutes les prestations du forfait ;
+ * `redeemedPrestationIds` porte ce qu'elle a consommé CE cycle. Échéance dépassée (« à régler ») ou
+ * `revokedAt` posé ⇒ non décomptable. Le règlement d'un cycle et la révocation se font sur la
+ * plateforme b&co, jamais dans cette app.
+ */
+export type Abonnement = {
+  id: string;
+  forfaitId: string;
+  /** La cliente qui a souscrit et paie — la fiche sur laquelle l'abonnement s'affiche. Le
+   *  « bénéficiaire d'abonnement » de b&co (souscrit pour un proche) ne remonte pas au comptoir. */
+  payerClientId: string;
+  subscribedAt: string; // ISO date
+  /** Dernier cycle réglé — l'échéance est `lastPaidAt + Forfait.cycleDays`. */
+  lastPaidAt: string; // ISO date
+  revokedAt: string | null; // ISO date
+  /** Prestations du forfait consommées dans le cycle en cours — remis à `[]` au paiement du cycle
+   *  suivant (sur la plateforme b&co). */
+  redeemedPrestationIds: string[];
+};
+
+/**
+ * Un ensemble fixe de prestations prépayées qu'une cliente a acheté sur la plateforme b&co (à
+ * −20 % de la somme à l'unité). Consommé prestation par prestation au fil des visites ; n'expire
+ * jamais, ne se recharge jamais — `redeemedPrestationIds` ne fait que grandir.
+ */
+export type PackPurchase = {
+  id: string;
+  packId: string;
+  ownerClientId: string;
+  purchasedAt: string; // ISO date
+  redeemedPrestationIds: string[];
+};
+
+/**
+ * La contribution d'un instrument (Pack ou Abonnement) aux « prestations déjà payées » d'une vente
+ * (ADR 0017). Renseignée d'office à l'ouverture de la vente quand la payeuse détient un instrument
+ * décomptable ; `serviceIds` liste tout ce que cet instrument peut couvrir sur ce ticket,
+ * `checkedServiceIds` le sous-ensemble coché que la réceptionniste décomptera vraiment à
+ * « Confirmer l'encaissement » (elle décoche une ligne, ou tout le groupe, pour la garder pour
+ * plus tard). Une unité par prestation.
+ */
+export type SaleCoverage = {
+  source: "abonnement" | "pack";
+  /** id de l'instance Abonnement / PackPurchase. */
+  instanceId: string;
+  /** id + libellé du Forfait / Pack, pour le ticket. */
+  planId: string;
+  planLabel: string;
+  /** toutes les prestations du panier que cet instrument peut couvrir (fixé à l'ouverture). */
+  serviceIds: string[];
+  /** le sous-ensemble coché — décompté à l'encaissement. Défaut : tout `serviceIds`. */
+  checkedServiceIds: string[];
+};
+
 export type CartLine = {
   id: string;
   refId: string; // service, produit or boisson id
@@ -291,6 +349,12 @@ export type Sale = {
       }
     | null;
   loyaltyPointsUsed: number;
+  /** Prestations du ticket tirées du Pack ou de l'Abonnement de la payeuse (ADR 0017) — prépayé,
+   *  pas une Remise : une ligne couverte est facturée 0 F et sort de l'assiette des remises.
+   *  Renseigné d'office à l'ouverture d'une vente sur une cliente qui détient un instrument
+   *  décomptable ; la réceptionniste décoche une ligne (ou tout un groupe) à garder pour plus tard.
+   *  Décompté dans le ledger à « Confirmer l'encaissement ». */
+  coverage: SaleCoverage[];
   /** A discretionary discount a receptionist granted with her personal code, capped at 20 % of the
    *  prestations total. `reason` is filled in after the sale is cashed in. */
   discountGranted: RemiseAccordee | null;

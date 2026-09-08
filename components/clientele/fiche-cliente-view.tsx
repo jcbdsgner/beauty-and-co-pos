@@ -24,6 +24,7 @@ import { Select } from "@/components/ui/atoms/select";
 import { PhotoPlaceholder } from "@/components/ui/atoms/photo-placeholder";
 import { Board, Lane, Legend, BoardEmpty, FlipChip } from "@/components/ui/board";
 import { DemoQrBlock } from "@/components/clientele/loyalty-card";
+import { AbonnementsPacksBoard } from "@/components/clientele/abonnements-packs-board";
 import { EditCoordonneesDialog } from "@/components/clientele/edit-coordonnees-dialog";
 import { EditPreferencesDialog } from "@/components/clientele/edit-preferences-dialog";
 import { useAppData } from "@/components/providers/app-data-provider";
@@ -344,9 +345,7 @@ export function FicheClienteView({ clientId }: { clientId: string }) {
             )}
           </Board>
 
-          <Board legend="Abonnement">
-            <BoardEmpty title="Aucun abonnement actif" hint="Cette cliente n'a pas d'abonnement en cours." />
-          </Board>
+          <AbonnementsPacksBoard clientId={client.id} />
         </div>
       </div>
 

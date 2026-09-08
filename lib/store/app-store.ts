@@ -7,6 +7,10 @@ import { PRODUITS, serviceById } from "@/lib/data/menu";
 import { PRATICIENNES } from "@/lib/data/praticiennes";
 import { CONVERSATIONS } from "@/lib/data/conversations";
 import { CARTES_CADEAUX, GIFT_CARD_ORDERS, giftCardForClient } from "@/lib/data/cartes-cadeaux";
+import { forfaitById } from "@/lib/data/forfaits";
+import { packById } from "@/lib/data/packs";
+import { ABONNEMENTS, abonnementsForClient, abonnementAvailablePrestations } from "@/lib/data/abonnements";
+import { PACK_PURCHASES, packPurchasesForClient, packRemainingPrestations } from "@/lib/data/pack-purchases";
 import { formatFcfa } from "@/lib/utils";
 import type {
   CarteCadeau,
@@ -21,6 +25,7 @@ import type {
   RendezVous,
   Reservation,
   Sale,
+  SaleCoverage,
 } from "@/lib/data/types";
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -90,11 +95,53 @@ function emptySale(label: string): Sale {
     cart: [],
     giftCardApplied: null,
     loyaltyPointsUsed: 0,
+    coverage: [],
     discountGranted: null,
     status: "ouverte",
     step: "vente",
     createdAt: new Date().toISOString(),
   };
+}
+
+/**
+ * Auto-detect which cart prestations the payer's Pack(s) / Abonnement(s) can cover (ADR 0017).
+ * Abonnement before Pack (it recharges next cycle — cheaper to burn), most recent first; one
+ * instrument per serviceId; one unit each. Everything it returns is ticked by default — the
+ * receptionist un-ticks what the cliente wants to keep for later.
+ */
+function detectCoverage(clientId: string | null, cart: CartLine[]): SaleCoverage[] {
+  if (!clientId) return [];
+  const serviceIds = cart.filter((l) => l.kind === "service").map((l) => l.refId);
+  if (serviceIds.length === 0) return [];
+
+  const claimed = new Set<string>();
+  const out: SaleCoverage[] = [];
+
+  const abos = abonnementsForClient(clientId)
+    .filter((a) => abonnementAvailablePrestations(a).length > 0)
+    .sort((a, b) => b.subscribedAt.localeCompare(a.subscribedAt));
+  for (const ab of abos) {
+    const forfait = forfaitById(ab.forfaitId);
+    if (!forfait) continue;
+    const available = abonnementAvailablePrestations(ab);
+    const hit = [...new Set(serviceIds.filter((id) => available.includes(id) && !claimed.has(id)))];
+    if (hit.length === 0) continue;
+    hit.forEach((id) => claimed.add(id));
+    out.push({ source: "abonnement", instanceId: ab.id, planId: forfait.id, planLabel: forfait.label, serviceIds: hit, checkedServiceIds: hit });
+  }
+
+  const packs = packPurchasesForClient(clientId).sort((a, b) => b.purchasedAt.localeCompare(a.purchasedAt));
+  for (const pp of packs) {
+    const pack = packById(pp.packId);
+    if (!pack) continue;
+    const remaining = packRemainingPrestations(pp);
+    const hit = [...new Set(serviceIds.filter((id) => remaining.includes(id) && !claimed.has(id)))];
+    if (hit.length === 0) continue;
+    hit.forEach((id) => claimed.add(id));
+    out.push({ source: "pack", instanceId: pp.id, planId: pack.id, planLabel: pack.label, serviceIds: hit, checkedServiceIds: hit });
+  }
+
+  return out;
 }
 
 /** The `giftCardApplied` shape for a card, with every portion left at its default (spend it all). */
@@ -150,14 +197,49 @@ export const MAX_REMISE_PCT = 20;
  * *after* the discount chain — it isn't a Remise, it doesn't change what the sale is worth, only
  * how much of it is still to be asked for (`amountDue`). Points earned at `confirmPayment` are
  * still computed against `total`, not `amountDue` — the cliente bought the full sale.
+ *
+ * `coverage` (Pack / Abonnement prestations déjà payées, ADR 0017) comes off *before* the discount
+ * chain: a covered prestation is billed 0 F and leaves the `prestations` base, so it never inflates
+ * a granted-discount percentage. Like the acompte it isn't a Remise — it stays out of
+ * `totalDiscount`, ventilated on its own line. Covered prestations earn no loyalty points (they
+ * don't move money through this sale).
  */
 export function computeTotals(sale: Sale) {
-  const prestations = sale.cart.filter((l) => l.kind === "service").reduce((sum, l) => sum + l.unitPrice * l.qty, 0);
+  const prestationsGross = sale.cart.filter((l) => l.kind === "service").reduce((sum, l) => sum + l.unitPrice * l.qty, 0);
   const produits = sale.cart.filter((l) => l.kind === "produit").reduce((sum, l) => sum + l.unitPrice * l.qty, 0);
   // Les boissons du Bar comptent dans le total (et les points gagnés) mais jamais dans l'assiette
   // d'une remise — comme les produits (ADR 0016).
   const boissons = sale.cart.filter((l) => l.kind === "boisson").reduce((sum, l) => sum + l.unitPrice * l.qty, 0);
-  const subtotal = prestations + produits + boissons;
+  const subtotal = prestationsGross + produits + boissons;
+
+  // Prestations déjà payées (ADR 0017) — Pack / Abonnement de la payeuse, prépayé, retiré avant la
+  // chaîne de remises. Une unité par (instrument, prestation) ; une prestation déjà couverte par un
+  // autre instrument n'est pas comptée deux fois. Ce n'est PAS une Remise : hors `totalDiscount`,
+  // comme l'acompte.
+  const unitsCovered: Record<string, number> = {};
+  const coveredAmountByService: Record<string, number> = {};
+  const coverageByInstance = (sale.coverage ?? [])
+    .map((cov) => {
+      let amount = 0;
+      const serviceIds: string[] = [];
+      for (const sid of cov.checkedServiceIds) {
+        const line = sale.cart.find((l) => l.kind === "service" && l.refId === sid);
+        if (!line) continue;
+        const used = unitsCovered[sid] ?? 0;
+        if (used >= line.qty) continue;
+        unitsCovered[sid] = used + 1;
+        amount += line.unitPrice;
+        coveredAmountByService[sid] = (coveredAmountByService[sid] ?? 0) + line.unitPrice;
+        serviceIds.push(sid);
+      }
+      return { source: cov.source, instanceId: cov.instanceId, planId: cov.planId, planLabel: cov.planLabel, amount, serviceIds };
+    })
+    .filter((c) => c.amount > 0);
+  const coverageDiscount = coverageByInstance.reduce((sum, c) => sum + c.amount, 0);
+
+  // Net des prestations couvertes — c'est l'assiette de la remise accordée (une prestation déjà
+  // facturée 0 n'est pas remisable).
+  const prestations = Math.max(0, prestationsGross - coverageDiscount);
 
   const maxGrantedDiscount = Math.round((prestations * MAX_REMISE_PCT) / 100);
   const receptionistMaxDiscount = Math.round((prestations * RECEPTIONIST_MAX_PCT) / 100);
@@ -170,7 +252,7 @@ export function computeTotals(sale: Sale) {
 
   const loyaltyDiscount = Math.floor(sale.loyaltyPointsUsed / 100) * 1000;
 
-  const beforeGiftCard = Math.max(0, subtotal - grantedDiscount - loyaltyDiscount);
+  const beforeGiftCard = Math.max(0, subtotal - coverageDiscount - grantedDiscount - loyaltyDiscount);
   const gc = sale.giftCardApplied;
   // What this card is willing to take off *this* ticket, before the "still owed" clamp.
   let giftCardCap = 0;
@@ -198,8 +280,12 @@ export function computeTotals(sale: Sale) {
   return {
     subtotal,
     prestations,
+    prestationsGross,
     produits,
     boissons,
+    coverageDiscount,
+    coverageByInstance,
+    coveredAmountByService,
     grantedDiscount,
     loyaltyDiscount,
     giftCardDiscount,
@@ -300,6 +386,10 @@ export type AppState = {
   /** Store the free-text justification for a granted discount (the post-payment step). */
   setDiscountReason: (saleId: string, reason: string) => void;
   setLoyaltyPointsUsed: (saleId: string, points: number) => void;
+  /** Tick / un-tick which prestations of a coverage group (Pack or Abonnement) to draw down —
+   *  pass the full ticked set for that instrument; the store clamps it to what the instrument can
+   *  actually cover. An empty set keeps the group but honours nothing from it (ADR 0017). */
+  setCoverageChecked: (saleId: string, instanceId: string, checkedServiceIds: string[]) => void;
   confirmPayment: (saleId: string, modes: { mode: PaymentMode; amount: number }[]) => void;
   activeSale: () => Sale | undefined;
 
@@ -517,8 +607,10 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
 
     // A sale opened straight onto a cliente (from a réservation, or from her fiche) links her
-    // gift card right away — same rule as identifying her later (ADR 0013).
+    // gift card right away — same rule as identifying her later (ADR 0013) — and pre-fills the
+    // Pack / Abonnement coverage on her prestations (ADR 0017).
     const opened = syncGiftCardToClient(sale);
+    opened.coverage = detectCoverage(opened.clientId, opened.cart);
 
     set((s) => ({
       sales: [...s.sales, opened],
@@ -550,9 +642,12 @@ export const useAppStore = create<AppState>((set, get) => ({
       sales: s.sales.map((sale) => {
         if (sale.id !== saleId) return sale;
         const next = { ...sale, ...patch };
-        // Identifying (or changing) the cliente re-links her gift card; the patch may also set the
-        // card itself (e.g. "Retirer"), which we leave untouched.
-        return "clientId" in patch && !("giftCardApplied" in patch) ? syncGiftCardToClient(next) : next;
+        if (!("clientId" in patch)) return next;
+        // Identifying (or changing) the cliente re-links her gift card (the patch may also set the
+        // card itself, e.g. "Retirer" — left untouched) and re-detects her Pack / Abonnement
+        // coverage (ADR 0017).
+        const synced = "giftCardApplied" in patch ? next : syncGiftCardToClient(next);
+        return { ...synced, coverage: detectCoverage(synced.clientId, synced.cart) };
       }),
     })),
 
@@ -581,7 +676,33 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   removeCartLine: (saleId, lineId) =>
     set((s) => ({
-      sales: s.sales.map((sale) => (sale.id === saleId ? { ...sale, cart: sale.cart.filter((l) => l.id !== lineId) } : sale)),
+      sales: s.sales.map((sale) => {
+        if (sale.id !== saleId) return sale;
+        const cart = sale.cart.filter((l) => l.id !== lineId);
+        // Drop a removed prestation from every coverage group (ADR 0017) — keep a group only while
+        // it still covers something in the cart.
+        const stillCovered = (ids: string[]) => ids.filter((id) => cart.some((l) => l.kind === "service" && l.refId === id));
+        const coverage = sale.coverage
+          .map((c) => ({ ...c, serviceIds: stillCovered(c.serviceIds), checkedServiceIds: stillCovered(c.checkedServiceIds) }))
+          .filter((c) => c.serviceIds.length > 0);
+        return { ...sale, cart, coverage };
+      }),
+    })),
+
+  setCoverageChecked: (saleId, instanceId, checkedServiceIds) =>
+    set((s) => ({
+      sales: s.sales.map((sale) =>
+        sale.id === saleId
+          ? {
+              ...sale,
+              coverage: sale.coverage.map((c) =>
+                c.instanceId === instanceId
+                  ? { ...c, checkedServiceIds: c.serviceIds.filter((id) => checkedServiceIds.includes(id)) }
+                  : c,
+              ),
+            }
+          : sale,
+      ),
     })),
 
   setGiftCardAdjustment: (saleId, patch) =>
@@ -658,7 +779,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   confirmPayment: (saleId, modes) => {
     const sale = get().sales.find((s) => s.id === saleId);
     if (!sale) return;
-    const { total, giftCardRemaining } = computeTotals(sale);
+    const { total, giftCardRemaining, coverageByInstance } = computeTotals(sale);
     const earned = Math.floor(total / 1000) * 10;
 
     // Burn what the sale spent off the gift card so its reliquat is real on the next scan.
@@ -667,6 +788,20 @@ export const useAppStore = create<AppState>((set, get) => ({
       if (card) {
         card.balance = giftCardRemaining;
         if (card.balance <= 0) card.status = "used";
+      }
+    }
+
+    // Draw down the payer's Pack / Abonnement for the prestations actually honoured here (ADR 0017)
+    // — definitive for a Pack, on the current cycle for an Abonnement. Mutates the mock ledger in
+    // place, like the gift card above.
+    for (const cov of coverageByInstance) {
+      if (cov.serviceIds.length === 0) continue;
+      if (cov.source === "abonnement") {
+        const ab = ABONNEMENTS.find((a) => a.id === cov.instanceId);
+        if (ab) ab.redeemedPrestationIds = [...new Set([...ab.redeemedPrestationIds, ...cov.serviceIds])];
+      } else {
+        const pp = PACK_PURCHASES.find((p) => p.id === cov.instanceId);
+        if (pp) pp.redeemedPrestationIds = [...new Set([...pp.redeemedPrestationIds, ...cov.serviceIds])];
       }
     }
     set((s) => ({

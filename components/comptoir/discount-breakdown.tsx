@@ -4,16 +4,24 @@ import type { Sale } from "@/lib/data/types";
 
 /**
  * The itemised discount lines — one per mechanism that actually reduced the total, plus the
- * granted-discount motif and the gift-card reliquat as captions. Shared by the receipt step and
- * the read-only receipt in Récap des ventes so the two never drift. Renders nothing when the sale
- * carries no discount.
+ * granted-discount motif and the gift-card reliquat as captions. Also carries the « prestations
+ * déjà payées » lines (Pack / Abonnement, ADR 0017) — prepaid, not a Remise, so listed above the
+ * discounts and not counted in `totalDiscount`. Shared by the receipt step and the read-only
+ * receipt in Récap des ventes so the two never drift. Renders nothing when the sale carries
+ * neither a discount nor a coverage.
  */
 export function DiscountBreakdown({ sale, className }: { sale: Sale; className?: string }) {
   const t = computeTotals(sale);
-  if (t.totalDiscount <= 0) return null;
+  if (t.totalDiscount <= 0 && t.coverageDiscount <= 0) return null;
 
   return (
     <div className={cn("flex flex-col gap-1 text-success", className)}>
+      {t.coverageByInstance.map((c) => (
+        <div key={c.instanceId} className="flex justify-between gap-3">
+          <span>Déjà payé — {c.planLabel}</span>
+          <span className="tabular-nums">−{formatFcfa(c.amount)}</span>
+        </div>
+      ))}
       {t.grantedDiscount > 0 && (
         <div className="flex justify-between gap-3">
           <span>
