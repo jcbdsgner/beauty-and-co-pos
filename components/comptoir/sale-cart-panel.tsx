@@ -27,7 +27,7 @@ const TIER_BADGE = {
  * the checkout button are the only other things allowed here.
  */
 export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScanner: () => void }) {
-  const { updateCartQty, removeCartLine, updateSale, clients, reservations, produits } = useAppData();
+  const { updateCartQty, removeCartLine, updateSale, clients, produits } = useAppData();
   const totals = computeTotals(sale);
   const isEmpty = sale.cart.length === 0;
   const itemCount = sale.cart.reduce((n, l) => n + l.qty, 0);
@@ -38,20 +38,19 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
   const needsClient = !isEmpty && sale.clientId === null && saleNeedsClient(sale);
   const clientOptional = !isEmpty && sale.clientId === null && !saleNeedsClient(sale);
   const canCheckout = !isEmpty && !needsClient;
-  const originReservation = sale.originReservationId
-    ? reservations.find((r) => r.id === sale.originReservationId)
-    : undefined;
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-[14px] border border-border bg-white">
       {/* Head */}
       <div className="relative shrink-0 overflow-hidden border-b border-border px-5 pt-5 pb-4">
         <BrandMark className="pointer-events-none absolute -top-8 -right-6 size-32 text-accent" />
-        <div className="relative flex items-baseline justify-between">
+        <div className="relative flex items-baseline gap-2">
           <p className="font-[family-name:var(--font-heading)] font-bold text-lg text-base-content">Ticket</p>
-          <span className="text-xs font-semibold tracking-[0.12em] text-base-content/55 uppercase tabular-nums">
-            {itemCount} {itemCount > 1 ? "articles" : "article"}
-          </span>
+          {itemCount > 0 && (
+            <span className="text-xs font-semibold tracking-[0.08em] text-base-content/45 uppercase tabular-nums">
+              {itemCount} {itemCount > 1 ? "articles" : "article"}
+            </span>
+          )}
         </div>
 
         {/* Cliente */}
@@ -73,7 +72,7 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
               <button
                 type="button"
                 onClick={() => updateSale(sale.id, { clientId: null })}
-                className="shrink-0 text-xs font-medium text-secondary underline underline-offset-2"
+                className="-mr-1 inline-flex min-h-11 shrink-0 items-center rounded-full bg-white/70 px-3 text-xs font-semibold text-secondary transition active:scale-95 hover:bg-white"
               >
                 Retirer
               </button>
@@ -120,13 +119,6 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
                 </p>
               )}
             </div>
-          )}
-          {originReservation && (
-            <p className="mt-2 rounded-lg bg-success/10 px-3 py-1.5 text-xs font-medium text-success">
-              {originReservation.rendezVous.filter((rv) => rv.status !== "annule").length > 1
-                ? "Prestations de la réservation ajoutées."
-                : "Prestation du rendez-vous ajoutée."}
-            </p>
           )}
         </div>
       </div>
@@ -187,7 +179,7 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
                       aria-label={`Moins — ${line.name}`}
                       className="flex size-14 items-center justify-center rounded-full text-base-content/70 transition active:scale-90 disabled:opacity-30"
                     >
-                      <Minus aria-hidden className="size-4" />
+                      <Minus aria-hidden className="size-5" />
                     </button>
                     <span className="w-7 text-center text-[15px] font-bold text-base-content tabular-nums">{line.qty}</span>
                     <button
@@ -197,7 +189,7 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
                       aria-label={`Plus — ${line.name}`}
                       className="flex size-14 items-center justify-center rounded-full text-base-content/70 transition active:scale-90 disabled:opacity-30"
                     >
-                      <Plus aria-hidden className="size-4" />
+                      <Plus aria-hidden className="size-5" />
                     </button>
                   </div>
 
@@ -206,9 +198,9 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
                   <IconButton
                     onClick={() => removeCartLine(sale.id, line.id)}
                     aria-label={`Retirer ${line.name}`}
-                    className="size-14 shrink-0 rounded-full text-base-content/55 transition active:scale-90 hover:bg-error/10 hover:text-destructive"
+                    className="size-14 shrink-0 rounded-full border border-border text-base-content/55 transition active:scale-90 active:bg-error/10 active:text-destructive hover:bg-error/10 hover:text-destructive"
                   >
-                    <Trash2 aria-hidden className="size-4" />
+                    <Trash2 aria-hidden className="size-5" />
                   </IconButton>
                 </div>
               </li>

@@ -66,7 +66,11 @@ export function DiscountSection({ sale }: { sale: Sale }) {
           {/* Gift card — auto-linked from the cliente's fiche; only its portion is adjusted here */}
           {sale.giftCardApplied && (
             <section>
-              <SectionLabel icon={<Gift className="size-3.5" />}>Carte cadeau</SectionLabel>
+              <SectionLabel icon={<Gift className="size-3.5" />}>
+                {sale.giftCardApplied.kind === "montant"
+                  ? `Carte cadeau · ${formatFcfa(sale.giftCardApplied.balance)}`
+                  : "Carte cadeau"}
+              </SectionLabel>
               <AppliedGiftCard
                 sale={sale}
                 totals={totals}
@@ -141,31 +145,23 @@ function AppliedGiftCard({
   const covered = gc.coveredServiceIds ?? gc.serviceIds ?? [];
 
   return (
-    <div className="mt-2 flex flex-col gap-2 rounded-lg bg-success/10 px-3 py-2.5 text-xs">
-      <div className="flex items-center justify-between font-medium text-success">
-        <span>
-          Carte « {gc.code} » · {gc.kind === "prestations" ? "prestations" : `solde ${formatFcfa(gc.balance)}`}
-        </span>
-        <button type="button" onClick={onRemove} className="underline underline-offset-2">
-          Retirer
-        </button>
+    <div className="mt-2 flex flex-col gap-2.5 rounded-lg bg-success/10 px-3 py-3 text-sm">
+      <div className="flex items-center justify-between gap-2 font-medium text-success">
+        <span>{gc.kind === "prestations" ? "Prestations couvertes" : "Montant utilisé"}</span>
+        <RemoveButton tone="success" onClick={onRemove} />
       </div>
 
       {gc.kind === "montant" ? (
-        <label className="flex items-center justify-between gap-2 text-base-content/80">
-          <span>Montant appliqué</span>
-          <span className="flex items-center gap-1.5">
-            <TextInput
-              size="compact"
-              inputMode="numeric"
-              aria-label="Montant de la carte cadeau appliqué à cette vente"
-              className="w-24 text-right tabular-nums"
-              value={String(gc.appliedAmount ?? gc.balance)}
-              onChange={(e) => onAdjust({ appliedAmount: Number(e.target.value.replace(/\D/g, "")) || 0 })}
-            />
-            <span className="text-base-content/55">F</span>
-          </span>
-        </label>
+        <span className="flex items-center gap-1.5">
+          <TextInput
+            inputMode="numeric"
+            aria-label="Montant de la carte cadeau utilisé sur cette vente"
+            className="flex-1 text-right tabular-nums"
+            value={String(gc.appliedAmount ?? gc.balance)}
+            onChange={(e) => onAdjust({ appliedAmount: Number(e.target.value.replace(/\D/g, "")) || 0 })}
+          />
+          <span className="text-base-content/55">F</span>
+        </span>
       ) : (
         <div className="flex flex-col">
           {(gc.serviceIds ?? []).map((id) => {
@@ -174,7 +170,7 @@ function AppliedGiftCard({
             return (
               <Checkbox
                 key={id}
-                className="min-h-11 text-[13px]"
+                className="min-h-12 text-[13px]"
                 checked={inCart && covered.includes(id)}
                 disabled={!inCart}
                 onChange={(c) =>
@@ -182,17 +178,16 @@ function AppliedGiftCard({
                     coveredServiceIds: c ? [...covered, id] : covered.filter((x) => x !== id),
                   })
                 }
-                label={`${svc?.name ?? id} · ${formatFcfa(svc?.price ?? 0)}${inCart ? "" : " — pas au panier"}`}
+                label={`${svc?.name ?? id}${inCart ? "" : " — pas au panier"}`}
               />
             );
           })}
         </div>
       )}
 
-      <p className="text-success/85">
-        Couvre −{formatFcfa(totals.giftCardDiscount)}
-        {totals.giftCardRemaining > 0 && ` · reste ${formatFcfa(totals.giftCardRemaining)} sur la carte`}
-      </p>
+      {gc.kind === "montant" && totals.giftCardRemaining > 0 && totals.giftCardDiscount > 0 && (
+        <p className="text-xs text-success/85">Il restera {formatFcfa(totals.giftCardRemaining)} sur la carte.</p>
+      )}
     </div>
   );
 }
@@ -202,6 +197,25 @@ function SectionLabel({ icon, children }: { icon: React.ReactNode; children: Rea
     <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold tracking-wide text-base-content/55 uppercase">
       {icon} {children}
     </p>
+  );
+}
+
+/** The quiet "Retirer" pill that peels a mechanism back off the ticket — a real 44px tap target,
+ *  not a bare text link. `success` sits on the green applied-state cards, `neutral` on the head. */
+function RemoveButton({ onClick, tone = "success" }: { onClick: () => void; tone?: "success" | "neutral" }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "-mr-1 inline-flex min-h-11 shrink-0 items-center rounded-full px-3 text-xs font-semibold transition active:scale-95",
+        tone === "success"
+          ? "bg-success/15 text-success hover:bg-success/25"
+          : "bg-white/70 text-secondary hover:bg-white",
+      )}
+    >
+      Retirer
+    </button>
   );
 }
 
@@ -246,22 +260,16 @@ function GrantedDiscountBlock({ sale }: { sale: Sale }) {
     return (
       <section>
         <SectionLabel icon={<ShieldCheck className="size-3.5" />}>Remise accordée</SectionLabel>
-        <div className="rounded-lg bg-success/10 px-3 py-2 text-xs font-medium text-success">
-          <div className="flex items-center justify-between">
+        <div className="rounded-lg bg-success/10 px-3 py-2.5 text-xs font-medium text-success">
+          <div className="flex items-center justify-between gap-2">
             <span>
               {granted.mode === "pourcentage" ? `${granted.value} % des prestations` : "Montant fixe"} · −
               {formatFcfa(totals.grantedDiscount)}
             </span>
-            <button
-              type="button"
-              onClick={() => updateSale(sale.id, { discountGranted: null })}
-              className="underline underline-offset-2"
-            >
-              Retirer
-            </button>
+            <RemoveButton tone="success" onClick={() => updateSale(sale.id, { discountGranted: null })} />
           </div>
-          <p className="mt-0.5 text-success/85">
-            {granted.managerCode ? "Validée par code manager · " : ""}motif demandé après l&apos;encaissement
+          <p className="mt-1 text-success/85">
+            {granted.managerCode ? "Code manager · motif après paiement" : "Motif demandé après le paiement"}
           </p>
         </div>
       </section>
@@ -287,29 +295,21 @@ function GrantedDiscountBlock({ sale }: { sale: Sale }) {
         </div>
 
         {mode === "pourcentage" ? (
-          <div>
-            <Pills
-              value={String(pct)}
-              onChange={(v) => setPct(Number(v))}
-              options={PCT_PRESETS.map((p) => ({ value: String(p), label: `${p} %` }))}
-            />
-            <p className="mt-1 text-[11px] text-base-content/45">
-              Jusqu&apos;à {RECEPTIONIST_MAX_PCT} % sans code · jusqu&apos;à {MAX_REMISE_PCT} % avec un code manager
-            </p>
-          </div>
+          <Pills
+            value={String(pct)}
+            onChange={(v) => setPct(Number(v))}
+            options={PCT_PRESETS.map((p) => ({ value: String(p), label: `${p} %` }))}
+          />
         ) : (
           <div>
             <TextInput
-              size="compact"
               inputMode="numeric"
               value={montant}
               onChange={(e) => setMontant(e.target.value.replace(/\D/g, ""))}
               placeholder="0"
               className="text-right tabular-nums"
             />
-            <p className="mt-1 text-xs text-base-content/55">
-              Jusqu&apos;à {formatFcfa(totals.receptionistMaxDiscount)} sans code · {formatFcfa(totals.maxGrantedDiscount)} ({MAX_REMISE_PCT} %) avec un code manager
-            </p>
+            <p className="mt-1 text-xs text-base-content/55">Maximum {formatFcfa(totals.maxGrantedDiscount)}</p>
           </div>
         )}
 

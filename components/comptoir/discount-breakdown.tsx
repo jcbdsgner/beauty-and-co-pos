@@ -41,8 +41,7 @@ export function DiscountBreakdown({ sale, className }: { sale: Sale; className?:
       {t.giftCardDiscount > 0 && (
         <div className="flex justify-between gap-3">
           <span>
-            Carte cadeau{sale.giftCardApplied && ` « ${sale.giftCardApplied.code} »`}
-            {sale.giftCardApplied?.kind === "prestations" && " (prestations)"}
+            Carte cadeau{sale.giftCardApplied?.kind === "prestations" && " (prestations)"}
           </span>
           <span className="tabular-nums">−{formatFcfa(t.giftCardDiscount)}</span>
         </div>
@@ -50,7 +49,7 @@ export function DiscountBreakdown({ sale, className }: { sale: Sale; className?:
       {sale.discountGranted?.reason && (
         <p className="text-xs text-base-content/55">Motif de la remise : {sale.discountGranted.reason}</p>
       )}
-      {t.giftCardRemaining > 0 && (
+      {t.giftCardDiscount > 0 && t.giftCardRemaining > 0 && (
         <p className="text-xs text-base-content/55">Reste {formatFcfa(t.giftCardRemaining)} sur la carte cadeau.</p>
       )}
     </div>

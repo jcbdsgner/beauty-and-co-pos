@@ -89,7 +89,7 @@ function CoverageGroup({
         <button
           type="button"
           onClick={() => onSet(allChecked ? [] : inCart)}
-          className="shrink-0 text-xs font-medium text-success underline underline-offset-2"
+          className="-mr-1 inline-flex min-h-11 shrink-0 items-center rounded-full bg-success/15 px-3 text-xs font-semibold text-success transition active:scale-95 hover:bg-success/25"
         >
           {allChecked ? "Tout décocher" : "Tout cocher"}
         </button>
