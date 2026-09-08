@@ -5,10 +5,14 @@ import { AppDataProvider } from "@/components/providers/app-data-provider";
 import { TooltipProvider } from "@/components/ui/atoms/tooltip";
 import { AppShell } from "@/components/shell/app-shell";
 
-const outfit = localFont({
-  src: "./fonts/Outfit-Variable.woff2",
-  variable: "--font-outfit",
-  weight: "100 900",
+const poppins = localFont({
+  src: [
+    { path: "./fonts/Poppins-400.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/Poppins-500.woff2", weight: "500", style: "normal" },
+    { path: "./fonts/Poppins-600.woff2", weight: "600", style: "normal" },
+    { path: "./fonts/Poppins-700.woff2", weight: "700", style: "normal" },
+  ],
+  variable: "--font-poppins",
 });
 
 const benedict = localFont({
@@ -29,7 +33,7 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
-      className={`${outfit.variable} ${benedict.variable} h-full antialiased`}
+      className={`${poppins.variable} ${benedict.variable} h-full antialiased`}
     >
       <body className="min-h-full">
         <AppDataProvider>
