@@ -199,23 +199,6 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
               );
             })}
           </ul>
-
-          {/* Fills the gap under a short list with context the receptionist can use with the
-              cliente in front of her, rather than leaving dead space above the total. */}
-          {client && (client.lastVisit || client.points > 0) && (
-            <div className="mt-3 flex flex-col gap-1 rounded-[10px] border border-base-300 bg-base-200 px-3.5 py-3 text-xs text-base-content/55">
-              {client.lastVisit && (
-                <div className="flex items-center justify-between">
-                  <span>Dernière visite</span>
-                  <span className="font-medium tabular-nums">{client.lastVisit}</span>
-                </div>
-              )}
-              <div className="flex items-center justify-between">
-                <span>Points fidélité</span>
-                <span className="font-medium tabular-nums">{client.points} pts</span>
-              </div>
-            </div>
-          )}
           </>
         )}
       </div>
