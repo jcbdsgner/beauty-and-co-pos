@@ -3,8 +3,8 @@ import { ArrowUpRight } from "lucide-react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-// daisyUI `btn` base. One brand colour (#886666) carries every accent role, so `brand` and
-// `dark` are the primary / neutral daisyUI buttons; semantic fills stay separate.
+// daisyUI `btn` base. One brand colour (#886666) carries every accent role: both `brand` and
+// `dark` are filled taupe (no dark-brown neutral fill on buttons); semantic fills stay separate.
 export type ButtonVariant =
   | "brand"
   | "dark"
@@ -30,7 +30,7 @@ export const buttonVariants = cva(
     variants: {
       variant: {
         brand: "btn-primary",
-        dark: "btn-neutral",
+        dark: "btn-primary",
         outline: "btn-outline border-base-300 text-secondary hover:!bg-base-200 hover:!border-base-300 hover:!text-secondary",
         lilac: "border-transparent bg-[var(--brand-lilac)] text-base-content/70 hover:brightness-95",
         success: "btn-success",
