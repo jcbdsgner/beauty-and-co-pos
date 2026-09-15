@@ -3,11 +3,18 @@
 import { useMemo } from "react";
 import { Avatar } from "@/components/ui/atoms/avatar";
 import { Button } from "@/components/ui/atoms/button";
+import { boissonById } from "@/lib/data/boissons";
 import { clientFullName, clientInitial } from "@/lib/data/clientele";
-import { serviceById } from "@/lib/data/menu";
-import { timeToMinutes, type ReservationDayRow } from "@/lib/data/planning";
-import { cn } from "@/lib/utils";
+import { produitById, serviceById } from "@/lib/data/menu";
+import { reservationComposition, timeToMinutes, type ReservationDayRow } from "@/lib/data/planning";
+import { cn, formatFcfa } from "@/lib/utils";
 import type { Cliente, Praticienne, RendezVous } from "@/lib/data/types";
+
+/** The card never grows with the réservation — cap the item list and summarize the rest; the full
+ *  breakdown lives in the fiche réservation (`AppointmentDetailSheet`). */
+const MAX_VISIBLE_ITEMS = 3;
+
+type ItemRow = { key: string; label: string; note: string; price: number };
 
 type Props = {
   rows: ReservationDayRow[];
@@ -24,11 +31,13 @@ function currentMinute(): number {
 }
 
 /**
- * « Le jour » sur l'Accueil (Figma 156-72) — la journée en cartes chronologiques : une carte par
- * réservation, heure · payeuse · prestations, « Voir les détails » + « Encaisser ». Volontairement
- * plus simple que la `DayList` du Planning (pas de rail, pas de filet « maintenant », pas de
- * dépliage des prestations) : l'Accueil trie, le Planning est l'établi. Elles pourront reconverger
- * quand le Planning passera à daisyUI.
+ * « Rendez-vous » sur l'Accueil (Figma 242:1735) — une grille fixe de 3 colonnes, une carte par
+ * réservation : payeuse · composition (« 1 femme + 1 enfant ») en en-tête, heure à droite, jusqu'à
+ * 3 lignes de détail (prestations puis extras pré-commandés — boisson, produit à emporter — le
+ * reste résumé en « + N »), Total, puis « Voir les détails » + « Encaisser ». Le détail complet
+ * (au-delà des 3 lignes) vit dans la fiche réservation (`AppointmentDetailSheet`), jamais dans la
+ * carte : elle garde toujours la même taille. Volontairement plus simple que la `DayList` du
+ * Planning (pas de rail, pas de filet « maintenant ») : l'Accueil trie, le Planning est l'établi.
  */
 export function AccueilDayList({ rows, clients, praticiennes, onOpenReservation, onEncaisser }: Props) {
   const now = currentMinute();
@@ -45,15 +54,49 @@ export function AccueilDayList({ rows, clients, praticiennes, onOpenReservation,
   }, [rows, clients]);
 
   const staffName = (id?: string) => (id ? praticiennes.find((p) => p.id === id)?.name : undefined);
+  const staffLine = (rv: RendezVous) => {
+    const first = staffName(rv.staffId) ?? "—";
+    const second = rv.secondStaffId ? staffName(rv.secondStaffId) : undefined;
+    return second ? `${first} + ${second}` : first;
+  };
 
   return (
-    <div className="flex flex-col gap-2.5">
+    <div className="grid grid-cols-3 gap-4">
       {sorted.map((row) => {
-        const { reservation, rendezVous, staffIds } = row;
+        const { reservation, rendezVous } = row;
         const payer = clients.find((c) => c.id === reservation.payerClientId);
         const active = rendezVous.filter((rv) => rv.status !== "annule");
         const hasSale = Boolean(reservation.saleId);
-        const summary = active.map((rv) => serviceById(rv.serviceId)?.name ?? "Prestation").join(" + ");
+        const composition = reservationComposition(reservation);
+
+        const items: ItemRow[] = active.map((rv) => {
+          const service = serviceById(rv.serviceId);
+          return { key: rv.id, label: service?.name ?? "Prestation", note: staffLine(rv), price: service?.price ?? 0 };
+        });
+        for (const extra of reservation.extras ?? []) {
+          if (extra.kind === "boisson") {
+            const boisson = boissonById(extra.refId);
+            if (!boisson) continue;
+            items.push({
+              key: `${extra.kind}-${extra.refId}`,
+              label: extra.qty > 1 ? `${extra.qty}× ${boisson.name}` : boisson.name,
+              note: "Boisson",
+              price: boisson.price * extra.qty,
+            });
+          } else {
+            const produit = produitById(extra.refId);
+            if (!produit) continue;
+            items.push({
+              key: `${extra.kind}-${extra.refId}`,
+              label: extra.qty > 1 ? `${extra.qty}× ${produit.name}` : produit.name,
+              note: "Produit à emporter",
+              price: produit.price * extra.qty,
+            });
+          }
+        }
+        const total = items.reduce((sum, item) => sum + item.price, 0);
+        const visibleItems = items.slice(0, MAX_VISIBLE_ITEMS);
+        const hiddenCount = items.length - visibleItems.length;
 
         const startMin = timeToMinutes(row.start);
         const endMin = timeToMinutes(row.end);
@@ -61,68 +104,75 @@ export function AccueilDayList({ rows, clients, praticiennes, onOpenReservation,
         const awaitingCheckout = phase === "past" && !hasSale;
         const past = phase === "past" && !awaitingCheckout;
 
-        const staffLabel =
-          staffIds.length > 1
-            ? ` · ${staffIds.length} praticiennes`
-            : staffIds.length === 1
-              ? ` · ${staffName(staffIds[0])}`
-              : "";
-
         const target = active[0] ?? rendezVous[0];
 
         return (
           <div
             key={reservation.id}
-            className="flex items-center gap-3 rounded-field border border-base-300 bg-base-100 px-4"
+            className={cn(
+              "flex flex-col gap-3 rounded-field border border-base-300 bg-base-100 p-4",
+              past && "opacity-70",
+            )}
           >
             <button
               type="button"
               onClick={() => target && onOpenReservation(target)}
-              className="flex min-w-0 flex-1 items-center gap-3 py-3 text-left transition active:opacity-70"
+              className="flex min-w-0 items-start justify-between gap-3 text-left transition active:opacity-70"
             >
-              <span className={cn("flex w-16 shrink-0 flex-col items-center text-center leading-tight", past && "opacity-55")}>
-                <span className="text-sm font-semibold tabular-nums text-base-content/55">{row.start}</span>
-                <span className="text-[0.7rem] tabular-nums text-base-content/40">→ {row.end}</span>
-              </span>
-
-              <span className={cn("min-w-0 flex-1 py-0.5", past && "opacity-70")}>
-                <span className="flex items-center gap-2">
-                  <Avatar
-                    initial={payer ? clientInitial(payer) : "?"}
-                    size={26}
-                    className="bg-accent text-[0.65rem] font-bold text-base-content"
-                  />
-                  <span className="truncate font-[family-name:var(--font-heading)] text-[15px] font-semibold text-base-content">
+              <span className="flex min-w-0 items-center gap-2.5">
+                <Avatar
+                  initial={payer ? clientInitial(payer) : "?"}
+                  size={32}
+                  className="mt-0.5 bg-accent text-xs font-bold text-base-content"
+                />
+                <span className="min-w-0">
+                  <span className="block truncate font-[family-name:var(--font-heading)] text-xl font-medium text-base-content">
                     {payer ? clientFullName(payer) : "Cliente"}
                   </span>
+                  <span className="mt-0.5 block truncate text-[13px] text-base-content/55">
+                    {composition}
+                    {awaitingCheckout && <span className="font-semibold text-warning"> · à encaisser</span>}
+                    {phase === "current" && <span className="font-semibold text-base-content/70"> · en cours</span>}
+                  </span>
                 </span>
-                <span className="mt-1 block truncate text-sm text-base-content/55">
-                  {summary || "Prestation"}
-                  {staffLabel}
-                  {awaitingCheckout && <span className="font-semibold text-warning"> · à encaisser</span>}
-                  {phase === "current" && <span className="font-semibold text-base-content/70"> · en cours</span>}
-                </span>
+              </span>
+              <span className="shrink-0 text-right leading-tight">
+                <span className="block text-base font-medium tabular-nums text-base-content">{row.start}</span>
+                <span className="mt-0.5 block text-xs tabular-nums text-base-content/40">→ {row.end}</span>
               </span>
             </button>
 
-            <span className="flex shrink-0 items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="min-w-[120px]"
-                onClick={() => target && onOpenReservation(target)}
-              >
+            <div className="flex flex-col gap-1.5 border-t border-base-300 pt-3">
+              {visibleItems.map((item) => (
+                <div key={item.key} className="flex items-center justify-between gap-3 text-sm">
+                  <span className="truncate text-base-content/75">{item.label}</span>
+                  <span className="shrink-0 text-base-content/45">{item.note}</span>
+                </div>
+              ))}
+              {hiddenCount > 0 && (
+                <div className="text-sm text-base-content/45">
+                  + {hiddenCount} de plus
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between border-t border-base-300 pt-3 text-sm font-semibold">
+              <span className="text-base-content/55">Total</span>
+              <span className="tabular-nums text-base-content">{formatFcfa(total)}</span>
+            </div>
+
+            <div className="flex gap-2 pt-1">
+              <Button variant="outline" className="flex-1" onClick={() => target && onOpenReservation(target)}>
                 Voir les détails
               </Button>
               <Button
                 variant={hasSale ? "outline" : "dark"}
-                size="sm"
-                className="min-w-[120px]"
+                className="flex-1"
                 onClick={() => onEncaisser(reservation.id)}
               >
                 {hasSale ? "Voir la vente" : "Encaisser"}
               </Button>
-            </span>
+            </div>
           </div>
         );
       })}

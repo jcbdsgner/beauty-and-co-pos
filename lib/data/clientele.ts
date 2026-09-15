@@ -152,6 +152,25 @@ export const CLIENTS: Cliente[] = [
     totalVisits: 18,
     createdAt: "2025-08-19",
   },
+  {
+    id: "cl-10",
+    loyaltyCode: "BACO-FID-1038",
+    firstName: "Aminata",
+    lastName: "Fall",
+    phone: "+221776623145",
+    whatsapp: "+221776623145",
+    email: "aminata.fall@example.com",
+    residenceCountry: "Sénégal",
+    tier: null,
+    points: 140,
+    preferenceNotes: {
+      boisson: "Jus de bissap pour les enfants, jamais de café.",
+    },
+    lastVisit: "Il y a 3 semaines",
+    totalSpent: 96000,
+    totalVisits: 4,
+    createdAt: "2026-04-12",
+  },
 ];
 
 export function clientById(id: string) {

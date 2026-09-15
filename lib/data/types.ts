@@ -135,6 +135,15 @@ export type AppointmentStatus = "actif" | "annule";
  *  external booking platform; "comptoir" is the rare walk-in a receptionist notes by hand. */
 export type ReservationSource = "en_ligne" | "comptoir";
 
+/** A boisson or produit pré-commandé en ligne avec une réservation, à retirer le jour même —
+ *  jamais une prestation (elle arrive toujours d'un Rendez-vous). `refId` pointe vers `Boisson.id`
+ *  ou `Produit.id` selon `kind`. */
+export type ReservationExtra = {
+  kind: "produit" | "boisson";
+  refId: string;
+  qty: number;
+};
+
 /**
  * Réservation — the payer-level booking. One cliente (`payerClientId`) settles the whole thing at
  * the counter, even when the prestations are spread over several praticiennes or done for a friend
@@ -156,8 +165,17 @@ export type Reservation = {
    *  verbatim like the rest of the réservation, never entered or edited in this app. Deducted from
    *  the sale's total at the counter (see `Sale.depositPaid`, ADR 0015). Absent ⇒ no acompte. */
   depositPaid?: number;
+  /** Boissons / produits pré-commandés en ligne avec la réservation, pour retrait le jour même —
+   *  arrivent verbatim comme le reste et s'ajoutent au panier avec les prestations à « Encaisser ».
+   *  Jamais de prestation ici (elle naît toujours d'un Rendez-vous). */
+  extras?: ReservationExtra[];
   createdAt?: string;
 };
+
+/** How a bénéficiaire reads on the Accueil's composition line ("1 femme + 1 enfant"). Derived from
+ *  the prestation (Mini&Co ⇒ enfant) when possible; `RendezVous.beneficiaryKind` only disambiguates
+ *  a free-text bénéficiaire the prestation alone can't settle (an adult male companion). */
+export type BeneficiaryKind = "femme" | "homme" | "enfant";
 
 /**
  * Rendez-vous — now atomic: one prestation, one créneau, one bénéficiaire, one praticienne (two
@@ -177,6 +195,10 @@ export type RendezVous = {
   beneficiaryClientId?: string;
   /** …or a free-text name (a friend, a child) when she has no fiche. Neither set ⇒ the payer herself. */
   beneficiaryName?: string;
+  /** Only meaningful alongside `beneficiaryName` — a known fiche is always "femme" (le salon reçoit
+   *  des clientes), and a Mini&Co prestation is always "enfant" regardless of this field. Lets a
+   *  free-text companion (mari, frère) read as "homme" on the composition line. */
+  beneficiaryKind?: BeneficiaryKind;
   start: string; // "HH:mm"
   durationMin: number;
   status: AppointmentStatus;

@@ -4,6 +4,7 @@ import { create } from "zustand";
 import { CLIENTS, clientFullName } from "@/lib/data/clientele";
 import { RESERVATIONS, reservationById, timeToMinutes } from "@/lib/data/planning";
 import { PRODUITS, serviceById } from "@/lib/data/menu";
+import { boissonById } from "@/lib/data/boissons";
 import { PRATICIENNES } from "@/lib/data/praticiennes";
 import { CONVERSATIONS } from "@/lib/data/conversations";
 import { CARTES_CADEAUX, GIFT_CARD_ORDERS, giftCardForClient } from "@/lib/data/cartes-cadeaux";
@@ -585,6 +586,20 @@ export const useAppStore = create<AppState>((set, get) => ({
               ...(benef ? { beneficiary: benef } : {}),
             });
           }
+        }
+        // Boissons / produits pré-commandés avec la réservation s'ajoutent verbatim, comme les
+        // prestations — c'est le même geste "Encaisser" qui règle tout d'un coup.
+        for (const extra of reservation.extras ?? []) {
+          const item = extra.kind === "boisson" ? boissonById(extra.refId) : PRODUITS.find((p) => p.id === extra.refId);
+          if (!item) continue;
+          lines.push({
+            id: nextId("line"),
+            refId: item.id,
+            kind: extra.kind,
+            name: item.name,
+            unitPrice: item.price,
+            qty: extra.qty,
+          });
         }
         sale.cart = lines;
 

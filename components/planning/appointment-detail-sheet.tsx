@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Clock, Scissors, User, Users, SlidersHorizontal } from "lucide-react";
+import { Clock, Coffee, ShoppingBag, Scissors, User, Users, SlidersHorizontal } from "lucide-react";
 import { Dialog } from "@/components/ui/molecules/dialog";
 import { CloseButton } from "@/components/ui/atoms/icon-button";
 import { Button } from "@/components/ui/atoms/button";
@@ -10,8 +10,9 @@ import { Field } from "@/components/ui/molecules/field";
 import { FlipChip, Legend } from "@/components/ui/board";
 import { EditRendezVousDialog } from "@/components/planning/edit-rendez-vous-dialog";
 import { useAppData } from "@/components/providers/app-data-provider";
+import { boissonById } from "@/lib/data/boissons";
 import { clientFullName } from "@/lib/data/clientele";
-import { serviceById } from "@/lib/data/menu";
+import { produitById, serviceById } from "@/lib/data/menu";
 import { appointmentEndTime, reservationForRendezVous } from "@/lib/data/planning";
 import { formatFcfa } from "@/lib/utils";
 import type { RendezVous } from "@/lib/data/types";
@@ -38,9 +39,15 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
   const cancelled = appointment.status === "annule";
   const hasSale = Boolean(reservation?.saleId);
   const lines = reservation?.rendezVous ?? [appointment];
-  const total = lines
+  const extras = reservation?.extras ?? [];
+  const prestationsTotal = lines
     .filter((rv) => rv.status !== "annule")
     .reduce((sum, rv) => sum + (serviceById(rv.serviceId)?.price ?? 0), 0);
+  const extrasTotal = extras.reduce((sum, extra) => {
+    const unitPrice = extra.kind === "boisson" ? (boissonById(extra.refId)?.price ?? 0) : (produitById(extra.refId)?.price ?? 0);
+    return sum + unitPrice * extra.qty;
+  }, 0);
+  const total = prestationsTotal + extrasTotal;
 
   function staffLabel(rv: RendezVous) {
     const first = praticiennes.find((p) => p.id === rv.staffId)?.name ?? "Inconnue";
@@ -102,8 +109,30 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
               </div>
             );
           })}
+          {extras.map((extra) => {
+            const item = extra.kind === "boisson" ? boissonById(extra.refId) : produitById(extra.refId);
+            return (
+              <div key={`${extra.kind}-${extra.refId}`} className="flex items-start gap-3 px-6 py-3.5">
+                <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-[var(--brand-rose-soft)] text-[var(--brand-taupe-muted)]">
+                  {extra.kind === "boisson" ? <Coffee className="size-4" /> : <ShoppingBag className="size-4" />}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-[var(--color-gray-900)]">
+                    {extra.qty > 1 ? `${extra.qty}× ` : ""}
+                    {item?.name ?? "Article"}
+                  </p>
+                  <p className="mt-0.5 text-xs text-[var(--color-gray-500)]">
+                    {extra.kind === "boisson" ? "Boisson · à retirer sur place" : "Produit · à emporter"}
+                  </p>
+                </div>
+                <span className="shrink-0 text-sm font-semibold tabular-nums text-[var(--color-gray-800)]">
+                  {item ? formatFcfa(item.price * extra.qty) : "—"}
+                </span>
+              </div>
+            );
+          })}
           <div className="flex items-center justify-between px-6 py-3">
-            <Legend>Total prestations</Legend>
+            <Legend>Total</Legend>
             <span className="text-sm font-bold tabular-nums text-[var(--color-gray-900)]">{formatFcfa(total)}</span>
           </div>
         </div>

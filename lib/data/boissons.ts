@@ -14,3 +14,7 @@ export const BOISSONS: Boisson[] = [
   { id: "boisson-soin-glace-ice-tea", name: "Soin Glacé Ice Tea", price: 3500, active: true, description: "Pêche citron", image: "/images/boissons/soin-glace-ice-tea.jpg" },
   { id: "boisson-pretty-latte", name: "Pretty Latte", price: 3900, active: true, description: "Lait froid ou chaud au choix et garniture au choix (caramel, vanille, cookies, spéculos)" },
 ];
+
+export function boissonById(id: string) {
+  return BOISSONS.find((b) => b.id === id);
+}

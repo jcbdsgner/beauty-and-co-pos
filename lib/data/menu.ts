@@ -255,3 +255,7 @@ export const PRODUITS: Produit[] = [
   { id: "correcteur-fluide-swiss-perfection-haute-couvrance", categoryId: "autres", name: "Correcteur Fluide « Swiss Perfection » – Haute Couvrance", price: 38500, stock: 14, active: true, image: "/images/produits/correcteur-fluide-swiss-perfection-haute-couvrance.jpg" },
   { id: "peigne-bijou-eclat-de-mariee-finition-or-rose", categoryId: "autres", name: "Peigne Bijou « Éclat de Mariée » – Finition Or Rose", price: 26000, stock: 10, active: true, image: "/images/produits/peigne-bijou-eclat-de-mariee-finition-or-rose.jpg" },
 ];
+
+export function produitById(id: string) {
+  return PRODUITS.find((p) => p.id === id);
+}

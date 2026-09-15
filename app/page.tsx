@@ -18,10 +18,11 @@ function todayISO(): string {
 }
 
 /**
- * Accueil — l'écran d'atterrissage (Figma 156-72). Deux sections seulement : « Cartes cadeaux »,
+ * Accueil — l'écran d'atterrissage (Figma 242:1735). Deux sections seulement : « Cartes cadeaux »,
  * un aperçu de la file de préparation (docs/adr/0012), qui s'efface quand il n'y a rien ; puis
- * « Le jour », la journée en cartes chronologiques par réservation (docs/adr/0014) — une ligne =
- * une payeuse, triée par heure. Plus de bloc de compteurs : la journée est là, la file a son lien.
+ * « Rendez-vous », la journée en grille fixe de 3 cartes par réservation (docs/adr/0014) — une
+ * carte = une payeuse, triée par heure. Plus de bloc de compteurs : la journée est là, la file a
+ * son lien.
  */
 export default function AccueilPage() {
   const { reservations, praticiennes, clients } = useAppData();
@@ -53,7 +54,7 @@ export default function AccueilPage() {
 
       <section>
         <div className="mb-2 pl-1">
-          <Legend>Le jour</Legend>
+          <Legend>Rendez-vous</Legend>
         </div>
         {reservationRows.length === 0 ? (
           <div className="rounded-field border border-dashed border-base-300 px-4 py-12 text-center">

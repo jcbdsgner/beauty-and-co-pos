@@ -1,4 +1,5 @@
-import type { RendezVous, Reservation } from "@/lib/data/types";
+import { serviceById } from "@/lib/data/menu";
+import type { BeneficiaryKind, RendezVous, Reservation } from "@/lib/data/types";
 
 /**
  * La prise de rendez-vous ne vit pas dans cette app (ADR 0006) : « Créer un rendez-vous » ouvre
@@ -102,6 +103,11 @@ export const RESERVATIONS: Reservation[] = [
     date: seedDay(0),
     source: "en_ligne",
     depositPaid: 8000,
+    // Pré-commande deux boissons du bar pour patienter pendant le soin.
+    extras: [
+      { kind: "boisson", refId: "boisson-pure-glow", qty: 1 },
+      { kind: "boisson", refId: "boisson-eclat-matcha", qty: 1 },
+    ],
     rendezVous: [
       {
         id: "rdv-3a",
@@ -119,6 +125,8 @@ export const RESERVATIONS: Reservation[] = [
     payerClientId: "cl-2",
     date: seedDay(0),
     source: "en_ligne",
+    // Pré-commande un soin Kérastase à retirer en repartant.
+    extras: [{ kind: "produit", refId: "nutritive-bain-riche-250ml", qty: 1 }],
     rendezVous: [
       {
         id: "rdv-4a",
@@ -172,6 +180,152 @@ export const RESERVATIONS: Reservation[] = [
         beneficiaryName: "Salématou (7 ans)",
         start: "13:00",
         durationMin: 30,
+        status: "actif",
+      },
+    ],
+  },
+
+  // Même prestation « à 2 » deux fois, pour la payeuse puis pour sa sœur : quatre praticiennes au
+  // total sur ce seul rendez-vous — plus deux boissons pré-commandées.
+  {
+    id: "res-22",
+    payerClientId: "cl-5",
+    date: seedDay(0),
+    source: "en_ligne",
+    extras: [
+      { kind: "boisson", refId: "boisson-dragon-mystic", qty: 1 },
+      { kind: "boisson", refId: "boisson-ice-coffee-caramel", qty: 1 },
+    ],
+    rendezVous: [
+      {
+        id: "rdv-22a",
+        reservationId: "res-22",
+        serviceId: "coiffure-tissage-versatile",
+        staffId: "bineta",
+        secondStaffId: "fatou",
+        start: "09:00",
+        durationMin: 60,
+        status: "actif",
+      },
+      {
+        id: "rdv-22b",
+        reservationId: "res-22",
+        serviceId: "coiffure-tissage-versatile",
+        staffId: "michelle",
+        secondStaffId: "gnagna",
+        beneficiaryName: "Aïda (sœur)",
+        start: "09:00",
+        durationMin: 60,
+        status: "actif",
+      },
+    ],
+  },
+
+  // Trois femmes sur une même note — la payeuse et deux amies, chacune sa prestation d'onglerie.
+  {
+    id: "res-23",
+    payerClientId: "cl-9",
+    date: seedDay(0),
+    source: "en_ligne",
+    extras: [
+      { kind: "produit", refId: "antiseptique-saryna-keys", qty: 1 },
+      { kind: "produit", refId: "damage-repair-oil-saryna-keys", qty: 1 },
+    ],
+    rendezVous: [
+      {
+        id: "rdv-23a",
+        reservationId: "res-23",
+        serviceId: "manucure-pedicure-manucure-spa-express",
+        staffId: "gnagna",
+        start: "10:00",
+        durationMin: 45,
+        status: "actif",
+      },
+      {
+        id: "rdv-23b",
+        reservationId: "res-23",
+        serviceId: "manucure-pedicure-jelly-pedicure",
+        staffId: "adja",
+        beneficiaryName: "Rokhaya (amie)",
+        start: "10:00",
+        durationMin: 65,
+        status: "actif",
+      },
+      {
+        id: "rdv-23c",
+        reservationId: "res-23",
+        serviceId: "manucure-pedicure-smooth-pedicure",
+        staffId: "marie-dominique",
+        beneficiaryName: "Marème (amie)",
+        start: "10:00",
+        durationMin: 80,
+        status: "actif",
+      },
+    ],
+  },
+
+  // La payeuse + son mari, chacun sa prestation — composition « 1 femme + 1 homme » — avec trois
+  // produits à emporter.
+  {
+    id: "res-24",
+    payerClientId: "cl-4",
+    date: seedDay(0),
+    source: "en_ligne",
+    extras: [
+      { kind: "produit", refId: "k-elixir-oil-30ml", qty: 1 },
+      { kind: "produit", refId: "correcteur-fluide-swiss-perfection-haute-couvrance", qty: 1 },
+      { kind: "produit", refId: "peigne-bijou-eclat-de-mariee-finition-or-rose", qty: 1 },
+    ],
+    rendezVous: [
+      {
+        id: "rdv-24a",
+        reservationId: "res-24",
+        serviceId: "coiffure-shampoing-sechage",
+        staffId: "michelle",
+        start: "15:00",
+        durationMin: 60,
+        status: "actif",
+      },
+      {
+        id: "rdv-24b",
+        reservationId: "res-24",
+        serviceId: "manucure-pedicure-manucure-spa-express",
+        staffId: "gnagna",
+        beneficiaryName: "Moussa (mari)",
+        beneficiaryKind: "homme",
+        start: "15:00",
+        durationMin: 45,
+        status: "actif",
+      },
+    ],
+  },
+
+  // Une mère dépose ses deux enfants — composition « 2 enfants », elle ne reçoit elle-même aucune
+  // prestation.
+  {
+    id: "res-25",
+    payerClientId: "cl-10",
+    date: seedDay(0),
+    source: "en_ligne",
+    rendezVous: [
+      {
+        id: "rdv-25a",
+        reservationId: "res-25",
+        serviceId: "mini-co-mini-jely-manucure",
+        staffId: "adja",
+        beneficiaryName: "Khady (8 ans)",
+        start: "11:00",
+        durationMin: 30,
+        status: "actif",
+      },
+      {
+        id: "rdv-25b",
+        reservationId: "res-25",
+        serviceId: "mini-co-mini-cutie-pedicure",
+        staffId: "gnagna",
+        beneficiaryName: "Aïcha (5 ans)",
+        start: "11:00",
+        durationMin: 35,
         status: "actif",
       },
     ],
@@ -384,6 +538,35 @@ export function groupDayByReservation(
     })
     .filter((row) => row.rendezVous.length > 0 && (includeCancelled || !row.allCancelled))
     .sort((a, b) => a.start.localeCompare(b.start) || a.reservation.payerClientId.localeCompare(b.reservation.payerClientId));
+}
+
+/**
+ * « 1 femme + 1 enfant » — la ligne de composition de l'Accueil (Figma 242:1735) : qui est
+ * physiquement du passage, comptée par personne distincte (pas par rendez-vous). Une prestation
+ * Mini&Co vaut toujours « enfant » ; sinon `beneficiaryKind` tranche pour un·e bénéficiaire en
+ * texte libre (un mari, un frère) ; une fiche connue ou l'absence de bénéficiaire (= la payeuse)
+ * valent toujours « femme ». Une payeuse qui ne reçoit elle-même aucune prestation (elle dépose ses
+ * enfants) n'apparaît pas dans le décompte.
+ */
+export function reservationComposition(reservation: Reservation): string {
+  const people = new Map<string, BeneficiaryKind>();
+  for (const rv of reservation.rendezVous) {
+    if (rv.status === "annule") continue;
+    const key = rv.beneficiaryClientId ?? rv.beneficiaryName ?? "__payer__";
+    if (people.has(key)) continue;
+    const service = serviceById(rv.serviceId);
+    const kind: BeneficiaryKind = service?.categoryId === "mini-co" ? "enfant" : (rv.beneficiaryKind ?? "femme");
+    people.set(key, kind);
+  }
+
+  const counts = { femme: 0, homme: 0, enfant: 0 };
+  for (const kind of people.values()) counts[kind] += 1;
+
+  const parts: string[] = [];
+  if (counts.femme > 0) parts.push(`${counts.femme} femme${counts.femme > 1 ? "s" : ""}`);
+  if (counts.homme > 0) parts.push(`${counts.homme} homme${counts.homme > 1 ? "s" : ""}`);
+  if (counts.enfant > 0) parts.push(`${counts.enfant} enfant${counts.enfant > 1 ? "s" : ""}`);
+  return parts.join(" + ") || "1 femme";
 }
 
 export function reservationById(reservations: Reservation[], id: string) {
