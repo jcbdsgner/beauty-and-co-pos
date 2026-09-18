@@ -5,11 +5,11 @@ import { useReactToPrint } from "react-to-print";
 import { Printer } from "lucide-react";
 import { Badge } from "@/components/ui/atoms/badge";
 import { Button } from "@/components/ui/atoms/button";
-import { Board, BoardHeader, BoardEmpty } from "@/components/ui/board";
+import { BoardHeader, Legend } from "@/components/ui/board";
 import { GiftCard } from "@/components/shared/gift-card";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { clientFullName } from "@/lib/data/clientele";
-import { cn, formatFcfa } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import type { GiftCardOrder } from "@/lib/data/types";
 
 const PRINT_PAGE_STYLE = `@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }`;
@@ -33,7 +33,9 @@ function waitLabel(days: number): string {
 /**
  * Cartes cadeaux à préparer (ADR 0012) — les cartes achetées en version imprimée : d'abord les
  * imprimer, puis les remettre (retrait) ou les confier à la livraison. Aucun encaissement, c'est
- * déjà payé. Deux plaques pour les deux gestes ; une commande `remise` / `livree` quitte la file.
+ * déjà payé. Deux grilles de blocs pour les deux gestes ; une commande `remise` / `livree` quitte
+ * la file. Chaque bloc affiche la carte elle-même (c'est aussi la cible d'impression) plutôt
+ * qu'une ligne de liste : l'objet qu'on prépare doit se reconnaître d'un coup d'œil.
  */
 export function GiftCardQueue() {
   const { giftCardOrders } = useAppData();
@@ -48,27 +50,35 @@ export function GiftCardQueue() {
       <BoardHeader section="Cartes cadeaux" backHref="/" backLabel="Accueil" />
 
       {total === 0 ? (
-        <Board legend="À préparer">
-          <BoardEmpty
-            title="Aucune carte à préparer"
-            hint="Les cartes cadeaux achetées en version imprimée apparaîtront ici."
-          />
-        </Board>
+        <div className="rounded-field border border-dashed border-base-300 px-4 py-12 text-center">
+          <p className="font-[family-name:var(--font-heading)] text-[15px] font-semibold text-base-content/60">
+            Aucune carte à préparer
+          </p>
+          <p className="mt-1 text-sm text-base-content/45">
+            Les cartes cadeaux achetées en version imprimée apparaîtront ici.
+          </p>
+        </div>
       ) : (
         <>
           {toPrint.length > 0 && (
-            <Board legend={`À imprimer · ${toPrint.length}`}>
-              {toPrint.map((order) => (
-                <GiftCardQueueRow key={order.id} order={order} />
-              ))}
-            </Board>
+            <section>
+              <Legend className="mb-2 block pl-1">À imprimer · {toPrint.length}</Legend>
+              <div className="grid grid-cols-2 gap-4 xl:grid-cols-3">
+                {toPrint.map((order) => (
+                  <GiftCardQueueTile key={order.id} order={order} />
+                ))}
+              </div>
+            </section>
           )}
           {toHandOver.length > 0 && (
-            <Board legend={`Prêtes à remettre · ${toHandOver.length}`}>
-              {toHandOver.map((order) => (
-                <GiftCardQueueRow key={order.id} order={order} />
-              ))}
-            </Board>
+            <section>
+              <Legend className="mb-2 block pl-1">Prêtes à remettre · {toHandOver.length}</Legend>
+              <div className="grid grid-cols-2 gap-4 xl:grid-cols-3">
+                {toHandOver.map((order) => (
+                  <GiftCardQueueTile key={order.id} order={order} />
+                ))}
+              </div>
+            </section>
           )}
         </>
       )}
@@ -76,7 +86,7 @@ export function GiftCardQueue() {
   );
 }
 
-function GiftCardQueueRow({ order }: { order: GiftCardOrder }) {
+function GiftCardQueueTile({ order }: { order: GiftCardOrder }) {
   const { clients, printGiftCardOrder, markGiftCardOrderHandedOver } = useAppData();
   const buyer = clients.find((c) => c.id === order.buyerClientId);
   const buyerName = buyer ? clientFullName(buyer) : "Cliente inconnue";
@@ -93,79 +103,57 @@ function GiftCardQueueRow({ order }: { order: GiftCardOrder }) {
   const days = daysWaiting(order.orderedAt);
   const stale = days >= STALE_DAYS;
 
+  const detail = isLivraison
+    ? printed
+      ? `Livrer à ${order.recipientName} — ${order.recipientPhone} · ${order.deliveryAddress}`
+      : `Pour ${order.recipientName}`
+    : printed && buyer
+      ? `Retrait au comptoir — prévenir au ${buyer.phone}`
+      : "Retrait au comptoir";
+
   return (
     <div
       className={cn(
-        "relative flex items-center gap-4 border-b border-base-300 px-4 py-2.5 last:border-b-0",
-        "min-h-14",
+        "flex flex-col gap-3 rounded-field border bg-base-100 p-4",
+        stale ? "border-warning" : "border-base-300",
       )}
     >
-      {/* reserved amber signal slot — a card that has waited too long holds the edge */}
-      <span
-        aria-hidden
-        className={cn("absolute inset-y-0 left-0 w-[3px]", stale ? "bg-warning" : "bg-transparent")}
-      />
-
-      {/* Off-screen print target — react-to-print reads the live DOM, so keep it mounted. */}
-      <div aria-hidden className="pointer-events-none fixed -left-[9999px] top-0">
-        <div ref={cardRef}>
-          <GiftCard code={order.code} balance={order.amount} />
-        </div>
+      {/* the print target is the card itself — react-to-print reads this live DOM node */}
+      <div ref={cardRef}>
+        <GiftCard code={order.code} balance={order.amount} />
       </div>
 
-      {/* figure column — amount over wait, aligned down the board */}
-      <span className="flex w-[76px] shrink-0 flex-col leading-tight">
-        <span className="font-[family-name:var(--font-heading)] text-[15px] font-semibold tabular-nums text-base-content">
-          {formatFcfa(order.amount)}
+      <div className="flex items-start justify-between gap-2">
+        <span className="min-w-0">
+          <span className="block truncate font-[family-name:var(--font-heading)] text-[15px] font-semibold text-base-content">
+            {buyerName}
+          </span>
+          <span className="mt-0.5 line-clamp-2 text-[13px] text-base-content/55">{detail}</span>
         </span>
+        <Badge variant={isLivraison ? "info" : "neutral"} className="shrink-0">
+          {isLivraison ? "Livraison" : "Retrait"}
+        </Badge>
+      </div>
+
+      <div className="flex items-center justify-between gap-2 border-t border-base-300 pt-3">
         <span
           className={cn(
-            "text-[0.7rem] font-semibold tabular-nums",
+            "shrink-0 whitespace-nowrap text-[0.7rem] font-semibold tabular-nums",
             stale ? "text-warning" : "text-base-content/45",
           )}
         >
           {waitLabel(days)}
         </span>
-      </span>
 
-      {/* identity + hand-over target */}
-      <span className="flex min-w-0 flex-1 flex-col gap-0.5 py-1.5">
-        <span className="flex items-center gap-2">
-          <span className="truncate font-[family-name:var(--font-heading)] text-[15px] font-semibold text-base-content">
-            {buyerName}
-          </span>
-          <Badge variant={isLivraison ? "info" : "neutral"}>{isLivraison ? "Livraison" : "Retrait"}</Badge>
-        </span>
-
-        {isLivraison ? (
-          printed ? (
-            <span className="text-[13px] leading-snug text-base-content/55">
-              <span className="text-base-content/80">Livrer à {order.recipientName}</span>
-              {" — "}
-              {order.recipientPhone} · {order.deliveryAddress}
-            </span>
-          ) : (
-            <span className="truncate text-[13px] text-base-content/55">Pour {order.recipientName}</span>
-          )
-        ) : (
-          <span className="text-[13px] text-base-content/55">
-            Retrait au comptoir
-            {printed && buyer ? ` — prévenir au ${buyer.phone}` : ""}
-          </span>
-        )}
-      </span>
-
-      {/* actions */}
-      <span className="flex shrink-0 items-center gap-2">
         {printed ? (
-          <>
+          <div className="flex gap-2">
             <Button variant="outline" size="sm" icon={<Printer className="size-4" />} onClick={() => print()}>
               Réimprimer
             </Button>
             <Button variant="dark" size="sm" onClick={() => markGiftCardOrderHandedOver(order.id)}>
               {isLivraison ? "Marquer comme expédiée" : "Marquer comme remise"}
             </Button>
-          </>
+          </div>
         ) : (
           <Button
             variant="dark"
@@ -179,7 +167,7 @@ function GiftCardQueueRow({ order }: { order: GiftCardOrder }) {
             Imprimer
           </Button>
         )}
-      </span>
+      </div>
     </div>
   );
 }
