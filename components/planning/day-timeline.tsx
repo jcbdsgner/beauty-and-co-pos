@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import { Eye, MoreHorizontal, UserX, Users } from "lucide-react";
 import { Avatar } from "@/components/ui/atoms/avatar";
 import { IconButton } from "@/components/ui/atoms/icon-button";
@@ -64,6 +64,16 @@ function nowMinutes() {
   return d.getHours() * 60 + d.getMinutes();
 }
 
+function subscribeNever() {
+  return () => {};
+}
+
+/** `false` au rendu serveur et à la première passe client (identiques, donc pas de mismatch
+ *  d'hydratation), `true` juste après — le trait "maintenant" n'apparaît qu'à ce moment-là. */
+function useMounted() {
+  return useSyncExternalStore(subscribeNever, () => true, () => false);
+}
+
 /** L'horaire hebdomadaire nominal, ou — si absent (repos) mais que des rendez-vous existent quand
  *  même ce jour-là (donnée de démonstration désalignée avec l'horaire type) — une plage dérivée de
  *  ces rendez-vous, pour ne jamais griser une ligne qui a pourtant un rendez-vous dedans. */
@@ -97,8 +107,11 @@ export function DayTimeline({ date, isToday, staff, rows, clients, onOpenReserva
   const hourMarks: number[] = [];
   for (let m = gridStart; m <= gridEnd; m += 60) hourMarks.push(m);
 
+  // Rendu client-only : `now` dépend de l'heure d'exécution, qui diverge entre le rendu serveur et
+  // l'hydratation client (React hydration mismatch). On n'affiche le trait "maintenant" qu'après montage.
+  const mounted = useMounted();
   const now = nowMinutes();
-  const showNow = isToday && now > gridStart && now < gridEnd;
+  const showNow = mounted && isToday && now > gridStart && now < gridEnd;
 
   if (staff.length === 0) {
     return <div className="px-6 py-14 text-center text-sm text-base-content/45">Aucune praticienne sélectionnée.</div>;
