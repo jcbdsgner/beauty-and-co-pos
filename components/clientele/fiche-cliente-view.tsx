@@ -117,26 +117,24 @@ export function FicheClienteView({ clientId }: { clientId: string }) {
 
   return (
     <div className="flex flex-col">
-      {/* Bandeau d'identité collant — la plaque ardoise de la cliente. Isolé dans son propre contexte
-          d'empilement et sorti du flux `gap` : au scroll il couvre proprement le contenu qui passe
-          dessous, sans bande morte ni coin de plaque qui dépasse. */}
-      <div className="sticky top-0 z-30 isolate -mx-8 -mt-8 mb-6 border-b border-white/15 bg-neutral px-8 py-4 shadow-[0_12px_24px_-14px_rgba(0,0,0,0.55)]">
+      {/* Bandeau d'identité collant — un titre nu sur le mur crème (ADR 0007), pas une plaque ardoise. */}
+      <div className="sticky top-0 z-30 isolate -mx-8 -mt-8 mb-6 border-b border-base-300 bg-white px-8 py-4 shadow-[0_8px_10px_-6px_rgba(0,0,0,0.07)]">
         <Link
           href="/clientele"
-          className="mb-2 inline-flex h-8 items-center gap-1.5 rounded-full border border-white/20 bg-white/5 px-3 text-xs font-medium text-white/70 transition hover:bg-white/10 hover:text-white"
+          className="mb-2 inline-flex h-8 items-center gap-1.5 rounded-full border border-base-300 bg-accent px-3 text-xs font-medium text-secondary transition hover:bg-base-300/60"
         >
           <ChevronLeft aria-hidden className="size-3.5" />
           Clientèle
         </Link>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3">
-            <Avatar initial={clientInitial(client)} size={48} className="bg-white/10 text-lg font-semibold text-white" />
+            <Avatar initial={clientInitial(client)} size={48} className="bg-accent text-lg font-semibold text-secondary" />
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h1 className="truncate font-[family-name:var(--font-heading)] text-2xl font-bold text-white">{clientFullName(client)}</h1>
+                <h1 className="truncate font-[family-name:var(--font-heading)] text-2xl font-medium text-base-content">{clientFullName(client)}</h1>
                 {client.tier && <FlipChip value={TIER_LABEL[client.tier]} tone={client.tier === "vip" ? "act" : "now"} className="min-w-0 px-2" />}
               </div>
-              <p className="truncate text-sm text-white/55">
+              <p className="truncate text-sm text-base-content/55">
                 Cliente depuis {new Date(client.createdAt).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}
                 {client.lastVisit ? ` · dernière visite ${client.lastVisit}` : ""}
               </p>
@@ -151,7 +149,7 @@ export function FicheClienteView({ clientId }: { clientId: string }) {
             </Button>
           </div>
         </div>
-        {!canContact && <p className="mt-2 text-xs text-white/40">Aucune coordonnée enregistrée — ajoutez un téléphone pour pouvoir la contacter.</p>}
+        {!canContact && <p className="mt-2 text-xs text-base-content/40">Aucune coordonnée enregistrée — ajoutez un téléphone pour pouvoir la contacter.</p>}
       </div>
 
       <div className="grid items-start gap-6 lg:grid-cols-[1.35fr_1fr]">
