@@ -1,3 +1,8 @@
+> **Amendé par [ADR 0020](0020-planning-calendrier-par-collaboratrice.md)** : le Planning perd sa
+> vue « Liste chronologique » (`DayList`) et sa vue « Grille calendrier » (`DayGrid`) au profit
+> d'un calendrier par collaboratrice, seul écran. La section ci-dessous ne décrit plus que la vue
+> qui survit, sur l'Accueil (`AccueilDayList`, déjà forkée de `DayList` avant même l'ADR 0020).
+
 # La vue journée : chronologique par réservation, avec trois vues
 
 Le Planning et le bloc « Le jour » de l'Accueil affichaient la journée **groupée par

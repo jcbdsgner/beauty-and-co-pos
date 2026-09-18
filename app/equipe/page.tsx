@@ -1,9 +1,10 @@
-import { PlanningBoard } from "@/components/planning/planning-board";
+import { redirect } from "next/navigation";
 
 /**
- * Équipe — plus de sous-page distincte : le roster est l'écran « Planning » du Planning (la
- * grille heures × praticiennes). Cette route ouvre le Planning directement sur cette bascule.
+ * Équipe — n'a jamais été une sous-page distincte (ADR 0005) : le roster est le Planning. Depuis
+ * la refonte totale du Planning (ADR 0020), il n'existe plus qu'un seul écran — cette route
+ * redirige simplement vers lui.
  */
 export default function EquipePage() {
-  return <PlanningBoard initialView="planning" />;
+  redirect("/planning");
 }

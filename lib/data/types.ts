@@ -5,16 +5,24 @@
 
 export type Role = "coiffeuse" | "estheticienne" | "menage" | "accueil";
 
+export type DayOfWeek = "lun" | "mar" | "mer" | "jeu" | "ven" | "sam" | "dim";
+
+/** Une plage de présence, "HH:mm" -> "HH:mm". */
+export type DayHours = { start: string; end: string };
+
+/** L'horaire hebdomadaire récurrent d'une praticienne (ADR 0020) — un jour absent de l'objet est
+ *  un jour de repos. Remplace l'ancien `shiftStart`/`shiftEnd`/`workingToday`, qui ne décrivait
+ *  qu'« aujourd'hui » et ne suivait pas la navigation du Planning dans le temps. */
+export type WeeklySchedule = Partial<Record<DayOfWeek, DayHours>>;
+
 export type Praticienne = {
   id: string;
   name: string;
   role: Role;
   initial: string;
-  workingToday: boolean;
+  weeklySchedule: WeeklySchedule;
+  /** Absence ponctuelle du jour (dernière minute) — vient par-dessus l'horaire hebdomadaire. */
   unavailableToday?: boolean;
-  /** Today's presence hours — hard roster data, shown in the Équipe rail. "HH:mm". Absent ⇒ jour de repos. */
-  shiftStart?: string;
-  shiftEnd?: string;
 };
 
 export type ClientTier = "vip" | "gold" | "silver" | null;

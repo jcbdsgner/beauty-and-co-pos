@@ -16,8 +16,8 @@
 |---|---|---|---|
 | `/` | [`app/page.tsx`](../app/page.tsx) | **Accueil** — centre de pilotage du jour | inline (cartes daisyUI — refonte Figma 156-72) |
 | `/recap-ventes` | [`app/recap-ventes/page.tsx`](../app/recap-ventes/page.tsx) | **Récap des ventes** | inline (`BoardHeader` + `DataTable`/`StatBand`) |
-| `/planning` | [`app/planning/page.tsx`](../app/planning/page.tsx) | **Planning** (groupé par praticienne) | [`components/planning/planning-board.tsx`](../components/planning/planning-board.tsx) |
-| `/equipe` | [`app/equipe/page.tsx`](../app/equipe/page.tsx) | **Équipe** = Planning sur la vue par praticienne | même `PlanningBoard` (`initialView="praticienne"`) |
+| `/planning` | [`app/planning/page.tsx`](../app/planning/page.tsx) | **Planning** — calendrier par praticienne (ADR 0020) | [`components/planning/planning-board.tsx`](../components/planning/planning-board.tsx) |
+| `/equipe` | [`app/equipe/page.tsx`](../app/equipe/page.tsx) | *(redirige vers `/planning`, ADR 0020 — n'a jamais été un écran distinct, ADR 0005)* | — |
 | `/clientele` | [`app/clientele/page.tsx`](../app/clientele/page.tsx) | **Clientèle** — recherche d'abord | [`components/clientele/repertoire-view.tsx`](../components/clientele/repertoire-view.tsx) |
 | `/clientele/[id]` | [`app/clientele/[id]/page.tsx`](../app/clientele/[id]/page.tsx) | **Fiche cliente** | [`components/clientele/fiche-cliente-view.tsx`](../components/clientele/fiche-cliente-view.tsx) |
 | `/clientele/[id]/fidelite` | [`app/clientele/[id]/fidelite/page.tsx`](../app/clientele/[id]/fidelite/page.tsx) | **Carte de fidélité** (plein écran, imprimable) | [`components/clientele/fidelite-view.tsx`](../components/clientele/fidelite-view.tsx) |
@@ -55,7 +55,9 @@ Structure : `Sidebar` | ( page scrollable `max-w-6xl` + `ComptoirBar` ) + `Compt
 ### Accueil — `/` — [`app/page.tsx`](../app/page.tsx)
 Landing, refonte Figma 156-72 (base daisyUI, cartes — plus de `Board`/`Lane`). `BoardHeader` (titre + `action` : lien externe **« Créer un rendez-vous »**, `BOOKING_URL` de [`lib/data/planning.ts`](../lib/data/planning.ts), `Button external` — 2ᵉ point d'entrée vers la plateforme, l'autre étant le pied du dialogue d'édition, ADR 0009). Le bloc de compteurs « Le point du jour » est **retiré** (la journée est visible, la file a son lien). Deux sections :
 1. **Cartes cadeaux** — [`AccueilGiftCards`](../components/journee/accueil-gift-cards.tsx) : aperçu compact de la file de préparation (ADR 0012) — les 3 commandes non résolues les plus anciennes en cartes côte à côte, en-tête (badge Retrait/Livraison + identifiant) séparé par un filet du corps, **bord ambre si ≥ 4 j**. Identifiant et corps dépendent de l'état : **non imprimée** → code en en-tête, coordonnées (nom · tél, puis adresse/e-mail) en corps, action **Imprimer** ; **imprimée, livraison** → code en en-tête, coordonnées destinataire en corps, action **Marquer comme expédiée** ; **imprimée, retrait** → nom de l'acheteuse en en-tête (qui chercher), champ code + bouton scan (visuel, `Scanner ou saisir une carte`) en corps, action **Marquer comme remis**. Lien **« Voir tout · N »** → `/cartes-cadeaux`. Section **masquée** quand il n'y a rien à préparer.
-2. **Rendez-vous** — [`AccueilDayList`](../components/journee/accueil-day-list.tsx) : la journée en grille fixe de 3 cartes (une carte = une réservation, heure `start → end` · avatar + payeuse · composition du passage « 1 femme + 1 enfant » (ADR 0018) · jusqu'à 3 lignes prestations + extras (boisson/produit pré-commandé), le reste en « + N de plus » — la carte ne grossit jamais — suffixe ambre « · à encaisser » si passé sans vente). Actions par carte : **Voir les détails** (`AppointmentDetailSheet`, détail complet) + **Encaisser** / **Voir la vente** (`useEncaissement`). Filtré sur le jour courant. **Ne partage plus la `DayList` du Planning** (divergence assumée le temps de la passe daisyUI du Planning — pas de rail, pas de filet « maintenant », pas de dépliage). Vide → « Journée libre » + lien planning.
+2. **Rendez-vous** — bascule `SegmentedToggle` **Liste / Calendrier** (ADR 0019), filtré sur le jour courant, vide → « Journée libre » + lien planning.
+   - **Liste** (défaut) — [`AccueilDayList`](../components/journee/accueil-day-list.tsx) : grille fixe de 3 cartes (une carte = une réservation, heure `start → end` · avatar + payeuse · composition du passage « 1 femme + 1 enfant » (ADR 0018) · jusqu'à 3 lignes prestations + extras (boisson/produit pré-commandé), le reste en « + N de plus » — la carte ne grossit jamais — suffixe ambre « · à encaisser » si passé sans vente). Actions par carte : **Voir les détails** (`AppointmentDetailSheet`, détail complet) + **Encaisser** / **Voir la vente** (`useEncaissement`). **Ne partage plus la `DayList` du Planning** (divergence assumée le temps de la passe daisyUI du Planning — pas de rail, pas de filet « maintenant », pas de dépliage).
+   - **Calendrier** (nouveau) — [`AccueilCalendar`](../components/journee/accueil-calendar.tsx) : rail heures + une colonne, un bloc = une réservation (grain réservation, pas rendez-vous), positionné sur son passage `start → end`, empilement d'avatars des praticiennes distinctes de la réservation. Réservations simultanées → colonnes côte à côte (lane-packing glouton). Survol → `Tooltip` (payeuse, heure, composition, praticiennes) pour désambiguïser un bloc rétréci. Clic → `AppointmentDetailSheet`. Pas de bouton Encaisser inline (bloc trop étroit en cas de chevauchement).
 - Dialogs : `AppointmentDetailSheet`, `encaissementDialog` via `useEncaissement`.
 
 ### Cartes cadeaux — `/cartes-cadeaux` — [`components/journee/gift-card-queue.tsx`](../components/journee/gift-card-queue.tsx) (ADR 0012)
@@ -68,17 +70,22 @@ File des `GiftCardOrder` non résolus, **deux plaques** pour les deux gestes : �
 - `DataTable` des ventes encaissées → clic ouvre `ReceiptView` en `Dialog`.
 - Ligne « ventes abandonnées » en pied.
 
-### Planning — `/planning` (et Équipe `/equipe`) — [`components/planning/planning-board.tsx`](../components/planning/planning-board.tsx)
-Un seul composant `PlanningBoard`, prop `initialView` (`"chrono"` | `"praticienne"` | `"grille"`) — `/planning` → `chrono`, `/equipe` → `praticienne` (ADR 0014).
-- `BoardHeader section="Planning"` + `reset`.
-- `WeekStrip` (sélecteur de jour sur la semaine).
-- `ChipFilter` de vue (Liste chronologique / Par praticienne / Grille calendrier) + `Switch` « Afficher les rendez-vous annulés ».
-- `Board` « Le jour » avec **rail de légende 280px** = roster de l'équipe (chacune + horaire de présence du jour). Groupes Équipe / Ménage.
-- **Liste chronologique** (défaut) : `DayList` — une ligne par réservation, triée par heure, dépliable en prestations. **Par praticienne** : lanes groupées, grain rendez-vous. **Grille calendrier** : `DayGrid` — heures × praticiennes, blocs positionnés.
-- Par lane : Encaisser, ouvrir `AppointmentDetailSheet`, menu `…` (marquer indisponible, voir).
-- **Aucune création de réservation** (ADR 0006/0009). Sous-composants :
+### Planning — `/planning` — [`components/planning/planning-board.tsx`](../components/planning/planning-board.tsx)
+Refonte totale (ADR 0020) : un seul écran, le programme de chaque praticienne — plus de bascule de
+vue, plus de liste de réservations (celle-ci ne vit plus que sur l'Accueil). `/equipe` redirige ici.
+- `BoardHeader section="Planning"` + `reset` (« Aujourd'hui », si la date affichée n'est pas aujourd'hui).
+- `DateStrip` — sélecteur de jour sur la semaine (daisyUI natif, remplace `WeekStrip` de `board.tsx`).
+- `ChipFilter` Jour/Semaine + `Switch` « Afficher les annulés ». Pas de vue Mois (hors périmètre, ADR 0020).
+- `RosterFilter` — sidebar (avatar + case à cocher par praticienne, groupée Coiffeur/Esthéticien/Ménage,
+  menu `…` : Isoler cette ligne / Marquer absente aujourd'hui). Remplace le rail de colonnes.
+- Corps : `DayTimeline` (vue Jour) ou `WeekTimeline` (vue Semaine) — **une ligne par praticienne**, le
+  temps défile **horizontalement** (axe renversé vs l'ancien `DayGrid`). Zone grisée = hors de
+  l'horaire hebdomadaire (`Praticienne.weeklySchedule`) du jour affiché ; ligne entière grisée
+  (hachures) = jour de repos. Taper un bloc ouvre `AppointmentDetailSheet`.
+- **Aucune création de réservation** (ADR 0006/0009) — le bouton « Créer un rendez-vous » ne vit plus
+  que sur l'Accueil. Sous-composants (inchangés) :
   - `AppointmentDetailSheet` — [`components/planning/appointment-detail-sheet.tsx`](../components/planning/appointment-detail-sheet.tsx) — fiche réservation : payeuse, prestations, praticiennes ; Encaisser / Ajuster / Annuler (motif facultatif).
-  - `EditRendezVousDialog` — [`components/planning/edit-rendez-vous-dialog.tsx`](../components/planning/edit-rendez-vous-dialog.tsx) — ajuster (prestation/praticienne/bénéficiaire), reprogrammer, ajouter/retirer un rendez-vous, annuler. Bouton « Créer un rendez-vous » → plateforme externe.
+  - `EditRendezVousDialog` — [`components/planning/edit-rendez-vous-dialog.tsx`](../components/planning/edit-rendez-vous-dialog.tsx) — ajuster (prestation/praticienne/bénéficiaire), reprogrammer, ajouter/retirer un rendez-vous, annuler.
 
 ### Clientèle — `/clientele` — [`components/clientele/repertoire-view.tsx`](../components/clientele/repertoire-view.tsx)
 Recherche d'abord (mécanisme partagé = `ClientSearchField` / `searchClients`).
@@ -164,7 +171,7 @@ Actions clés : `addClient`/`updateClient`, `cancelAppointment`/`rescheduleRende
 | `planning.ts` | `RESERVATIONS` (réservations « du jour ») + `flattenRendezVous`, `reservationById`, `appointmentEndTime`, `timeToMinutes`. |
 | `menu.ts` | `SERVICES` (verbatim du catalogue b&co), `PRODUITS`, `SERVICE_CATEGORIES`, `PRODUCT_CATEGORIES` (marques : Kérastase, Saryna Keys, Nefertiti, Beccy Wave, Autres), `KERASTASE_GAMMES`, `serviceById`. |
 | `boissons.ts` | `BOISSONS` — le Bar b&co (type `Boisson`, sans catégorie ni stock, ADR 0016). |
-| `praticiennes.ts` | `PRATICIENNES` (roster + horaires du jour). |
+| `praticiennes.ts` | `PRATICIENNES` (roster + `weeklySchedule` — horaire hebdomadaire récurrent, ADR 0020) + `scheduleFor`/`isWorkingOn`/`dayOfWeek`. |
 | `conversations.ts` | `CONVERSATIONS` (9 fils de démo, ADR 0011) + `conversationByClientId` / `conversationById`. |
 | `styles.ts` | `STYLES` (Catalogue → Les Planches). |
 | `cartes-cadeaux.ts` | `CARTES_CADEAUX` + `carteCadeauByCode`, `normalizeGiftCardCode`, `giftCardExpiryLabel`. |
@@ -175,7 +182,7 @@ Actions clés : `addClient`/`updateClient`, `cancelAppointment`/`rescheduleRende
 
 ## 6. Kit UI — [`components/ui/`](../components/ui/)
 
-- **`board.tsx`** — langage « Le Tableau » (ADR 0005) : `BoardHeader`, `Board`, `Lane`, `Legend`, `FlipChip`, `WeekStrip`, `ChipFilter`, `VoletSwitch`, `BoardEmpty`. Utilisé par Accueil, Planning, Clientèle, Catalogue (Messages a son propre langage maître-détail).
+- **`board.tsx`** — langage « Le Tableau » (ADR 0005) : `BoardHeader`, `Board`, `Lane`, `Legend`, `FlipChip`, `WeekStrip`, `ChipFilter`, `VoletSwitch`, `BoardEmpty`. Utilisé par Accueil, Clientèle, Catalogue (Messages a son propre langage maître-détail) — plus seulement `BoardHeader`/`ChipFilter` côté Planning depuis sa refonte daisyUI native (ADR 0020) ; `WeekStrip` n'a plus aucun appelant (export mort, gardé pour Clientèle/Catalogue si besoin).
 - **`atoms/`** — `button`, `badge`, `avatar`, `card`, `text-input`, `textarea`, `select`, `checkbox`, `switch`, `search-input`, `icon-button`, `logo`, `brand-mark`, `hero-number`, `progress-bar`, `round-step-button`, `photo-placeholder`, `spinner`, `skeleton`, `separator`, `tooltip`, `field-label`, `icons`.
 - **`molecules/`** — `dialog`, `confirm-dialog`, `popover`, `dropdown-menu`, `tabs`, `accordion`, `command`, `pills`, `segmented-toggle`, `radio-group`, `stepper`, `numeric-keypad`, `date-picker`, `file-upload`, `input-otp`, `toast`, `alert`, `breadcrumb`, `empty-state`, `stat-tile`, `person-card`, `relance-card`, `appointment-timeline-row`, `sale-tray-trigger`, `field`, `carousel`.
 - **`organisms/`** — `toolbar`, `data-table`, `docked-panel`.
@@ -191,8 +198,9 @@ Tokens de marque : [`app/globals.css`](../app/globals.css) — `--core-brand-col
 |---|---|
 | Écran d'accueil / du jour | [`app/page.tsx`](../app/page.tsx) |
 | Chiffre d'affaires, ventes du jour, reçus historiques | [`app/recap-ventes/page.tsx`](../app/recap-ventes/page.tsx) |
-| Agenda, semaine, absences, ajuster/reprogrammer/annuler une réservation | [`components/planning/planning-board.tsx`](../components/planning/planning-board.tsx) + `appointment-detail-sheet.tsx` + `edit-rendez-vous-dialog.tsx` |
-| Roster / horaires équipe | `PlanningBoard` (rail), [`lib/data/praticiennes.ts`](../lib/data/praticiennes.ts) |
+| Programme d'une praticienne, semaine, absences | [`components/planning/planning-board.tsx`](../components/planning/planning-board.tsx) (`day-timeline.tsx`/`week-timeline.tsx`/`roster-filter.tsx`) |
+| Ajuster/reprogrammer/annuler une réservation, encaisser depuis une fiche | `appointment-detail-sheet.tsx` + `edit-rendez-vous-dialog.tsx` |
+| Roster / horaire hebdomadaire équipe | `RosterFilter`, [`lib/data/praticiennes.ts`](../lib/data/praticiennes.ts) (`weeklySchedule`) |
 | Rechercher / créer une cliente | [`components/clientele/repertoire-view.tsx`](../components/clientele/repertoire-view.tsx), `new-client-dialog.tsx`, `shared/client-search-field.tsx` |
 | Fiche cliente, notes, préférences, coordonnées | [`components/clientele/fiche-cliente-view.tsx`](../components/clientele/fiche-cliente-view.tsx) + `edit-*-dialog.tsx` |
 | Carte / points de fidélité | `fidelite-view.tsx`, `loyalty-card.tsx` ; calcul dans `app-store.ts` (`confirmPayment`) |

@@ -9,6 +9,7 @@ import { FieldLabel } from "@/components/ui/atoms/field-label";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { clientFullName } from "@/lib/data/clientele";
 import { serviceById } from "@/lib/data/menu";
+import { isWorkingOn } from "@/lib/data/praticiennes";
 import type { Reservation } from "@/lib/data/types";
 
 type ReplaceStaffDialogProps = {
@@ -56,7 +57,11 @@ export function ReplaceStaffDialog({ open, reservation, onCancel, onConfirm }: R
           const original = praticiennes.find((p) => p.id === rv.staffId);
           const service = serviceById(rv.serviceId);
           const candidates = praticiennes.filter(
-            (p) => p.workingToday && !p.unavailableToday && p.id !== rv.staffId && (!original || p.role === original.role),
+            (p) =>
+              isWorkingOn(p, new Date()) &&
+              !p.unavailableToday &&
+              p.id !== rv.staffId &&
+              (!original || p.role === original.role),
           );
           return (
             <div key={rv.id} className="flex flex-col gap-1.5">

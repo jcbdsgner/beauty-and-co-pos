@@ -594,3 +594,9 @@ export function minutesToTime(minutes: number) {
 export function appointmentEndTime(appointment: Pick<RendezVous, "start" | "durationMin">) {
   return minutesToTime(timeToMinutes(appointment.start) + appointment.durationMin);
 }
+
+/** "09:00" -> "9h", "18:30" -> "18h30" — the short clock label used across the Planning. */
+export function formatHour(time: string) {
+  const [h, m] = time.split(":");
+  return m === "00" ? `${Number(h)}h` : `${Number(h)}h${m}`;
+}

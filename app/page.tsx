@@ -1,9 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { CalendarRange, ListChecks } from "lucide-react";
 import { Button } from "@/components/ui/atoms/button";
+import { SegmentedToggle } from "@/components/ui/molecules/segmented-toggle";
 import { BoardHeader, Legend } from "@/components/ui/board";
 import { AppointmentDetailSheet } from "@/components/planning/appointment-detail-sheet";
+import { AccueilCalendar } from "@/components/journee/accueil-calendar";
 import { AccueilDayList } from "@/components/journee/accueil-day-list";
 import { AccueilGiftCards } from "@/components/journee/accueil-gift-cards";
 import { useEncaissement } from "@/components/journee/use-encaissement";
@@ -17,18 +20,21 @@ function todayISO(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+type AccueilView = "liste" | "calendrier";
+
 /**
  * Accueil — l'écran d'atterrissage (Figma 242:1735). Deux sections seulement : « Cartes cadeaux »,
  * un aperçu de la file de préparation (docs/adr/0012), qui s'efface quand il n'y a rien ; puis
- * « Rendez-vous », la journée en grille fixe de 3 cartes par réservation (docs/adr/0014) — une
- * carte = une payeuse, triée par heure. Plus de bloc de compteurs : la journée est là, la file a
- * son lien.
+ * « Rendez-vous », la journée du jour (docs/adr/0014) — basculable entre **Liste** (grille fixe de
+ * 3 cartes par réservation, docs/adr/0018) et **Calendrier** (rail heures, un bloc = une
+ * réservation, docs/adr/0019). Plus de bloc de compteurs : la journée est là, la file a son lien.
  */
 export default function AccueilPage() {
   const { reservations, praticiennes, clients } = useAppData();
   const { requestEncaissement, encaissementDialog } = useEncaissement();
 
   const [detail, setDetail] = useState<RendezVous | null>(null);
+  const [view, setView] = useState<AccueilView>("liste");
 
   // « Le jour » = la journée en cours seulement. Le seed `RESERVATIONS` porte aujourd'hui par
   // défaut ; la passe Planning y ajoute un champ `date` pour ses vues Semaine — on filtre donc
@@ -53,8 +59,18 @@ export default function AccueilPage() {
       <AccueilGiftCards />
 
       <section>
-        <div className="mb-2 pl-1">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-3 pl-1">
           <Legend>Rendez-vous</Legend>
+          {reservationRows.length > 0 && (
+            <SegmentedToggle
+              value={view}
+              onChange={(v) => setView(v as AccueilView)}
+              options={[
+                { value: "liste", label: "Liste", icon: <ListChecks className="size-4" /> },
+                { value: "calendrier", label: "Calendrier", icon: <CalendarRange className="size-4" /> },
+              ]}
+            />
+          )}
         </div>
         {reservationRows.length === 0 ? (
           <div className="rounded-field border border-dashed border-base-300 px-4 py-12 text-center">
@@ -62,17 +78,21 @@ export default function AccueilPage() {
               Journée libre
             </p>
             <p className="mt-1 text-sm text-base-content/45">Aucun rendez-vous aujourd&apos;hui.</p>
-            <Button href="/planning" variant="outline" size="sm" className="mt-4">
-              Ouvrir le planning
-            </Button>
           </div>
-        ) : (
+        ) : view === "liste" ? (
           <AccueilDayList
             rows={reservationRows}
             clients={clients}
             praticiennes={praticiennes}
             onOpenReservation={setDetail}
             onEncaisser={requestEncaissement}
+          />
+        ) : (
+          <AccueilCalendar
+            rows={reservationRows}
+            clients={clients}
+            praticiennes={praticiennes}
+            onOpenReservation={setDetail}
           />
         )}
       </section>

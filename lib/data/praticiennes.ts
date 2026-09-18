@@ -1,15 +1,142 @@
-import type { Praticienne } from "@/lib/data/types";
+import type { DayHours, DayOfWeek, Praticienne } from "@/lib/data/types";
+
+/** `Date.getDay()` (0 = dimanche) -> jour du glossaire, dans cet ordre. */
+const DAY_KEYS: DayOfWeek[] = ["dim", "lun", "mar", "mer", "jeu", "ven", "sam"];
+
+export function dayOfWeek(d: Date): DayOfWeek {
+  return DAY_KEYS[d.getDay()];
+}
+
+/** L'horaire de présence d'une praticienne pour cette date — absent ⇒ jour de repos ce jour-là. */
+export function scheduleFor(p: Praticienne, d: Date): DayHours | undefined {
+  return p.weeklySchedule[dayOfWeek(d)];
+}
+
+/** Vrai si la praticienne est censée être au salon ce jour-là (horaire hebdomadaire seul — ne
+ *  tient pas compte d'une absence ponctuelle, voir `Praticienne.unavailableToday`). */
+export function isWorkingOn(p: Praticienne, d: Date): boolean {
+  return scheduleFor(p, d) !== undefined;
+}
 
 export const PRATICIENNES: Praticienne[] = [
-  { id: "bineta", name: "Bineta", role: "coiffeuse", initial: "B", workingToday: true, shiftStart: "09:00", shiftEnd: "18:00" },
-  { id: "fatou", name: "Fatou", role: "coiffeuse", initial: "F", workingToday: true, shiftStart: "10:00", shiftEnd: "19:00" },
-  { id: "gnagna", name: "Gnagna", role: "estheticienne", initial: "G", workingToday: true, shiftStart: "09:00", shiftEnd: "17:00" },
-  { id: "henry", name: "Henry", role: "coiffeuse", initial: "H", workingToday: false },
-  { id: "marie-dominique", name: "Marie Dominique", role: "estheticienne", initial: "MD", workingToday: true, shiftStart: "11:00", shiftEnd: "19:00" },
-  { id: "adja", name: "Adja", role: "estheticienne", initial: "A", workingToday: true, shiftStart: "09:30", shiftEnd: "18:30" },
-  { id: "michelle", name: "Michelle", role: "coiffeuse", initial: "M", workingToday: true, shiftStart: "08:30", shiftEnd: "16:30" },
-  { id: "aissatou", name: "Aïssatou", role: "menage", initial: "AÏ", workingToday: true, shiftStart: "08:00", shiftEnd: "13:00" },
-  { id: "ndiole", name: "Ndiole", role: "accueil", initial: "N", workingToday: true, shiftStart: "08:30", shiftEnd: "19:00" },
+  {
+    id: "bineta",
+    name: "Bineta",
+    role: "coiffeuse",
+    initial: "B",
+    weeklySchedule: {
+      mar: { start: "09:00", end: "18:00" },
+      mer: { start: "09:00", end: "18:00" },
+      jeu: { start: "09:00", end: "18:00" },
+      ven: { start: "09:00", end: "18:00" },
+      sam: { start: "09:00", end: "18:00" },
+    },
+  },
+  {
+    id: "fatou",
+    name: "Fatou",
+    role: "coiffeuse",
+    initial: "F",
+    weeklySchedule: {
+      mar: { start: "10:00", end: "19:00" },
+      mer: { start: "10:00", end: "19:00" },
+      jeu: { start: "10:00", end: "19:00" },
+      ven: { start: "10:00", end: "19:00" },
+      sam: { start: "10:00", end: "19:00" },
+    },
+  },
+  {
+    id: "gnagna",
+    name: "Gnagna",
+    role: "estheticienne",
+    initial: "G",
+    weeklySchedule: {
+      lun: { start: "09:00", end: "17:00" },
+      mar: { start: "09:00", end: "17:00" },
+      jeu: { start: "09:00", end: "17:00" },
+      ven: { start: "09:00", end: "17:00" },
+      sam: { start: "09:00", end: "17:00" },
+    },
+  },
+  {
+    id: "henry",
+    name: "Henry",
+    role: "coiffeuse",
+    initial: "H",
+    weeklySchedule: {
+      mer: { start: "09:00", end: "17:00" },
+      jeu: { start: "09:00", end: "17:00" },
+      ven: { start: "09:00", end: "17:00" },
+      sam: { start: "09:00", end: "17:00" },
+      dim: { start: "09:00", end: "17:00" },
+    },
+  },
+  {
+    id: "marie-dominique",
+    name: "Marie Dominique",
+    role: "estheticienne",
+    initial: "MD",
+    weeklySchedule: {
+      lun: { start: "11:00", end: "19:00" },
+      mar: { start: "11:00", end: "19:00" },
+      mer: { start: "11:00", end: "19:00" },
+      jeu: { start: "11:00", end: "19:00" },
+      ven: { start: "11:00", end: "19:00" },
+    },
+  },
+  {
+    id: "adja",
+    name: "Adja",
+    role: "estheticienne",
+    initial: "A",
+    weeklySchedule: {
+      mar: { start: "09:30", end: "18:30" },
+      mer: { start: "09:30", end: "18:30" },
+      jeu: { start: "09:30", end: "18:30" },
+      ven: { start: "09:30", end: "18:30" },
+      sam: { start: "09:30", end: "18:30" },
+    },
+  },
+  {
+    id: "michelle",
+    name: "Michelle",
+    role: "coiffeuse",
+    initial: "M",
+    weeklySchedule: {
+      lun: { start: "08:30", end: "16:30" },
+      mar: { start: "08:30", end: "16:30" },
+      mer: { start: "08:30", end: "16:30" },
+      jeu: { start: "08:30", end: "16:30" },
+      ven: { start: "08:30", end: "16:30" },
+    },
+  },
+  {
+    id: "aissatou",
+    name: "Aïssatou",
+    role: "menage",
+    initial: "AÏ",
+    weeklySchedule: {
+      lun: { start: "08:00", end: "13:00" },
+      mar: { start: "08:00", end: "13:00" },
+      mer: { start: "08:00", end: "13:00" },
+      jeu: { start: "08:00", end: "13:00" },
+      ven: { start: "08:00", end: "13:00" },
+      sam: { start: "08:00", end: "13:00" },
+    },
+  },
+  {
+    id: "ndiole",
+    name: "Ndiole",
+    role: "accueil",
+    initial: "N",
+    weeklySchedule: {
+      mar: { start: "08:30", end: "17:30" },
+      mer: { start: "08:30", end: "17:30" },
+      jeu: { start: "08:30", end: "17:30" },
+      ven: { start: "08:30", end: "17:30" },
+      sam: { start: "08:30", end: "17:30" },
+    },
+  },
 ];
 
 export function praticienneById(id: string) {
