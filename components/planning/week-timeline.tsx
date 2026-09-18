@@ -5,6 +5,7 @@ import { Avatar } from "@/components/ui/atoms/avatar";
 import { IconButton } from "@/components/ui/atoms/icon-button";
 import { DropdownMenu } from "@/components/ui/molecules/dropdown-menu";
 import { dateISO, formatHour, reservationDate, type RendezVousRow } from "@/lib/data/planning";
+import { praticienneAccent } from "@/lib/data/praticienne-colors";
 import { scheduleFor } from "@/lib/data/praticiennes";
 import { cn } from "@/lib/utils";
 import type { Praticienne } from "@/lib/data/types";
@@ -75,10 +76,12 @@ export function WeekTimeline({ weekDays, today, staff, allRows, onPickDay, onIso
         </div>
 
         {/* ── rows ── */}
-        {staff.map((p) => (
-          <div key={p.id} className="flex border-b border-base-300 last:border-b-0">
+        {staff.map((p) => {
+          const accent = praticienneAccent(p.id);
+          return (
+          <div key={p.id} className="flex border-b border-l-[3px] border-base-300 last:border-b-0" style={{ borderLeftColor: accent.dot }}>
             <div className="flex shrink-0 items-center gap-2 border-r border-base-300 px-3 py-2" style={{ width: LABEL_W }}>
-              <Avatar initial={p.initial} size={28} className="shrink-0 bg-accent text-[0.68rem] font-semibold text-secondary" />
+              <Avatar initial={p.initial} size={28} className="shrink-0 text-[0.68rem] font-semibold" style={{ backgroundColor: accent.dot, color: "#fff" }} />
               <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-base-content">{p.name}</span>
               <DropdownMenu
                 align="end"
@@ -127,7 +130,12 @@ export function WeekTimeline({ weekDays, today, staff, allRows, onPickDay, onIso
                         {formatHour(hours.start)}–{formatHour(hours.end)}
                       </span>
                       {items.length > 0 && (
-                        <span className="text-[0.64rem] tabular-nums text-base-content/40">{items.length} rdv</span>
+                        <span
+                          className="rounded-full px-1.5 py-px text-[0.62rem] font-bold tabular-nums"
+                          style={{ backgroundColor: accent.bg, color: accent.text }}
+                        >
+                          {items.length} rdv
+                        </span>
                       )}
                     </>
                   ) : (
@@ -137,7 +145,8 @@ export function WeekTimeline({ weekDays, today, staff, allRows, onPickDay, onIso
               );
             })}
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

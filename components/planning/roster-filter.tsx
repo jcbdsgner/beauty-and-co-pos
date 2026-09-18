@@ -6,6 +6,7 @@ import { IconButton } from "@/components/ui/atoms/icon-button";
 import { DropdownMenu } from "@/components/ui/molecules/dropdown-menu";
 import { ROLE_LABEL } from "@/lib/data/utilisateurs";
 import { formatHour } from "@/lib/data/planning";
+import { praticienneAccent } from "@/lib/data/praticienne-colors";
 import { scheduleFor } from "@/lib/data/praticiennes";
 import { cn } from "@/lib/utils";
 import type { Praticienne, Role } from "@/lib/data/types";
@@ -54,13 +55,12 @@ export function RosterFilter({ staff, date, visibleIds, isolatedId, onToggle, on
               const hours = scheduleFor(p, date);
               const absent = isToday && p.unavailableToday;
               const checked = visibleIds.has(p.id);
+              const accent = praticienneAccent(p.id);
               return (
                 <div
                   key={p.id}
-                  className={cn(
-                    "flex items-center gap-2 rounded-field px-1.5 py-1.5 transition",
-                    !checked && "opacity-40",
-                  )}
+                  className={cn("flex items-center gap-2 rounded-field px-1.5 py-1.5 transition", !checked && "opacity-40")}
+                  style={checked && !absent ? { backgroundColor: accent.bg } : undefined}
                 >
                   <input
                     type="checkbox"
@@ -72,10 +72,8 @@ export function RosterFilter({ staff, date, visibleIds, isolatedId, onToggle, on
                   <Avatar
                     initial={p.initial}
                     size={28}
-                    className={cn(
-                      "shrink-0 text-[0.68rem] font-semibold",
-                      absent ? "bg-base-200 text-base-content/40" : "bg-accent text-secondary",
-                    )}
+                    className={cn("shrink-0 text-[0.68rem] font-semibold", absent && "bg-base-200 text-base-content/40")}
+                    style={absent ? undefined : { backgroundColor: accent.dot, color: "#fff" }}
                   />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[13px] font-semibold text-base-content">{p.name}</p>

@@ -8,6 +8,7 @@ import { DropdownMenu } from "@/components/ui/molecules/dropdown-menu";
 import { clientFullName } from "@/lib/data/clientele";
 import { serviceById } from "@/lib/data/menu";
 import { appointmentEndTime, formatHour, minutesToTime, timeToMinutes, type RendezVousRow } from "@/lib/data/planning";
+import { praticienneAccent } from "@/lib/data/praticienne-colors";
 import { scheduleFor } from "@/lib/data/praticiennes";
 import { cn } from "@/lib/utils";
 import type { Cliente, DayHours, Praticienne, RendezVous } from "@/lib/data/types";
@@ -130,7 +131,7 @@ export function DayTimeline({ date, isToday, staff, rows, clients, onOpenReserva
           const { placed, lanes } = pack(col);
           const rowH = Math.max(LANE_H, lanes * (LANE_H - 8) + 16);
           const absent = isToday && p.unavailableToday;
-          const roseAccent = p.role === "coiffeuse";
+          const accent = praticienneAccent(p.id);
           const beforeW = hours ? x(timeToMinutes(hours.start)) : bodyW;
           const afterStart = hours ? x(timeToMinutes(hours.end)) : 0;
 
@@ -139,21 +140,20 @@ export function DayTimeline({ date, isToday, staff, rows, clients, onOpenReserva
               {/* left label */}
               <div
                 className={cn(
-                  "sticky left-0 z-10 flex shrink-0 items-center gap-2 border-r border-base-300 bg-base-100 px-3",
+                  "sticky left-0 z-10 flex shrink-0 items-center gap-2 border-r border-l-[3px] border-base-300 bg-base-100 px-3",
                   absent && "bg-warning/5",
                 )}
-                style={{ width: LABEL_W, minHeight: rowH }}
+                style={{ width: LABEL_W, minHeight: rowH, borderLeftColor: absent ? undefined : accent.dot }}
               >
                 <Avatar
                   initial={p.initial}
                   size={32}
-                  className={cn(
-                    "shrink-0 text-[0.72rem] font-semibold",
-                    absent ? "bg-base-200 text-base-content/40" : "bg-accent text-secondary",
-                  )}
+                  className={cn("shrink-0 text-[0.72rem] font-semibold", absent && "bg-base-200 text-base-content/40")}
+                  style={absent ? undefined : { backgroundColor: accent.dot, color: "#fff" }}
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-[family-name:var(--font-heading)] text-[13px] font-semibold text-base-content">
+                  <p className="flex items-center gap-1.5 truncate font-[family-name:var(--font-heading)] text-[13px] font-semibold text-base-content">
+                    <span aria-hidden className="size-1.5 shrink-0 rounded-full" style={{ backgroundColor: absent ? undefined : accent.dot }} />
                     {p.name}
                   </p>
                   <p className={cn("truncate text-[0.7rem] tabular-nums", absent ? "font-semibold text-warning" : "text-base-content/45")}>
@@ -228,23 +228,34 @@ export function DayTimeline({ date, isToday, staff, rows, clients, onOpenReserva
                       key={rv.id + p.id}
                       type="button"
                       onClick={() => onOpenReservation(rv)}
-                      style={{ left, top: 8 + lane * (LANE_H - 8), width: w, height: LANE_H - 14 }}
+                      style={{
+                        left,
+                        top: 8 + lane * (LANE_H - 8),
+                        width: w,
+                        height: LANE_H - 14,
+                        ...(cancelled
+                          ? undefined
+                          : { backgroundColor: accent.bg, borderColor: accent.border, borderLeftColor: accent.dot }),
+                      }}
                       className={cn(
-                        "absolute flex flex-col justify-center gap-0.5 overflow-hidden rounded-field border border-l-[3px] px-2.5 text-left transition hover:z-10 hover:shadow-md active:opacity-70",
+                        "absolute flex flex-col justify-center gap-0.5 overflow-hidden rounded-field border border-l-[3px] px-2.5 text-left shadow-sm transition hover:z-10 hover:shadow-md active:opacity-70",
                         cancelled
-                          ? "border-dashed border-base-300 border-l-base-300 bg-base-100 opacity-55"
-                          : cn("border-base-300 bg-base-100 hover:bg-base-200/60", roseAccent ? "border-l-primary" : "border-l-secondary"),
+                          ? "border-dashed border-base-300 border-l-base-300 bg-base-100 opacity-55 shadow-none"
+                          : "hover:brightness-[0.97]",
                         isSecond && !cancelled && "opacity-75",
                       )}
                     >
-                      <span className="flex items-center gap-1 text-[0.64rem] font-semibold tabular-nums text-base-content/45">
+                      <span
+                        className="flex items-center gap-1 text-[0.64rem] font-bold tabular-nums"
+                        style={cancelled ? undefined : { color: accent.text }}
+                      >
                         {rv.start}
                         {rv.secondStaffId && <Users aria-hidden className="size-3" />}
                       </span>
                       <span className={cn("truncate text-xs font-semibold text-base-content", cancelled && "line-through")}>
                         {payer ? clientFullName(payer) : "Cliente"}
                       </span>
-                      {wide && svc && <span className="truncate text-[0.68rem] text-base-content/50">{svc.name}</span>}
+                      {wide && svc && <span className="truncate text-[0.68rem] text-base-content/60">{svc.name}</span>}
                     </button>
                   );
                 })}
