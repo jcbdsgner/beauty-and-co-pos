@@ -13,7 +13,7 @@ import { useAppData } from "@/components/providers/app-data-provider";
 import { boissonById } from "@/lib/data/boissons";
 import { clientFullName } from "@/lib/data/clientele";
 import { produitById, serviceById } from "@/lib/data/menu";
-import { appointmentEndTime, reservationForRendezVous } from "@/lib/data/planning";
+import { appointmentEndTime, reservationComposition, reservationForRendezVous } from "@/lib/data/planning";
 import { formatFcfa } from "@/lib/utils";
 import type { RendezVous } from "@/lib/data/types";
 
@@ -75,7 +75,7 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
           {cancelled && <FlipChip value="Annulé" tone="void" />}
           {hasSale && <FlipChip value="En cours" tone="signal" />}
           <span className="w-full text-[0.7rem] text-white/60">
-            {reservation?.source === "comptoir" ? "Notée au comptoir" : "Réservée en ligne"} · règle {lines.length > 1 ? `${lines.length} prestations` : "la prestation"}
+            {reservation ? `Réservé pour ${reservationComposition(reservation)}` : "Réservée en ligne"}
           </span>
         </div>
 

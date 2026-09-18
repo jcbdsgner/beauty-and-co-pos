@@ -1,14 +1,15 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronRight, Printer, ScanLine } from "lucide-react";
 import { useReactToPrint } from "react-to-print";
 import { Badge } from "@/components/ui/atoms/badge";
 import { Button } from "@/components/ui/atoms/button";
 import { Card } from "@/components/ui/atoms/card";
-import { IconButton } from "@/components/ui/atoms/icon-button";
+import { CloseButton, IconButton } from "@/components/ui/atoms/icon-button";
 import { TextInput } from "@/components/ui/atoms/text-input";
+import { Dialog } from "@/components/ui/molecules/dialog";
 import { Legend } from "@/components/ui/board";
 import { GiftCard } from "@/components/shared/gift-card";
 import { useAppData } from "@/components/providers/app-data-provider";
@@ -38,6 +39,7 @@ function daysWaiting(orderedAt: string): number {
  */
 export function AccueilGiftCards() {
   const { giftCardOrders } = useAppData();
+  const [scanOpen, setScanOpen] = useState(false);
 
   const pending = [...giftCardOrders]
     .filter((o) => o.status === "a_imprimer" || o.status === "imprimee")
@@ -61,11 +63,93 @@ export function AccueilGiftCards() {
         </Link>
       </div>
       <div className="flex flex-wrap gap-4">
+        <button
+          type="button"
+          onClick={() => setScanOpen(true)}
+          className="flex flex-1 basis-[300px] flex-col items-center justify-center gap-2 rounded-box border border-dashed border-base-300 px-4 py-8 text-base-content/55 transition active:scale-[0.99] hover:border-secondary hover:bg-accent hover:text-secondary"
+        >
+          <ScanLine aria-hidden className="size-6" />
+          <span className="text-sm font-semibold">Scanner le code cadeau</span>
+        </button>
         {shown.map((order) => (
           <GiftCardMiniCard key={order.id} order={order} />
         ))}
       </div>
+      <ScanGiftCardDialog open={scanOpen} onClose={() => setScanOpen(false)} />
     </section>
+  );
+}
+
+/**
+ * Scanner une carte déjà imprimée pour la remettre / marquer son expédition d'un geste, sans avoir
+ * à la repérer dans la file (`/cartes-cadeaux`) — le même rôle que le champ code sur une carte de
+ * retrait déjà imprimée (`GiftCardMiniCard`), mais accessible même quand elle n'est pas parmi les
+ * `HOME_LIMIT` les plus anciennes affichées ici.
+ */
+function ScanGiftCardDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { giftCardOrders, markGiftCardOrderHandedOver } = useAppData();
+  const [code, setCode] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  function close() {
+    setCode("");
+    setError(null);
+    onClose();
+  }
+
+  function resolve() {
+    const value = code.trim().toUpperCase();
+    if (!value) return;
+
+    const order = giftCardOrders.find((o) => o.code.toUpperCase() === value);
+    if (!order) {
+      setError("Code non reconnu.");
+      return;
+    }
+    if (order.status === "a_imprimer") {
+      setError("Cette carte n'est pas encore imprimée.");
+      return;
+    }
+    if (order.status === "remise" || order.status === "livree") {
+      setError("Cette carte a déjà été remise.");
+      return;
+    }
+    markGiftCardOrderHandedOver(order.id);
+    close();
+  }
+
+  return (
+    <Dialog open={open} labelledBy="scan-gift-card-title" className="relative max-w-sm p-6">
+      <CloseButton onClick={close} />
+      <h2 id="scan-gift-card-title" className="font-[family-name:var(--font-heading)] text-xl font-semibold text-base-content">
+        Scanner le code cadeau
+      </h2>
+      <p className="mt-1 text-sm text-base-content/55">
+        Saisissez ou scannez le code imprimé sur la carte pour la marquer remise.
+      </p>
+      <form
+        className="mt-4 flex gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          resolve();
+        }}
+      >
+        <TextInput
+          size="compact"
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          placeholder="Code de la carte"
+          autoFocus
+          autoCapitalize="characters"
+          spellCheck={false}
+          aria-label="Code de la carte cadeau à scanner"
+        />
+        <Button type="submit" variant="brand" size="sm" className="shrink-0" disabled={!code.trim()}>
+          Valider
+        </Button>
+      </form>
+      {error && <p className="mt-3 text-sm font-medium text-destructive">{error}</p>}
+    </Dialog>
   );
 }
 
