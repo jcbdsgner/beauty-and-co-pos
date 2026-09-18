@@ -7,11 +7,10 @@ import { Logo } from "@/components/ui/atoms/logo";
 import { Avatar } from "@/components/ui/atoms/avatar";
 import { DropdownMenu } from "@/components/ui/molecules/dropdown-menu";
 import { ConfirmDialog } from "@/components/ui/molecules/confirm-dialog";
-import { SwitchUserDialog } from "@/components/compte/switch-user-dialog";
 import { useSession } from "@/lib/session";
 import { ROLE_LABEL } from "@/lib/data/utilisateurs";
 import { HomeIcon, CalendarIcon, PeopleIcon, GearIcon, LogoutIcon } from "@/components/ui/atoms/icons";
-import { MessageCircle, Sparkles, ArrowLeftRight } from "lucide-react";
+import { MessageCircle, Sparkles } from "lucide-react";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { cn } from "@/lib/utils";
 
@@ -29,77 +28,74 @@ const NAV = [
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { currentUser } = useSession();
+  const { currentUser, photoUrl, logout } = useSession();
   const { conversations } = useAppData();
   const unreadCount = conversations.filter((c) => c.unread).length;
   const [confirmLogout, setConfirmLogout] = useState(false);
-  const [switchOpen, setSwitchOpen] = useState(false);
 
   return (
-    <aside className="flex h-screen w-[260px] shrink-0 flex-col border-r border-base-300 bg-base-100">
-      <div className="flex flex-col items-center gap-2 px-6 pt-8 pb-6">
-        <Logo className="relative h-16 w-16 shrink-0" />
-        <p className="text-xs font-semibold tracking-wide text-base-content/45 uppercase">Point de vente</p>
+    <aside className="flex h-screen w-[104px] shrink-0 flex-col items-center border-r border-base-300 bg-base-100">
+      <div className="flex shrink-0 items-center justify-center pt-6 pb-4">
+        <Logo className="relative h-[83px] w-[83px] shrink-0" />
       </div>
 
-      <nav className="flex flex-col gap-1 px-4">
+      <nav className="flex w-full flex-1 flex-col justify-center gap-3 px-2.5">
         {NAV.map((item) => {
           const active = item.match(pathname);
           const Icon = item.icon;
+          const badge = item.href === "/messages" && unreadCount > 0;
           return (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-field px-4 py-3 text-[15px] font-medium transition active:scale-[0.98]",
-                active ? "bg-primary/10 font-semibold text-primary" : "text-base-content/60 hover:bg-base-200",
+                "flex h-[83px] flex-col items-center justify-center gap-2 rounded-box px-1 py-3 text-center transition active:scale-[0.98]",
+                active ? "bg-primary text-primary-content" : "text-base-content/60 hover:bg-base-200",
               )}
             >
-              <Icon className="size-5" />
-              <span className="flex-1">{item.label}</span>
-              {item.href === "/messages" && unreadCount > 0 && (
-                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-warning px-1 text-[11px] font-semibold text-warning-content tabular-nums">
-                  {unreadCount}
-                </span>
-              )}
+              <span className="relative">
+                <Icon className="size-6" />
+                {badge && <span className="absolute -top-1 -right-1.5 size-2 rounded-full bg-warning" />}
+              </span>
+              <span className="text-[10.5px] leading-tight font-semibold tracking-wide uppercase">{item.label}</span>
             </Link>
           );
         })}
       </nav>
 
-      <div className="mt-auto flex flex-col gap-3 px-4 py-5">
+      <div className="flex w-full shrink-0 flex-col items-center px-2.5 py-5">
         <DropdownMenu
           align="start"
+          side="right"
           trigger={
             <button
               type="button"
-              className="flex w-full items-center gap-3 rounded-field px-3 py-2.5 text-left transition hover:bg-base-200 active:scale-[0.98]"
+              aria-label="Mon compte"
+              className="flex size-16 items-center justify-center rounded-box transition hover:bg-base-200 active:scale-[0.98]"
             >
-              <Avatar initial={currentUser.initial} size={36} className="bg-accent font-semibold text-secondary" />
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-semibold text-base-content">{currentUser.name}</span>
-                <span className="block text-xs text-base-content/55">{ROLE_LABEL[currentUser.role]}</span>
-              </span>
+              <Avatar photoUrl={photoUrl} initial={currentUser.initial} size={40} className="bg-accent font-semibold text-secondary" />
             </button>
           }
           items={[
+            { type: "header", label: currentUser.name, sublabel: ROLE_LABEL[currentUser.role] },
+            { type: "separator" },
             { label: "Mon compte", icon: <GearIcon className="size-4" />, onSelect: () => router.push("/compte") },
-            { label: "Changer d'utilisateur", icon: <ArrowLeftRight className="size-4" />, onSelect: () => setSwitchOpen(true) },
             { type: "separator" },
             { label: "Déconnexion", icon: <LogoutIcon className="size-4" />, tone: "danger", onSelect: () => setConfirmLogout(true) },
           ]}
         />
       </div>
 
-      <SwitchUserDialog open={switchOpen} onClose={() => setSwitchOpen(false)} />
-
       <ConfirmDialog
         open={confirmLogout}
         title="Se déconnecter ?"
-        description="Vous devrez vous reconnecter pour accéder au poste."
+        description="Vous devrez ressaisir votre mot de passe pour accéder au poste."
         confirmLabel="Se déconnecter"
         onCancel={() => setConfirmLogout(false)}
-        onConfirm={() => setConfirmLogout(false)}
+        onConfirm={() => {
+          setConfirmLogout(false);
+          logout();
+        }}
       />
     </aside>
   );

@@ -1,35 +1,37 @@
 "use client";
 
 import { useCallback, useMemo, useSyncExternalStore } from "react";
-import { UTILISATEURS, utilisateurById, type Utilisateur } from "@/lib/data/utilisateurs";
+import { UTILISATEUR, type Utilisateur } from "@/lib/data/utilisateurs";
 
 /**
- * Session du poste — qui tient le comptoir + son code PIN. Entièrement simulée : la valeur vit
- * dans `sessionStorage` (par onglet, effacée à la fermeture), aucune authentification réelle,
- * aucun backend. Un seul persona, aucun rôle de permission (voir ADR 0001).
+ * Session du poste — le compte unique (mot de passe + photo) et l'état connecté/verrouillé.
+ * Entièrement simulée : la valeur vit dans `sessionStorage` (par onglet, effacée à la fermeture),
+ * aucune authentification réelle, aucun backend. Un seul compte, aucune bascule (voir ADR 0026).
  */
 
-const USER_KEY = "pdv.session.userId";
-const PIN_KEY = "pdv.session.pins";
-const DEFAULT_ID = UTILISATEURS[0].id;
+const AUTH_KEY = "pdv.session.authenticated";
+const PASSWORD_KEY = "pdv.session.password";
+const PHOTO_KEY = "pdv.session.photoUrl";
 
-type Snapshot = { userId: string; pins: Record<string, string> };
+type Snapshot = { authenticated: boolean; password: string; photoUrl: string | null };
 
 let cache: Snapshot | null = null;
 const listeners = new Set<() => void>();
-const SERVER_SNAPSHOT: Snapshot = { userId: DEFAULT_ID, pins: {} };
+const SERVER_SNAPSHOT: Snapshot = { authenticated: true, password: UTILISATEUR.password, photoUrl: null };
 
 function compute(): Snapshot {
-  let userId = DEFAULT_ID;
-  let pins: Record<string, string> = {};
+  let authenticated = true;
+  let password = UTILISATEUR.password;
+  let photoUrl: string | null = null;
   try {
-    const stored = sessionStorage.getItem(USER_KEY);
-    if (stored && utilisateurById(stored)) userId = stored;
-    pins = JSON.parse(sessionStorage.getItem(PIN_KEY) ?? "{}");
+    const storedAuth = sessionStorage.getItem(AUTH_KEY);
+    if (storedAuth !== null) authenticated = storedAuth === "1";
+    password = sessionStorage.getItem(PASSWORD_KEY) ?? UTILISATEUR.password;
+    photoUrl = sessionStorage.getItem(PHOTO_KEY);
   } catch {
     /* sessionStorage indisponible — valeurs par défaut */
   }
-  return { userId, pins };
+  return { authenticated, password, photoUrl };
 }
 
 function getSnapshot(): Snapshot {
@@ -53,20 +55,28 @@ function emit() {
   for (const l of listeners) l();
 }
 
-function writeUserId(id: string) {
-  if (!utilisateurById(id)) return;
+function writeAuthenticated(value: boolean) {
   try {
-    sessionStorage.setItem(USER_KEY, id);
+    sessionStorage.setItem(AUTH_KEY, value ? "1" : "0");
   } catch {
     /* ignore */
   }
   emit();
 }
 
-function writePin(id: string, pin: string) {
-  const next = { ...getSnapshot().pins, [id]: pin };
+function writePassword(password: string) {
   try {
-    sessionStorage.setItem(PIN_KEY, JSON.stringify(next));
+    sessionStorage.setItem(PASSWORD_KEY, password);
+  } catch {
+    /* ignore */
+  }
+  emit();
+}
+
+function writePhotoUrl(photoUrl: string | null) {
+  try {
+    if (photoUrl) sessionStorage.setItem(PHOTO_KEY, photoUrl);
+    else sessionStorage.removeItem(PHOTO_KEY);
   } catch {
     /* ignore */
   }
@@ -75,30 +85,46 @@ function writePin(id: string, pin: string) {
 
 export type Session = {
   currentUser: Utilisateur;
-  /** Bascule le poste sur un autre utilisateur (le PIN est vérifié par l'appelant). */
-  switchUser: (id: string) => void;
-  /** Vrai si `pin` correspond au code de `userId` (valeur de session si changée, sinon défaut). */
-  verifyPin: (userId: string, pin: string) => boolean;
-  /** Enregistre un nouveau PIN pour un utilisateur (simulé, en session). */
-  setPin: (userId: string, pin: string) => void;
+  photoUrl: string | null;
+  authenticated: boolean;
+  /** Vrai si `password` correspond au mot de passe courant (valeur de session si changé, sinon défaut). */
+  verifyPassword: (password: string) => boolean;
+  /** Enregistre un nouveau mot de passe (simulé, en session). */
+  setPassword: (password: string) => void;
+  setPhotoUrl: (photoUrl: string | null) => void;
+  /** Verrouille le poste — affiche l'écran de verrouillage jusqu'à réauthentification. */
+  logout: () => void;
+  /** Vérifie le mot de passe et déverrouille le poste si correct. */
+  login: (password: string) => boolean;
 };
 
 export function useSession(): Session {
   const snap = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  const currentUser = utilisateurById(snap.userId) ?? UTILISATEURS[0];
 
-  const switchUser = useCallback((id: string) => writeUserId(id), []);
-  const setPin = useCallback((id: string, pin: string) => writePin(id, pin), []);
-  const verifyPin = useCallback(
-    (id: string, pin: string) => {
-      const user = utilisateurById(id);
-      return !!user && (snap.pins[id] ?? user.pin) === pin;
+  const verifyPassword = useCallback((password: string) => snap.password === password, [snap.password]);
+  const setPassword = useCallback((password: string) => writePassword(password), []);
+  const setPhotoUrl = useCallback((photoUrl: string | null) => writePhotoUrl(photoUrl), []);
+  const logout = useCallback(() => writeAuthenticated(false), []);
+  const login = useCallback(
+    (password: string) => {
+      if (snap.password !== password) return false;
+      writeAuthenticated(true);
+      return true;
     },
-    [snap.pins],
+    [snap.password],
   );
 
   return useMemo(
-    () => ({ currentUser, switchUser, verifyPin, setPin }),
-    [currentUser, switchUser, verifyPin, setPin],
+    () => ({
+      currentUser: UTILISATEUR,
+      photoUrl: snap.photoUrl,
+      authenticated: snap.authenticated,
+      verifyPassword,
+      setPassword,
+      setPhotoUrl,
+      logout,
+      login,
+    }),
+    [snap.photoUrl, snap.authenticated, verifyPassword, setPassword, setPhotoUrl, logout, login],
   );
 }

@@ -17,8 +17,12 @@ Le geste central de la réceptionniste : prendre le paiement d'une cliente qui s
 _Avoid_: Accueillir (retiré), Passer en caisse, Servir
 
 **Réceptionniste**:
-L'unique persona de point-de-vente : la personne au comptoir qui accueille les clientes, tient la caisse et encaisse tout au long de la journée. Elle n'a aucun rôle de configuration du salon (menu, prix, effectif, entités) — ces décisions appartiennent à la direction et se prennent hors de cette app. Un·e praticien·ne peut ponctuellement utiliser le poste, avec exactement les mêmes droits : il n'existe pas de second rôle, pas de déverrouillage « direction / admin » nulle part dans l'app.
+L'unique persona de point-de-vente : la personne au comptoir qui accueille les clientes, tient la caisse et encaisse tout au long de la journée. Elle n'a aucun rôle de configuration du salon (menu, prix, effectif, entités) — ces décisions appartiennent à la direction et se prennent hors de cette app. Un·e praticien·ne peut ponctuellement utiliser le poste, avec exactement les mêmes droits : il n'existe pas de second rôle, pas de déverrouillage « direction / admin » nulle part dans l'app. Un seul compte existe dans l'app (voir **Écran de verrouillage**) — pas une liste de personnes parmi lesquelles choisir.
 _Avoid_: Caissière, caissier, hôtesse, gestionnaire, propriétaire, admin (pas des rôles distincts — un seul persona)
+
+**Écran de verrouillage**:
+L'état du poste quand il n'est pas identifié : plein écran, bloque l'accès à toute l'app tant que le mot de passe du compte n'est pas ressaisi. N'apparaît qu'après un geste explicite — « Se déconnecter » depuis Mon compte ou le menu identité du pied de sidebar — jamais au chargement d'un onglet neuf, qui retrouve directement le poste connecté par défaut (ADR 0026). Comme il n'y a qu'un seul compte (voir **Réceptionniste**), se reconnecter ne consiste jamais à en choisir un autre : la notion de « changer de compte » n'existe plus dans l'app.
+_Avoid_: Écran de connexion, Login (rien à créer ni choisir — seulement se reconnecter au même compte)
 
 **Réservation**:
 La prise de rendez-vous **au niveau de la payeuse** : une cliente (celle qui règle) réserve pour elle-même et éventuellement pour d'autres (une amie, un enfant), une ou plusieurs prestations, réparties sur une ou plusieurs praticiennes, à une ou plusieurs heures. Presque toujours faite **en ligne** par la cliente sur la plateforme de réservation externe ; le parcours de prise de rendez-vous **ne vit pas dans cette app** (voir ADR 0006). C'est l'unité qu'on **encaisse** : une réservation → une Vente, un seul règlement pour tout.
