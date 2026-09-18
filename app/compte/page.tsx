@@ -10,7 +10,7 @@ import { LogoutSection } from "@/components/compte/logout-section";
  */
 export default function ComptePage() {
   return (
-    <div className="flex flex-col gap-7">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-7">
       <BoardHeader section="Compte" />
       <div className="flex flex-col gap-5">
         <PhotoSection />

@@ -19,7 +19,7 @@ export function LogoutSection() {
       <div>
         <Button
           type="button"
-          variant="danger-outline"
+          variant="outline"
           icon={<LogoutIcon className="size-4" />}
           onClick={() => setConfirmOpen(true)}
           className="w-auto"
