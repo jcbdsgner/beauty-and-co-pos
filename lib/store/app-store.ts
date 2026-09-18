@@ -345,6 +345,9 @@ export type AppState = {
   // (ADR 0009): reschedule, reassign, swap prestation / bénéficiaire, add / remove a rendez-vous,
   // cancel with a reason. The one hard block is a praticienne double-booked (findStaffClash).
   cancelAppointment: (rvId: string, reason?: string) => void;
+  /** Annule toute la réservation d'un coup — chaque rendez-vous encore actif reçoit le même motif
+   *  (ADR 0023). Distinct de `cancelAppointment`, qui ne touche qu'un rendez-vous précis. */
+  cancelReservation: (reservationId: string, reason?: string) => void;
   rescheduleRendezVous: (rvId: string, start: string) => { ok: boolean; message: string };
   updateRendezVous: (
     rvId: string,
@@ -357,6 +360,8 @@ export type AppState = {
   ) => { ok: boolean; message: string };
   removeRendezVous: (rvId: string) => void;
   markStaffUnavailable: (staffId: string) => void;
+  /** Réordonne la sidebar du Planning : déplace `draggedId` juste avant `targetId` (ADR 0024). */
+  movePraticienne: (draggedId: string, targetId: string) => void;
 
   // Comptoir / Sales
   deployComptoir: () => void;
@@ -457,6 +462,22 @@ export const useAppStore = create<AppState>((set, get) => ({
       }),
     })),
 
+  cancelReservation: (reservationId, reason) =>
+    set((s) => ({
+      reservations: s.reservations.map((r) =>
+        r.id === reservationId
+          ? {
+              ...r,
+              rendezVous: r.rendezVous.map((rv) =>
+                rv.status === "annule"
+                  ? rv
+                  : { ...rv, status: "annule", ...(reason?.trim() ? { cancelReason: reason.trim() } : {}) },
+              ),
+            }
+          : r,
+      ),
+    })),
+
   rescheduleRendezVous: (rvId, start) => {
     const { reservations } = get();
     const rv = reservations.flatMap((r) => r.rendezVous).find((x) => x.id === rvId);
@@ -537,6 +558,20 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   markStaffUnavailable: (staffId) =>
     set((s) => ({ praticiennes: s.praticiennes.map((p) => (p.id === staffId ? { ...p, unavailableToday: true } : p)) })),
+
+  // Ordre d'affichage de la sidebar du Planning (ADR 0024) — glisser-déposer entre collaboratrices
+  // d'un même rôle. Session-only, pas persisté (cohérent avec le reste du store).
+  movePraticienne: (draggedId, targetId) =>
+    set((s) => {
+      if (draggedId === targetId) return {};
+      const list = [...s.praticiennes];
+      const from = list.findIndex((p) => p.id === draggedId);
+      if (from === -1) return {};
+      const [moved] = list.splice(from, 1);
+      const to = list.findIndex((p) => p.id === targetId);
+      list.splice(to === -1 ? from : to, 0, moved);
+      return { praticiennes: list };
+    }),
 
   deployComptoir: () => set({ comptoirDeployed: true }),
   collapseComptoir: () => set({ comptoirDeployed: false }),

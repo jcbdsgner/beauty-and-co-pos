@@ -9,8 +9,13 @@ type DialogProps = {
   labelledBy: string;
   role?: "dialog" | "alertdialog";
   /** "sheet" anchors to the bottom and shows a drag-handle grip — for a form that wants to feel
-   *  like it slid up from the counter, not a floating alert. */
-  variant?: "center" | "sheet";
+   *  like it slid up from the counter, not a floating alert. "side" anchors full-height to the
+   *  right, over the page rather than in place of it — for a read view, not a form. */
+  variant?: "center" | "sheet" | "side";
+  /** Only meaningful for variant="side" — lets Échap / a click outside close it. Passing it opts
+   *  that instance into being dismissible this way; omit it and "side" stays as protected as
+   *  every other variant. */
+  onClose?: () => void;
   overlayClassName?: string;
   className?: string;
   children: React.ReactNode;
@@ -23,13 +28,19 @@ type DialogProps = {
  * ni à la touche Échap" — a deliberate decision on a counter where a stray tap must never wipe a
  * half-filled form). Every caller renders its own explicit "×" / "Annuler" control.
  *
+ * "side" is the one exception: it carries a read view (a fiche, not a form), so nothing is lost
+ * if it closes early — pass `onClose` and it dismisses on Échap / outside click like any ordinary
+ * overlay (ADR 0023).
+ *
  * Elevation: a deep, wide shadow + chunkier 28px corners so a Dialog never reads as a flat Card.
  */
-export function Dialog({ open, labelledBy, role = "dialog", variant = "center", overlayClassName, className, children }: DialogProps) {
+export function Dialog({ open, labelledBy, role = "dialog", variant = "center", onClose, overlayClassName, className, children }: DialogProps) {
   const sheet = variant === "sheet";
+  const side = variant === "side";
+  const dismissible = side && Boolean(onClose);
 
   return (
-    <DialogPrimitive.Root open={open}>
+    <DialogPrimitive.Root open={open} onOpenChange={(next) => { if (!next && dismissible) onClose?.(); }}>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay
           className={cn(
@@ -39,22 +50,26 @@ export function Dialog({ open, labelledBy, role = "dialog", variant = "center", 
         />
         <div
           className={cn(
-            "fixed inset-0 z-50 flex p-4",
-            sheet ? "items-end justify-center sm:items-center" : "items-center justify-center",
+            "fixed inset-0 z-50 flex",
+            side ? "justify-end" : "items-center justify-center p-4",
+            sheet && "items-end justify-center p-4 sm:items-center",
           )}
         >
           <DialogPrimitive.Content
             aria-labelledby={labelledBy}
             aria-describedby={undefined}
             role={role}
-            onEscapeKeyDown={(e) => e.preventDefault()}
-            onPointerDownOutside={(e) => e.preventDefault()}
-            onInteractOutside={(e) => e.preventDefault()}
+            onEscapeKeyDown={(e) => { if (!dismissible) e.preventDefault(); }}
+            onPointerDownOutside={(e) => { if (!dismissible) e.preventDefault(); }}
+            onInteractOutside={(e) => { if (!dismissible) e.preventDefault(); }}
             className={cn(
               "w-full bg-base-100 text-base-content shadow-[0px_24px_64px_-12px_rgba(0,0,0,0.35)] focus:outline-none",
-              "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
-              "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
-              sheet ? "rounded-t-[var(--radius-box)] sm:rounded-[var(--radius-box)]" : "rounded-[var(--radius-box)]",
+              "data-[state=open]:animate-in data-[state=open]:fade-in-0",
+              "data-[state=closed]:animate-out data-[state=closed]:fade-out-0",
+              side
+                ? "h-full max-w-md rounded-none data-[state=open]:slide-in-from-right-12 data-[state=closed]:slide-out-to-right-12"
+                : "rounded-[var(--radius-box)] data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95",
+              sheet && "rounded-t-[var(--radius-box)] sm:rounded-[var(--radius-box)]",
               className,
             )}
           >
