@@ -128,6 +128,11 @@ destructive edit to a shared atom.
   (inset hairline), no ambient lift. If it would read as a Material card, it is wrong.
 - **The One-Signal rule.** Only amber says "attention". If a second colour starts meaning
   "look here", the board has lost its single channel and the receptionist has to decode a legend.
+  **Exception (ADR 0022):** the Accueil calendar view (`AccueilCalendar`) is a decorative,
+  agenda-style exception — each block carries a rotating colour family purely to separate
+  same-day events visually, the way a personal calendar app does. Amber inside those blocks still
+  means only "à encaisser" / "now"; the family colour never carries status meaning. Don't reuse
+  this multicolour treatment outside that one view.
 - **The Chip-Flips rule.** Every status change animates one 140ms half-flip on the flip-chip and,
   if it is a change the receptionist should notice, an amber pulse + held edge on the lane.
   `prefers-reduced-motion` → instant swap, edge still held.

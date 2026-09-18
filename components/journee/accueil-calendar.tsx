@@ -8,14 +8,17 @@ import { reservationComposition, timeToMinutes, type ReservationDayRow } from "@
 import { cn } from "@/lib/utils";
 import type { Cliente, Praticienne, RendezVous } from "@/lib/data/types";
 
-/** Vue calendrier de l'Accueil (ADR 0019) — rail heures + une colonne, un bloc = une
- *  réservation entière (grain réservation, pas rendez-vous), positionné sur son passage
- *  `start → end`. Réservations simultanées (peu importe la praticienne) posées côte à côte
- *  par lane-packing glouton. */
+/** Vue calendrier de l'Accueil (ADR 0019, palette ADR 0022) — rail heures + une colonne, un bloc
+ *  = une réservation entière (grain réservation, pas rendez-vous), positionné sur son passage
+ *  `start → end`. Réservations simultanées (peu importe la praticienne) posées côte à côte par
+ *  lane-packing glouton. Chaque bloc porte une couleur de famille (rotation déterministe sur
+ *  l'ordre chronologique du jour) — seule exception à la doctrine « un seul signal », voir
+ *  ADR 0022. */
 const SLOT_MIN = 30;
-const SLOT_H = 34; // px per 30 min — même échelle que DayGrid
-const RAIL_W = 52;
-const LANE_MIN_W = 150;
+const SLOT_H = 64; // px per 30 min — assez pour que le contenu d'un bloc ne soit jamais rogné
+const MIN_CARD_H = 118; // hauteur plancher : temps + nom + composition + avatars, jamais coupés
+const RAIL_W = 56;
+const LANE_MIN_W = 232;
 const MAX_AVATARS = 3;
 
 type Props = {
@@ -36,14 +39,23 @@ function hm(t: string) {
   return m === "00" ? `${Number(h)}h` : `${Number(h)}h${m}`;
 }
 
-type Placed = { row: ReservationDayRow; top: number; lane: number };
+const PALETTE = [
+  { bg: "var(--cal-amber-bg)", fg: "var(--cal-amber-fg)" },
+  { bg: "var(--cal-lilac-bg)", fg: "var(--cal-lilac-fg)" },
+  { bg: "var(--cal-rose-bg)", fg: "var(--cal-rose-fg)" },
+  { bg: "var(--cal-mint-bg)", fg: "var(--cal-mint-fg)" },
+  { bg: "var(--cal-sky-bg)", fg: "var(--cal-sky-fg)" },
+] as const;
+
+type Placed = { row: ReservationDayRow; top: number; lane: number; hue: number };
 
 /** Lane packing glouton — deux réservations qui se chevauchent dans le temps (n'importe quelle
- *  praticienne) sont posées côte à côte plutôt que superposées. */
+ *  praticienne) sont posées côte à côte plutôt que superposées. La couleur suit l'ordre
+ *  chronologique du jour, pas la lane, pour éviter que deux voisines dans le temps se ressemblent. */
 function pack(rows: ReservationDayRow[]): { placed: Placed[]; lanes: number } {
   const sorted = [...rows].sort((a, b) => timeToMinutes(a.start) - timeToMinutes(b.start));
   const laneEnds: number[] = [];
-  const placed = sorted.map((row) => {
+  const placed = sorted.map((row, i) => {
     const start = timeToMinutes(row.start);
     const end = timeToMinutes(row.end);
     let lane = laneEnds.findIndex((e) => e <= start);
@@ -53,7 +65,7 @@ function pack(rows: ReservationDayRow[]): { placed: Placed[]; lanes: number } {
     } else {
       laneEnds[lane] = end;
     }
-    return { row, top: start, lane };
+    return { row, top: start, lane, hue: i % PALETTE.length };
   });
   return { placed, lanes: Math.max(1, laneEnds.length) };
 }
@@ -76,19 +88,18 @@ export function AccueilCalendar({ rows, clients, praticiennes, onOpenReservation
   const showNow = now > gridStart && now < gridEnd;
 
   const { placed, lanes } = useMemo(() => pack(rows), [rows]);
-  const narrow = lanes > 2;
 
   const staffOf = (id: string) => praticiennes.find((p) => p.id === id);
 
   return (
-    <div className="overflow-x-auto [scrollbar-width:thin]">
-      <div className="relative flex" style={{ height: bodyH + 10, paddingTop: 10, minWidth: RAIL_W + lanes * LANE_MIN_W }}>
+    <div className="overflow-x-auto rounded-box border border-base-300 bg-base-100 p-4 [scrollbar-width:thin]">
+      <div className="relative flex" style={{ height: bodyH + 12, paddingTop: 12, minWidth: RAIL_W + lanes * LANE_MIN_W }}>
         <div className="shrink-0 border-r border-base-300" style={{ width: RAIL_W }}>
           {hourMarks.map((m, i) => (
             <div key={m} className="relative" style={{ height: i === hourMarks.length - 1 ? 0 : SLOT_H * 2 }}>
               <span
                 className={cn(
-                  "absolute right-2 text-[0.68rem] font-semibold tabular-nums text-base-content/40",
+                  "absolute right-3 text-xs font-semibold tabular-nums text-base-content/40",
                   i === 0 ? "top-0" : "-top-2",
                 )}
               >
@@ -105,13 +116,13 @@ export function AccueilCalendar({ rows, clients, praticiennes, onOpenReservation
             ),
           )}
 
-          {placed.map(({ row, lane }) => {
+          {placed.map(({ row, lane, hue }) => {
             const { reservation } = row;
             const payer = clients.find((c) => c.id === reservation.payerClientId);
             const startMin = timeToMinutes(row.start);
             const endMin = timeToMinutes(row.end);
             const top = y(startMin);
-            const h = Math.max(y(endMin) - top, SLOT_H - 6);
+            const h = Math.max(y(endMin) - top, MIN_CARD_H);
             const composition = reservationComposition(reservation);
             const hasSale = Boolean(reservation.saleId);
             const phase = endMin <= now ? "past" : startMin <= now ? "current" : "upcoming";
@@ -121,6 +132,7 @@ export function AccueilCalendar({ rows, clients, praticiennes, onOpenReservation
             const hiddenAvatars = staffList.length - visibleAvatars.length;
             const target = row.rendezVous[0];
             const payerName = payer ? clientFullName(payer) : "Cliente";
+            const { bg, fg } = PALETTE[hue];
 
             return (
               <Tooltip
@@ -144,35 +156,43 @@ export function AccueilCalendar({ rows, clients, praticiennes, onOpenReservation
                   style={{
                     top,
                     height: h,
-                    left: `calc(${(lane / lanes) * 100}% + 3px)`,
-                    width: `calc(${100 / lanes}% - 6px)`,
+                    left: `calc(${(lane / lanes) * 100}% + 5px)`,
+                    width: `calc(${100 / lanes}% - 10px)`,
+                    backgroundColor: bg,
+                    borderTop: `3px solid ${fg}`,
                   }}
                   className={cn(
-                    "absolute flex flex-col gap-1 overflow-hidden rounded-field border border-l-[3px] border-base-300 border-l-accent bg-base-100 px-2.5 py-1.5 text-left transition hover:z-10 hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)] active:opacity-70",
-                    phase === "past" && !awaitingCheckout && "opacity-70",
+                    "absolute flex flex-col gap-1.5 overflow-hidden rounded-2xl px-3.5 py-3 text-left shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition hover:z-10 hover:shadow-[0_6px_16px_rgba(0,0,0,0.14)] active:opacity-80",
+                    phase === "past" && !awaitingCheckout && "opacity-60",
                   )}
                 >
                   <span className="flex items-center justify-between gap-1">
-                    <span className="truncate text-xs font-semibold tabular-nums text-base-content/55">{row.start}</span>
-                    {awaitingCheckout && <span className="size-1.5 shrink-0 rounded-full bg-warning" />}
+                    <span className="truncate text-xs font-bold tabular-nums" style={{ color: fg }}>
+                      {row.start}
+                    </span>
+                    {awaitingCheckout && (
+                      <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-warning ring-2 ring-base-100">
+                        <span className="size-1.5 rounded-full bg-base-100" />
+                      </span>
+                    )}
                   </span>
-                  <span className="truncate text-sm font-medium text-base-content">{payerName}</span>
-                  {!narrow && <span className="truncate text-xs text-base-content/55">{composition}</span>}
+                  <span className="truncate text-[0.95rem] font-semibold text-base-content">{payerName}</span>
+                  <span className="truncate text-xs text-base-content/60">{composition}</span>
                   {visibleAvatars.length > 0 && (
-                    <span className="mt-auto flex items-center">
+                    <span className="mt-auto flex items-center pt-1">
                       {visibleAvatars.map((p, i) => (
                         <Avatar
                           key={p.id}
                           initial={p.initial}
-                          size={20}
-                          className={cn(
-                            "bg-accent text-[0.6rem] font-semibold text-base-content ring-2 ring-base-100",
-                            i > 0 && "-ml-2",
-                          )}
+                          size={26}
+                          className={cn("bg-base-100 text-[0.65rem] font-bold text-base-content ring-2 ring-base-100", i > 0 && "-ml-2.5")}
                         />
                       ))}
                       {hiddenAvatars > 0 && (
-                        <span className="-ml-2 flex size-5 shrink-0 items-center justify-center rounded-full bg-base-300 text-[0.6rem] font-semibold text-base-content/70 ring-2 ring-base-100">
+                        <span
+                          className="-ml-2.5 flex size-[26px] shrink-0 items-center justify-center rounded-full text-[0.65rem] font-bold text-base-100 ring-2 ring-base-100"
+                          style={{ backgroundColor: fg }}
+                        >
                           +{hiddenAvatars}
                         </span>
                       )}

@@ -42,12 +42,16 @@ encaisse, ne jamais l'éparpiller »). Chaque bloc porte : payeuse, heure `start
 praticiennes distinctes de la réservation — `ReservationDayRow.staffIds`, déjà calculé, aucun
 changement de modèle.
 
-**Palette : pas de code couleur par événement.** Les captures de référence utilisent une couleur
-par bloc ; ce projet a une doctrine « un seul signal » (ambre) depuis la refonte daisyUI — le
-calendrier de l'Accueil reprend donc le même traitement neutre que les cartes existantes
-(`base-100` / `base-300` / `accent`), l'ambre restant réservé aux statuts (« à encaisser »,
-« en cours »). Seul le **principe** des captures est repris (bloc positionné dans le temps +
-empilement d'avatars + gestion du chevauchement), pas leur palette arc-en-ciel.
+**Palette : pas de code couleur par événement.** ~~Les captures de référence utilisent une
+couleur par bloc ; ce projet a une doctrine « un seul signal » (ambre) depuis la refonte
+daisyUI — le calendrier de l'Accueil reprend donc le même traitement neutre que les cartes
+existantes (`base-100` / `base-300` / `accent`), l'ambre restant réservé aux statuts
+(« à encaisser », « en cours »). Seul le **principe** des captures est repris (bloc positionné
+dans le temps + empilement d'avatars + gestion du chevauchement), pas leur palette
+arc-en-ciel.~~ **Renversé par l'[ADR 0022](0022-calendrier-accueil-palette-multicolore.md)** : le
+rendu neutre s'est révélé illisible à l'usage (blocs indistincts + contenu rogné par une échelle
+trop compacte) ; la palette multicolore des captures est reprise, comme exception documentée à la
+doctrine « un seul signal », strictement bornée à cette vue.
 
 **Survol.** Sur un bloc — notamment un bloc rétréci par le chevauchement — le survol ouvre un
 `Tooltip` (primitive déjà existante, Radix) qui détaille payeuse, heure, composition et le nom de
@@ -71,7 +75,8 @@ chevauchement. `Encaisser` reste accessible depuis la fiche réservation ouverte
 - **Réutiliser tel quel `DayGrid` du Planning.** Écarté : grain rendez-vous / colonnes-praticienne,
   pas le besoin exprimé (grain réservation, une seule colonne façon agenda personnel). Aurait aussi
   réintroduit l'éparpillement d'une réservation sur plusieurs colonnes que l'ADR 0014 a corrigé.
-- **Palette multicolore par réservation**, fidèle aux captures. Écarté : contredit la doctrine
-  « un seul signal » du langage visuel actuel (refonte daisyUI).
+- ~~**Palette multicolore par réservation**, fidèle aux captures. Écarté : contredit la doctrine
+  « un seul signal » du langage visuel actuel (refonte daisyUI).~~ Revu et adopté par
+  l'[ADR 0022](0022-calendrier-accueil-palette-multicolore.md).
 - **Ajouter aussi la navigation semaine/jour sur l'Accueil.** Non demandé, écarté pour l'instant —
   reste fidèle à « aujourd'hui seulement » ; à rouvrir si le besoin se confirme.
