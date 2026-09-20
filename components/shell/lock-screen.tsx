@@ -1,74 +1,122 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
+import { Eye, EyeOff } from "lucide-react";
 import { Logo } from "@/components/ui/atoms/logo";
-import { Avatar } from "@/components/ui/atoms/avatar";
-import { Card } from "@/components/ui/atoms/card";
 import { Button } from "@/components/ui/atoms/button";
 import { FieldLabel } from "@/components/ui/atoms/field-label";
 import { TextInput } from "@/components/ui/atoms/text-input";
+import { Toast } from "@/components/ui/molecules/toast";
 import { useSession } from "@/lib/session";
-import { ROLE_LABEL } from "@/lib/data/utilisateurs";
 
-/** Écran de verrouillage — plein écran, bloque l'app jusqu'à réauthentification (ADR 0026). */
+/**
+ * Écran de verrouillage — plein écran, bloque l'app jusqu'à réauthentification (ADR 0026).
+ * Démo : n'importe quelle adresse e-mail et mot de passe suffisent, aucune vérification réelle.
+ */
 export function LockScreen() {
-  const { currentUser, photoUrl, login } = useSession();
+  const { login } = useSession();
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [revealed, setRevealed] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
 
   function submit() {
-    if (!login(password)) {
-      setError("Mot de passe incorrect.");
-      setPassword("");
-      return;
-    }
+    login();
   }
 
   return (
-    <div className="flex h-screen items-center justify-center bg-base-200 px-4">
-      <Card className="flex w-full max-w-sm flex-col items-center gap-6 p-8">
-        <Logo className="h-14 w-14 shrink-0" />
+    <div className="relative flex h-screen w-screen items-center justify-end overflow-hidden bg-base-200 p-10">
+      <Image
+        src="/images/brand/lock-screen-interior.jpg"
+        alt=""
+        fill
+        sizes="100vw"
+        priority
+        className="object-cover"
+      />
 
-        <div className="flex flex-col items-center gap-3">
-          <Avatar
-            photoUrl={photoUrl}
-            initial={currentUser.initial}
-            size={72}
-            className="bg-accent text-xl font-semibold text-secondary"
-          />
-          <div className="text-center">
-            <p className="text-lg font-semibold text-base-content">{currentUser.name}</p>
-            <p className="text-sm text-base-content/55">{ROLE_LABEL[currentUser.role]}</p>
-          </div>
+      <Logo className="absolute left-10 top-10 h-16 w-16 shrink-0 overflow-hidden rounded-2xl shadow-lg" />
+
+      <div className="relative z-10 flex w-full max-w-[440px] flex-col gap-8 rounded-[2.5rem] bg-base-100 px-10 py-11 shadow-2xl">
+        <div>
+          <p className="text-base text-base-content/70">
+            Bienvenue chez <span className="font-semibold text-primary">Beauty and Co</span>
+          </p>
+          <h1 className="mt-1 font-heading text-4xl font-semibold text-base-content">Reconnexion</h1>
         </div>
 
         <form
-          className="flex w-full flex-col gap-3"
+          className="flex flex-col gap-5 pt-4"
           onSubmit={(e) => {
             e.preventDefault();
             submit();
           }}
         >
           <div>
-            <FieldLabel variant="plain" className="mb-2">
-              Mot de passe
+            <FieldLabel variant="plain" htmlFor="lock-email" className="mb-2">
+              Adresse e-mail
             </FieldLabel>
             <TextInput
-              type="password"
-              autoComplete="current-password"
+              id="lock-email"
+              type="email"
+              autoComplete="email"
               autoFocus
-              value={password}
-              onChange={(e) => { setPassword(e.target.value); setError(null); }}
+              placeholder="vous@beautyandco.fr"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
           </div>
 
-          {error && <p className="text-sm font-medium text-error">{error}</p>}
+          <div>
+            <FieldLabel variant="plain" htmlFor="lock-password" className="mb-2">
+              Mot de passe
+            </FieldLabel>
+            <div className="relative">
+              <TextInput
+                id="lock-password"
+                type={revealed ? "text" : "password"}
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="pr-11"
+              />
+              <button
+                type="button"
+                onClick={() => setRevealed((r) => !r)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40 transition hover:text-base-content/70"
+                aria-label={revealed ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+              >
+                {revealed ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              </button>
+            </div>
+            <div className="mt-2 flex justify-end">
+              {/* Démo : aucun flux de récupération réel, cf. commentaire ci-dessus. */}
+              <button
+                type="button"
+                onClick={() => setToast("Fonctionnalité non disponible dans cette démo.")}
+                className="text-sm font-medium text-primary hover:underline"
+              >
+                Mot de passe oublié ?
+              </button>
+            </div>
+          </div>
 
-          <Button type="submit" variant="dark" disabled={!password}>
-            Se reconnecter
-          </Button>
+          <div className="mt-2 flex justify-end">
+            <Button
+              type="submit"
+              variant="brand"
+              size="xl"
+              className="shadow-[0px_4px_19px_rgba(136,102,102,0.35)]"
+              disabled={!email || !password}
+            >
+              Se reconnecter
+            </Button>
+          </div>
         </form>
-      </Card>
+      </div>
+
+      <Toast message={toast} onDismiss={() => setToast(null)} />
     </div>
   );
 }

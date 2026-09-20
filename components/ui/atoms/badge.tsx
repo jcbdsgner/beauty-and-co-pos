@@ -14,7 +14,8 @@ export type BadgeVariant =
   | "silver"
   | "brand"
   | "dark"
-  | "neutral";
+  | "neutral"
+  | "livraison";
 
 const DOT_TONE: Record<string, string> = {
   success: "bg-success",
@@ -29,6 +30,7 @@ const FLAG_TONE: Record<string, string> = {
   silver: "bg-[var(--pos-tier-silver)] text-white border-transparent",
   brand: "bg-primary text-primary-content border-transparent",
   dark: "bg-neutral text-neutral-content border-transparent",
+  livraison: "bg-[var(--pos-fulfillment-livraison-soft)] text-base-content border-transparent text-[13px] font-medium",
 };
 
 const SOFT_TONE: Record<string, string> = {

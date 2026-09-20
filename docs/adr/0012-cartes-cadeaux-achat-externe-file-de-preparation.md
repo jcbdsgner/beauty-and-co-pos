@@ -11,11 +11,11 @@ Les deux modes imprimés alimentent une **file de préparation** ouverte sur l'A
 ## Décision
 
 - **Nouvel objet `GiftCardOrder`** (« Commande de carte cadeau ») : `{ buyerClientId, code, amount, fulfillment: "retrait" | "livraison", orderedAt, status, recipientName?/recipientPhone?/deliveryAddress? }`. L'acheteur est **toujours une fiche cliente connue**. Le `code` référence une entrée du ledger `CARTES_CADEAUX` (inchangé — cf. ADR 0002) : la carte imprimée porte un code réel, réutilisable au comptoir plus tard par le flux d'application existant.
-- **`status`** : `a_imprimer → imprimee → remise` (retrait) / `→ livree` (livraison). `remise` / `livree` = terminaux, la commande quitte la file. « Livrée » côté salon = **confiée à la livraison** ; la livraison réelle (coursier) se fait hors app, l'app n'orchestre rien — même principe que « Transférer à la direction » (ADR 0011) et les réservations.
+- **`status`** : `a_imprimer → imprimee → remise` (retrait) / `→ livree` (livraison). `remise` / `livree` = terminaux, la commande quitte la file. « Livrée » côté salon = **confiée à la livraison** ; la livraison réelle (coursier) se fait hors app, l'app n'orchestre rien — même principe que « Transférer à la manager » (ADR 0011) et les réservations.
 - **Accueil** : pas de bloc dédié. La cellule **« Encaissé aujourd'hui »** de « Le point du jour » (`app/page.tsx`) devient **« Cartes à préparer »** — compteur des commandes non résolues (`a_imprimer` + `imprimee`), état vide « Aucune carte à préparer » en sourdine. « Encaissé aujourd'hui » disparaît de l'Accueil (reste via le Récap des ventes).
 - **Route dédiée `/cartes-cadeaux`** (« Cartes cadeaux à préparer ») : la file complète. Une ligne = acheteur + montant + badge Retrait/Livraison + statut ; les lignes Livraison exposent nom / téléphone / adresse du bénéficiaire. Actions : **Imprimer** (impression directe de la face carte, `react-to-print`, **sans dialog de prévisualisation** — l'utilisateur ne veut pas voir la carte à l'écran) puis **Marquer comme remise / expédiée**.
 - **Face imprimée** (`components/shared/gift-card.tsx`) : conservée **riche** (code + montant + QR démo + branding) — c'est un vrai livrable client, et le code doit pouvoir être scanné/tapé au comptoir. Elle n'est **jamais rendue dans l'UI de la file**, seulement comme cible d'impression hors-écran.
-- **ADR 0001 préservé** : aucune émission, aucun encaissement, aucune surface direction — le salon ne fait que **préparer** ce qui a été acheté ailleurs.
+- **ADR 0001 préservé** : aucune émission, aucun encaissement, aucune surface manager — le salon ne fait que **préparer** ce qui a été acheté ailleurs.
 
 ## Conséquences
 

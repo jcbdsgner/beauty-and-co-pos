@@ -1,12 +1,13 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
 import { Printer } from "lucide-react";
 import { Badge } from "@/components/ui/atoms/badge";
 import { Button } from "@/components/ui/atoms/button";
 import { BoardHeader, Legend } from "@/components/ui/board";
 import { GiftCard } from "@/components/shared/gift-card";
+import { Toast } from "@/components/ui/molecules/toast";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { clientFullName } from "@/lib/data/clientele";
 import { cn } from "@/lib/utils";
@@ -15,16 +16,16 @@ import type { GiftCardOrder } from "@/lib/data/types";
 const PRINT_PAGE_STYLE = `@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }`;
 
 /** A card left waiting this long carries the amber edge — the one signal, "this needs you now". */
-const STALE_DAYS = 4;
+export const STALE_DAYS = 4;
 
-function daysWaiting(orderedAt: string): number {
+export function daysWaiting(orderedAt: string): number {
   const then = new Date(`${orderedAt}T00:00:00`);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   return Math.max(0, Math.round((today.getTime() - then.getTime()) / 86_400_000));
 }
 
-function waitLabel(days: number): string {
+export function waitLabel(days: number): string {
   if (days <= 0) return "auj.";
   if (days === 1) return "hier";
   return `${days} j`;
@@ -34,8 +35,8 @@ function waitLabel(days: number): string {
  * Cartes cadeaux à préparer (ADR 0012) — les cartes achetées en version imprimée : d'abord les
  * imprimer, puis les remettre (retrait) ou les confier à la livraison. Aucun encaissement, c'est
  * déjà payé. Deux grilles de blocs pour les deux gestes ; une commande `remise` / `livree` quitte
- * la file. Chaque bloc affiche la carte elle-même (c'est aussi la cible d'impression) plutôt
- * qu'une ligne de liste : l'objet qu'on prépare doit se reconnaître d'un coup d'œil.
+ * la file. Blocs identiques à ceux de « Cartes cadeaux à préparer » sur l'Accueil (audit UX du
+ * 19/09) : pas d'aperçu de la carte, elle n'est rendue que hors-écran pour l'impression.
  */
 export function GiftCardQueue() {
   const { giftCardOrders } = useAppData();
@@ -90,6 +91,7 @@ function GiftCardQueueTile({ order }: { order: GiftCardOrder }) {
   const { clients, printGiftCardOrder, markGiftCardOrderHandedOver } = useAppData();
   const buyer = clients.find((c) => c.id === order.buyerClientId);
   const buyerName = buyer ? clientFullName(buyer) : "Cliente inconnue";
+  const [toast, setToast] = useState<string | null>(null);
 
   const cardRef = useRef<HTMLDivElement>(null);
   const print = useReactToPrint({
@@ -118,9 +120,11 @@ function GiftCardQueueTile({ order }: { order: GiftCardOrder }) {
         stale ? "border-warning" : "border-base-300",
       )}
     >
-      {/* the print target is the card itself — react-to-print reads this live DOM node */}
-      <div ref={cardRef}>
-        <GiftCard code={order.code} balance={order.amount} />
+      {/* Off-screen print target — react-to-print reads the live DOM, so keep it mounted (pas d'aperçu à l'écran). */}
+      <div aria-hidden className="pointer-events-none fixed -left-[9999px] top-0">
+        <div ref={cardRef}>
+          <GiftCard code={order.code} balance={order.amount} />
+        </div>
       </div>
 
       <div className="flex items-start justify-between gap-2">
@@ -130,7 +134,7 @@ function GiftCardQueueTile({ order }: { order: GiftCardOrder }) {
           </span>
           <span className="mt-0.5 line-clamp-2 text-[13px] text-base-content/55">{detail}</span>
         </span>
-        <Badge variant={isLivraison ? "info" : "neutral"} className="shrink-0">
+        <Badge variant={isLivraison ? "livraison" : "neutral"} className="shrink-0">
           {isLivraison ? "Livraison" : "Retrait"}
         </Badge>
       </div>
@@ -147,7 +151,15 @@ function GiftCardQueueTile({ order }: { order: GiftCardOrder }) {
 
         {printed ? (
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" icon={<Printer className="size-4" />} onClick={() => print()}>
+            <Button
+              variant="outline"
+              size="sm"
+              icon={<Printer className="size-4" />}
+              onClick={() => {
+                print();
+                setToast(`Carte-cadeau ${order.code} envoyée à l'impression.`);
+              }}
+            >
               Réimprimer
             </Button>
             <Button variant="dark" size="sm" onClick={() => markGiftCardOrderHandedOver(order.id)}>
@@ -162,12 +174,14 @@ function GiftCardQueueTile({ order }: { order: GiftCardOrder }) {
             onClick={() => {
               print();
               printGiftCardOrder(order.id);
+              setToast(`Carte-cadeau ${order.code} envoyée à l'impression.`);
             }}
           >
             Imprimer
           </Button>
         )}
       </div>
+      <Toast message={toast} onDismiss={() => setToast(null)} />
     </div>
   );
 }

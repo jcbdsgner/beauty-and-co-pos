@@ -24,6 +24,7 @@ import { Select } from "@/components/ui/atoms/select";
 import { PhotoPlaceholder } from "@/components/ui/atoms/photo-placeholder";
 import { Board, Lane, Legend, BoardEmpty, FlipChip } from "@/components/ui/board";
 import { DemoQrBlock } from "@/components/clientele/loyalty-card";
+import { ChannelGlyph } from "@/components/messages/channel-glyph";
 import { AbonnementsPacksBoard } from "@/components/clientele/abonnements-packs-board";
 import { EditCoordonneesDialog } from "@/components/clientele/edit-coordonnees-dialog";
 import { EditPreferencesDialog } from "@/components/clientele/edit-preferences-dialog";
@@ -196,7 +197,12 @@ export function FicheClienteView({ clientId }: { clientId: string }) {
                 return (
                   <Lane
                     key={m.id}
-                    title={who}
+                    title={
+                      <span className="flex items-center gap-1.5">
+                        {who}
+                        {conversation && <ChannelGlyph channel={conversation.channel} className="size-3.5" />}
+                      </span>
+                    }
                     meta={<span className="line-clamp-2">{m.body}</span>}
                     className="items-start py-3"
                   />

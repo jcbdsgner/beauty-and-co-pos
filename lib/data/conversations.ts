@@ -3,11 +3,11 @@ import type { Conversation } from "@/lib/data/types";
 /**
  * One thread per cliente (ADR 0011). A thread carries, on a single timeline: automatic relances
  * already sent, relances still `pending`, and the messages exchanged once someone replied. The
- * prototype never actually *fires* a relance — the schedule lives in the direction's back-office —
+ * prototype never actually *fires* a relance — the schedule lives in the manager's back-office —
  * so `pending` messages are simply seeded here with their due date in `at`.
  *
  * point-de-vente reads and mutates this list only through the store (take-over, hand-back,
- * transfer, send). Client and conseillère replies are scripted, like the payment and scan flows.
+ * transfer, send). Client and bot replies are scripted, like the payment and scan flows.
  */
 export const CONVERSATIONS: Conversation[] = [
   // ── Programmées, jamais touchées (auto) ──────────────────────────────────
@@ -20,7 +20,7 @@ export const CONVERSATIONS: Conversation[] = [
     messages: [
       {
         id: "m-1-1",
-        sender: "conseillere",
+        sender: "bot",
         channel: "whatsapp",
         at: "2026-09-03T08:00:00",
         relanceType: "anniversaire",
@@ -38,7 +38,7 @@ export const CONVERSATIONS: Conversation[] = [
     messages: [
       {
         id: "m-2-1",
-        sender: "conseillere",
+        sender: "bot",
         channel: "whatsapp",
         at: "2026-09-01T08:00:00",
         relanceType: "anniversaire",
@@ -56,7 +56,7 @@ export const CONVERSATIONS: Conversation[] = [
     messages: [
       {
         id: "m-3-1",
-        sender: "conseillere",
+        sender: "bot",
         channel: "whatsapp",
         at: "2026-09-01T09:30:00",
         relanceType: "fidelite",
@@ -75,7 +75,7 @@ export const CONVERSATIONS: Conversation[] = [
     messages: [
       {
         id: "m-4-1",
-        sender: "conseillere",
+        sender: "bot",
         channel: "sms",
         at: "2026-08-28T08:30:00",
         relanceType: "soins",
@@ -84,17 +84,17 @@ export const CONVERSATIONS: Conversation[] = [
       },
     ],
   },
-  // ── Réponse cliente, la Conseillère a répondu (lu) ───────────────────────
+  // ── Réponse cliente, le Bot a répondu (lu) ───────────────────────────────
   {
     id: "conv-5",
     clientId: "cl-3",
     channel: "sms",
-    state: "conseillere",
+    state: "bot",
     unread: false,
     messages: [
       {
         id: "m-5-1",
-        sender: "conseillere",
+        sender: "bot",
         channel: "sms",
         at: "2026-08-30T09:00:00",
         relanceType: "soins",
@@ -110,7 +110,7 @@ export const CONVERSATIONS: Conversation[] = [
       },
       {
         id: "m-5-3",
-        sender: "conseillere",
+        sender: "bot",
         channel: "sms",
         at: "2026-08-30T14:21:00",
         body: "Parfait Coumba, on vous garde un créneau. À très vite ✨",
@@ -120,14 +120,14 @@ export const CONVERSATIONS: Conversation[] = [
   {
     id: "conv-6",
     clientId: "cl-5",
-    channel: "email",
-    state: "conseillere",
+    channel: "sms",
+    state: "bot",
     unread: false,
     messages: [
       {
         id: "m-6-1",
-        sender: "conseillere",
-        channel: "email",
+        sender: "bot",
+        channel: "sms",
         at: "2026-08-25T11:40:00",
         relanceType: "reconquete",
         discountLabel: "-10% prochaine visite",
@@ -136,14 +136,14 @@ export const CONVERSATIONS: Conversation[] = [
       {
         id: "m-6-2",
         sender: "cliente",
-        channel: "email",
+        channel: "sms",
         at: "2026-08-26T09:15:00",
         body: "Merci, c'est gentil 🙏",
       },
       {
         id: "m-6-3",
-        sender: "conseillere",
-        channel: "email",
+        sender: "bot",
+        channel: "sms",
         at: "2026-08-26T09:16:00",
         body: "Avec plaisir Mariam. Votre place est prête quand vous le souhaitez 🌸",
       },
@@ -153,14 +153,14 @@ export const CONVERSATIONS: Conversation[] = [
   {
     id: "conv-7",
     clientId: "cl-8",
-    channel: "email",
-    state: "conseillere",
+    channel: "sms",
+    state: "bot",
     unread: true,
     messages: [
       {
         id: "m-7-1",
-        sender: "conseillere",
-        channel: "email",
+        sender: "bot",
+        channel: "sms",
         at: "2026-08-29T10:00:00",
         relanceType: "reconquete",
         discountLabel: "-15% prochaine visite",
@@ -169,7 +169,7 @@ export const CONVERSATIONS: Conversation[] = [
       {
         id: "m-7-2",
         sender: "cliente",
-        channel: "email",
+        channel: "sms",
         at: "2026-08-31T18:05:00",
         body: "Bonjour, la remise est valable jusqu'à quand ?",
       },
@@ -185,7 +185,7 @@ export const CONVERSATIONS: Conversation[] = [
     messages: [
       {
         id: "m-8-1",
-        sender: "conseillere",
+        sender: "bot",
         channel: "whatsapp",
         at: "2026-08-30T10:12:00",
         relanceType: "recommandation",
@@ -215,7 +215,7 @@ export const CONVERSATIONS: Conversation[] = [
       },
       {
         id: "m-8-5",
-        sender: "conseillere",
+        sender: "bot",
         channel: "whatsapp",
         at: "2026-09-04T09:00:00",
         relanceType: "fidelite",
@@ -224,17 +224,17 @@ export const CONVERSATIONS: Conversation[] = [
       },
     ],
   },
-  // ── Transférée à la direction (terminal, lecture seule) ─────────────────
+  // ── Transférée à la manager (terminal, lecture seule) ───────────────────
   {
     id: "conv-9",
     clientId: "cl-7",
     channel: "whatsapp",
-    state: "direction",
+    state: "manager",
     unread: false,
     messages: [
       {
         id: "m-9-1",
-        sender: "conseillere",
+        sender: "bot",
         channel: "whatsapp",
         at: "2026-08-27T09:05:00",
         relanceType: "fidelite",
@@ -252,7 +252,7 @@ export const CONVERSATIONS: Conversation[] = [
         sender: "receptionniste",
         channel: "whatsapp",
         at: "2026-08-27T15:30:00",
-        body: "Je comprends Sokhna, je transmets votre message à la direction qui reviendra vers vous rapidement.",
+        body: "Je comprends Sokhna, je transmets votre message à la manager qui reviendra vers vous rapidement.",
       },
     ],
   },

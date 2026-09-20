@@ -6,7 +6,8 @@ const TIME_FMT = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-
 
 /**
  * One conversational message (no `relanceType`). Cliente sits left on white; the receptionist and
- * the Conseillère sit right on the rose-soft accent. The Conseillère carries her signature line.
+ * the bot sit right on the rose-soft accent. "Bot" is the internal tag shown to the receptionist —
+ * the bot's actual message body still signs itself "Votre conseillère beauté" to the cliente.
  */
 export function MessageBubble({ message }: { message: Message }) {
   const mine = message.sender !== "cliente";
@@ -21,7 +22,7 @@ export function MessageBubble({ message }: { message: Message }) {
         <p className="whitespace-pre-line">{message.body}</p>
       </div>
       <span className="px-1 text-[11px] text-base-content/45" title={FULL_DATE_FMT.format(new Date(message.at))}>
-        {message.sender === "conseillere" && "Conseillère · Beauty and Co · "}
+        {message.sender === "bot" && "Bot · Beauty and Co · "}
         {TIME_FMT.format(new Date(message.at))}
       </span>
     </div>

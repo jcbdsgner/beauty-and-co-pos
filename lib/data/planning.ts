@@ -1,12 +1,10 @@
 import { serviceById } from "@/lib/data/menu";
-import type { BeneficiaryKind, RendezVous, Reservation } from "@/lib/data/types";
+import { scheduleFor } from "@/lib/data/praticiennes";
+import type { BeneficiaryKind, Praticienne, RendezVous, Reservation } from "@/lib/data/types";
 
-/**
- * La prise de rendez-vous ne vit pas dans cette app (ADR 0006) : « Créer un rendez-vous » ouvre
- * la plateforme de réservation externe. Point d'entrée depuis le Planning (fiche réservation) et
- * l'Accueil (en-tête).
- */
-export const BOOKING_URL = "https://booking.beautyandco.example";
+/** Périodes affichables au Planning (ADR 0020). Mois (rouvert par ADR 0024) retiré par ADR 0025 :
+ *  absent du Figma de référence, qui ne montre que Jour/Semaine. */
+export type PlanningPeriod = "jour" | "semaine";
 
 /** A calendar day as "YYYY-MM-DD" (local). */
 export function dateISO(d: Date): string {
@@ -64,7 +62,7 @@ export const RESERVATIONS: Reservation[] = [
         reservationId: "res-1",
         serviceId: "manucure-pedicure-manucure-spa-express",
         staffId: "gnagna",
-        beneficiaryName: "Awa (amie)",
+        beneficiaryName: "Awa",
         start: "10:00",
         durationMin: 45,
         status: "actif",
@@ -114,7 +112,7 @@ export const RESERVATIONS: Reservation[] = [
         reservationId: "res-3",
         serviceId: "spa-relax-me-time",
         staffId: "gnagna",
-        start: "14:00",
+        start: "13:40",
         durationMin: 80,
         status: "actif",
       },
@@ -133,7 +131,7 @@ export const RESERVATIONS: Reservation[] = [
         reservationId: "res-4",
         serviceId: "coiffure-shampoing-brushing-shampoing-inclus-et-obligatoire",
         staffId: "michelle",
-        start: "09:30",
+        start: "10:00",
         durationMin: 60,
         status: "actif",
       },
@@ -185,8 +183,9 @@ export const RESERVATIONS: Reservation[] = [
     ],
   },
 
-  // Même prestation « à 2 » deux fois, pour la payeuse puis pour sa sœur : quatre praticiennes au
-  // total sur ce seul rendez-vous — plus deux boissons pré-commandées.
+  // Même prestation « à 2 » deux fois, pour la payeuse puis pour une amie : quatre praticiennes au
+  // total sur ce seul rendez-vous — plus deux boissons pré-commandées. Pas de lien de parenté
+  // précisé (audit UX du 19/09) — non pertinent, non vérifiable dans l'app.
   {
     id: "res-22",
     payerClientId: "cl-5",
@@ -213,7 +212,7 @@ export const RESERVATIONS: Reservation[] = [
         serviceId: "coiffure-tissage-versatile",
         staffId: "michelle",
         secondStaffId: "gnagna",
-        beneficiaryName: "Aïda (sœur)",
+        beneficiaryName: "Aïda",
         start: "09:00",
         durationMin: 60,
         status: "actif",
@@ -237,7 +236,7 @@ export const RESERVATIONS: Reservation[] = [
         reservationId: "res-23",
         serviceId: "manucure-pedicure-manucure-spa-express",
         staffId: "gnagna",
-        start: "10:00",
+        start: "11:35",
         durationMin: 45,
         status: "actif",
       },
@@ -246,7 +245,7 @@ export const RESERVATIONS: Reservation[] = [
         reservationId: "res-23",
         serviceId: "manucure-pedicure-jelly-pedicure",
         staffId: "adja",
-        beneficiaryName: "Rokhaya (amie)",
+        beneficiaryName: "Rokhaya",
         start: "10:00",
         durationMin: 65,
         status: "actif",
@@ -256,7 +255,7 @@ export const RESERVATIONS: Reservation[] = [
         reservationId: "res-23",
         serviceId: "manucure-pedicure-smooth-pedicure",
         staffId: "marie-dominique",
-        beneficiaryName: "Marème (amie)",
+        beneficiaryName: "Marème",
         start: "10:00",
         durationMin: 80,
         status: "actif",
@@ -291,7 +290,7 @@ export const RESERVATIONS: Reservation[] = [
         reservationId: "res-24",
         serviceId: "manucure-pedicure-manucure-spa-express",
         staffId: "gnagna",
-        beneficiaryName: "Moussa (mari)",
+        beneficiaryName: "Moussa",
         beneficiaryKind: "homme",
         start: "15:00",
         durationMin: 45,
@@ -314,7 +313,7 @@ export const RESERVATIONS: Reservation[] = [
         serviceId: "mini-co-mini-jely-manucure",
         staffId: "adja",
         beneficiaryName: "Khady (8 ans)",
-        start: "11:00",
+        start: "11:05",
         durationMin: 30,
         status: "actif",
       },
@@ -682,4 +681,37 @@ export function appointmentEndTime(appointment: Pick<RendezVous, "start" | "dura
 export function formatHour(time: string) {
   const [h, m] = time.split(":");
   return m === "00" ? `${Number(h)}h` : `${Number(h)}h${m}`;
+}
+
+/**
+ * Les horaires réellement libres d'une praticienne, un jour donné, pour une durée donnée : son
+ * horaire hebdomadaire moins ses rendez-vous actifs déjà posés ce jour-là (ADR 0027 — « Créer un
+ * rendez-vous » au comptoir). Pas de réification en objet « Créneau » (mot réservé au vocabulaire
+ * b&co côté client, cf. `CONTEXT.md`) : une simple liste d'horaires "HH:mm" à choisir.
+ */
+export function freeSlotsForStaff(
+  staff: Praticienne,
+  date: string,
+  reservations: Reservation[],
+  durationMin: number,
+  stepMin = 15,
+): string[] {
+  if (staff.unavailableToday && date === todayISO()) return [];
+  const hours = scheduleFor(staff, new Date(`${date}T00:00:00`));
+  if (!hours) return [];
+
+  const dayStart = timeToMinutes(hours.start);
+  const dayEnd = timeToMinutes(hours.end);
+  const busy = reservations
+    .filter((r) => reservationDate(r) === date)
+    .flatMap((r) => r.rendezVous)
+    .filter((rv) => rv.status !== "annule" && (rv.staffId === staff.id || rv.secondStaffId === staff.id))
+    .map((rv) => ({ start: timeToMinutes(rv.start), end: timeToMinutes(rv.start) + rv.durationMin }));
+
+  const slots: string[] = [];
+  for (let t = dayStart; t + durationMin <= dayEnd; t += stepMin) {
+    const clashes = busy.some((b) => t < b.end && b.start < t + durationMin);
+    if (!clashes) slots.push(minutesToTime(t));
+  }
+  return slots;
 }

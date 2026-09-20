@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronDown, Gift, Percent, ShieldCheck, Star } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ChevronRight, Gift, Percent, ShieldCheck, Star } from "lucide-react";
 import { Badge } from "@/components/ui/atoms/badge";
 import { Button } from "@/components/ui/atoms/button";
 import { TextInput } from "@/components/ui/atoms/text-input";
 import { RoundStepButton } from "@/components/ui/atoms/round-step-button";
 import { Checkbox } from "@/components/ui/atoms/checkbox";
+import { CloseButton } from "@/components/ui/atoms/icon-button";
 import { Pills } from "@/components/ui/molecules/pills";
 import { SegmentedToggle } from "@/components/ui/molecules/segmented-toggle";
+import { Dialog } from "@/components/ui/molecules/dialog";
 import { useAppData, computeTotals } from "@/components/providers/app-data-provider";
 import { MAX_REMISE_PCT, RECEPTIONIST_MAX_PCT } from "@/lib/store/app-store";
 import { serviceById } from "@/lib/data/menu";
@@ -16,10 +18,9 @@ import { cn, formatFcfa } from "@/lib/utils";
 import type { RemiseMode, Sale } from "@/lib/data/types";
 
 /**
- * Discounts unfold inline at the foot of the ticket, right above the total — a caissier reaches
- * for them mid-transaction with the cliente in front of her, so a popup that hides the rest of
- * the panier is more friction than it's worth. Collapsed, it's a one-line trigger with a summary
- * badge; open, it stacks the three mechanisms in place.
+ * Discounts live in a dialog reached from a one-line trigger at the foot of the ticket — a caissier
+ * opens it, sets up the mechanisms with the cliente in front of her, and validates back to the
+ * ticket, where the trigger now carries the discount badge and the total below has already moved.
  *
  * Three mechanisms, all stackable, all able to bring the total to 0 F:
  *  · a gift card — auto-linked from the cliente's fiche (ADR 0013), only its portion is adjusted here,
@@ -30,6 +31,7 @@ import type { RemiseMode, Sale } from "@/lib/data/types";
 export function DiscountSection({ sale }: { sale: Sale }) {
   const { setGiftCardAdjustment, setLoyaltyPointsUsed, updateSale, clients } = useAppData();
   const [open, setOpen] = useState(false);
+  const validateGrantedDiscountRef = useRef<() => boolean>(() => true);
 
   const client = sale.clientId ? clients.find((c) => c.id === sale.clientId) : undefined;
   const redeemable = client ? Math.floor(client.points / 100) * 100 : 0;
@@ -37,12 +39,12 @@ export function DiscountSection({ sale }: { sale: Sale }) {
   const hasDiscount = totals.totalDiscount > 0;
 
   return (
-    <div className="mb-3 rounded-[10px] border border-border">
+    <>
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        className="flex min-h-14 w-full items-center justify-between gap-2 px-4 text-[15px] font-medium text-base-content/70 transition active:scale-[0.99] outline-none focus-visible:ring-4 focus-visible:ring-ring/15"
+        onClick={() => setOpen(true)}
+        aria-haspopup="dialog"
+        className="mb-3 flex min-h-14 w-full items-center justify-between gap-2 rounded-[10px] border border-border px-4 text-[15px] font-medium text-base-content/70 transition active:scale-[0.99] outline-none focus-visible:ring-4 focus-visible:ring-ring/15"
       >
         <span className="flex items-center gap-2">
           <Percent aria-hidden className="size-4 text-secondary" />
@@ -54,15 +56,29 @@ export function DiscountSection({ sale }: { sale: Sale }) {
           ) : (
             <span className="text-xs text-base-content/55">Carte cadeau · points · remise</span>
           )}
-          <ChevronDown
-            aria-hidden
-            className={cn("size-4 shrink-0 text-base-content/45 transition-transform", open && "rotate-180")}
-          />
+          <ChevronRight aria-hidden className="size-4 shrink-0 text-base-content/45" />
         </span>
       </button>
 
-      {open && (
-        <div className="flex max-h-[55vh] flex-col gap-6 overflow-y-auto border-t border-border px-4 pt-4 pb-4">
+      <Dialog
+        open={open}
+        labelledBy="discount-dialog-title"
+        className="relative flex max-h-[85vh] w-full max-w-lg flex-col rounded-3xl p-0"
+      >
+        <div className="flex items-start justify-between gap-4 border-b border-border p-6 pb-4">
+          <div>
+            <h2
+              id="discount-dialog-title"
+              className="font-[family-name:var(--font-heading)] font-semibold text-xl text-base-content"
+            >
+              Remise
+            </h2>
+            <p className="mt-0.5 text-sm text-base-content/55">Carte cadeau · points fidélité · remise accordée</p>
+          </div>
+          <CloseButton onClick={() => setOpen(false)} />
+        </div>
+
+        <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto p-6">
           {/* Gift card — auto-linked from the cliente's fiche; only its portion is adjusted here */}
           {sale.giftCardApplied && (
             <section>
@@ -117,10 +133,23 @@ export function DiscountSection({ sale }: { sale: Sale }) {
           )}
 
           {/* Receptionist-granted discount */}
-          <GrantedDiscountBlock sale={sale} />
+          <GrantedDiscountBlock sale={sale} validateRef={validateGrantedDiscountRef} />
         </div>
-      )}
-    </div>
+
+        <div className="shrink-0 border-t border-border p-6 pt-4">
+          <Button
+            variant="dark"
+            size="xl"
+            className="w-full"
+            onClick={() => {
+              if (validateGrantedDiscountRef.current()) setOpen(false);
+            }}
+          >
+            {hasDiscount ? `Valider — remise de ${formatFcfa(totals.totalDiscount)}` : "Valider"}
+          </Button>
+        </div>
+      </Dialog>
+    </>
   );
 }
 
@@ -226,7 +255,13 @@ const PCT_PRESETS = [5, 10, 15, MAX_REMISE_PCT];
  * code of her own — up to 10 %. Between 10 and 20 % she must enter a manager code (ADR 0008). Over
  * 20 % is refused. The *reason* is not asked now: it's captured right after the sale is cashed in.
  */
-function GrantedDiscountBlock({ sale }: { sale: Sale }) {
+function GrantedDiscountBlock({
+  sale,
+  validateRef,
+}: {
+  sale: Sale;
+  validateRef: React.MutableRefObject<() => boolean>;
+}) {
   const { grantDiscount, updateSale } = useAppData();
   const totals = computeTotals(sale);
   const granted = sale.discountGranted;
@@ -250,11 +285,28 @@ function GrantedDiscountBlock({ sale }: { sale: Sale }) {
   const canApply =
     value > 0 && totals.prestations > 0 && !overCeiling && (!needsManager || managerOk);
 
-  function apply() {
+  /** Called when the ticket-level "Valider" is pressed. Nothing entered → let it close silently;
+   *  something entered but invalid → block the close and surface why; valid → grant it, then close. */
+  function validate(): boolean {
+    if (granted || value <= 0) return true;
+    if (!canApply) {
+      setMsg(
+        overCeiling
+          ? `${MAX_REMISE_PCT} % est le plafond absolu — impossible d'accorder plus ici.`
+          : totals.prestations <= 0
+            ? "Aucune prestation à remiser sur ce ticket."
+            : "Code manager requis (4 à 6 chiffres).",
+      );
+      return false;
+    }
     const res = grantDiscount(sale.id, mode, value, needsManager ? managerCode : undefined);
-    setMsg(res.message);
+    setMsg(res.ok ? null : res.message);
     if (res.ok) setManagerCode("");
+    return res.ok;
   }
+  useEffect(() => {
+    validateRef.current = validate;
+  });
 
   if (granted) {
     return (
@@ -342,9 +394,6 @@ function GrantedDiscountBlock({ sale }: { sale: Sale }) {
           </span>
         </div>
 
-        <Button variant="dark" size="default" className="w-full" disabled={!canApply} onClick={apply}>
-          Accorder la remise
-        </Button>
         {msg && <p className="text-xs font-medium text-destructive">{msg}</p>}
       </div>
     </section>

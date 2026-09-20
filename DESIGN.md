@@ -128,11 +128,19 @@ destructive edit to a shared atom.
   (inset hairline), no ambient lift. If it would read as a Material card, it is wrong.
 - **The One-Signal rule.** Only amber says "attention". If a second colour starts meaning
   "look here", the board has lost its single channel and the receptionist has to decode a legend.
-  **Exception (ADR 0022):** the Accueil calendar view (`AccueilCalendar`) is a decorative,
+  **Exception 1 (ADR 0022):** the Accueil calendar view (`AccueilCalendar`) is a decorative,
   agenda-style exception — each block carries a rotating colour family purely to separate
   same-day events visually, the way a personal calendar app does. Amber inside those blocks still
-  means only "à encaisser" / "now"; the family colour never carries status meaning. Don't reuse
-  this multicolour treatment outside that one view.
+  means only "à encaisser" / "now"; the family colour never carries status meaning.
+  **Exception 2 (ADR 0024, palette redone à la lettre du Figma par ADR 0025):** the Planning
+  calendar (`DayTimeline`/`WeekTimeline`, `praticienneAccent`) carries one accent colour per
+  praticienne, for the same "who at a glance" reason — 8 saturated hues (light-tint block fill +
+  saturated border/avatar/text), assigned by the praticienne's position in the roster. ADR 0025
+  (literal Figma reproduction, explicit user request) **drops the amber-hue exclusion**: one of
+  the 8 hues is amber, used purely as "this praticienne's colour", same as any other hue in the
+  set — it carries no status meaning there. The Planning "now" marker is `bg-primary` (the brand
+  taupe), not amber, precisely to keep amber-as-signal unambiguous everywhere it still applies.
+  Don't reuse a multicolour-by-entity treatment anywhere else without a further named exception.
 - **The Chip-Flips rule.** Every status change animates one 140ms half-flip on the flip-chip and,
   if it is a change the receptionist should notice, an amber pulse + held edge on the lane.
   `prefers-reduced-motion` → instant swap, edge still held.
@@ -157,7 +165,7 @@ as a `text-lg` heading — a board is labelled like a schedule, not titled like 
 
 ## Layout
 
-Fixed 260px sidebar + fluid content, `max-w-6xl`, `px-8 py-8` (unchanged). Inside a section:
+Fixed 260px sidebar + fluid content, `max-w-[1440px]`, `px-8 py-8` (unchanged). Inside a section:
 
 - **The section heading** is a plain bold title on the cream ground (ADR 0007) — section name,
   optional `context` line in `ink-500` beneath it, `reset` / `action` aligned right, an optional

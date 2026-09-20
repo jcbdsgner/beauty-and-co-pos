@@ -145,6 +145,23 @@ function detectCoverage(clientId: string | null, cart: CartLine[]): SaleCoverage
   return out;
 }
 
+/**
+ * Re-run `detectCoverage` after the cart changes, keeping whatever the receptionist already
+ * ticked/unticked on a still-matching group — only a newly-added prestation joins pre-checked.
+ * Without this, a prestation added *after* the cliente is identified (the normal counter order)
+ * never surfaces a coverage group at all, since `addCartLine` doesn't otherwise touch `coverage`.
+ */
+function syncCoverage(clientId: string | null, cart: CartLine[], existing: SaleCoverage[]): SaleCoverage[] {
+  return detectCoverage(clientId, cart).map((cov) => {
+    const prev = existing.find((c) => c.instanceId === cov.instanceId);
+    if (!prev) return cov;
+    const checkedServiceIds = cov.serviceIds.filter((id) =>
+      prev.serviceIds.includes(id) ? prev.checkedServiceIds.includes(id) : true,
+    );
+    return { ...cov, checkedServiceIds };
+  });
+}
+
 /** The `giftCardApplied` shape for a card, with every portion left at its default (spend it all). */
 function giftCardAppliedFrom(card: CarteCadeau): NonNullable<Sale["giftCardApplied"]> {
   return card.kind === "prestations"
@@ -326,8 +343,8 @@ export type AppState = {
    *  the Clientèle landing. Session-only, capped, no persistence (consistent with the rest of the store). */
   recentClientIds: string[];
   /** One message thread per cliente (ADR 0011). The receptionist can take a thread over and write,
-   *  hand it back to the Conseillère, or transfer it to the direction (terminal). Scheduled
-   *  relances stay defined in the direction's back-office — the app only writes *into* a thread. */
+   *  hand it back to the bot, or transfer it to the manager (terminal). Scheduled relances stay
+   *  defined in the manager's back-office — the app only writes *into* a thread. */
   conversations: Conversation[];
   /** Printed gift cards bought on the external platform, awaiting preparation (ADR 0012). Reactive
    *  so marking one handed-over drops its row from the queue immediately. */
@@ -340,10 +357,22 @@ export type AppState = {
   /** Record that a cliente's fiche was opened (called from FicheClienteView). */
   noteClientViewed: (id: string) => void;
 
-  // Rendez-vous (atomic, nested inside their Réservation). No création de réservation here — the
-  // booking journey lives on the external platform. But the receptionist adjusts what arrives
-  // (ADR 0009): reschedule, reassign, swap prestation / bénéficiaire, add / remove a rendez-vous,
-  // cancel with a reason. The one hard block is a praticienne double-booked (findStaffClash).
+  // Rendez-vous (atomic, nested inside their Réservation). Most réservations still arrive from the
+  // external booking journey, but the receptionist can also create one at the counter — a phone
+  // booking, no upsell, no acompte (ADR 0027) — and adjusts what arrives either way (ADR 0009):
+  // reschedule, reassign, swap prestation / bénéficiaire, add / remove a rendez-vous, cancel with a
+  // reason. The one hard block is a praticienne double-booked (findStaffClash).
+  /** Crée une réservation `source: "comptoir"` avec 1..N rendez-vous — voir ADR 0027. Chaque ligne
+   *  est vérifiée contre les réservations existantes et entre elles (`findStaffClash`) ; la
+   *  première ligne en clash arrête tout, rien n'est enregistré. */
+  createReservation: (
+    payerClientId: string,
+    lines: Array<
+      Pick<RendezVous, "serviceId" | "staffId" | "start"> &
+        Partial<Pick<RendezVous, "secondStaffId" | "beneficiaryClientId" | "beneficiaryName" | "beneficiaryKind" | "durationMin">>
+    >,
+    options?: { date?: string },
+  ) => { ok: boolean; message: string; reservationId?: string };
   cancelAppointment: (rvId: string, reason?: string) => void;
   /** Annule toute la réservation d'un coup — chaque rendez-vous encore actif reçoit le même motif
    *  (ADR 0023). Distinct de `cancelAppointment`, qui ne touche qu'un rendez-vous précis. */
@@ -402,10 +431,10 @@ export type AppState = {
   // Messages (ADR 0011)
   /** Receptionist takes a thread over — she now writes; that cliente's pending relances are held. */
   takeOverConversation: (convId: string) => void;
-  /** Hand a thread back to the Conseillère (never back to `auto`). */
-  handBackToConseillere: (convId: string) => void;
-  /** Transfer a thread to the direction — terminal, the thread leaves the app and freezes. */
-  transferToDirection: (convId: string) => void;
+  /** Hand a thread back to the bot (never back to `auto`). */
+  handBackToBot: (convId: string) => void;
+  /** Transfer a thread to the manager — terminal, the thread leaves the app and freezes. */
+  transferToManager: (convId: string) => void;
   /** Append a receptionist message; no-op unless the thread is `receptionniste`. Scripts one
    *  client reply back after ~1.5s (prototype, like the scanner demo). */
   sendClientMessage: (convId: string, body: string) => void;
@@ -453,6 +482,59 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   noteClientViewed: (id) =>
     set((s) => ({ recentClientIds: [id, ...s.recentClientIds.filter((x) => x !== id)].slice(0, 8) })),
+
+  createReservation: (payerClientId, lines, options) => {
+    if (!payerClientId) return { ok: false, message: "Choisissez la cliente qui règle." };
+    if (lines.length === 0) return { ok: false, message: "Ajoutez au moins un rendez-vous." };
+
+    const { reservations, praticiennes } = get();
+    const reservationId = nextId("res");
+    const staffName = (id: string) => praticiennes.find((p) => p.id === id)?.name ?? "La praticienne";
+    const newRvs: RendezVous[] = [];
+
+    for (const data of lines) {
+      const durationMin = data.durationMin ?? serviceById(data.serviceId)?.durationMinutes ?? 30;
+      const staffIds = [data.staffId, data.secondStaffId].filter(Boolean) as string[];
+      const cand = { start: data.start, durationMin };
+
+      const clash = findStaffClash(reservations, "", { staffIds, ...cand });
+      if (clash) {
+        return { ok: false, message: `${staffName(clash.staffId)} a déjà un rendez-vous à ${clash.other.start} — choisissez un autre horaire.` };
+      }
+      const localClash = newRvs.find((rv) => {
+        const otherStaff = [rv.staffId, rv.secondStaffId].filter(Boolean) as string[];
+        return staffIds.some((id) => otherStaff.includes(id)) && timeRangesOverlap(cand, rv);
+      });
+      if (localClash) {
+        return { ok: false, message: `${staffName(localClash.staffId)} est déjà prise à ${localClash.start} sur un autre rendez-vous de cette réservation.` };
+      }
+
+      newRvs.push({
+        id: nextId("rdv"),
+        reservationId,
+        serviceId: data.serviceId,
+        staffId: data.staffId,
+        start: data.start,
+        durationMin,
+        status: "actif",
+        ...(data.secondStaffId ? { secondStaffId: data.secondStaffId } : {}),
+        ...(data.beneficiaryClientId ? { beneficiaryClientId: data.beneficiaryClientId } : {}),
+        ...(data.beneficiaryName ? { beneficiaryName: data.beneficiaryName } : {}),
+        ...(data.beneficiaryKind ? { beneficiaryKind: data.beneficiaryKind } : {}),
+      });
+    }
+
+    const reservation: Reservation = {
+      id: reservationId,
+      payerClientId,
+      source: "comptoir",
+      rendezVous: newRvs,
+      ...(options?.date ? { date: options.date } : {}),
+      createdAt: new Date().toISOString(),
+    };
+    set((s) => ({ reservations: [...s.reservations, reservation] }));
+    return { ok: true, message: "Rendez-vous enregistré.", reservationId };
+  },
 
   cancelAppointment: (rvId, reason) =>
     set((s) => ({
@@ -711,10 +793,12 @@ export const useAppStore = create<AppState>((set, get) => ({
           if (sale.id !== saleId) return sale;
           const existing = sale.cart.find((l) => l.refId === line.refId);
           if (existing) {
-            return { ...sale, cart: sale.cart.map((l) => (l.id === existing.id ? { ...l, qty: Math.min(max, l.qty + 1) } : l)) };
+            const cart = sale.cart.map((l) => (l.id === existing.id ? { ...l, qty: Math.min(max, l.qty + 1) } : l));
+            return { ...sale, cart, coverage: syncCoverage(sale.clientId, cart, sale.coverage) };
           }
           if (max < 1) return sale;
-          return { ...sale, cart: [...sale.cart, { ...line, id: nextId("line"), qty: 1 }] };
+          const cart = [...sale.cart, { ...line, id: nextId("line"), qty: 1 }];
+          return { ...sale, cart, coverage: syncCoverage(sale.clientId, cart, sale.coverage) };
         }),
       };
     }),
@@ -890,20 +974,20 @@ export const useAppStore = create<AppState>((set, get) => ({
   takeOverConversation: (convId) =>
     set((s) => ({
       conversations: s.conversations.map((c) =>
-        c.id === convId && c.state !== "direction" ? { ...c, state: "receptionniste" } : c,
+        c.id === convId && c.state !== "manager" ? { ...c, state: "receptionniste" } : c,
       ),
     })),
 
-  handBackToConseillere: (convId) =>
+  handBackToBot: (convId) =>
     set((s) => ({
       conversations: s.conversations.map((c) =>
-        c.id === convId && c.state === "receptionniste" ? { ...c, state: "conseillere" } : c,
+        c.id === convId && c.state === "receptionniste" ? { ...c, state: "bot" } : c,
       ),
     })),
 
-  transferToDirection: (convId) =>
+  transferToManager: (convId) =>
     set((s) => ({
-      conversations: s.conversations.map((c) => (c.id === convId ? { ...c, state: "direction" } : c)),
+      conversations: s.conversations.map((c) => (c.id === convId ? { ...c, state: "manager" } : c)),
     })),
 
   markConversationRead: (convId) =>

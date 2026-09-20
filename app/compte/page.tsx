@@ -10,12 +10,14 @@ import { LogoutSection } from "@/components/compte/logout-section";
  */
 export default function ComptePage() {
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-7">
+    <div className="mx-auto flex w-full max-w-4xl flex-col gap-7">
       <BoardHeader section="Compte" />
-      <div className="flex flex-col gap-5">
-        <PhotoSection />
+      <div className="grid items-start gap-5 lg:grid-cols-2">
+        <div className="flex flex-col gap-5">
+          <PhotoSection />
+          <LogoutSection />
+        </div>
         <PasswordSection />
-        <LogoutSection />
       </div>
     </div>
   );

@@ -4,7 +4,7 @@ L'[ADR 0004](0004-relances-section-clientele-recentree.md) avait promu **Relance
 section à trois volets : la tournée du matin (messages à valider et envoyer, geste
 quotidien), les envois groupés (Campagnes), le contenu conseillère (config rare-édition).
 On revient dessus : les relances **partent automatiquement**, leurs conditions et leurs
-textes sont définis par la direction dans un **back-office hors de cette app**. La
+textes sont définis par la manager dans un **back-office hors de cette app**. La
 réceptionniste n'envoie plus rien et ne configure plus rien.
 
 ## Décision

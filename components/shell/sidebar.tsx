@@ -8,7 +8,6 @@ import { Avatar } from "@/components/ui/atoms/avatar";
 import { DropdownMenu } from "@/components/ui/molecules/dropdown-menu";
 import { ConfirmDialog } from "@/components/ui/molecules/confirm-dialog";
 import { useSession } from "@/lib/session";
-import { ROLE_LABEL } from "@/lib/data/utilisateurs";
 import { HomeIcon, CalendarIcon, PeopleIcon, GearIcon, LogoutIcon } from "@/components/ui/atoms/icons";
 import { MessageCircle, Sparkles } from "lucide-react";
 import { useAppData } from "@/components/providers/app-data-provider";
@@ -77,11 +76,10 @@ export function Sidebar() {
             </button>
           }
           items={[
-            { type: "header", label: currentUser.name, sublabel: ROLE_LABEL[currentUser.role] },
+            { type: "header", label: currentUser.name },
             { type: "separator" },
             { label: "Mon compte", icon: <GearIcon className="size-4" />, onSelect: () => router.push("/compte") },
-            { type: "separator" },
-            { label: "Déconnexion", icon: <LogoutIcon className="size-4" />, tone: "danger", onSelect: () => setConfirmLogout(true) },
+            { label: "Déconnexion", icon: <LogoutIcon className="size-4" />, onSelect: () => setConfirmLogout(true) },
           ]}
         />
       </div>

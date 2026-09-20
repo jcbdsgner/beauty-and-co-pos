@@ -1,28 +1,24 @@
 /**
- * Palette d'accent par praticienne — exception ciblée à la règle mono-couleur du POS (daisyUI
- * "beautyco", #886666 partout ailleurs), validée avec l'utilisateur pour le Planning : les
- * références visuelles (calendrier par collaborateur) reposent sur une teinte par ligne pour
- * repérer d'un coup d'œil qui travaille où. Tons pastel choisis pour rester à l'écart de l'ambre
- * (#b5590a, seul signal "à traiter" du POS) et du rose/taupe de marque.
+ * Palette d'accent par praticienne — couleurs reprises à la lettre du Figma de référence
+ * (node 270:2466, ADR 0025) : une teinte saturée distincte par ligne (rouge, sarcelle, bleu,
+ * ambre, violet, rose, vert, ardoise…), plutôt que la palette de 16 tons pastel qui excluait
+ * délibérément l'ambre (ADR 0024, table rase — voir ADR 0025). Assignée par **position** dans
+ * l'équipe planifiable (pas par hash de l'id) pour reproduire l'ordre du Figma ; se déplace avec
+ * la praticienne si l'équipe est réordonnée par glisser-déposer.
  */
 type PraticienneAccent = { bg: string; border: string; text: string; dot: string };
 
 const PALETTE: PraticienneAccent[] = [
-  { bg: "#eaf1fb", border: "#c3d6f0", text: "#3f5f95", dot: "#5b7fc0" }, // bleu
-  { bg: "#eaf5f0", border: "#c2e4d4", text: "#3f7a5f", dot: "#4f9c78" }, // sauge
-  { bg: "#f2eef9", border: "#dccdf0", text: "#6c4f96", dot: "#8a63bd" }, // violet
-  { bg: "#e9f4f6", border: "#bfe0e5", text: "#2f7480", dot: "#3f95a3" }, // teal
-  { bg: "#f7eef2", border: "#eccfdd", text: "#9c4f74", dot: "#c1638f" }, // prune
-  { bg: "#eef2e7", border: "#d4e0c0", text: "#607a3a", dot: "#7f9c4e" }, // olive doux
-  { bg: "#eceef7", border: "#ccd2ec", text: "#4a5590", dot: "#6570b8" }, // indigo
+  { bg: "#feebe6", border: "#ef4444", text: "#b92819", dot: "#dc4632" }, // rouge (Bineta)
+  { bg: "#e0f2f1", border: "#14b8a6", text: "#0d786e", dot: "#149688" }, // sarcelle (Fatou)
+  { bg: "#edf6fb", border: "#49a4ca", text: "#1e6eaa", dot: "#3891cc" }, // bleu (Henry)
+  { bg: "#fff7e6", border: "#f59e0b", text: "#a0640a", dot: "#d99320" }, // ambre (Michelle)
+  { bg: "#f3e8ff", border: "#8b5cf6", text: "#6432b9", dot: "#7c50d2" }, // violet (Gnagna)
+  { bg: "#fde2eb", border: "#ec4899", text: "#aa1e55", dot: "#d23c78" }, // rose (Marie Dominique)
+  { bg: "#dcfce7", border: "#22c55e", text: "#168048", dot: "#22a05a" }, // vert (Adja)
+  { bg: "#f1f4f5", border: "#778d9c", text: "#414b82", dot: "#5a69a0" }, // ardoise (Aïssatou)
 ];
 
-function hash(id: string) {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
-  return Math.abs(h);
-}
-
-export function praticienneAccent(id: string): PraticienneAccent {
-  return PALETTE[hash(id) % PALETTE.length];
+export function praticienneAccent(index: number): PraticienneAccent {
+  return PALETTE[((index % PALETTE.length) + PALETTE.length) % PALETTE.length];
 }

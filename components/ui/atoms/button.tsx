@@ -20,7 +20,7 @@ export const buttonVariants = cva(
   // registers on a touchscreen); a disabled control stays a legible muted fill, never an
   // opacity wash.
   cn(
-    "btn font-semibold normal-case",
+    "btn normal-case",
     "focus-visible:outline-2 focus-visible:outline-offset-2",
     "active:scale-[0.97]",
     "disabled:!bg-base-200 disabled:!text-base-content/40 disabled:!border-transparent disabled:!shadow-none disabled:scale-100",
@@ -40,10 +40,12 @@ export const buttonVariants = cva(
       },
       size: {
         // daisyUI heights scale from --size-field (0.35rem): md ≈ 56px, lg ≈ 67px, sm ≈ 45px.
-        default: "btn-md text-[17px]",
-        xl: "btn-lg text-[17px]",
-        sm: "btn-sm text-[15px]",
-        icon: "btn-md btn-square",
+        // Weight follows Figma 255:2: the everyday in-card action pair (md) reads Medium; the
+        // page-level CTAs (sm header pill, lg counter bar) stay SemiBold.
+        default: "btn-md text-[16px] font-medium",
+        xl: "btn-lg text-[17px] font-semibold",
+        sm: "btn-sm text-[15px] font-semibold",
+        icon: "btn-md btn-square font-semibold",
       },
     },
     defaultVariants: { variant: "brand", size: "default" },

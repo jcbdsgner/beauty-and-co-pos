@@ -1,6 +1,7 @@
 "use client";
 
 import { Lock, Minus, Plus, ScanLine, Search, Trash2 } from "lucide-react";
+import { Tooltip } from "@/components/ui/atoms/tooltip";
 import { Button } from "@/components/ui/atoms/button";
 import { IconButton } from "@/components/ui/atoms/icon-button";
 import { Badge } from "@/components/ui/atoms/badge";
@@ -172,36 +173,42 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
                 <div className="mt-2 flex items-center gap-2">
                   {/* single-pill quantity stepper — the most-used control on the ticket, so 56px */}
                   <div className="flex items-center rounded-full border border-border">
-                    <button
-                      type="button"
-                      onClick={() => updateCartQty(sale.id, line.id, Math.max(1, line.qty - 1))}
-                      disabled={line.qty <= 1}
-                      aria-label={`Moins — ${line.name}`}
-                      className="flex size-14 items-center justify-center rounded-full text-base-content/70 transition active:scale-90 disabled:opacity-30"
-                    >
-                      <Minus aria-hidden className="size-5" />
-                    </button>
+                    <Tooltip content="Retirer une unité">
+                      <button
+                        type="button"
+                        onClick={() => updateCartQty(sale.id, line.id, Math.max(1, line.qty - 1))}
+                        disabled={line.qty <= 1}
+                        aria-label={`Moins — ${line.name}`}
+                        className="flex size-14 items-center justify-center rounded-full text-base-content/70 transition active:scale-90 disabled:opacity-30"
+                      >
+                        <Minus aria-hidden className="size-5" />
+                      </button>
+                    </Tooltip>
                     <span className="w-7 text-center text-[15px] font-bold text-base-content tabular-nums">{line.qty}</span>
-                    <button
-                      type="button"
-                      onClick={() => updateCartQty(sale.id, line.id, Math.min(maxQty, line.qty + 1))}
-                      disabled={line.qty >= maxQty}
-                      aria-label={`Plus — ${line.name}`}
-                      className="flex size-14 items-center justify-center rounded-full text-base-content/70 transition active:scale-90 disabled:opacity-30"
-                    >
-                      <Plus aria-hidden className="size-5" />
-                    </button>
+                    <Tooltip content="Ajouter une unité">
+                      <button
+                        type="button"
+                        onClick={() => updateCartQty(sale.id, line.id, Math.min(maxQty, line.qty + 1))}
+                        disabled={line.qty >= maxQty}
+                        aria-label={`Plus — ${line.name}`}
+                        className="flex size-14 items-center justify-center rounded-full text-base-content/70 transition active:scale-90 disabled:opacity-30"
+                      >
+                        <Plus aria-hidden className="size-5" />
+                      </button>
+                    </Tooltip>
                   </div>
 
                   <span className="min-w-0 flex-1" />
 
-                  <IconButton
-                    onClick={() => removeCartLine(sale.id, line.id)}
-                    aria-label={`Retirer ${line.name}`}
-                    className="size-14 shrink-0 rounded-full border border-border text-base-content/55 transition active:scale-90 active:bg-error/10 active:text-destructive hover:bg-error/10 hover:text-destructive"
-                  >
-                    <Trash2 aria-hidden className="size-5" />
-                  </IconButton>
+                  <Tooltip content="Retirer du panier">
+                    <IconButton
+                      onClick={() => removeCartLine(sale.id, line.id)}
+                      aria-label={`Retirer ${line.name}`}
+                      className="size-14 shrink-0 rounded-full border border-border text-base-content/55 transition active:scale-90 active:bg-error/10 active:text-destructive hover:bg-error/10 hover:text-destructive"
+                    >
+                      <Trash2 aria-hidden className="size-5" />
+                    </IconButton>
+                  </Tooltip>
                 </div>
               </li>
               );

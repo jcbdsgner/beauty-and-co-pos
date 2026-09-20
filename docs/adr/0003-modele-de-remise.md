@@ -1,12 +1,12 @@
 # Modèle de remise : trois mécanismes cumulables, motif après l'encaissement
 
-[ADR 0001](0001-persona-unique-poste-de-comptoir.md) a supprimé le rôle direction et son code de déverrouillage. Cet ADR fixe le modèle de remise qui le remplace.
+[ADR 0001](0001-persona-unique-poste-de-comptoir.md) a supprimé le rôle manager et son code de déverrouillage. Cet ADR fixe le modèle de remise qui le remplace.
 
 Trois mécanismes, **tous cumulables**, pouvant amener le total à **0 F** :
 
 1. **Points fidélité** — la cliente convertit des points en réduction (100 pts = 1 000 F, par pas de 100, borné à son solde). Distinct de l'**acquisition** de points (10 pts / 1 000 F payés), qui reste inchangée et se calcule sur le total **après** remises.
 2. **Carte cadeau** — instrument prépayé, voir [ADR 0002](0002-carte-cadeau-instrument-prepaye.md).
-3. **Remise accordée** — une réduction discrétionnaire que la réceptionniste accorde ~~avec **son code personnel**~~ (**superseded [ADR 0008](0008-remise-accordee-code-manager.md) : aucun code sous 10 %, code manager de 10 à 20 %**). Elle choisit un **montant** ou un **pourcentage**. Plafond : **20 % du total des prestations** (services uniquement — les produits ne sont jamais remisés ainsi). Au-delà, il faut l'accord de la direction, hors de cette app.
+3. **Remise accordée** — une réduction discrétionnaire que la réceptionniste accorde ~~avec **son code personnel**~~ (**superseded [ADR 0008](0008-remise-accordee-code-manager.md) : aucun code sous 10 %, code manager de 10 à 20 %**). Elle choisit un **montant** ou un **pourcentage**. Plafond : **20 % du total des prestations** (services uniquement — les produits ne sont jamais remisés ainsi). Au-delà, il faut l'accord de la manager, hors de cette app.
 
 **Ordre de calcul** (l'ordre compte, l'un des mécanismes est un pourcentage) :
 `remise accordée` (sur les prestations) → `points` → `carte cadeau` en dernier, clampée à ce qui reste dû.

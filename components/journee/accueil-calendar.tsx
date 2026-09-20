@@ -177,7 +177,9 @@ export function AccueilCalendar({ rows, clients, praticiennes, onOpenReservation
                     )}
                   </span>
                   <span className="truncate text-[0.95rem] font-semibold text-base-content">{payerName}</span>
-                  <span className="truncate text-xs text-base-content/60">{composition}</span>
+                  {/* line-clamp plutôt que truncate (audit UX du 19/09) : une composition comme
+                      « 2 enfants » ne doit jamais être coupée à mi-mot sur une lane étroite. */}
+                  <span className="line-clamp-2 text-xs leading-snug text-base-content/60">{composition}</span>
                   {visibleAvatars.length > 0 && (
                     <span className="mt-auto flex items-center pt-1">
                       {visibleAvatars.map((p, i) => (

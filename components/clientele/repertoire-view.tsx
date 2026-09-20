@@ -1,10 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { Avatar } from "@/components/ui/atoms/avatar";
 import { SearchInput } from "@/components/ui/atoms/search-input";
 import { Button } from "@/components/ui/atoms/button";
-import { Board, Lane, BoardEmpty, ChipFilter } from "@/components/ui/board";
+import { Legend, ChipFilter } from "@/components/ui/board";
 import { NewClientDialog } from "@/components/clientele/new-client-dialog";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { clientFullName, clientInitial, searchClients } from "@/lib/data/clientele";
@@ -111,32 +112,6 @@ export function RepertoireView() {
     setDialogOpen(true);
   }
 
-  function clientLane(c: Cliente, opts?: { trailing?: string }) {
-    return (
-      <Lane
-        key={c.id}
-        leading={<Avatar initial={clientInitial(c)} size={34} className="bg-accent text-xs font-semibold text-secondary" />}
-        title={
-          <span className="flex items-center gap-2">
-            {clientFullName(c)}
-            <TierFlag tier={c.tier} />
-          </span>
-        }
-        meta={
-          opts?.trailing
-            ? opts.trailing
-            : `${c.totalVisits} visite${c.totalVisits > 1 ? "s" : ""}${c.lastVisit ? ` · ${c.lastVisit}` : ""}`
-        }
-        actions={
-          !opts?.trailing && (
-            <span className="text-sm font-semibold tabular-nums text-base-content">{formatFcfa(c.totalSpent)}</span>
-          )
-        }
-        href={`/clientele/${c.id}`}
-      />
-    );
-  }
-
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-3">
@@ -152,31 +127,39 @@ export function RepertoireView() {
       </div>
 
       {!searching && (recent.length > 0 || expectedToday.length > 0) && (
-        <div className="grid grid-cols-2 gap-6">
-          <Board legend="Vues récemment">
-            {recent.length === 0 ? (
-              <BoardEmpty title="Aucune fiche ouverte" hint="Les fiches ouvertes sur ce poste apparaîtront ici." />
-            ) : (
-              recent.map((c) => clientLane(c, { trailing: c.phone }))
-            )}
-          </Board>
-          <Board legend="Attendues aujourd'hui">
-            {expectedToday.length === 0 ? (
-              <BoardEmpty title="Personne attendue" hint="Aucune cliente n'a de rendez-vous aujourd'hui." />
-            ) : (
-              expectedToday.map(({ client, start }) => clientLane(client, { trailing: `Rendez-vous ${start}` }))
-            )}
-          </Board>
+        <div className={recent.length > 0 && expectedToday.length > 0 ? "grid grid-cols-2 gap-6" : "space-y-3"}>
+          {recent.length > 0 && (
+            <div className="space-y-3">
+              <Legend>Vues récemment</Legend>
+              <div className={`grid grid-cols-2 gap-3 ${expectedToday.length > 0 ? "" : "md:grid-cols-3"}`}>
+                {recent.map((c) => (
+                  <ClientCard key={c.id} client={c} trailing={c.phone} />
+                ))}
+              </div>
+            </div>
+          )}
+          {expectedToday.length > 0 && (
+            <div className="space-y-3">
+              <Legend>Attendues aujourd&apos;hui</Legend>
+              <div className={`grid grid-cols-2 gap-3 ${recent.length > 0 ? "" : "md:grid-cols-3"}`}>
+                {expectedToday.map(({ client, start }) => (
+                  <ClientCard key={client.id} client={client} trailing={`Rendez-vous ${start}`} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
-      <Board
-        legend={searching ? `Résultats · ${filtered.length}` : "Tout l'annuaire"}
-        legendRight={!searching && <ChipFilter options={FILTERS} value={filter} onChange={setFilter} />}
-      >
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Legend>{searching ? `Résultats · ${filtered.length}` : "Tout l'annuaire"}</Legend>
+          {!searching && <ChipFilter options={FILTERS} value={filter} onChange={setFilter} />}
+        </div>
+
         {filtered.length === 0 ? (
           searching ? (
-            <BoardEmpty
+            <EmptyBlock
               title={`Aucune cliente pour « ${query.trim()} »`}
               hint="Cette cliente n'est peut-être pas encore au répertoire."
               action={
@@ -186,7 +169,7 @@ export function RepertoireView() {
               }
             />
           ) : (
-            <BoardEmpty
+            <EmptyBlock
               title="Aucune cliente ne correspond à ce filtre"
               action={
                 <Button variant="outline" onClick={() => setFilter("toutes")}>
@@ -196,11 +179,55 @@ export function RepertoireView() {
             />
           )
         ) : (
-          filtered.map((c) => clientLane(c))
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            {filtered.map((c) => (
+              <ClientCard key={c.id} client={c} />
+            ))}
+          </div>
         )}
-      </Board>
+      </div>
 
       {dialogOpen && <NewClientDialog open initialValues={dialogPrefill} onClose={() => setDialogOpen(false)} />}
+    </div>
+  );
+}
+
+/* ── Bloc cliente (grille de l'annuaire) ────────────────────────────────── */
+
+function ClientCard({ client: c, trailing }: { client: Cliente; trailing?: string }) {
+  return (
+    <Link
+      href={`/clientele/${c.id}`}
+      className="group flex flex-col gap-3 rounded-lg bg-white p-4 text-left shadow-[0px_30px_30px_0px_rgba(0,0,0,0.04),0px_7px_16px_0px_rgba(0,0,0,0.05)] transition hover:-translate-y-0.5 hover:shadow-[0px_30px_30px_0px_rgba(0,0,0,0.06),0px_7px_16px_0px_rgba(0,0,0,0.08)]"
+    >
+      <div className="flex items-start justify-between gap-2">
+        <Avatar initial={clientInitial(c)} size={40} className="bg-accent text-sm font-semibold text-secondary" />
+        <TierFlag tier={c.tier} />
+      </div>
+      <div className="min-w-0">
+        <p className="truncate text-base font-semibold text-base-content">{clientFullName(c)}</p>
+        <p className="truncate text-xs text-base-content/55">
+          {trailing ?? `${c.totalVisits} visite${c.totalVisits > 1 ? "s" : ""}${c.lastVisit ? ` · ${c.lastVisit}` : ""}`}
+        </p>
+      </div>
+      {!trailing && (
+        <div className="mt-auto">
+          <p className="text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-base-content/35">Total dépensé</p>
+          <p className="text-sm font-semibold tabular-nums text-primary">{formatFcfa(c.totalSpent)}</p>
+        </div>
+      )}
+    </Link>
+  );
+}
+
+function EmptyBlock({ title, hint, action }: { title: string; hint?: string; action?: React.ReactNode }) {
+  return (
+    <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-base-300 px-6 py-14 text-center">
+      <p className="font-[family-name:var(--font-heading)] text-xs font-bold uppercase tracking-[0.12em] text-base-content/40">
+        {title}
+      </p>
+      {hint && <p className="max-w-sm text-sm text-base-content/50">{hint}</p>}
+      {action && <div className="mt-2">{action}</div>}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, MoreHorizontal, UserX } from "lucide-react";
+import { Eye, MoreHorizontal, Undo2, UserX } from "lucide-react";
 import { Avatar } from "@/components/ui/atoms/avatar";
 import { IconButton } from "@/components/ui/atoms/icon-button";
 import { DropdownMenu } from "@/components/ui/molecules/dropdown-menu";
@@ -28,16 +28,19 @@ function dayHead(d: Date) {
 type Props = {
   weekDays: Date[];
   today: Date;
-  /** Colonnes — déjà filtrées par la sidebar de filtre du parent. */
   staff: Praticienne[];
+  /** Index stable de chaque praticienne dans l'équipe planifiable — pilote la couleur d'accent. */
+  accentIndex: Map<string, number>;
   /** Tous les rendez-vous actifs, toutes dates confondues — regroupés ici par jour + praticienne. */
   allRows: RendezVousRow[];
+  isolatedId: string | null;
   onPickDay: (d: Date, staffId?: string) => void;
   onIsolate: (id: string) => void;
+  onShowAll: () => void;
   onMarkAbsent: (id: string) => void;
 };
 
-export function WeekTimeline({ weekDays, today, staff, allRows, onPickDay, onIsolate, onMarkAbsent }: Props) {
+export function WeekTimeline({ weekDays, today, staff, accentIndex, allRows, isolatedId, onPickDay, onIsolate, onShowAll, onMarkAbsent }: Props) {
   const rowsFor = (d: Date, staffId: string) => {
     const iso = dateISO(d);
     return allRows.filter((r) => reservationDate(r.reservation) === iso && (r.rv.staffId === staffId || r.rv.secondStaffId === staffId));
@@ -77,7 +80,7 @@ export function WeekTimeline({ weekDays, today, staff, allRows, onPickDay, onIso
 
         {/* ── rows ── */}
         {staff.map((p) => {
-          const accent = praticienneAccent(p.id);
+          const accent = praticienneAccent(accentIndex.get(p.id) ?? 0);
           return (
           <div key={p.id} className="flex border-b border-l-[3px] border-base-300 last:border-b-0" style={{ borderLeftColor: accent.dot }}>
             <div className="flex shrink-0 items-center gap-2 border-r border-base-300 px-3 py-2" style={{ width: LABEL_W }}>
@@ -95,6 +98,9 @@ export function WeekTimeline({ weekDays, today, staff, allRows, onPickDay, onIso
                 }
                 items={[
                   { label: "Isoler cette ligne", icon: <Eye className="size-4" />, onSelect: () => onIsolate(p.id) },
+                  ...(isolatedId
+                    ? [{ label: "Afficher toute l'équipe", icon: <Undo2 className="size-4" />, onSelect: onShowAll }]
+                    : []),
                   {
                     label: "Marquer absente aujourd'hui",
                     icon: <UserX className="size-4" />,

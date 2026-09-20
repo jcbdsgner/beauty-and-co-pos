@@ -94,8 +94,8 @@ export type Session = {
   setPhotoUrl: (photoUrl: string | null) => void;
   /** Verrouille le poste — affiche l'écran de verrouillage jusqu'à réauthentification. */
   logout: () => void;
-  /** Vérifie le mot de passe et déverrouille le poste si correct. */
-  login: (password: string) => boolean;
+  /** Déverrouille le poste — démo : n'importe quelle adresse e-mail et mot de passe conviennent. */
+  login: () => void;
 };
 
 export function useSession(): Session {
@@ -105,14 +105,7 @@ export function useSession(): Session {
   const setPassword = useCallback((password: string) => writePassword(password), []);
   const setPhotoUrl = useCallback((photoUrl: string | null) => writePhotoUrl(photoUrl), []);
   const logout = useCallback(() => writeAuthenticated(false), []);
-  const login = useCallback(
-    (password: string) => {
-      if (snap.password !== password) return false;
-      writeAuthenticated(true);
-      return true;
-    },
-    [snap.password],
-  );
+  const login = useCallback(() => writeAuthenticated(true), []);
 
   return useMemo(
     () => ({

@@ -3,9 +3,9 @@ import type { ConversationState, Message, MessageSender, RelanceType } from "@/l
 /** Inbox / header token for who holds the thread. */
 export const STATE_LABEL: Record<ConversationState, string> = {
   auto: "Auto",
-  conseillere: "Conseillère",
+  bot: "Bot",
   receptionniste: "Vous",
-  direction: "Direction",
+  manager: "Manager",
 };
 
 export const RELANCE_TYPE_LABEL: Record<RelanceType, string> = {
@@ -49,7 +49,7 @@ export function orderedMessages(messages: Message[]): Message[] {
 export function senderLabel(sender: MessageSender, clientShortName: string): string {
   if (sender === "cliente") return clientShortName;
   if (sender === "receptionniste") return "Vous";
-  return "Conseillère";
+  return "Bot";
 }
 
 export function lastRealMessage(messages: Message[]): Message | undefined {

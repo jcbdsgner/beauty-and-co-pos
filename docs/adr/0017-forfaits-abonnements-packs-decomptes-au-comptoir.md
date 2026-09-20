@@ -11,7 +11,7 @@ cliente encaisse — mais rien de plus.
 1. **Décompte seul.** La réceptionniste **consomme** une prestation d'un Pack ou d'un
    Abonnement existant ; elle n'en **vend** jamais et ne souscrit personne. C'est cohérent
    avec toute l'app : une prestation naît d'une réservation (ADR 0006), une carte cadeau
-   s'achète hors app (ADR 0002), la direction ne se connecte pas (ADR 0001). Un Pack ou
+   s'achète hors app (ADR 0002), la manager ne se connecte pas (ADR 0001). Un Pack ou
    une souscription qui naîtrait au comptoir romprait ce principe et réintroduirait un
    paiement récurrent dans une app qui n'en a pas.
 

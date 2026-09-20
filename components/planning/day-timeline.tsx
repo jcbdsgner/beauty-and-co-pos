@@ -1,23 +1,28 @@
 "use client";
 
-import { useMemo, useSyncExternalStore } from "react";
-import { Eye, MoreHorizontal, UserX, Users } from "lucide-react";
+import { useMemo, useState, useSyncExternalStore } from "react";
+import { Eye, GripVertical, MoreHorizontal, Undo2, UserX, Users } from "lucide-react";
 import { Avatar } from "@/components/ui/atoms/avatar";
 import { IconButton } from "@/components/ui/atoms/icon-button";
 import { DropdownMenu } from "@/components/ui/molecules/dropdown-menu";
-import { clientFullName } from "@/lib/data/clientele";
 import { serviceById } from "@/lib/data/menu";
 import { appointmentEndTime, formatHour, minutesToTime, timeToMinutes, type RendezVousRow } from "@/lib/data/planning";
 import { praticienneAccent } from "@/lib/data/praticienne-colors";
 import { scheduleFor } from "@/lib/data/praticiennes";
 import { cn } from "@/lib/utils";
-import type { Cliente, DayHours, Praticienne, RendezVous } from "@/lib/data/types";
+import type { DayHours, Praticienne, RendezVous } from "@/lib/data/types";
 
 /**
- * « Planning · Jour » (ADR 0020) — le calendrier par collaboratrice : une ligne par praticienne,
- * le temps défile horizontalement, les rendez-vous sont positionnés dedans (début + durée). Zone
- * grisée = hors de l'horaire hebdomadaire du jour affiché ; ligne entière grisée = jour de repos.
- * Remplace `DayGrid` (colonnes-praticiennes, temps vertical, langage « Le Tableau »).
+ * « Planning · Jour » — reconstruit à la lettre du Figma (node 270:2466, ADR 0025) : une ligne
+ * par praticienne, le temps défile horizontalement, les rendez-vous sont positionnés dedans
+ * (début + durée), empilés en sous-lignes verticales quand deux se chevauchent (`pack`) — une
+ * praticienne ne peut jamais paraître faire deux prestations à la fois. Un bloc n'affiche que
+ * l'heure et la prestation. Zone grisée = hors de l'horaire hebdomadaire du jour affiché ; ligne
+ * entière grisée = jour de repos. C'est la seule surface du Planning — pas de sidebar de filtre
+ * séparée (le Figma n'en a pas) : la poignée de glisser-déposer, l'isolement et l'absence vivent
+ * directement sur l'étiquette de ligne, comme dans la maquette. Le trait "maintenant" est dans la
+ * couleur de marque (`bg-primary`), pas ambre : il repère l'heure courante, ce n'est pas un
+ * signal « à traiter » (doctrine du seul signal ambre).
  */
 const SLOT_MIN = 30;
 const SLOT_W = 56; // px per 30 min
@@ -27,20 +32,22 @@ const LANE_H = 56;
 type Props = {
   date: Date;
   isToday: boolean;
-  /** Colonnes — déjà filtrées par la sidebar de filtre du parent. */
   staff: Praticienne[];
-  /** Rendez-vous du jour affiché, déjà filtrés (annulés) par le parent. */
+  /** Index stable de chaque praticienne dans l'équipe planifiable — pilote la couleur d'accent. */
+  accentIndex: Map<string, number>;
   rows: RendezVousRow[];
-  clients: Cliente[];
+  isolatedId: string | null;
   onOpenReservation: (rv: RendezVous) => void;
   onIsolate: (id: string) => void;
+  onShowAll: () => void;
   onMarkAbsent: (id: string) => void;
+  onReorder: (draggedId: string, targetId: string) => void;
 };
 
 type Placed = { row: RendezVousRow; start: number; end: number; lane: number };
 
 /** Greedy lane packing so two rendez-vous that overlap on one praticienne stack instead of hiding
- *  each other — now vertical sub-lanes within a row instead of side-by-side columns. */
+ *  each other — vertical sub-lanes within a row. */
 function pack(items: RendezVousRow[]): { placed: Placed[]; lanes: number } {
   const sorted = [...items].sort((a, b) => timeToMinutes(a.rv.start) - timeToMinutes(b.rv.start));
   const laneEnds: number[] = [];
@@ -85,9 +92,21 @@ function effectiveHours(nominal: DayHours | undefined, col: RendezVousRow[]): Da
   return { start: minutesToTime(Math.min(...starts)), end: minutesToTime(Math.max(...ends)) };
 }
 
-export function DayTimeline({ date, isToday, staff, rows, clients, onOpenReservation, onIsolate, onMarkAbsent }: Props) {
-  const active = useMemo(() => rows.filter((r) => r.rv.status !== "annule"), [rows]);
-  const withCancelled = rows.length !== active.length;
+export function DayTimeline({
+  date,
+  isToday,
+  staff,
+  accentIndex,
+  rows,
+  isolatedId,
+  onOpenReservation,
+  onIsolate,
+  onShowAll,
+  onMarkAbsent,
+  onReorder,
+}: Props) {
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
 
   const { gridStart, gridEnd } = useMemo(() => {
     const marks: number[] = [];
@@ -138,13 +157,13 @@ export function DayTimeline({ date, isToday, staff, rows, clients, onOpenReserva
 
         {/* ── rows ── */}
         {staff.map((p) => {
-          const col = active.filter((r) => r.rv.staffId === p.id || r.rv.secondStaffId === p.id);
+          const col = rows.filter((r) => r.rv.staffId === p.id || r.rv.secondStaffId === p.id);
           const nominal = scheduleFor(p, date);
           const hours = effectiveHours(nominal, col);
           const { placed, lanes } = pack(col);
           const rowH = Math.max(LANE_H, lanes * (LANE_H - 8) + 16);
           const absent = isToday && p.unavailableToday;
-          const accent = praticienneAccent(p.id);
+          const accent = praticienneAccent(accentIndex.get(p.id) ?? 0);
           const beforeW = hours ? x(timeToMinutes(hours.start)) : bodyW;
           const afterStart = hours ? x(timeToMinutes(hours.end)) : 0;
 
@@ -152,20 +171,47 @@ export function DayTimeline({ date, isToday, staff, rows, clients, onOpenReserva
             <div key={p.id} className="flex border-b border-base-300 last:border-b-0">
               {/* left label */}
               <div
+                draggable
+                onDragStart={(e) => {
+                  setDraggedId(p.id);
+                  e.dataTransfer.effectAllowed = "move";
+                }}
+                onDragEnd={() => {
+                  setDraggedId(null);
+                  setOverId(null);
+                }}
+                onDragOver={(e) => {
+                  if (!draggedId || draggedId === p.id) return;
+                  e.preventDefault();
+                  setOverId(p.id);
+                }}
+                onDragLeave={() => setOverId((id) => (id === p.id ? null : id))}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  if (draggedId && draggedId !== p.id) onReorder(draggedId, p.id);
+                  setDraggedId(null);
+                  setOverId(null);
+                }}
                 className={cn(
                   "sticky left-0 z-10 flex shrink-0 items-center gap-2 border-r border-l-[3px] border-base-300 bg-base-100 px-3",
                   absent && "bg-warning/5",
+                  draggedId === p.id && "opacity-40",
+                  overId === p.id && draggedId && draggedId !== p.id && "ring-2 ring-inset ring-primary/60",
                 )}
-                style={{ width: LABEL_W, minHeight: rowH, borderLeftColor: absent ? undefined : accent.dot }}
+                style={{ width: LABEL_W, minHeight: rowH, borderLeftColor: absent ? undefined : accent.border }}
               >
+                <GripVertical aria-hidden className="size-3.5 shrink-0 cursor-grab text-base-content/25 active:cursor-grabbing" />
                 <Avatar
                   initial={p.initial}
                   size={32}
                   className={cn("shrink-0 text-[0.72rem] font-semibold", absent && "bg-base-200 text-base-content/40")}
-                  style={absent ? undefined : { backgroundColor: accent.dot, color: "#fff" }}
+                  style={absent ? undefined : { backgroundColor: accent.border, color: "#fff" }}
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="flex items-center gap-1.5 truncate font-[family-name:var(--font-heading)] text-[13px] font-semibold text-base-content">
+                  <p
+                    className="flex items-center gap-1.5 truncate font-[family-name:var(--font-heading)] text-[13px] font-semibold"
+                    style={{ color: absent ? undefined : accent.text }}
+                  >
                     <span aria-hidden className="size-1.5 shrink-0 rounded-full" style={{ backgroundColor: absent ? undefined : accent.dot }} />
                     {p.name}
                   </p>
@@ -185,6 +231,9 @@ export function DayTimeline({ date, isToday, staff, rows, clients, onOpenReserva
                   }
                   items={[
                     { label: "Isoler cette ligne", icon: <Eye className="size-4" />, onSelect: () => onIsolate(p.id) },
+                    ...(isolatedId
+                      ? [{ label: "Afficher toute l'équipe", icon: <Undo2 className="size-4" />, onSelect: onShowAll }]
+                      : []),
                     ...(isToday
                       ? [
                           {
@@ -221,14 +270,11 @@ export function DayTimeline({ date, isToday, staff, rows, clients, onOpenReserva
                 {absent && <div aria-hidden className="pointer-events-none absolute inset-0 bg-warning/10" />}
 
                 {placed.map(({ row, lane }) => {
-                  const { rv, reservation } = row;
+                  const { rv } = row;
                   const left = x(timeToMinutes(rv.start));
                   const w = Math.max((rv.durationMin / SLOT_MIN) * SLOT_W, SLOT_W - 6);
                   const svc = serviceById(rv.serviceId);
-                  const payer = clients.find((c) => c.id === reservation.payerClientId);
                   const isSecond = rv.secondStaffId === p.id && rv.staffId !== p.id;
-                  const cancelled = rv.status === "annule";
-                  const wide = w > SLOT_W * 3;
                   return (
                     <button
                       key={rv.id + p.id}
@@ -239,29 +285,20 @@ export function DayTimeline({ date, isToday, staff, rows, clients, onOpenReserva
                         top: 8 + lane * (LANE_H - 8),
                         width: w,
                         height: LANE_H - 14,
-                        ...(cancelled
-                          ? undefined
-                          : { backgroundColor: accent.bg, borderColor: accent.border, borderLeftColor: accent.dot }),
+                        backgroundColor: accent.bg,
+                        borderColor: accent.border,
+                        borderLeftColor: accent.border,
                       }}
                       className={cn(
-                        "absolute flex flex-col justify-center gap-0.5 overflow-hidden rounded-field border border-l-[3px] px-2.5 text-left shadow-sm transition hover:z-10 hover:shadow-md active:opacity-70",
-                        cancelled
-                          ? "border-dashed border-base-300 border-l-base-300 bg-base-100 opacity-55 shadow-none"
-                          : "hover:brightness-[0.97]",
-                        isSecond && !cancelled && "opacity-75",
+                        "absolute flex flex-col justify-center gap-0.5 overflow-hidden rounded-field border border-l-[3px] px-2.5 text-left shadow-sm transition hover:z-10 hover:shadow-md hover:brightness-[0.97] active:opacity-70",
+                        isSecond && "opacity-75",
                       )}
                     >
-                      <span
-                        className="flex items-center gap-1 text-[0.64rem] font-bold tabular-nums"
-                        style={cancelled ? undefined : { color: accent.text }}
-                      >
+                      <span className="flex items-center gap-1 text-[0.64rem] font-bold tabular-nums" style={{ color: accent.text }}>
                         {rv.start}
                         {rv.secondStaffId && <Users aria-hidden className="size-3" />}
                       </span>
-                      <span className={cn("truncate text-xs font-semibold text-base-content", cancelled && "line-through")}>
-                        {payer ? clientFullName(payer) : "Cliente"}
-                      </span>
-                      {wide && svc && <span className="truncate text-[0.68rem] text-base-content/60">{svc.name}</span>}
+                      <span className="truncate text-xs font-semibold text-base-content">{svc?.name ?? "Prestation"}</span>
                     </button>
                   );
                 })}
@@ -270,17 +307,13 @@ export function DayTimeline({ date, isToday, staff, rows, clients, onOpenReserva
           );
         })}
 
-        {/* ── "maintenant" — one amber hairline across every row ── */}
+        {/* ── "maintenant" — couleur de marque, pas ambre : repère l'heure, pas un signal ── */}
         {showNow && (
-          <div aria-hidden className="pointer-events-none absolute z-20 w-px bg-warning" style={{ left: LABEL_W + x(now), top: 32, bottom: 0 }}>
-            <span className="absolute -left-[3px] -top-[3px] size-[7px] rounded-full bg-warning" />
+          <div aria-hidden className="pointer-events-none absolute z-20 w-px bg-primary" style={{ left: LABEL_W + x(now), top: 32, bottom: 0 }}>
+            <span className="absolute -left-[3px] -top-[3px] size-[7px] rounded-full bg-primary" />
           </div>
         )}
       </div>
-
-      {withCancelled && (
-        <p className="px-3 py-2 text-[0.68rem] text-base-content/35">Les rendez-vous annulés sont affichés en pointillés.</p>
-      )}
     </div>
   );
 }

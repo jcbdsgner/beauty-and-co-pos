@@ -419,14 +419,16 @@ export type RelanceType = "anniversaire" | "soins" | "fidelite" | "reconquete" |
 export type RelanceChannel = "whatsapp" | "sms" | "email";
 
 /**
- * Who holds a conversation thread (ADR 0011). `auto` and `conseillere` behave identically — the
- * virtual conseillère tends the thread, scheduled relances go out — they differ only by the inbox
- * token: `auto` was never touched by a human, `conseillere` was handed back to her after a
- * receptionist take-over. `direction` is terminal: the thread left the app, it stays read-only.
+ * Who holds a conversation thread (ADR 0011). `auto` and `bot` behave identically — the virtual
+ * conseillère (internally the "bot") tends the thread, scheduled relances go out — they differ
+ * only by the inbox token: `auto` was never touched by a human, `bot` was handed back to her
+ * after a receptionist take-over. `manager` is terminal: the thread left the app, it stays
+ * read-only. "Bot" and "manager" are internal vocabulary only — client-facing messages are still
+ * signed "Votre conseillère beauté".
  */
-export type ConversationState = "auto" | "conseillere" | "receptionniste" | "direction";
+export type ConversationState = "auto" | "bot" | "receptionniste" | "manager";
 
-export type MessageSender = "cliente" | "receptionniste" | "conseillere";
+export type MessageSender = "cliente" | "receptionniste" | "bot";
 
 export type Message = {
   id: string;
@@ -435,7 +437,7 @@ export type Message = {
   /** ISO datetime — when the message went out, or (if `pending`) when the relance is due to. */
   at: string;
   body: string;
-  /** Present ⇔ the message is an automatic relance carried by the Conseillère. */
+  /** Present ⇔ the message is an automatic relance carried by the bot. */
   relanceType?: RelanceType;
   /** true ⇔ a scheduled relance that has not gone out yet. */
   pending?: boolean;

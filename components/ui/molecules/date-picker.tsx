@@ -10,6 +10,8 @@ type DatePickerProps = {
   onChange: (date: Date) => void;
   placeholder?: string;
   className?: string;
+  /** Days strictly before this one are shown greyed out and unclickable (ex. réservation : pas de jour passé). */
+  minDate?: Date;
 };
 
 const WEEKDAYS = ["L", "M", "M", "J", "V", "S", "D"];
@@ -35,7 +37,7 @@ function isSameDay(a: Date, b: Date) {
  *  boundary. Kept dependency-free (plain Date math, fr-FR labels, Monday-first, 48px cells) rather
  *  than pulled onto react-day-picker: it already does everything a themed calendar lib would, at a
  *  fraction of the CSS surface, and stays fully inside the flat brand language. */
-export function DatePicker({ value, onChange, placeholder = "Choisir une date", className }: DatePickerProps) {
+export function DatePicker({ value, onChange, placeholder = "Choisir une date", className, minDate }: DatePickerProps) {
   const [open, setOpen] = useState(false);
   const [visibleMonth, setVisibleMonth] = useState(() => startOfMonth(value ?? new Date()));
 
@@ -105,21 +107,25 @@ export function DatePicker({ value, onChange, placeholder = "Choisir une date", 
               const date = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), day);
               const selected = value && isSameDay(date, value);
               const isToday = isSameDay(date, today);
+              const disabled = minDate ? date < new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate()) : false;
               return (
                 <button
                   key={day}
                   type="button"
+                  disabled={disabled}
                   onClick={() => {
                     onChange(date);
                     setOpen(false);
                   }}
                   className={cn(
                     "flex size-12 items-center justify-center rounded-full text-sm transition active:scale-90",
-                    selected
-                      ? "bg-primary font-semibold text-primary-foreground"
-                      : isToday
-                        ? "font-semibold text-secondary"
-                        : "text-base-content/80 active:bg-accent hover:bg-accent",
+                    disabled
+                      ? "cursor-not-allowed text-base-content/25"
+                      : selected
+                        ? "bg-primary font-semibold text-primary-foreground"
+                        : isToday
+                          ? "font-semibold text-secondary"
+                          : "text-base-content/80 active:bg-accent hover:bg-accent",
                   )}
                 >
                   {day}

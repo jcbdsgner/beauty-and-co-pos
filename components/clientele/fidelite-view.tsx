@@ -1,12 +1,13 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { MessageCircle, Mail, Download, Printer } from "lucide-react";
 import { BoardHeader, Board, BoardEmpty } from "@/components/ui/board";
 import { Button } from "@/components/ui/atoms/button";
 import { LoyaltyCard, qrCells } from "@/components/clientele/loyalty-card";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { clientFullName } from "@/lib/data/clientele";
+import { cn } from "@/lib/utils";
 
 type FideliteViewProps = { clientId: string };
 
@@ -16,6 +17,7 @@ export function FideliteView({ clientId }: FideliteViewProps) {
   const { clients } = useAppData();
   const client = clients.find((c) => c.id === clientId);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
 
   if (!client) {
     return (
@@ -118,12 +120,31 @@ export function FideliteView({ clientId }: FideliteViewProps) {
       </div>
 
       <div className="mx-auto flex w-full max-w-lg flex-col gap-4">
-        <LoyaltyCard name={clientFullName(client)} tier={client.tier} points={client.points} clientId={client.id} />
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-white p-4 print:hidden">
+          <div>
+            <p className="text-sm font-semibold text-base-content">{clientFullName(client)}</p>
+            <p className="text-xs text-base-content/60">
+              {client.points} points fidélité{client.tier ? ` · ${TIER_LABEL[client.tier]}` : ""}
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setShowPreview((v) => !v)}>
+            {showPreview ? "Masquer l'aperçu" : "Aperçu"}
+          </Button>
+        </div>
+
+        {/* Rendue hors-écran quand l'aperçu est masqué : l'impression (window.print, print:block) en a besoin. */}
+        <LoyaltyCard
+          name={clientFullName(client)}
+          tier={client.tier}
+          points={client.points}
+          clientId={client.id}
+          className={cn(!showPreview && "hidden print:block")}
+        />
 
         <div className="grid grid-cols-2 gap-3 print:hidden sm:grid-cols-4">
           <div>
             <Button
-              variant={client.whatsapp ? "success" : "outline"}
+              variant={client.whatsapp ? "dark" : "outline"}
               size="sm"
               disabled={!client.whatsapp}
               icon={<MessageCircle className="size-4" />}
@@ -136,7 +157,7 @@ export function FideliteView({ clientId }: FideliteViewProps) {
           </div>
           <div>
             <Button
-              variant={client.email ? "info" : "outline"}
+              variant={client.email ? "dark" : "outline"}
               size="sm"
               disabled={!client.email}
               icon={<Mail className="size-4" />}

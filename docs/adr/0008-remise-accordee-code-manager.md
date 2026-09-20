@@ -7,7 +7,7 @@ accordée, débloquée par le **code personnel** de la réceptionniste. On révi
    avec un code manager en plus.
 2. **Version courante** — le **code personnel disparaît**. La réceptionniste accorde
    **jusqu'à 10 %** du total des prestations **sans aucun code** ; **de 10 à 20 %**, elle
-   saisit un **code manager** — un code temporaire que la direction lui communique au cas
+   saisit un **code manager** — un code temporaire que la manager lui communique au cas
    par cas. **20 % reste le plafond absolu.**
 
 Le motif obligatoire après l'encaissement, l'ordre de calcul et la base (total des

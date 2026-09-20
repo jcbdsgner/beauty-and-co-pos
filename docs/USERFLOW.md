@@ -2,7 +2,7 @@
 
 > **Amendement 2026-09-01 (v2.3) — Relances entièrement automatiques ; la section devient une vue de lecture.**
 > Les relances partent automatiquement ; leurs conditions, délais et textes sont définis par la
-> direction dans un **back-office hors de cette app**. La réceptionniste n'envoie plus rien et ne
+> manager dans un **back-office hors de cette app**. La réceptionniste n'envoie plus rien et ne
 > configure plus rien — la section Relances est un **écran unique en lecture** : les relances déjà
 > parties (cliente, type, date, canal — filtrable) et celles **à venir**, **anniversaires en tête**
 > pour que le comptoir en tienne compte à l'arrivée de la cliente. **Retirés :** les trois volets
@@ -35,12 +35,12 @@
 > cœur → bulle). Elle n'est plus en lecture seule : un **fil de conversation par cliente** réunit sur
 > une timeline unique les relances automatiques envoyées, celles **à venir**, et les messages
 > échangés. La réceptionniste peut **prendre la main** sur un fil (elle écrit à la cliente ; les
-> relances programmées de cette cliente passent **en pause**), **repasser la main à la Conseillère**,
-> ou **transférer à la direction** (état terminal — la conversation quitte l'app, aucune surface
+> relances programmées de cette cliente passent **en pause**), **repasser la main au Bot**,
+> ou **transférer à la manager** (état terminal — la conversation quitte l'app, aucune surface
 > manager créée, **ADR 0001 préservé**). Écran **maître-détail** : inbox (~380 px, tri
 > attention-d'abord, **anniversaires en tête**, **signal ambre** pour un non-lu) + panneau
-> conversation (en-tête + timeline de bulles + composeur, désactivé avec motif quand la Conseillère
-> ou la direction tient le fil). Modèle : `Relance` (objet) disparaît au profit de **`Conversation`**
+> conversation (en-tête + timeline de bulles + composeur, désactivé avec motif quand le Bot
+> ou la manager tient le fil). Modèle : `Relance` (objet) disparaît au profit de **`Conversation`**
 > (`{ clientId, channel, state, unread }`, `messages`) et **`Message`** (`{ sender, channel, at,
 > body, relanceType?, pending? }`) ; `RelanceStatus` supprimé. **Widget « Tournée du matin » retiré
 > de l'Accueil** (l'info vit dans l'inbox Messages). **Conseillère** réécrite : de « signe les
@@ -65,6 +65,36 @@
 > sort de l'Accueil (reste via Récap). La version « 4 dénominations à imprimer à volonté » (commit
 > `7b38d71`, `components/journee/gift-cards-board.tsx`) est **abandonnée** — lecture erronée du
 > concept. Voir `docs/adr/0012` (répond à la question ouverte d'émission de `docs/adr/0002`).
+
+> **Amendement 2026-09-19 (v2.7) — Création de réservation au comptoir ; « Créer un rendez-vous » devient in-app.**
+> ADR 0006 puis 0009 avaient délibérément exclu la **création** d'une réservation dans l'app — la
+> raison : dupliquer le parcours de réservation en ligne (dispos, acompte, recommandations,
+> paiement) serait de la surface morte. Ce raisonnement ne couvrait pas un besoin resté sans
+> solution : une réceptionniste au téléphone avec une cliente qui préfère réserver directement au
+> salon (20-30 % des passages au comptoir ne sont déjà liés à aucune réservation en ligne). On
+> rouvre donc la **création**, minimale, pensée pour la réceptionniste et non pour la cliente en
+> self-service. Voir `docs/adr/0027`.
+> - Nouveau `CreateReservationDialog` : payeuse (`ClientSearchField`, même recherche que le
+>   Comptoir), 1..N rendez-vous — bénéficiaire (texte libre, vide = la payeuse), prestation
+>   (sélecteur catégorisé et cherchable, pas le `<select>` plat d'`AddRvForm`), praticienne, un
+>   **horaire disponible** choisi dans une grille calculée depuis l'horaire hebdomadaire de la
+>   praticienne et ses rendez-vous déjà posés ce jour-là (`freeSlotsForStaff`) — jamais une heure
+>   saisie à l'aveugle. Même garde-fou de chevauchement que le reste du Planning
+>   (`findStaffClash`), vérifié ligne par ligne.
+> - Deux actions finales : **Enregistrer le rendez-vous** (planifie, la cliente encaissera plus
+>   tard) ou **Enregistrer et encaisser** (walk-in immédiat — rouvre le chemin `openNewTab({
+>   reservationId })` déjà existant, aucun nouveau circuit côté vente).
+> - Aucun mécanisme du parcours b&co self-service n'est repris : pas de plafond de participants,
+>   pas de suggestion de prestation complémentaire, pas de Pack/Bar Beauty/Boutique, pas d'étape de
+>   paiement, pas de compte cliente.
+> - Nouvelle action store `createReservation` (source `"comptoir"`). Le bouton « Créer un
+>   rendez-vous » (en-tête de l'Accueil, pied du dialogue d'édition) ouvre désormais ce formulaire
+>   in-app au lieu de la plateforme externe — `BOOKING_URL` est retiré.
+> - Vocabulaire : pas de mot « Créneau » réifié (réservé à b&co côté client, `CONTEXT.md`) — l'UI
+>   dit « horaire disponible ». Nouvelle entrée `CONTEXT.md` : **Créer un rendez-vous** ; entrées
+>   **Réservation**, **Rendez-vous**, **Accueil**, **Planning** amendées.
+> - Hors périmètre : créer un rendez-vous en cliquant une case vide du Planning (fast-follow
+>   possible, pas couvert par cette passe).
 
 > **Amendement 2026-08-27 (v2.2) — Refonte 2 : Planning · Clientèle · Relances · Catalogue.** Ces
 > quatre sections (et leurs sous-écrans : Équipe, Fiche cliente, Carte de fidélité, Détail planche)
@@ -131,12 +161,12 @@ La sidebar passe de **6 items à 5** (Accueil / Planning / Clientèle / Relances
 | **Réservation** | La prise de rendez-vous au niveau de la **payeuse** : une cliente réserve, pour elle et éventuellement d'autres, une ou plusieurs prestations sur une ou plusieurs praticiennes. Presque toujours faite en ligne (`source`) — le parcours de réservation ne vit pas dans cette app. L'unité qu'on encaisse. | `N,1 —— 1,1 Cliente` (rôle : *payeuse*) · `1,1 —— 1,N Rendez-vous` · **`1,1 —— 0,1 Vente`** (rôle : *passage en caisse* — le lien qui déclenche le badge « En cours ») | — (pas de cycle de vie propre ; son statut effectif se déduit de ses rendez-vous) |
 | **Rendez-vous** | Une **prestation planifiée** atomique : une prestation, un·e bénéficiaire, un créneau, une praticienne — deux si la prestation est « réalisable à 2 » (`secondStaffId`, durée déjà divisée). Plusieurs peuvent partager la même heure. Ligne d'une Réservation. La réceptionniste l'**ajuste** au comptoir (prestation, praticienne, bénéficiaire, **reprogrammation**, ajout / retrait, annulation avec `cancelReason?` facultatif) — jamais de création (v2.4, ADR 0009). | `N,1 —— 1,1 Réservation` · `N,1 —— 1,1 Praticienne` (assignée) · `N,1 —— 0,1 Praticienne` (seconde) · `N,1 —— 1,1 Service` · `N,1 —— 0,1 Cliente` (bénéficiaire ; sinon `beneficiaryName` libre ; sinon la payeuse) | `actif → (annulé)` — **pas** de « en attente / confirmé » (les réservations arrivent fermes de la plateforme en ligne) ; Annulé est terminal, jamais supprimé (cf. toggle « Afficher les annulés ») ; un rendez-vous *retiré* (erreur de saisie) disparaît, distinct d'*annulé* |
 | **Vente** (panier) | Une transaction en cours de construction ou déjà encaissée, un onglet du Comptoir. | `1,1 —— 0,1 Cliente` · `1,1 —— 0,N LigneDePanier` · `0,1 —— 1,1 Réservation` (rôle inverse : *origine*, si ouverte via « Encaisser ») · `1,1 —— 0,1 CarteCadeau` (appliquée) · `1,1 —— 0,1 Remise` (accordée par la réceptionniste) | `ouverte(catalogue\|paiement) → encaissée` (terminal, produit un Reçu) **ou** `→ abandonnée` (fermée sans encaissement — nouvel état, nécessaire pour que le Récap des ventes distingue une vraie vente d'un onglet fermé vide) |
-| **Remise** | Une réduction exprimée en montant fixe **ou** en pourcentage — `{ mode, valeur }`. Le **même objet** est porté par une Vente (remise accordée au comptoir : jusqu'à 10 % des prestations sans code, 10–20 % avec un **code manager**, + motif) et par une relance de reconquête — un **Message** (ex. −15 %, code promo, défini par la direction). Les *points fidélité utilisés* et la *carte cadeau* ne sont **pas** des Remise — ce sont des mécanismes distincts qui, avec la Remise, se cumulent dans le calcul du total. | `0,N —— 1,1 Vente` *ou* `0,N —— 1,1 Message` (jamais les deux) | — (valeur figée à la création ; pour une Vente, le `motif` est renseigné après l'encaissement) |
+| **Remise** | Une réduction exprimée en montant fixe **ou** en pourcentage — `{ mode, valeur }`. Le **même objet** est porté par une Vente (remise accordée au comptoir : jusqu'à 10 % des prestations sans code, 10–20 % avec un **code manager**, + motif) et par une relance de reconquête — un **Message** (ex. −15 %, code promo, défini par la manager). Les *points fidélité utilisés* et la *carte cadeau* ne sont **pas** des Remise — ce sont des mécanismes distincts qui, avec la Remise, se cumulent dans le calcul du total. | `0,N —— 1,1 Vente` *ou* `0,N —— 1,1 Message` (jamais les deux) | — (valeur figée à la création ; pour une Vente, le `motif` est renseigné après l'encaissement) |
 | **CarteCadeau** | Un instrument **prépayé** (pas une remise) : un code, un solde propre, un statut. Achetée hors app. Une Vente n'en consomme que ce qu'il faut ; le reliquat reste sur la carte. | `0,N —— 0,1 Vente` (appliquée) · `1,1 —— 0,N GiftCardOrder` (via `code`) | `active → utilisée` (solde épuisé) · `expirée` (terminal) |
 | **GiftCardOrder** (commande de carte cadeau) | Une carte cadeau achetée en version **imprimée** que le salon prépare : imprimer, puis remettre (retrait) ou confier à la livraison. Aucun encaissement (v2.6). Porte l'acheteur, le montant, le code du ledger, le mode, et — si livraison — nom/tél/adresse du bénéficiaire. | `N,1 —— 1,1 Cliente` (rôle : acheteur) · `N,1 —— 1,1 CarteCadeau` (via `code`) | `a_imprimer → imprimee → remise` (retrait) / `→ livree` (livraison — confiée au coursier, hors app) |
 | **Style** | Un contenu du **Catalogue** de références (ex-Lookbook) : un rendu à montrer ou recommander. Consulté depuis le module Catalogue ou une recommandation de Fiche cliente — jamais depuis le Comptoir, aucun lien avec le panier. | `0,N —— 0,N Message` (référencé par une relance de recommandation) | — |
-| **Conversation** (fil) | La messagerie avec une cliente : une timeline de **Messages** (section Messages), plus un canal et un état. Un fil par cliente. La direction pilote toujours les relances hors de l'app ; la réceptionniste **échange** sans rien configurer (v2.5). | `1,1 —— 1,1 Cliente` · `1,1 —— 1,N Message` | `auto → conseillere ⇄ receptionniste` ; `→ direction` (terminal — transféré hors app, fil figé). `receptionniste` **met en pause** les relances programmées de la cliente. |
-| **Message** | Une entrée d'un **Fil** : un émetteur (cliente / réceptionniste / Conseillère), un canal, une date, un corps. Une **relance** = un Message de la Conseillère avec un `relanceType` (anniversaire / soins / fidélité / reconquête / recommandation) ; `pending` tant qu'elle n'est pas partie. Réponses cliente + Conseillère simulées (prototype). | `N,1 —— 1,1 Conversation` · `N,1 —— 0,1 Style` (relance de recommandation) · `N,1 —— 0,1 Remise` (relance de reconquête) | `pending → envoyé` pour une relance ; les autres messages n'ont pas d'état |
+| **Conversation** (fil) | La messagerie avec une cliente : une timeline de **Messages** (section Messages), plus un canal et un état. Un fil par cliente. La manager pilote toujours les relances hors de l'app ; la réceptionniste **échange** sans rien configurer (v2.5). | `1,1 —— 1,1 Cliente` · `1,1 —— 1,N Message` | `auto → bot ⇄ receptionniste` ; `→ manager` (terminal — transféré hors app, fil figé). `receptionniste` **met en pause** les relances programmées de la cliente. |
+| **Message** | Une entrée d'un **Fil** : un émetteur (cliente / réceptionniste / Bot), un canal, une date, un corps. Une **relance** = un Message du Bot avec un `relanceType` (anniversaire / soins / fidélité / reconquête / recommandation) ; `pending` tant qu'elle n'est pas partie. Réponses cliente + Bot simulées (prototype). | `N,1 —— 1,1 Conversation` · `N,1 —— 0,1 Style` (relance de recommandation) · `N,1 —— 0,1 Remise` (relance de reconquête) | `pending → envoyé` pour une relance ; les autres messages n'ont pas d'état |
 
 ### Carte relationnelle
 
@@ -250,7 +280,7 @@ graph TB
 
     RL[Messages - inbox maître-détail] --> RL1[Inbox - anniversaires + non-lus en tête]
     RL --> RL2[Conversation - timeline + composeur]
-    RL2 --> RL3[Transférer à la direction - hors app, terminal]
+    RL2 --> RL3[Transférer à la manager - hors app, terminal]
     CL3 -.->|Voir les échanges| RL2
 
     CAT[Catalogue] --> CAT2[Les Planches]
@@ -553,9 +583,9 @@ Carte de fidélité  (depuis « Ouvrir » sur La Fiche)
 
 ## Section Messages
 
-*v2.5 : ex-**Relances**. Item de sidebar renommé (**Messages**, icône bulle), route `/messages`. Position sidebar : Accueil · Planning · Clientèle · **Messages** · Catalogue. Plus une **vue de lecture** : une messagerie. La direction pilote toujours les relances (conditions, délais, textes) hors de l'app ; la réceptionniste ne configure rien, mais elle **échange** avec la cliente. Cf. `docs/adr/0011` (supersède partiellement `0010`).*
+*v2.5 : ex-**Relances**. Item de sidebar renommé (**Messages**, icône bulle), route `/messages`. Position sidebar : Accueil · Planning · Clientèle · **Messages** · Catalogue. Plus une **vue de lecture** : une messagerie. La manager pilote toujours les relances (conditions, délais, textes) hors de l'app ; la réceptionniste ne configure rien, mais elle **échange** avec la cliente. Cf. `docs/adr/0011` (supersède partiellement `0010`).*
 
-*Job stories : (1) voir dans un fil unique ce qui a été / va être envoyé à une cliente ; (2) quand elle répond, lui répondre — ou laisser la Conseillère le faire, ou passer à la direction.*
+*Job stories : (1) voir dans un fil unique ce qui a été / va être envoyé à une cliente ; (2) quand elle répond, lui répondre — ou laisser le Bot le faire, ou passer à la manager.*
 
 ```
 Messages  (maître-détail — inbox à gauche ~380px, conversation à droite)
@@ -564,31 +594,31 @@ INBOX
 Groupe épinglé « Programmées / à venir » : les relances pas encore parties, ANNIVERSAIRES EN TÊTE
   puis le reste des fils, triés : non-lus d'abord, puis activité récente
 Une ligne de fil : avatar · nom · dernier message tronqué (1 ligne, sourd) · horodatage
-  · glyphe de canal COLORÉ par canal (WhatsApp / SMS / email) · jeton d'état (Auto · Vous · Conseillère · Direction)
+  · glyphe de canal COLORÉ par canal (WhatsApp / SMS / email) · jeton d'état (Auto · Vous · Bot · Manager)
   · point ambre si réponse cliente non lue
 Champ « Filtrer par cliente » (pas de bordure pointillée)
 [ aucun fil → « Aucun échange » ] [ aucune programmée → le groupe épinglé disparaît ]
 
 CONVERSATION
 En-tête : nom · badge palier · canal · jeton d'état · actions de main (selon l'état) :
-  - état conseillere/auto : « Répondre / Prendre la conversation »
-  - état receptionniste : « Repasser à la Conseillère » · « Transférer à la direction »
-  - état direction : aucune action (fil figé, lecture seule)
+  - état bot/auto : « Répondre / Prendre la conversation »
+  - état receptionniste : « Repasser au Bot » · « Transférer à la manager »
+  - état manager : aucune action (fil figé, lecture seule)
 Timeline (haut → bas, chronologique) :
-  - bulle cliente à gauche, bulle salon (réceptionniste / Conseillère) à droite ; la Conseillère signée
+  - bulle cliente à gauche, bulle salon (réceptionniste / Bot) à droite ; le Bot signé
   - une relance ENVOYÉE = carte système : « Relance anniversaire · envoyée jeu. 3 sept · WhatsApp » + corps, signée Conseillère
   - une relance À VENIR = élément futur en bas de fil : « Anniversaire — partira le 3 sept, sauf prise en main »
     (en pause visible si l'état est receptionniste)
 Composeur en bas : actif si état = receptionniste ; sinon désactivé + motif
-  (« La Conseillère tient cette conversation. Prenez la main pour écrire. » / « Transférée à la direction. »)
+  (« Le Bot tient cette conversation. Prenez la main pour écrire. » / « Transférée à la manager. »)
 [ fil sans aucune réponse cliente → la timeline ne montre que les relances auto ]
 
-DIALOG « Transférer à la direction »
+DIALOG « Transférer à la manager »
 Confirmation qui explique que la conversation QUITTE l'app : la réceptionniste ne verra plus la suite,
-la direction prend le relais hors de l'app. Irréversible depuis l'app.
+la manager prend le relais hors de l'app. Irréversible depuis l'app.
 ```
 
-**Décisions actées (Messages)** : `Relance` (objet) → **`Conversation`** (`{ clientId, channel, state: auto|conseillere|receptionniste|direction, unread }`, `messages`) + **`Message`** (`{ sender: cliente|receptionniste|conseillere, channel, at, body, relanceType?, pending?, lateDays?, styleId?, discountLabel? }`) ; `RelanceStatus` supprimé ; `RelanceType` / `RelanceChannel` conservés. Prise en main **met en pause** les relances programmées de la cliente. « Transférer à la direction » = **hors app**, aucune surface manager (ADR 0001). Réponses cliente + Conseillère **simulées**. Widget « Tournée du matin » retiré de l'Accueil. Cf. `docs/adr/0011`.
+**Décisions actées (Messages)** : `Relance` (objet) → **`Conversation`** (`{ clientId, channel, state: auto|bot|receptionniste|manager, unread }`, `messages`) + **`Message`** (`{ sender: cliente|receptionniste|bot, channel, at, body, relanceType?, pending?, lateDays?, styleId?, discountLabel? }`) ; `RelanceStatus` supprimé ; `RelanceType` / `RelanceChannel` conservés. Prise en main **met en pause** les relances programmées de la cliente. « Transférer à la manager » = **hors app**, aucune surface manager (ADR 0001). Réponses cliente + Bot **simulées**. Widget « Tournée du matin » retiré de l'Accueil. Cf. `docs/adr/0011`.
 
 ### Fonctionnalités par écran
 
@@ -627,7 +657,7 @@ Boissons  (lecture) — le Bar Beauty & Co : photo, composition, prix
 
 ## Section Réglages — supprimée
 
-*Point-de-vente a un persona unique (ADR 0001) : il n'y a pas de rôle « direction / admin », donc pas d'écran de configuration du salon. La section Réglages disparaît entièrement.*
+*Point-de-vente a un persona unique (ADR 0001) : il n'y a pas de rôle « manager / admin », donc pas d'écran de configuration du salon. La section Réglages disparaît entièrement.*
 
 - **Retiré de l'app** : gestion du Menu (prestations / produits / prix / catégories — le Menu reste une donnée en lecture seule, éditée hors de l'app), Entreprises & Salons, Gestion Utilisateurs, Gestion Salon, Tendances soins, Notifications, Apparence.
 - **Déplacé** : Photos de référence → **Catalogue** ; Conseils & cycles de relance → **Relances → Contenu conseillère** (v2.1 ; la v2 le plaçait dans Clientèle).
@@ -730,7 +760,7 @@ Prochainement  (une seule liste compacte, pas 9 cartes grisées de même poids q
 | Lookbook (consultation + détail) | **Section Catalogue** (onglet Styles) + Détail style |
 | Gestion Services / Produits / Catégories | Retiré (le Menu est une donnée en lecture seule, éditée hors de l'app — ADR 0001) |
 | Photos de référence | **Section Catalogue** (onglet Photos de référence) |
-| Conseils beauté / cycles de relance | Retiré de l'app (v2.3, ADR 0010 — édité par la direction dans un back-office ; la conseillère reste la signature) |
+| Conseils beauté / cycles de relance | Retiré de l'app (v2.3, ADR 0010 — édité par la manager dans un back-office ; la conseillère reste la signature) |
 | Entreprises & Salons | Retiré (ADR 0001) |
 | Gestion Utilisateurs / Salon, Tendances, Notifications, Apparence | Retiré (ADR 0001) |
 | Mon Profil, Sécurité | `/compte` (menu identité du pied de sidebar) |

@@ -110,7 +110,7 @@ export function AccueilDayList({ rows, clients, praticiennes, onOpenReservation,
           <div
             key={reservation.id}
             className={cn(
-              "flex flex-col gap-3 rounded-field border border-base-300 bg-base-100 p-4",
+              "flex h-full flex-col gap-3 rounded-field border border-base-300 bg-base-100 p-4",
               past && "opacity-70",
             )}
           >
@@ -129,11 +129,9 @@ export function AccueilDayList({ rows, clients, praticiennes, onOpenReservation,
                   <span className="block truncate font-[family-name:var(--font-heading)] text-xl font-medium text-base-content">
                     {payer ? clientFullName(payer) : "Cliente"}
                   </span>
-                  <span className="mt-0.5 block truncate text-[13px] text-base-content/55">
-                    {composition}
-                    {awaitingCheckout && <span className="font-semibold text-warning"> · à encaisser</span>}
-                    {phase === "current" && <span className="font-semibold text-base-content/70"> · en cours</span>}
-                  </span>
+                  {/* line-clamp plutôt que truncate (audit UX du 19/09) : une composition comme
+                      « 2 enfants » ne doit jamais être coupée à mi-mot. */}
+                  <span className="mt-0.5 line-clamp-2 text-[13px] leading-snug text-base-content/55">{composition}</span>
                 </span>
               </span>
               <span className="shrink-0 text-right leading-tight">
@@ -161,7 +159,7 @@ export function AccueilDayList({ rows, clients, praticiennes, onOpenReservation,
               <span className="tabular-nums text-base-content">{formatFcfa(total)}</span>
             </div>
 
-            <div className="flex gap-2 pt-1">
+            <div className="mt-auto flex gap-2 pt-1">
               <Button variant="outline" className="flex-1" onClick={() => target && onOpenReservation(target)}>
                 Voir les détails
               </Button>

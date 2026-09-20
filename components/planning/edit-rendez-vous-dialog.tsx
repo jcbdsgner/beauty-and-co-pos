@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ExternalLink, Plus, Trash2, CalendarX } from "lucide-react";
+import { Plus, Trash2, CalendarX } from "lucide-react";
 import { Dialog } from "@/components/ui/molecules/dialog";
 import { CloseButton } from "@/components/ui/atoms/icon-button";
 import { Button } from "@/components/ui/atoms/button";
@@ -11,10 +11,11 @@ import { Textarea } from "@/components/ui/atoms/textarea";
 import { Field } from "@/components/ui/molecules/field";
 import { Legend } from "@/components/ui/board";
 import { Toast } from "@/components/ui/molecules/toast";
+import { CreateReservationDialog } from "@/components/planning/create-reservation-dialog";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { clientFullName } from "@/lib/data/clientele";
 import { SERVICES, serviceById } from "@/lib/data/menu";
-import { appointmentEndTime, BOOKING_URL, reservationById } from "@/lib/data/planning";
+import { appointmentEndTime, reservationById } from "@/lib/data/planning";
 import type { Praticienne, RendezVous } from "@/lib/data/types";
 
 const SERVICE_OPTIONS = [...SERVICES]
@@ -41,16 +42,20 @@ export function EditRendezVousDialog({ reservationId, onClose }: Props) {
 }
 
 function EditRendezVousBody({ reservationId, onClose }: { reservationId: string; onClose: () => void }) {
-  const { reservations, clients, praticiennes, addRendezVous } = useAppData();
+  const { reservations, clients, praticiennes, addRendezVous, cancelReservation } = useAppData();
   const reservation = reservationById(reservations, reservationId)!;
   const payer = clients.find((c) => c.id === reservation.payerClientId);
   const schedulable = praticiennes.filter((p) => p.role !== "accueil" && p.role !== "menage");
 
   const [toast, setToast] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  const [confirmCancel, setConfirmCancel] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+  const [creatingRdv, setCreatingRdv] = useState(false);
 
   const activeLines = reservation.rendezVous.filter((rv) => rv.status !== "annule");
   const cancelledLines = reservation.rendezVous.filter((rv) => rv.status === "annule");
+  const reservationCancelled = activeLines.length === 0;
 
   return (
     <>
@@ -109,20 +114,60 @@ function EditRendezVousBody({ reservationId, onClose }: { reservationId: string;
       </div>
 
       <div className="flex items-center justify-between gap-3 border-t border-[var(--board-groove)] p-6 pt-4">
-        <a
-          href={BOOKING_URL}
-          target="_blank"
-          rel="noreferrer"
+        <button
+          type="button"
+          onClick={() => setCreatingRdv(true)}
           className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--brand-taupe-muted)] underline underline-offset-2"
         >
-          <ExternalLink className="size-4" /> Créer un rendez-vous
-        </a>
-        <Button variant="dark" onClick={onClose}>
-          Terminé
-        </Button>
+          <Plus className="size-4" /> Créer un rendez-vous
+        </button>
+        <div className="flex items-center gap-2">
+          {!reservationCancelled && (
+            <Button variant="danger-outline" icon={<CalendarX className="size-4" />} onClick={() => setConfirmCancel(true)}>
+              Annuler la réservation
+            </Button>
+          )}
+          <Button variant="dark" onClick={onClose}>
+            Terminé
+          </Button>
+        </div>
       </div>
 
+      <Dialog open={confirmCancel} labelledBy="cancel-reservation-title" className="max-w-sm p-6">
+        <h3 id="cancel-reservation-title" className="font-[family-name:var(--font-heading)] text-lg font-semibold text-[var(--color-gray-900)]">
+          Annuler cette réservation ?
+        </h3>
+        <p className="mt-2 text-sm text-[var(--color-gray-500)]">
+          Toutes ses prestations passeront au statut Annulé et resteront consultables via « Afficher les annulés ».
+        </p>
+        <Field label="Motif (facultatif)" className="mt-4">
+          <Textarea value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} rows={2} placeholder="Ex. la cliente a décalé sa venue" />
+        </Field>
+        <div className="mt-4 flex gap-3">
+          <Button variant="outline" className="flex-1" onClick={() => setConfirmCancel(false)}>
+            Retour
+          </Button>
+          <Button
+            variant="danger"
+            className="flex-1"
+            onClick={() => {
+              cancelReservation(reservationId, cancelReason);
+              setConfirmCancel(false);
+              setToast("Réservation annulée.");
+            }}
+          >
+            Annuler la réservation
+          </Button>
+        </div>
+      </Dialog>
+
       <Toast message={toast} onDismiss={() => setToast(null)} />
+
+      <CreateReservationDialog
+        open={creatingRdv}
+        onClose={() => setCreatingRdv(false)}
+        onCreated={(msg) => setToast(msg)}
+      />
     </>
   );
 }
@@ -140,7 +185,7 @@ function RvEditor({
   canRemove: boolean;
   onDone: (message: string) => void;
 }) {
-  const { clients, rescheduleRendezVous, updateRendezVous, removeRendezVous, cancelAppointment } = useAppData();
+  const { clients, rescheduleRendezVous, updateRendezVous, removeRendezVous } = useAppData();
 
   const initialBenef = rv.beneficiaryClientId
     ? clients.find((c) => c.id === rv.beneficiaryClientId)?.firstName ?? ""
@@ -153,8 +198,6 @@ function RvEditor({
   const [start, setStart] = useState(rv.start);
   const [benef, setBenef] = useState(initialBenef);
   const [error, setError] = useState<string | null>(null);
-  const [confirmCancel, setConfirmCancel] = useState(false);
-  const [reason, setReason] = useState("");
 
   const staffOptions = staff.map((p) => ({ value: p.id, label: p.name }));
   const secondOptions = [{ value: NONE, label: "Aucune" }, ...staffOptions.filter((o) => o.value !== staffId)];
@@ -195,12 +238,7 @@ function RvEditor({
           <Select value={serviceId} onChange={setServiceId} options={SERVICE_OPTIONS} size="compact" />
         </Field>
         <Field label="Créneau">
-          <input
-            type="time"
-            value={start}
-            onChange={(e) => setStart(e.target.value)}
-            className="h-11 w-full rounded-lg border border-border bg-white px-3 text-sm text-[var(--color-gray-900)] transition focus:border-ring focus:ring-4 focus:ring-ring/15 focus:outline-none"
-          />
+          <TextInput type="time" size="compact" value={start} onChange={(e) => setStart(e.target.value)} />
         </Field>
         <Field label="Praticienne">
           <Select value={staffId} onChange={setStaffId} options={staffOptions} size="compact" />
@@ -209,7 +247,7 @@ function RvEditor({
           <Select value={secondStaffId} onChange={setSecondStaffId} options={secondOptions} size="compact" />
         </Field>
         <Field label="Bénéficiaire (vide = la payeuse)" className="sm:col-span-2">
-          <TextInput value={benef} onChange={(e) => setBenef(e.target.value)} placeholder="La payeuse" />
+          <TextInput size="compact" value={benef} onChange={(e) => setBenef(e.target.value)} placeholder="La payeuse" />
         </Field>
       </div>
 
@@ -222,9 +260,6 @@ function RvEditor({
       <div className="flex flex-wrap items-center gap-2">
         <Button size="sm" variant="brand" disabled={!dirty} onClick={save}>
           Enregistrer
-        </Button>
-        <Button size="sm" variant="danger-outline" icon={<CalendarX className="size-4" />} onClick={() => setConfirmCancel(true)}>
-          Annuler le rendez-vous
         </Button>
         {canRemove && (
           <Button
@@ -240,34 +275,6 @@ function RvEditor({
           </Button>
         )}
       </div>
-
-      <Dialog open={confirmCancel} labelledBy="cancel-rdv-title" className="max-w-sm p-6">
-        <h3 id="cancel-rdv-title" className="font-[family-name:var(--font-heading)] text-lg font-semibold text-[var(--color-gray-900)]">
-          Annuler ce rendez-vous ?
-        </h3>
-        <p className="mt-2 text-sm text-[var(--color-gray-500)]">
-          Il passera au statut Annulé et restera consultable via « Afficher les annulés ».
-        </p>
-        <Field label="Motif (facultatif)" className="mt-4">
-          <Textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={2} placeholder="Ex. la cliente a décalé sa venue" />
-        </Field>
-        <div className="mt-4 flex gap-3">
-          <Button variant="outline" className="flex-1" onClick={() => setConfirmCancel(false)}>
-            Retour
-          </Button>
-          <Button
-            variant="danger"
-            className="flex-1"
-            onClick={() => {
-              cancelAppointment(rv.id, reason);
-              setConfirmCancel(false);
-              onDone("Rendez-vous annulé.");
-            }}
-          >
-            Annuler le rendez-vous
-          </Button>
-        </div>
-      </Dialog>
     </div>
   );
 }
@@ -294,12 +301,7 @@ function AddRvForm({
           <Select value={serviceId} onChange={setServiceId} options={SERVICE_OPTIONS} size="compact" />
         </Field>
         <Field label="Créneau">
-          <input
-            type="time"
-            value={start}
-            onChange={(e) => setStart(e.target.value)}
-            className="h-11 w-full rounded-lg border border-border bg-white px-3 text-sm text-[var(--color-gray-900)] transition focus:border-ring focus:ring-4 focus:ring-ring/15 focus:outline-none"
-          />
+          <TextInput type="time" size="compact" value={start} onChange={(e) => setStart(e.target.value)} />
         </Field>
         <Field label="Praticienne" className="sm:col-span-2">
           <Select value={staffId} onChange={setStaffId} options={staff.map((p) => ({ value: p.id, label: p.name }))} size="compact" />

@@ -47,7 +47,7 @@ export function Select({ value, onChange, options, placeholder = "SÃ©lectionnerâ
           className,
         )}
       >
-        <SelectPrimitive.Value placeholder={placeholder} />
+        <SelectPrimitive.Value className="min-w-0 flex-1 truncate" placeholder={placeholder} />
         <SelectPrimitive.Icon>
           <ChevronDown aria-hidden className="size-4 shrink-0 text-base-content/50" />
         </SelectPrimitive.Icon>

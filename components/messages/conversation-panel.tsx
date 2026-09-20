@@ -31,8 +31,8 @@ export function ConversationPanel({ conversationId }: { conversationId: string }
     clients,
     markConversationRead,
     takeOverConversation,
-    handBackToConseillere,
-    transferToDirection,
+    handBackToBot,
+    transferToManager,
     sendClientMessage,
   } = useAppData();
 
@@ -87,12 +87,7 @@ export function ConversationPanel({ conversationId }: { conversationId: string }
             <span>{STATE_LABEL[conv.state]}</span>
           </div>
         </div>
-        <HandActions
-          state={conv.state}
-          onTakeOver={() => takeOverConversation(conv.id)}
-          onHandBack={() => handBackToConseillere(conv.id)}
-          onTransfer={() => setConfirmTransfer(true)}
-        />
+        <HandActions state={conv.state} onHandBack={() => handBackToBot(conv.id)} onTransfer={() => setConfirmTransfer(true)} />
       </div>
 
       {/* Timeline */}
@@ -120,15 +115,14 @@ export function ConversationPanel({ conversationId }: { conversationId: string }
 
       <ConfirmDialog
         open={confirmTransfer}
-        tone="danger"
-        title="Transférer à la direction ?"
-        description={`La conversation avec ${clientFullName(
-          client,
-        )} quittera l'app : la direction la reprend hors de Beauty and Co POS, et vous ne verrez plus la suite des échanges ici. Le fil reste visible en lecture seule.`}
+        tone="neutral"
+        confirmVariant="brand"
+        title="Transférer à la manager ?"
+        description={`${clientFullName(client)} sera prise en charge par la manager, hors de l'app. Le fil reste visible ici en lecture seule.`}
         confirmLabel="Transférer"
         onCancel={() => setConfirmTransfer(false)}
         onConfirm={() => {
-          transferToDirection(conv.id);
+          transferToManager(conv.id);
           setConfirmTransfer(false);
         }}
       />
@@ -136,34 +130,27 @@ export function ConversationPanel({ conversationId }: { conversationId: string }
   );
 }
 
+/** "Prendre la conversation" n'existe qu'une fois, près du composeur (audit UX du 19/09) — plus
+ *  de doublon ici pour les états auto/bot, où le contenu tient largement dans la fenêtre. */
 function HandActions({
   state,
-  onTakeOver,
   onHandBack,
   onTransfer,
 }: {
   state: Conversation["state"];
-  onTakeOver: () => void;
   onHandBack: () => void;
   onTransfer: () => void;
 }) {
-  if (state === "direction") return null;
-  if (state === "receptionniste") {
-    return (
-      <div className="flex shrink-0 gap-2">
-        <Button variant="outline" size="sm" onClick={onHandBack}>
-          Repasser à la Conseillère
-        </Button>
-        <Button variant="danger-outline" size="sm" onClick={onTransfer}>
-          Transférer à la direction
-        </Button>
-      </div>
-    );
-  }
+  if (state !== "receptionniste") return null;
   return (
-    <Button variant="brand" size="sm" className="shrink-0" onClick={onTakeOver}>
-      Prendre la conversation
-    </Button>
+    <div className="flex shrink-0 gap-2">
+      <Button variant="outline" size="sm" onClick={onHandBack}>
+        Repasser au Bot
+      </Button>
+      <Button variant="danger-outline" size="sm" onClick={onTransfer}>
+        Transférer à la manager
+      </Button>
+    </div>
   );
 }
 
@@ -182,18 +169,18 @@ function Composer({
   onSend: () => void;
   onTakeOver: () => void;
 }) {
-  if (state === "direction") {
+  if (state === "manager") {
     return (
       <div className="shrink-0 border-t border-border bg-base-200 p-4 text-center text-sm text-base-content/55">
-        Cette conversation a été transférée à la direction. Elle se poursuit hors de l&apos;app.
+        Cette conversation a été transférée à la manager. Elle se poursuit hors de l&apos;app.
       </div>
     );
   }
 
-  if (state === "auto" || state === "conseillere") {
+  if (state === "auto" || state === "bot") {
     return (
       <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border bg-base-200 p-4">
-        <p className="text-sm text-base-content/55">La Conseillère tient cette conversation.</p>
+        <p className="text-sm text-base-content/55">Le Bot tient cette conversation.</p>
         <Button variant="brand" size="sm" onClick={onTakeOver}>
           Prendre la conversation
         </Button>

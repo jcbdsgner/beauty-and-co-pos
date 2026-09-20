@@ -132,7 +132,7 @@ export default function DesignSystemPage() {
       <div className="flex flex-col gap-12 pb-24">
           <BoardHeader
             section="Composants"
-            action={<Badge variant="dark">v3 · base shadcn · {COMPONENT_COUNT} composants</Badge>}
+            action={<Badge variant="dark">v3 · base daisyUI · {COMPONENT_COUNT} composants</Badge>}
           />
 
           <nav className="sticky top-0 z-10 -mx-8 flex gap-2 border-b border-base-300 bg-base-200/95 px-8 py-3 backdrop-blur-sm">
@@ -168,12 +168,19 @@ export default function DesignSystemPage() {
                 <Swatch name="Erreur" varName="--color-error" fg="#fff" />
                 <Swatch name="Info" varName="--color-info" fg="#fff" />
               </div>
+              <p className="mt-3 text-xs text-base-content/55">
+                Doctrine « un seul signal » (refonte daisyUI) : ces 4 couleurs restent réservées à des cas précis, jamais à une action
+                neutre. <strong>Erreur</strong> — actions destructives uniquement (ex. bouton de confirmation d&rsquo;un dialog de suppression
+                ou de transfert). <strong>Attention</strong> — l&rsquo;ambre reste le seul signal d&rsquo;alerte transverse (ancienneté, stock,
+                retard). <strong>Succès/Info</strong> — retours ponctuels (toast, alerte). Une action non destructive (envoyer, valider,
+                encaisser) utilise une variante neutre de la charte (brand/dark/outline), jamais une couleur de marque tierce ou sémantique.
+              </p>
             </Card>
 
             <Card className="p-6">
               <FieldLabel className="mb-4">Typographie</FieldLabel>
               <div className="flex flex-col gap-4">
-                <Specimen label="Titre écran · Poppins 700" sample="Bonjour, Propriétaire" className="font-[family-name:var(--font-heading)] font-bold text-3xl text-base-content" />
+                <Specimen label="Titre écran · Poppins 500" sample="Bonjour, Ndiole" className="font-[family-name:var(--font-heading)] font-medium text-3xl text-base-content" />
                 <Specimen label="Titre section · Poppins 600" sample="Gestion Produits" className="text-xl font-semibold text-base-content" />
                 <Specimen label="Corps · Poppins 400" sample="Trouvez un client existant ou ajoutez un nouveau profil." className="text-[15px] text-base-content/80" />
                 <Specimen label="Label · uppercase tracked" sample="REVENUS DU JOUR" className="text-xs font-semibold tracking-wide text-base-content/55 uppercase" />

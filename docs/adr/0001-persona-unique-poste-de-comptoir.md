@@ -1,6 +1,6 @@
-# Persona unique : le poste de comptoir, aucune surface direction/admin
+# Persona unique : le poste de comptoir, aucune surface manager/admin
 
-`PRODUCT.md` décrit point-de-vente comme une app « till/back-office ». Nous avons tranché plus étroitement : le seul persona est la **réceptionniste** au comptoir (un·e praticien·ne peut tenir le poste ponctuellement, mêmes droits). Il n'existe aucun rôle « direction / admin », aucun écran de configuration du salon, aucun déverrouillage par code manager — la remise exceptionnelle passe désormais par une remise réceptionniste bornée (≤ 20 %) assortie d'un motif obligatoire, pas par une autorisation d'un rôle supérieur.
+`PRODUCT.md` décrit point-de-vente comme une app « till/back-office ». Nous avons tranché plus étroitement : le seul persona est la **réceptionniste** au comptoir (un·e praticien·ne peut tenir le poste ponctuellement, mêmes droits). Il n'existe aucun rôle « manager / admin », aucun écran de configuration du salon, aucun déverrouillage par code manager — la remise exceptionnelle passe désormais par une remise réceptionniste bornée (≤ 20 %) assortie d'un motif obligatoire, pas par une autorisation d'un rôle supérieur.
 
 ## Conséquences
 
@@ -11,4 +11,4 @@
 
 ## Alternative écartée
 
-Garder les écrans de configuration mais les verrouiller derrière un rôle manager (PIN/déverrouillage). Écarté : ça maintient dans l'app une complexité (double rôle, gestion de session à deux niveaux) au service d'un utilisateur — la direction — qui n'est pas au comptoir et fera ces réglages ailleurs.
+Garder les écrans de configuration mais les verrouiller derrière un rôle manager (PIN/déverrouillage). Écarté : ça maintient dans l'app une complexité (double rôle, gestion de session à deux niveaux) au service d'un utilisateur — la manager — qui n'est pas au comptoir et fera ces réglages ailleurs.

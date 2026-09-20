@@ -28,7 +28,7 @@ export function SegmentedToggle({ options, value, onChange, className }: Segment
 
   return (
     <div
-      className={cn("relative grid rounded-selector bg-base-200 p-1", className)}
+      className={cn("relative grid rounded-selector bg-[#efefef] p-1", className)}
       style={{ gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))` }}
     >
       <span

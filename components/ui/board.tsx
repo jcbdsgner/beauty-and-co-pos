@@ -7,7 +7,8 @@
  * *plaque* framed by a routed groove with a tracked-uppercase legend cut into its top edge;
  * rows are *lanes* on hairline rules; status is a *flip-chip* that half-flips on change; the one
  * signal colour is amber — a changed lane pulses once then holds a 3px amber inset until it is
- * acted on. Used by Planning, Clientèle, Relances, Catalogue.
+ * acted on. Used by Planning, Clientèle, Relances. Catalogue moved to its own vitrine grammar
+ * (`components/catalogue/catalogue-parts.tsx`, ADR 0021).
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -62,7 +63,7 @@ export function BoardHeader({ section, action, reset, backHref, backLabel = "Ret
         </Link>
       )}
       <div className="min-w-0 flex-1">
-        <h1 className="font-[family-name:var(--font-heading)] text-[1.9rem] font-bold leading-none tracking-[-0.02em] text-[var(--color-gray-900)]">
+        <h1 className="font-[family-name:var(--font-heading)] text-[30px] font-medium leading-[30px] tracking-[-0.02em] text-[var(--color-gray-900)]">
           {section}
         </h1>
       </div>

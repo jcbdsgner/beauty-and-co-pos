@@ -21,8 +21,8 @@ const MODES: {
   logo?: { src: string; width: number; height: number };
   hint: string;
 }[] = [
-  { value: "wave", label: "Wave", icon: Smartphone, logo: { src: "/images/payment/wave.png", width: 512, height: 506 }, hint: "La cliente valide sur son téléphone." },
-  { value: "orange_money", label: "Orange Money", icon: Wallet, logo: { src: "/images/payment/orange-money.png", width: 512, height: 343 }, hint: "La cliente valide sur son téléphone." },
+  { value: "wave", label: "Wave", icon: Smartphone, logo: { src: "/images/payment/wave.png", width: 512, height: 506 }, hint: "Vérifiez la réception du paiement avant d'encaisser." },
+  { value: "orange_money", label: "Orange Money", icon: Wallet, logo: { src: "/images/payment/orange-money.png", width: 512, height: 343 }, hint: "Vérifiez la réception du paiement avant d'encaisser." },
   { value: "carte", label: "Carte", icon: CreditCard, hint: "Insérez ou passez la carte." },
   { value: "especes", label: "Espèces", icon: Banknote, hint: "Saisissez le montant reçu de la cliente." },
 ];
@@ -57,7 +57,11 @@ export function PaymentStep({ sale }: { sale: Sale }) {
       : mixed && !balanced
         ? `Reste ${formatFcfa(Math.abs(remaining))} à répartir.`
         : involvesCash && !cashEnough
-          ? "Montant reçu insuffisant."
+          ? // Texte neutre tant que rien n'est saisi — "insuffisant" ne se lit comme une erreur
+            // qu'une fois une première saisie faite (audit UX du 19/09).
+            cashReceived === ""
+            ? "Saisissez le montant reçu."
+            : "Montant reçu insuffisant."
           : null;
 
   function handleConfirm() {
@@ -168,13 +172,15 @@ export function PaymentStep({ sale }: { sale: Sale }) {
                     )}
                   >
                     {m.logo ? (
-                      <span className="flex h-[72px] w-full items-center justify-center overflow-hidden rounded-xl">
+                      // Même fond neutre pour Wave et Orange Money (audit UX du 19/09) : réduit
+                      // l'écart de saturation entre leurs couleurs de marque et les tuiles Carte/Espèces.
+                      <span className="flex h-[72px] w-full items-center justify-center overflow-hidden rounded-xl bg-base-200 px-4">
                         <Image
                           src={m.logo.src}
                           alt={m.label}
                           width={m.logo.width}
                           height={m.logo.height}
-                          className="max-h-[72px] w-auto max-w-full object-contain"
+                          className="max-h-12 w-auto max-w-full object-contain"
                         />
                       </span>
                     ) : (

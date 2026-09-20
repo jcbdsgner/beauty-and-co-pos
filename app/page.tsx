@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/atoms/button";
 import { SegmentedToggle } from "@/components/ui/molecules/segmented-toggle";
 import { BoardHeader, Legend } from "@/components/ui/board";
 import { AppointmentDetailSheet } from "@/components/planning/appointment-detail-sheet";
+import { CreateReservationDialog } from "@/components/planning/create-reservation-dialog";
 import { AccueilCalendar } from "@/components/journee/accueil-calendar";
 import { AccueilDayList } from "@/components/journee/accueil-day-list";
 import { AccueilGiftCards } from "@/components/journee/accueil-gift-cards";
 import { useEncaissement } from "@/components/journee/use-encaissement";
 import { useAppData } from "@/components/providers/app-data-provider";
-import { BOOKING_URL, groupDayByReservation } from "@/lib/data/planning";
+import { groupDayByReservation } from "@/lib/data/planning";
 import type { RendezVous } from "@/lib/data/types";
 
 /** Today as "YYYY-MM-DD" (local). */
@@ -35,6 +36,7 @@ export default function AccueilPage() {
 
   const [detail, setDetail] = useState<RendezVous | null>(null);
   const [view, setView] = useState<AccueilView>("liste");
+  const [creatingRdv, setCreatingRdv] = useState(false);
 
   // « Le jour » = la journée en cours seulement. Le seed `RESERVATIONS` porte aujourd'hui par
   // défaut ; la passe Planning y ajoute un champ `date` pour ses vues Semaine — on filtre donc
@@ -50,9 +52,16 @@ export default function AccueilPage() {
       <BoardHeader
         section="Accueil"
         action={
-          <Button href={BOOKING_URL} external variant="outline" size="sm">
-            Créer un rendez-vous
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* /recap-ventes était une route orpheline, jamais atteignable qu'en tapant l'URL
+                (audit UX du 19/09) — point d'entrée depuis l'Accueil. */}
+            <Button href="/recap-ventes" variant="outline" size="sm">
+              Voir le récap
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setCreatingRdv(true)}>
+              Créer un rendez-vous
+            </Button>
+          </div>
         }
       />
 
@@ -107,6 +116,8 @@ export default function AccueilPage() {
       />
 
       {encaissementDialog}
+
+      <CreateReservationDialog open={creatingRdv} onClose={() => setCreatingRdv(false)} />
     </div>
   );
 }

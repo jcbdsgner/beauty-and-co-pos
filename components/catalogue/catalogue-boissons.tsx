@@ -1,52 +1,52 @@
 "use client";
 
-import Image from "next/image";
-import { Board, BoardEmpty } from "@/components/ui/board";
-import { PhotoPlaceholder } from "@/components/ui/atoms/photo-placeholder";
+import { useState } from "react";
+import { CatalogueCard, CatalogueEmpty } from "@/components/catalogue/catalogue-parts";
+import { CatalogueLightbox } from "@/components/catalogue/catalogue-lightbox";
 import { BOISSONS } from "@/lib/data/boissons";
-import { formatFcfa } from "@/lib/utils";
 
 /**
  * Boissons — le Bar Beauty & Co, en lecture : chaque boisson avec sa photo, sa composition et son
  * prix. On feuillette avec la cliente pendant qu'elle patiente ; l'ajout au panier se fait au
- * Comptoir (onglet « Boissons » du Menu). Les mêmes références que la prise de RDV b&co.
+ * Comptoir (onglet « Boissons » du Menu). Les mêmes références que la prise de RDV b&co. Cartes
+ * « menu » (ADR 0021) — pas de rail, pas de catégorie : le bar n'en a pas.
  */
 export function CatalogueBoissons() {
   const boissons = BOISSONS.filter((b) => b.active);
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+
+  if (boissons.length === 0) {
+    return <CatalogueEmpty title="Aucune boisson" hint="Le bar n'a rien à la carte pour le moment." />;
+  }
 
   return (
-    <Board legend={`${boissons.length} boisson${boissons.length > 1 ? "s" : ""}`} tone="plain">
-      {boissons.length === 0 ? (
-        <BoardEmpty title="Aucune boisson" hint="Le bar n'a rien à la carte pour le moment." />
-      ) : (
-        <>
-          <div className="grid grid-cols-2 gap-px bg-base-300 md:grid-cols-3 xl:grid-cols-4">
-            {boissons.map((b) => (
-              <div key={b.id} className="flex flex-col bg-white">
-                <div className="relative aspect-[4/5] bg-white">
-                  {b.image ? (
-                    <Image src={b.image} alt={b.name} fill sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw" className="object-contain p-3" />
-                  ) : (
-                    <PhotoPlaceholder className="size-full rounded-none border-0" label="Photo à venir" />
-                  )}
-                </div>
-                <div className="flex flex-1 flex-col gap-1 border-t border-base-300 p-3">
-                  <p className="text-sm font-semibold text-base-content">{b.name}</p>
-                  {b.description && (
-                    <p className="text-xs leading-snug text-base-content/55">{b.description}</p>
-                  )}
-                  <p className="mt-auto pt-1 text-sm font-semibold tabular-nums text-primary">
-                    {formatFcfa(b.price)}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="border-t border-base-300 bg-black/[0.02] px-4 py-2 text-xs text-base-content/55">
-            Lait avec ou sans lactose au choix.
-          </div>
-        </>
-      )}
-    </Board>
+    <div className="space-y-4">
+      <p className="text-sm font-semibold text-base-content/60">
+        {`${boissons.length} boisson${boissons.length > 1 ? "s" : ""} au Bar Beauty & Co`}
+      </p>
+
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
+        {boissons.map((b, i) => (
+          <CatalogueCard
+            key={b.id}
+            name={b.name}
+            price={b.price}
+            image={b.image}
+            imageBg="bg-accent"
+            description={b.description}
+            onOpen={() => setOpenIndex(i)}
+          />
+        ))}
+      </div>
+
+      <p className="text-center text-xs text-base-content/45">Lait avec ou sans lactose au choix.</p>
+
+      <CatalogueLightbox
+        items={boissons.map((b) => ({ id: b.id, name: b.name, price: b.price, image: b.image, description: b.description }))}
+        index={openIndex}
+        onNavigate={setOpenIndex}
+        onClose={() => setOpenIndex(null)}
+      />
+    </div>
   );
 }

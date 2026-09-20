@@ -34,6 +34,7 @@ import { boissonById } from "@/lib/data/boissons";
 import { produitById, serviceById } from "@/lib/data/menu";
 import { appointmentEndTime, reservationComposition, reservationForRendezVous, timeToMinutes } from "@/lib/data/planning";
 import { formatFcfa } from "@/lib/utils";
+import { PREFERENCE_DOMAINS, PREFERENCE_DOMAIN_LABEL } from "@/lib/data/types";
 import type { BeneficiaryKind, Cliente, RendezVous } from "@/lib/data/types";
 
 type Props = {
@@ -48,12 +49,16 @@ type BeneficiaryGroup = {
   label: string;
   href: string | null;
   kind: BeneficiaryKind;
+  /** The fiche behind this beneficiary, when known — the payer herself for "Elle-même", or the
+   *  linked fiche for a named beneficiary. Powers the Préférences block; stays null for a
+   *  beneficiary named free-text (no fiche to read preferences from). */
+  client: Cliente | null;
   lines: RendezVous[];
 };
 
 /** Same key + kind derivation as `reservationComposition` (lib/data/planning.ts) — the panel's
  *  groups must always match the composition line shown on the Accueil card and the header here. */
-function beneficiaryGroups(lines: RendezVous[], clients: Cliente[]): BeneficiaryGroup[] {
+function beneficiaryGroups(lines: RendezVous[], clients: Cliente[], payer: Cliente | undefined): BeneficiaryGroup[] {
   const groups = new Map<string, BeneficiaryGroup>();
   for (const rv of lines) {
     const key = rv.beneficiaryClientId ?? rv.beneficiaryName ?? "__payer__";
@@ -61,8 +66,19 @@ function beneficiaryGroups(lines: RendezVous[], clients: Cliente[]): Beneficiary
     const kind: BeneficiaryKind = service?.categoryId === "mini-co" ? "enfant" : (rv.beneficiaryKind ?? "femme");
     if (!groups.has(key)) {
       const fiche = rv.beneficiaryClientId ? clients.find((c) => c.id === rv.beneficiaryClientId) : undefined;
-      const label = key === "__payer__" ? "Elle-même" : (fiche ? clientFullName(fiche) : (rv.beneficiaryName ?? "Bénéficiaire"));
-      groups.set(key, { key, label, href: fiche ? `/clientele/${fiche.id}` : null, kind, lines: [] });
+      // Le nom de la payeuse plutôt qu'un générique « Elle-même » (audit UX du 19/09). Pour un
+      // bénéficiaire sans fiche, son prénom sans la précision de lien de parenté entre parenthèses
+      // (ex. « sœur ») — non pertinente, non récupérable dans les données de l'app.
+      const label =
+        key === "__payer__"
+          ? payer
+            ? clientFullName(payer)
+            : "Elle-même"
+          : fiche
+            ? clientFullName(fiche)
+            : (rv.beneficiaryName ?? "Bénéficiaire").replace(/\s*\([^)]*\)\s*$/, "");
+      const client = key === "__payer__" ? (payer ?? null) : (fiche ?? null);
+      groups.set(key, { key, label, href: fiche ? `/clientele/${fiche.id}` : null, kind, client, lines: [] });
     }
     groups.get(key)!.lines.push(rv);
   }
@@ -71,6 +87,55 @@ function beneficiaryGroups(lines: RendezVous[], clients: Cliente[]): Beneficiary
     const bStart = Math.min(...b.lines.map((rv) => timeToMinutes(rv.start)));
     return aStart - bStart;
   });
+}
+
+/** Compact, per-beneficiary preference read: hair/color reference plus every non-empty domain
+ *  note on her fiche. No photos here — this panel is a fast pre-service glance, not the fiche. */
+function clientPreferenceLines(client: Cliente | null): { label: string; note: string }[] {
+  if (!client) return [];
+  const lines: { label: string; note: string }[] = [];
+  if (client.hairType) lines.push({ label: "Type de cheveux", note: client.hairType });
+  if (client.colorReference) lines.push({ label: "Réf. couleur", note: client.colorReference });
+  for (const domain of PREFERENCE_DOMAINS) {
+    const note = client.preferenceNotes?.[domain];
+    if (note) lines.push({ label: PREFERENCE_DOMAIN_LABEL[domain], note });
+  }
+  return lines;
+}
+
+/** One "Avantages" line: icon, title, the detail that used to be hidden behind a count (which
+ *  prestations, what's included, what's left), and either a trailing figure or a status badge —
+ *  never both, one advantage never needs two competing values. */
+function AvantageRow({
+  icon,
+  title,
+  detail,
+  value,
+  badge,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  detail: string;
+  value?: string;
+  badge?: { label: string; tone: "warning" | "neutral" };
+}) {
+  return (
+    <div className="flex items-start gap-3 py-2.5">
+      <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-[var(--brand-rose-soft)] text-[var(--brand-taupe-muted)]">
+        {icon}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold text-[var(--color-gray-900)]">{title}</p>
+        <p className="mt-0.5 text-xs leading-snug text-[var(--color-gray-500)]">{detail}</p>
+      </div>
+      {value && <span className="shrink-0 text-sm font-semibold tabular-nums text-[var(--color-gray-800)]">{value}</span>}
+      {badge && (
+        <Badge variant={badge.tone} className="shrink-0">
+          {badge.label}
+        </Badge>
+      )}
+    </div>
+  );
 }
 
 /** Fiche réservation — panneau latéral droit (payeuse, avantages, prestations groupées par
@@ -100,7 +165,7 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
   }, 0);
   const total = prestationsTotal + extrasTotal;
 
-  const groups = beneficiaryGroups(lines, clients);
+  const groups = beneficiaryGroups(lines, clients, payer);
   const startTimes = lines.map((rv) => timeToMinutes(rv.start));
   const endTimes = lines.map((rv) => timeToMinutes(appointmentEndTime(rv)));
   const rangeStart = startTimes.length ? Math.min(...startTimes) : 0;
@@ -159,41 +224,54 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
           {hasAvantages && (
             <div className="border-b border-[var(--board-groove)] px-6 py-4">
               <Legend>Avantages</Legend>
-              <div className="mt-2 flex flex-wrap gap-1.5">
+              <div className="mt-2 flex flex-col divide-y divide-[var(--board-groove)]">
                 {giftCard && (
-                  <Badge variant="neutral" icon={<Gift className="size-3.5" />}>
-                    {giftCard.kind === "montant"
-                      ? `Carte cadeau · ${formatFcfa(giftCard.balance)}`
-                      : `Carte cadeau · ${giftCard.serviceIds?.length ?? 0} prestation${(giftCard.serviceIds?.length ?? 0) > 1 ? "s" : ""}`}
-                  </Badge>
+                  <AvantageRow
+                    icon={<Gift className="size-4" />}
+                    title="Carte cadeau"
+                    detail={
+                      giftCard.kind === "montant"
+                        ? "Solde à valoir sur la vente"
+                        : (giftCard.serviceIds ?? [])
+                            .map((id) => serviceById(id)?.name)
+                            .filter((name): name is string => Boolean(name))
+                            .join(" + ") || "Prestations prépayées"
+                    }
+                    value={giftCard.kind === "montant" ? formatFcfa(giftCard.balance) : undefined}
+                  />
                 )}
                 {payer && payer.points > 0 && (
-                  <Badge variant="neutral" icon={<Star className="size-3.5" />}>
-                    {payer.points} pts fidélité
-                  </Badge>
+                  <AvantageRow icon={<Star className="size-4" />} title="Points fidélité" detail="Cumulés · échangeables en caisse" value={`${payer.points} pts`} />
                 )}
                 {abonnements.map((ab) => {
                   const forfait = forfaitById(ab.forfaitId);
                   if (!forfait) return null;
                   const status = abonnementStatus(ab);
+                  const included = forfait.prestationIds.map((id) => serviceById(id)?.name).filter((name): name is string => Boolean(name));
                   return (
-                    <Badge
+                    <AvantageRow
                       key={ab.id}
-                      variant={status === "a_regler" ? "warning" : "neutral"}
-                      icon={<CalendarClock className="size-3.5" />}
-                    >
-                      {forfait.label} · {ABONNEMENT_STATUS_LABEL[status]}
-                    </Badge>
+                      icon={<CalendarClock className="size-4" />}
+                      title={forfait.label}
+                      detail={included.length > 0 ? `Inclut : ${included.join(", ")}` : forfait.description}
+                      badge={{ label: ABONNEMENT_STATUS_LABEL[status], tone: status === "a_regler" ? "warning" : "neutral" }}
+                    />
                   );
                 })}
                 {packs.map((pp) => {
                   const pack = packById(pp.packId);
                   if (!pack) return null;
-                  const used = pack.prestationIds.length - packRemainingPrestations(pp).length;
+                  const remainingIds = packRemainingPrestations(pp);
+                  const used = pack.prestationIds.length - remainingIds.length;
+                  const remainingNames = remainingIds.map((id) => serviceById(id)?.name).filter((name): name is string => Boolean(name));
                   return (
-                    <Badge key={pp.id} variant="neutral" icon={<PackageCheck className="size-3.5" />}>
-                      {pack.label} · {used}/{pack.prestationIds.length} utilisées
-                    </Badge>
+                    <AvantageRow
+                      key={pp.id}
+                      icon={<PackageCheck className="size-4" />}
+                      title={pack.label}
+                      detail={remainingNames.length > 0 ? `Restant : ${remainingNames.join(", ")}` : "Entièrement utilisé"}
+                      value={`${used}/${pack.prestationIds.length} utilisées`}
+                    />
                   );
                 })}
               </div>
@@ -229,6 +307,24 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
                       <span className="text-xs font-semibold tabular-nums text-[var(--color-gray-500)]">{formatFcfa(groupTotal)}</span>
                     )}
                   </div>
+
+                  {(() => {
+                    const prefLines = clientPreferenceLines(group.client);
+                    if (prefLines.length === 0) return null;
+                    return (
+                      <div className="mt-2 rounded-lg bg-[var(--color-gray-50)] px-3 py-2">
+                        <Legend className="text-[var(--color-gray-500)]">Préférences</Legend>
+                        <dl className="mt-1 flex flex-col gap-1">
+                          {prefLines.map((pref) => (
+                            <div key={pref.label} className="flex gap-1.5 text-xs leading-snug">
+                              <dt className="shrink-0 font-semibold text-[var(--color-gray-700)]">{pref.label} ·</dt>
+                              <dd className="text-[var(--color-gray-600)]">{pref.note}</dd>
+                            </div>
+                          ))}
+                        </dl>
+                      </div>
+                    );
+                  })()}
 
                   <div className="mt-2 flex flex-col divide-y divide-[var(--board-groove)]">
                     {group.lines.map((rv) => {
