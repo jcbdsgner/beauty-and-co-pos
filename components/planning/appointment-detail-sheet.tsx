@@ -200,7 +200,9 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
               id="rdv-detail-title"
               className="font-[family-name:var(--font-heading)] text-xl font-semibold underline decoration-white/30 decoration-2 underline-offset-4 transition hover:decoration-white/70"
             >
-              {clientFullName(payer)}
+              {/* Référence de la réservation plutôt que le nom de la payeuse (audit UX du 19/09) —
+                  son nom reste lisible plus bas, sur sa propre ligne de bénéficiaire. */}
+              {reservation?.id ?? clientFullName(payer)}
             </Link>
           ) : (
             <h2 id="rdv-detail-title" className="font-[family-name:var(--font-heading)] text-xl font-semibold">
