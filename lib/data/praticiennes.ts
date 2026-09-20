@@ -24,6 +24,7 @@ export const PRATICIENNES: Praticienne[] = [
     name: "Bineta",
     role: "coiffeuse",
     initial: "B",
+    salonId: "sea-plaza-bco",
     weeklySchedule: {
       mar: { start: "09:00", end: "18:00" },
       mer: { start: "09:00", end: "18:00" },
@@ -37,6 +38,7 @@ export const PRATICIENNES: Praticienne[] = [
     name: "Fatou",
     role: "coiffeuse",
     initial: "F",
+    salonId: "sea-plaza-bco",
     weeklySchedule: {
       mar: { start: "10:00", end: "19:00" },
       mer: { start: "10:00", end: "19:00" },
@@ -50,6 +52,7 @@ export const PRATICIENNES: Praticienne[] = [
     name: "Gnagna",
     role: "estheticienne",
     initial: "G",
+    salonId: "almadies",
     weeklySchedule: {
       lun: { start: "09:00", end: "17:00" },
       mar: { start: "09:00", end: "17:00" },
@@ -63,6 +66,7 @@ export const PRATICIENNES: Praticienne[] = [
     name: "Henry",
     role: "coiffeuse",
     initial: "H",
+    salonId: "almadies",
     weeklySchedule: {
       mer: { start: "09:00", end: "17:00" },
       jeu: { start: "09:00", end: "17:00" },
@@ -76,6 +80,7 @@ export const PRATICIENNES: Praticienne[] = [
     name: "Marie Dominique",
     role: "estheticienne",
     initial: "MD",
+    salonId: "sea-plaza-bco",
     weeklySchedule: {
       lun: { start: "11:00", end: "19:00" },
       mar: { start: "11:00", end: "19:00" },
@@ -89,6 +94,7 @@ export const PRATICIENNES: Praticienne[] = [
     name: "Adja",
     role: "estheticienne",
     initial: "A",
+    salonId: "almadies",
     weeklySchedule: {
       mar: { start: "09:30", end: "18:30" },
       mer: { start: "09:30", end: "18:30" },
@@ -102,6 +108,7 @@ export const PRATICIENNES: Praticienne[] = [
     name: "Michelle",
     role: "coiffeuse",
     initial: "M",
+    salonId: "almadies",
     weeklySchedule: {
       lun: { start: "08:30", end: "16:30" },
       mar: { start: "08:30", end: "16:30" },
@@ -115,6 +122,7 @@ export const PRATICIENNES: Praticienne[] = [
     name: "Aïssatou",
     role: "menage",
     initial: "AÏ",
+    salonId: "almadies",
     weeklySchedule: {
       lun: { start: "08:00", end: "13:00" },
       mar: { start: "08:00", end: "13:00" },
@@ -129,6 +137,7 @@ export const PRATICIENNES: Praticienne[] = [
     name: "Ndiole",
     role: "accueil",
     initial: "N",
+    salonId: "sea-plaza-bco",
     weeklySchedule: {
       mar: { start: "08:30", end: "17:30" },
       mer: { start: "08:30", end: "17:30" },

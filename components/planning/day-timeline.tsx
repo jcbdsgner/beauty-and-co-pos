@@ -203,14 +203,7 @@ export function DayTimeline({ date, isToday, staff, rows, clients, onOpenReserva
               {/* timeline */}
               <div className="relative shrink-0" style={{ width: bodyW, minHeight: rowH }}>
                 {!hours && (
-                  <div
-                    aria-hidden
-                    className="pointer-events-none absolute inset-0 flex items-center justify-center bg-base-300/80"
-                    style={{
-                      backgroundImage:
-                        "repeating-linear-gradient(135deg, transparent, transparent 7px, rgba(0,0,0,0.035) 7px, rgba(0,0,0,0.035) 14px)",
-                    }}
-                  >
+                  <div aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center bg-base-300/60">
                     <span className="text-[0.68rem] font-semibold uppercase tracking-[0.1em] text-base-content/40">Repos</span>
                   </div>
                 )}

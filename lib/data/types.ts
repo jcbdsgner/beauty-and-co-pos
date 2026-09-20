@@ -21,6 +21,9 @@ export type Praticienne = {
   role: Role;
   initial: string;
   weeklySchedule: WeeklySchedule;
+  /** Le salon où elle travaille (`Salon.id`, voir `lib/data/entreprises.ts`) — fixe, jamais les
+   *  deux à la fois (ADR 0028). Une paire « réalisable à 2 » est toujours au même salon. */
+  salonId: string;
   /** Absence ponctuelle du jour (dernière minute) — vient par-dessus l'horaire hebdomadaire. */
   unavailableToday?: boolean;
 };

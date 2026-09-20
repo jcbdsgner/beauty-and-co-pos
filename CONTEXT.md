@@ -56,6 +56,10 @@ _Avoid_: Agenda, Calendrier, Rendez-vous (nom de l'objet, pas de la section), É
 Un membre de l'équipe affiché au Planning : coiffeuse ou esthéticienne (tient des rendez-vous), ou ménage (y figure sans jamais en tenir) — l'accueil (la fonction du comptoir) n'y figure pas. Porte un **horaire hebdomadaire** récurrent — pour chaque jour de semaine, une plage de présence ou un repos ; généralement 8 à 10h de présence par jour travaillé, 1 à 2 jours de repos par semaine. Une **absence ponctuelle** (dernière minute, un jour normalement travaillé) se marque par-dessus sans toucher à l'horaire hebdomadaire.
 _Avoid_: Employée, Staff, Collaborateur/collaboratrice (mot courant, mais le terme du modèle reste Praticienne), Coiffeur/coiffeuse générique (le rôle exact vit dans `role` ; ménage en est une aussi)
 
+**Salon**:
+Un point de vente physique de l'enseigne — deux aujourd'hui, Almadies et Sea Plaza (`lib/data/entreprises.ts`). Une **praticienne** est rattachée à un seul salon (`salonId`) : elle n'est jamais aux deux en même temps, donc une prestation « réalisable à 2 » implique toujours deux praticiennes du même salon. Le Planning porte un **filtre de lecture** (Tous les salons / Almadies / Sea Plaza, ADR 0028) pour ne consulter que le programme d'un site à la fois — aucune configuration de salon dans l'app (retirée par ADR 0001) : ce filtre lit une donnée déjà là, il n'en crée ni n'en modifie aucune.
+_Avoid_: Site, Boutique, Antenne, Établissement
+
 **Reprogrammer**:
 Déplacer un rendez-vous existant à un autre créneau (jour + heure), depuis la fiche réservation. Seul contrôle : une praticienne ne peut pas se retrouver avec deux rendez-vous qui se chevauchent — le cas est **bloqué**. Remplace « Décaler », que l'ADR 0006 avait retiré quand le Planning était en lecture seule (cf. ADR 0009).
 _Avoid_: Décaler, Déplacer, Reporter

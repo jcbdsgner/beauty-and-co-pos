@@ -331,6 +331,35 @@ export const RESERVATIONS: Reservation[] = [
     ],
   },
 
+  /* ── Il y a trois jours ─────────────────────────────────────── */
+  {
+    id: "res-26",
+    payerClientId: "cl-3",
+    date: seedDay(-3),
+    source: "en_ligne",
+    rendezVous: [
+      { id: "rdv-26a", reservationId: "res-26", serviceId: "coiffure-coupe-transformation", staffId: "michelle", start: "09:00", durationMin: 40, status: "actif" },
+    ],
+  },
+  {
+    id: "res-27",
+    payerClientId: "cl-8",
+    date: seedDay(-3),
+    source: "en_ligne",
+    rendezVous: [
+      { id: "rdv-27a", reservationId: "res-27", serviceId: "soin-du-visage-hydrafacial-deep-clean", staffId: "adja", start: "12:00", durationMin: 75, status: "actif" },
+    ],
+  },
+  {
+    id: "res-28",
+    payerClientId: "cl-10",
+    date: seedDay(-3),
+    source: "en_ligne",
+    rendezVous: [
+      { id: "rdv-28a", reservationId: "res-28", serviceId: "manucure-pedicure-jelly-pedicure", staffId: "gnagna", start: "16:30", durationMin: 65, status: "actif" },
+    ],
+  },
+
   /* ── Avant-hier ─────────────────────────────────────────────── */
   {
     id: "res-7",
@@ -439,6 +468,15 @@ export const RESERVATIONS: Reservation[] = [
       { id: "rdv-17a", reservationId: "res-17", serviceId: "manucure-pedicure-smooth-pedicure", staffId: "gnagna", start: "13:00", durationMin: 80, status: "actif" },
     ],
   },
+  {
+    id: "res-29",
+    payerClientId: "cl-1",
+    date: seedDay(2),
+    source: "en_ligne",
+    rendezVous: [
+      { id: "rdv-29a", reservationId: "res-29", serviceId: "spa-relax-me-time", staffId: "adja", start: "09:30", durationMin: 80, status: "actif" },
+    ],
+  },
 
   /* ── Dans trois jours ───────────────────────────────────────── */
   {
@@ -460,8 +498,17 @@ export const RESERVATIONS: Reservation[] = [
       { id: "rdv-19b", reservationId: "res-19", serviceId: "epilation-epilation-sourcils", staffId: "marie-dominique", start: "12:30", durationMin: 15, status: "actif" },
     ],
   },
+  {
+    id: "res-30",
+    payerClientId: "cl-7",
+    date: seedDay(3),
+    source: "en_ligne",
+    rendezVous: [
+      { id: "rdv-30a", reservationId: "res-30", serviceId: "coiffure-tresses-cheveux", staffId: "henry", start: "14:30", durationMin: 60, status: "actif" },
+    ],
+  },
 
-  /* ── Dans quatre / six jours ────────────────────────────────── */
+  /* ── Dans quatre / cinq / six jours ─────────────────────────── */
   {
     id: "res-20",
     payerClientId: "cl-6",
@@ -472,12 +519,48 @@ export const RESERVATIONS: Reservation[] = [
     ],
   },
   {
+    id: "res-31",
+    payerClientId: "cl-10",
+    date: seedDay(4),
+    source: "en_ligne",
+    rendezVous: [
+      { id: "rdv-31a", reservationId: "res-31", serviceId: "coiffure-soin-complet", staffId: "bineta", start: "13:30", durationMin: 130, status: "actif" },
+    ],
+  },
+  {
+    id: "res-32",
+    payerClientId: "cl-3",
+    date: seedDay(5),
+    source: "en_ligne",
+    rendezVous: [
+      { id: "rdv-32a", reservationId: "res-32", serviceId: "manucure-pedicure-perfect-manucure-russe-gel-sur-ongles-naturels-gainage", staffId: "gnagna", start: "10:00", durationMin: 90, status: "actif" },
+    ],
+  },
+  {
+    id: "res-33",
+    payerClientId: "cl-9",
+    date: seedDay(5),
+    source: "en_ligne",
+    rendezVous: [
+      { id: "rdv-33a", reservationId: "res-33", serviceId: "coiffure-tissage-versatile", staffId: "michelle", secondStaffId: "gnagna", start: "09:00", durationMin: 60, status: "actif" },
+    ],
+  },
+  {
     id: "res-21",
     payerClientId: "cl-2",
     date: seedDay(6),
     source: "en_ligne",
     rendezVous: [
       { id: "rdv-21a", reservationId: "res-21", serviceId: "coiffure-ponytail", staffId: "fatou", start: "14:00", durationMin: 90, status: "actif" },
+    ],
+  },
+  {
+    id: "res-34",
+    payerClientId: "cl-5",
+    date: seedDay(6),
+    source: "en_ligne",
+    rendezVous: [
+      { id: "rdv-34a", reservationId: "res-34", serviceId: "soin-du-visage-golden-vip-facial", staffId: "adja", start: "11:00", durationMin: 90, status: "actif" },
     ],
   },
 ];
