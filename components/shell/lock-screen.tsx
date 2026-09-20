@@ -26,9 +26,9 @@ export function LockScreen() {
   }
 
   return (
-    <div className="relative flex h-screen w-screen items-center justify-end overflow-hidden bg-base-200 p-10">
+    <div className="relative flex h-screen w-screen items-center justify-end overflow-hidden bg-base-200">
       <Image
-        src="/images/brand/lock-screen-interior.jpg"
+        src="/images/brand/lock-screen-spa.jpg"
         alt=""
         fill
         sizes="100vw"
@@ -38,7 +38,7 @@ export function LockScreen() {
 
       <Logo className="absolute left-10 top-10 h-16 w-16 shrink-0 overflow-hidden rounded-2xl shadow-lg" />
 
-      <div className="relative z-10 flex w-full max-w-[440px] flex-col gap-8 rounded-[2.5rem] bg-base-100 px-10 py-11 shadow-2xl">
+      <div className="relative z-10 mr-[clamp(2.5rem,17%,20rem)] flex w-full max-w-[540px] flex-col gap-8 rounded-[2.5rem] bg-base-100 px-10 py-11 shadow-2xl">
         <div>
           <p className="text-base text-base-content/70">
             Bienvenue chez <span className="font-semibold text-primary">Beauty and Co</span>
