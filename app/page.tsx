@@ -10,6 +10,7 @@ import { SearchInput } from "@/components/ui/atoms/search-input";
 import { Pills } from "@/components/ui/molecules/pills";
 import { DatePicker } from "@/components/ui/molecules/date-picker";
 import { BoardHeader, ChipFilter, Legend } from "@/components/ui/board";
+import { Separator } from "@/components/ui/atoms/separator";
 import { AppointmentDetailSheet } from "@/components/planning/appointment-detail-sheet";
 import { CreateReservationDialog } from "@/components/planning/create-reservation-dialog";
 import { AccueilCalendar } from "@/components/journee/accueil-calendar";
@@ -157,6 +158,7 @@ export default function AccueilPage() {
                 ...SALONS.map((s) => ({ value: s.id, label: s.name })),
               ]}
             />
+            <Separator orientation="vertical" className="h-6" />
             {/* /recap-ventes était une route orpheline, jamais atteignable qu'en tapant l'URL
                 (audit UX du 19/09) — point d'entrée depuis l'Accueil. */}
             <Button href="/recap-ventes" variant="outline" size="sm">
