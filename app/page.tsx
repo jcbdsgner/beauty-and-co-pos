@@ -192,10 +192,10 @@ export default function AccueilPage() {
 
         <div className="mb-4 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center">
           <SearchInput
-            placeholder="Rechercher une cliente ou une praticienne…"
+            placeholder="Rechercher une cliente ou praticienne…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="sm:max-w-xs"
+            className="flex-1 sm:max-w-sm"
           />
           <Pills options={PERIOD_OPTIONS} value={period} onChange={(v) => setPeriod(v as Period)} wrap={false} />
           {period === "perso" && (

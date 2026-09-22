@@ -113,8 +113,11 @@ export function AccueilDayList({ rows, clients, praticiennes, onOpenReservation,
 
   return (
     <div className="flex flex-col gap-8">
-      {dateGroups.map(({ date, slots }) => (
-        <div key={date} className="flex flex-col gap-6">
+      {dateGroups.map(({ date, slots }, i) => (
+        <div
+          key={date}
+          className={cn("flex flex-col gap-6", showDateHeaders && i > 0 && "border-t border-base-300 pt-8")}
+        >
           {showDateHeaders && (
             <p className="pl-1 font-[family-name:var(--font-heading)] text-base font-semibold text-base-content">
               {dateGroupLabel(date, todayIso)}
