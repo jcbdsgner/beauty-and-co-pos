@@ -238,11 +238,11 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
                 trigger={
                   <button
                     type="button"
-                    className="-mx-2 flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left transition hover:bg-[var(--color-gray-50)]"
+                    className="-mx-2 flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition hover:bg-[var(--color-gray-50)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-ring)]"
                   >
                     <Avatar
                       initial={clientInitial(payer)}
-                      size={36}
+                      size={40}
                       className="bg-[var(--brand-rose-soft)] text-sm font-semibold text-[var(--brand-taupe-muted)]"
                     />
                     <span className="min-w-0 flex-1">
