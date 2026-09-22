@@ -9,6 +9,9 @@ export type Utilisateur = {
   name: string;
   initial: string;
   role: Role;
+  /** Lie ce compte poste à sa fiche `Praticienne` (même salon, même équipe) — voir
+   *  lib/data/praticiennes.ts. Sert à retrouver le salon du poste (ex. l'en-tête Accueil). */
+  praticienneId: string;
   /** Mot de passe par défaut, simulé — la "vraie" valeur vit en session (voir lib/session.ts). */
   password: string;
 };
@@ -21,4 +24,10 @@ export const ROLE_LABEL: Record<Role, string> = {
   accueil: "Accueil",
 };
 
-export const UTILISATEUR: Utilisateur = { name: "Ndiole", initial: "N", role: "accueil", password: "beautyco" };
+export const UTILISATEUR: Utilisateur = {
+  name: "Ndiole",
+  initial: "N",
+  role: "accueil",
+  praticienneId: "ndiole",
+  password: "beautyco",
+};

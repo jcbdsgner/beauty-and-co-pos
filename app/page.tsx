@@ -13,6 +13,8 @@ import { AccueilGiftCards } from "@/components/journee/accueil-gift-cards";
 import { useEncaissement } from "@/components/journee/use-encaissement";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { groupDayByReservation } from "@/lib/data/planning";
+import { salonById } from "@/lib/data/entreprises";
+import { useSession } from "@/lib/session";
 import type { RendezVous } from "@/lib/data/types";
 
 /** Today as "YYYY-MM-DD" (local). */
@@ -33,10 +35,16 @@ type AccueilView = "liste" | "calendrier";
 export default function AccueilPage() {
   const { reservations, praticiennes, clients } = useAppData();
   const { requestEncaissement, encaissementDialog } = useEncaissement();
+  const { currentUser } = useSession();
 
   const [detail, setDetail] = useState<RendezVous | null>(null);
   const [view, setView] = useState<AccueilView>("liste");
   const [creatingRdv, setCreatingRdv] = useState(false);
+
+  const salon = useMemo(() => {
+    const moi = praticiennes.find((p) => p.id === currentUser.praticienneId);
+    return moi ? salonById(moi.salonId) : undefined;
+  }, [praticiennes, currentUser.praticienneId]);
 
   // « Le jour » = la journée en cours seulement. Le seed `RESERVATIONS` porte aujourd'hui par
   // défaut ; la passe Planning y ajoute un champ `date` pour ses vues Semaine — on filtre donc
@@ -64,6 +72,12 @@ export default function AccueilPage() {
           </div>
         }
       />
+
+      <p className="-mt-4 pl-1 text-sm text-base-content/45">
+        {[currentUser.name, salon?.name, `${reservationRows.length} rendez-vous aujourd'hui`]
+          .filter(Boolean)
+          .join(" · ")}
+      </p>
 
       <AccueilGiftCards />
 
