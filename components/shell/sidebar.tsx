@@ -34,8 +34,8 @@ export function Sidebar() {
 
   return (
     <aside className="flex h-screen w-[104px] shrink-0 flex-col items-center border-r border-base-300 bg-base-100">
-      <div className="flex shrink-0 items-center justify-center pt-6 pb-4">
-        <Logo className="relative h-[83px] w-[83px] shrink-0" />
+      <div className="flex shrink-0 items-center justify-center pt-8 pb-6">
+        <Logo size="footer" className="relative h-9 w-[78px] shrink-0" />
       </div>
 
       <nav className="flex w-full flex-1 flex-col justify-center gap-3 px-2.5">

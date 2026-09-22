@@ -10,6 +10,7 @@ import { PaymentStep } from "@/components/comptoir/payment-step";
 import { ReceiptStep } from "@/components/comptoir/receipt-step";
 import { IdentifyDialog } from "@/components/comptoir/identify-dialog";
 import { BrandMark } from "@/components/ui/atoms/brand-mark";
+import { Logo } from "@/components/ui/atoms/logo";
 import { useAppData } from "@/components/providers/app-data-provider";
 
 /**
@@ -31,7 +32,12 @@ export function ComptoirPanel() {
     <div className="fixed inset-0 z-40 flex flex-col bg-primary">
       {/* Taupe desk strip */}
       <div className="flex shrink-0 items-end justify-between gap-4 px-5 pt-3">
-        <SaleTabsBar />
+        <div className="flex items-end gap-3">
+          <div className="mb-2 flex h-12 shrink-0 items-center rounded-full bg-white px-4">
+            <Logo size="footer" className="relative h-5 w-[43px] shrink-0" />
+          </div>
+          <SaleTabsBar />
+        </div>
         <button
           type="button"
           onClick={collapseComptoir}
