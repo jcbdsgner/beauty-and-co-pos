@@ -75,7 +75,7 @@ export function AccueilCalendar({ rows, clients, praticiennes, onOpenReservation
 
   const { gridStart, gridEnd } = useMemo(() => {
     const marks = rows.flatMap((r) => [timeToMinutes(r.start), timeToMinutes(r.end)]);
-    const lo = marks.length ? Math.min(...marks) : 9 * 60;
+    const lo = marks.length ? Math.min(...marks) : 10 * 60;
     const hi = marks.length ? Math.max(...marks) : 19 * 60;
     const start = Math.floor(lo / 60) * 60;
     return { gridStart: start, gridEnd: Math.max(Math.ceil(hi / 60) * 60, start + 4 * 60) };

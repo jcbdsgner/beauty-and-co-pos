@@ -142,6 +142,8 @@ export const RESERVATIONS: Reservation[] = [
     payerClientId: "cl-1",
     date: seedDay(0),
     source: "en_ligne",
+    // Vient d'arriver de la plateforme externe, pas encore remarquée (ADR 0030).
+    seen: false,
     rendezVous: [
       {
         id: "rdv-5a",
@@ -159,6 +161,8 @@ export const RESERVATIONS: Reservation[] = [
     payerClientId: "cl-3",
     date: seedDay(0),
     source: "en_ligne",
+    // Vient d'arriver de la plateforme externe, pas encore remarquée (ADR 0030).
+    seen: false,
     rendezVous: [
       {
         id: "rdv-6a",
@@ -202,7 +206,7 @@ export const RESERVATIONS: Reservation[] = [
         serviceId: "coiffure-tissage-versatile",
         staffId: "bineta",
         secondStaffId: "fatou",
-        start: "09:00",
+        start: "10:00",
         durationMin: 60,
         status: "actif",
       },
@@ -213,7 +217,7 @@ export const RESERVATIONS: Reservation[] = [
         staffId: "michelle",
         secondStaffId: "gnagna",
         beneficiaryName: "Aïda",
-        start: "09:00",
+        start: "10:00",
         durationMin: 60,
         status: "actif",
       },
@@ -337,7 +341,7 @@ export const RESERVATIONS: Reservation[] = [
     date: seedDay(-3),
     source: "en_ligne",
     rendezVous: [
-      { id: "rdv-26a", reservationId: "res-26", serviceId: "coiffure-coupe-transformation", staffId: "michelle", start: "09:00", durationMin: 40, status: "actif" },
+      { id: "rdv-26a", reservationId: "res-26", serviceId: "coiffure-coupe-transformation", staffId: "michelle", start: "10:00", durationMin: 40, status: "actif" },
     ],
   },
   {
@@ -413,7 +417,7 @@ export const RESERVATIONS: Reservation[] = [
     date: seedDay(-1),
     source: "en_ligne",
     rendezVous: [
-      { id: "rdv-12a", reservationId: "res-12", serviceId: "manucure-pedicure-perfect-manucure-russe-gel-sur-ongles-naturels-gainage", staffId: "gnagna", start: "09:00", durationMin: 90, status: "actif" },
+      { id: "rdv-12a", reservationId: "res-12", serviceId: "manucure-pedicure-perfect-manucure-russe-gel-sur-ongles-naturels-gainage", staffId: "gnagna", start: "10:00", durationMin: 90, status: "actif" },
     ],
   },
 
@@ -424,7 +428,7 @@ export const RESERVATIONS: Reservation[] = [
     date: seedDay(1),
     source: "en_ligne",
     rendezVous: [
-      { id: "rdv-13a", reservationId: "res-13", serviceId: "coiffure-tissage-versatile", staffId: "bineta", secondStaffId: "fatou", start: "09:00", durationMin: 60, status: "actif" },
+      { id: "rdv-13a", reservationId: "res-13", serviceId: "coiffure-tissage-versatile", staffId: "bineta", secondStaffId: "fatou", start: "10:00", durationMin: 60, status: "actif" },
       { id: "rdv-13b", reservationId: "res-13", serviceId: "manucure-pedicure-manucure-spa-express", staffId: "gnagna", start: "10:30", durationMin: 45, status: "actif" },
     ],
   },
@@ -541,7 +545,7 @@ export const RESERVATIONS: Reservation[] = [
     date: seedDay(5),
     source: "en_ligne",
     rendezVous: [
-      { id: "rdv-33a", reservationId: "res-33", serviceId: "coiffure-tissage-versatile", staffId: "michelle", secondStaffId: "gnagna", start: "09:00", durationMin: 60, status: "actif" },
+      { id: "rdv-33a", reservationId: "res-33", serviceId: "coiffure-tissage-versatile", staffId: "michelle", secondStaffId: "gnagna", start: "10:00", durationMin: 60, status: "actif" },
     ],
   },
   {

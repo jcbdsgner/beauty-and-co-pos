@@ -13,21 +13,22 @@ import { cn } from "@/lib/utils";
 import type { DayHours, Praticienne, RendezVous } from "@/lib/data/types";
 
 /**
- * « Planning · Jour » — reconstruit à la lettre du Figma (node 270:2466, ADR 0025) : une ligne
- * par praticienne, le temps défile horizontalement, les rendez-vous sont positionnés dedans
- * (début + durée), empilés en sous-lignes verticales quand deux se chevauchent (`pack`) — une
- * praticienne ne peut jamais paraître faire deux prestations à la fois. Un bloc n'affiche que
- * l'heure et la prestation. Zone grisée = hors de l'horaire hebdomadaire du jour affiché ; ligne
- * entière grisée = jour de repos. C'est la seule surface du Planning — pas de sidebar de filtre
- * séparée (le Figma n'en a pas) : la poignée de glisser-déposer, l'isolement et l'absence vivent
- * directement sur l'étiquette de ligne, comme dans la maquette. Le trait "maintenant" est dans la
- * couleur de marque (`bg-primary`), pas ambre : il repère l'heure courante, ce n'est pas un
- * signal « à traiter » (doctrine du seul signal ambre).
+ * « Planning · Jour » — reconstruit à la lettre du Figma (node 270:2466, ADR 0025), puis basculé
+ * en vertical (même principe, axe renversé) : une colonne par praticienne, le temps défile verticalement, les
+ * rendez-vous sont positionnés dedans (début + durée), côte à côte en sous-colonnes quand deux se
+ * chevauchent (`pack`) — une praticienne ne peut jamais paraître faire deux prestations à la fois.
+ * Un bloc n'affiche que l'heure et la prestation. Zone grisée = hors de l'horaire hebdomadaire du
+ * jour affiché ; colonne entière grisée = jour de repos. C'est la seule surface du Planning — pas
+ * de sidebar de filtre séparée (le Figma n'en a pas) : la poignée de glisser-déposer, l'isolement
+ * et l'absence vivent directement sur l'en-tête de colonne, comme avant sur l'étiquette de ligne.
+ * Le trait "maintenant" est dans la couleur de marque (`bg-primary`), pas ambre : il repère l'heure
+ * courante, ce n'est pas un signal « à traiter » (doctrine du seul signal ambre).
  */
 const SLOT_MIN = 30;
-const SLOT_W = 56; // px per 30 min
-const LABEL_W = 208;
-const LANE_H = 56;
+const SLOT_H = 56; // px per 30 min
+const TIME_COL_W = 52;
+const HEADER_H = 72;
+const LANE_W = 152;
 
 type Props = {
   date: Date;
@@ -47,7 +48,7 @@ type Props = {
 type Placed = { row: RendezVousRow; start: number; end: number; lane: number };
 
 /** Greedy lane packing so two rendez-vous that overlap on one praticienne stack instead of hiding
- *  each other — vertical sub-lanes within a row. */
+ *  each other — side-by-side sub-lanes within a column. */
 function pack(items: RendezVousRow[]): { placed: Placed[]; lanes: number } {
   const sorted = [...items].sort((a, b) => timeToMinutes(a.rv.start) - timeToMinutes(b.rv.start));
   const laneEnds: number[] = [];
@@ -83,7 +84,7 @@ function useMounted() {
 
 /** L'horaire hebdomadaire nominal, ou — si absent (repos) mais que des rendez-vous existent quand
  *  même ce jour-là (donnée de démonstration désalignée avec l'horaire type) — une plage dérivée de
- *  ces rendez-vous, pour ne jamais griser une ligne qui a pourtant un rendez-vous dedans. */
+ *  ces rendez-vous, pour ne jamais griser une colonne qui a pourtant un rendez-vous dedans. */
 function effectiveHours(nominal: DayHours | undefined, col: RendezVousRow[]): DayHours | undefined {
   if (nominal) return nominal;
   if (col.length === 0) return undefined;
@@ -115,14 +116,14 @@ export function DayTimeline({
       if (h) marks.push(timeToMinutes(h.start), timeToMinutes(h.end));
     }
     for (const r of rows) marks.push(timeToMinutes(r.rv.start), timeToMinutes(appointmentEndTime(r.rv)));
-    const lo = marks.length ? Math.min(...marks) : 9 * 60;
+    const lo = marks.length ? Math.min(...marks) : 10 * 60;
     const hi = marks.length ? Math.max(...marks) : 19 * 60;
     const flooredLo = Math.floor(lo / 60) * 60;
     return { gridStart: flooredLo, gridEnd: Math.max(Math.ceil(hi / 60) * 60, flooredLo + 4 * 60) };
   }, [staff, rows, date]);
 
-  const x = (min: number) => ((min - gridStart) / SLOT_MIN) * SLOT_W;
-  const bodyW = x(gridEnd);
+  const y = (min: number) => ((min - gridStart) / SLOT_MIN) * SLOT_H;
+  const bodyH = y(gridEnd);
   const hourMarks: number[] = [];
   for (let m = gridStart; m <= gridEnd; m += 60) hourMarks.push(m);
 
@@ -132,44 +133,54 @@ export function DayTimeline({
   const now = nowMinutes();
   const showNow = mounted && isToday && now > gridStart && now < gridEnd;
 
+  const columns = useMemo(
+    () =>
+      staff.map((p) => {
+        const col = rows.filter((r) => r.rv.staffId === p.id || r.rv.secondStaffId === p.id);
+        const nominal = scheduleFor(p, date);
+        const hours = effectiveHours(nominal, col);
+        const { placed, lanes } = pack(col);
+        const colW = Math.max(LANE_W, lanes * (LANE_W - 8) + 16);
+        const absent = isToday && p.unavailableToday;
+        const accent = praticienneAccent(accentIndex.get(p.id) ?? 0);
+        const beforeH = hours ? y(timeToMinutes(hours.start)) : bodyH;
+        const afterStart = hours ? y(timeToMinutes(hours.end)) : 0;
+        return { p, hours, placed, colW, absent, accent, beforeH, afterStart };
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [staff, rows, date, isToday, accentIndex, gridStart, gridEnd],
+  );
+
   if (staff.length === 0) {
     return <div className="px-6 py-14 text-center text-sm text-base-content/45">Aucune praticienne sélectionnée.</div>;
   }
 
+  const totalContentW = TIME_COL_W + columns.reduce((sum, c) => sum + c.colW, 0);
+
   return (
-    <div className="overflow-x-auto [scrollbar-width:thin]">
-      <div className="relative" style={{ minWidth: LABEL_W + bodyW }}>
-        {/* ── hour header ── */}
-        <div className="flex border-b border-base-300 bg-base-200/40">
-          <div className="sticky left-0 z-10 shrink-0 border-r border-base-300 bg-base-200/40" style={{ width: LABEL_W }} />
-          <div className="relative shrink-0" style={{ width: bodyW, height: 32 }}>
-            {hourMarks.map((m) => (
-              <span
-                key={m}
-                className="absolute top-1/2 -translate-y-1/2 text-[0.68rem] font-semibold tabular-nums text-base-content/45"
-                style={{ left: x(m) + 4 }}
-              >
-                {formatHour(`${Math.floor(m / 60)}:00`)}
-              </span>
-            ))}
+    <div className="max-h-[65vh] overflow-auto [scrollbar-width:thin]">
+      <div className="relative" style={{ minWidth: totalContentW }}>
+        <div className="flex">
+          {/* ── time ruler ── */}
+          <div className="sticky left-0 z-20 shrink-0" style={{ width: TIME_COL_W }}>
+            <div className="sticky top-0 z-30 border-b border-r border-base-300 bg-base-200/40" style={{ height: HEADER_H }} />
+            <div className="relative border-r border-base-300 bg-base-200/40" style={{ height: bodyH }}>
+              {hourMarks.map((m) => (
+                <span
+                  key={m}
+                  className="absolute right-1.5 -translate-y-1/2 text-[0.68rem] font-semibold tabular-nums text-base-content/45"
+                  style={{ top: y(m) }}
+                >
+                  {formatHour(`${Math.floor(m / 60)}:00`)}
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* ── rows ── */}
-        {staff.map((p) => {
-          const col = rows.filter((r) => r.rv.staffId === p.id || r.rv.secondStaffId === p.id);
-          const nominal = scheduleFor(p, date);
-          const hours = effectiveHours(nominal, col);
-          const { placed, lanes } = pack(col);
-          const rowH = Math.max(LANE_H, lanes * (LANE_H - 8) + 16);
-          const absent = isToday && p.unavailableToday;
-          const accent = praticienneAccent(accentIndex.get(p.id) ?? 0);
-          const beforeW = hours ? x(timeToMinutes(hours.start)) : bodyW;
-          const afterStart = hours ? x(timeToMinutes(hours.end)) : 0;
-
-          return (
-            <div key={p.id} className="flex border-b border-base-300 last:border-b-0">
-              {/* left label */}
+          {/* ── columns ── */}
+          {columns.map(({ p, hours, placed, colW, absent, accent, beforeH, afterStart }) => (
+            <div key={p.id} className="flex shrink-0 flex-col border-r border-base-300 last:border-r-0" style={{ width: colW }}>
+              {/* column header */}
               <div
                 draggable
                 onDragStart={(e) => {
@@ -193,12 +204,12 @@ export function DayTimeline({
                   setOverId(null);
                 }}
                 className={cn(
-                  "sticky left-0 z-10 flex shrink-0 items-center gap-2 border-r border-l-[3px] border-base-300 bg-base-100 px-3",
+                  "sticky top-0 z-10 flex items-center gap-2 border-b border-t-[3px] border-base-300 bg-base-100 px-2.5",
                   absent && "bg-warning/5",
                   draggedId === p.id && "opacity-40",
                   overId === p.id && draggedId && draggedId !== p.id && "ring-2 ring-inset ring-primary/60",
                 )}
-                style={{ width: LABEL_W, minHeight: rowH, borderLeftColor: absent ? undefined : accent.border }}
+                style={{ height: HEADER_H, borderTopColor: absent ? undefined : accent.border }}
               >
                 <GripVertical aria-hidden className="size-3.5 shrink-0 cursor-grab text-base-content/25 active:cursor-grabbing" />
                 <Avatar
@@ -230,7 +241,7 @@ export function DayTimeline({
                     </IconButton>
                   }
                   items={[
-                    { label: "Isoler cette ligne", icon: <Eye className="size-4" />, onSelect: () => onIsolate(p.id) },
+                    { label: "Isoler cette colonne", icon: <Eye className="size-4" />, onSelect: () => onIsolate(p.id) },
                     ...(isolatedId
                       ? [{ label: "Afficher toute l'équipe", icon: <Undo2 className="size-4" />, onSelect: onShowAll }]
                       : []),
@@ -249,30 +260,30 @@ export function DayTimeline({
                 />
               </div>
 
-              {/* timeline */}
-              <div className="relative shrink-0" style={{ width: bodyW, minHeight: rowH }}>
+              {/* column body */}
+              <div className="relative" style={{ height: bodyH }}>
                 {!hours && (
                   <div aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center bg-base-300/60">
                     <span className="text-[0.68rem] font-semibold uppercase tracking-[0.1em] text-base-content/40">Repos</span>
                   </div>
                 )}
-                {hours && beforeW > 0 && (
-                  <div aria-hidden className="pointer-events-none absolute inset-y-0 left-0 bg-base-300/60" style={{ width: beforeW }} />
+                {hours && beforeH > 0 && (
+                  <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 bg-base-300/60" style={{ height: beforeH }} />
                 )}
-                {hours && afterStart < bodyW && (
-                  <div aria-hidden className="pointer-events-none absolute inset-y-0 bg-base-300/60" style={{ left: afterStart, right: 0 }} />
+                {hours && afterStart < bodyH && (
+                  <div aria-hidden className="pointer-events-none absolute inset-x-0 bg-base-300/60" style={{ top: afterStart, bottom: 0 }} />
                 )}
                 {hourMarks.map((m) =>
                   m === gridStart ? null : (
-                    <div key={m} aria-hidden className="pointer-events-none absolute inset-y-0 border-l border-base-300/60" style={{ left: x(m) }} />
+                    <div key={m} aria-hidden className="pointer-events-none absolute inset-x-0 border-t border-base-300/60" style={{ top: y(m) }} />
                   ),
                 )}
                 {absent && <div aria-hidden className="pointer-events-none absolute inset-0 bg-warning/10" />}
 
                 {placed.map(({ row, lane }) => {
                   const { rv } = row;
-                  const left = x(timeToMinutes(rv.start));
-                  const w = Math.max((rv.durationMin / SLOT_MIN) * SLOT_W, SLOT_W - 6);
+                  const top = y(timeToMinutes(rv.start));
+                  const h = Math.max((rv.durationMin / SLOT_MIN) * SLOT_H, SLOT_H - 6);
                   const svc = serviceById(rv.serviceId);
                   const isSecond = rv.secondStaffId === p.id && rv.staffId !== p.id;
                   return (
@@ -281,10 +292,10 @@ export function DayTimeline({
                       type="button"
                       onClick={() => onOpenReservation(rv)}
                       style={{
-                        left,
-                        top: 8 + lane * (LANE_H - 8),
-                        width: w,
-                        height: LANE_H - 14,
+                        top,
+                        left: 8 + lane * (LANE_W - 8),
+                        width: LANE_W - 14,
+                        height: h,
                         backgroundColor: accent.bg,
                         borderColor: accent.border,
                         borderLeftColor: accent.border,
@@ -304,12 +315,16 @@ export function DayTimeline({
                 })}
               </div>
             </div>
-          );
-        })}
+          ))}
+        </div>
 
         {/* ── "maintenant" — couleur de marque, pas ambre : repère l'heure, pas un signal ── */}
         {showNow && (
-          <div aria-hidden className="pointer-events-none absolute z-20 w-px bg-primary" style={{ left: LABEL_W + x(now), top: 32, bottom: 0 }}>
+          <div
+            aria-hidden
+            className="pointer-events-none absolute z-20 h-px bg-primary"
+            style={{ top: HEADER_H + y(now), left: TIME_COL_W, width: totalContentW - TIME_COL_W }}
+          >
             <span className="absolute -left-[3px] -top-[3px] size-[7px] rounded-full bg-primary" />
           </div>
         )}

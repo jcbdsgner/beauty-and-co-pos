@@ -362,7 +362,7 @@ export default function DesignSystemPage() {
               <Accordion
                 items={[
                   { value: "a", title: "Beauty and Co", content: "Almadies · Sea Plaza" },
-                  { value: "b", title: "Horaires", content: "Lun – Sam · 9h – 19h" },
+                  { value: "b", title: "Horaires", content: "Lun – Sam · 10h – 19h" },
                 ]}
               />
             </Card>
