@@ -14,13 +14,18 @@ import {
   Star,
   CalendarClock,
   PackageCheck,
+  ChevronDown,
+  Mail,
+  Phone,
 } from "lucide-react";
 import { Dialog } from "@/components/ui/molecules/dialog";
 import { CloseButton } from "@/components/ui/atoms/icon-button";
 import { Button } from "@/components/ui/atoms/button";
 import { Badge } from "@/components/ui/atoms/badge";
+import { Avatar } from "@/components/ui/atoms/avatar";
 import { Textarea } from "@/components/ui/atoms/textarea";
 import { Field } from "@/components/ui/molecules/field";
+import { Popover } from "@/components/ui/molecules/popover";
 import { FlipChip, Legend } from "@/components/ui/board";
 import { EditRendezVousDialog } from "@/components/planning/edit-rendez-vous-dialog";
 import { useAppData } from "@/components/providers/app-data-provider";
@@ -29,13 +34,15 @@ import { abonnementsForClient, abonnementStatus, ABONNEMENT_STATUS_LABEL } from 
 import { forfaitById } from "@/lib/data/forfaits";
 import { packPurchasesForClient, packRemainingPrestations } from "@/lib/data/pack-purchases";
 import { packById } from "@/lib/data/packs";
-import { clientFullName } from "@/lib/data/clientele";
+import { clientFullName, clientInitial } from "@/lib/data/clientele";
 import { boissonById } from "@/lib/data/boissons";
 import { produitById, serviceById } from "@/lib/data/menu";
 import { appointmentEndTime, reservationComposition, reservationForRendezVous, timeToMinutes } from "@/lib/data/planning";
 import { formatFcfa } from "@/lib/utils";
 import { PREFERENCE_DOMAINS, PREFERENCE_DOMAIN_LABEL } from "@/lib/data/types";
 import type { BeneficiaryKind, Cliente, RendezVous } from "@/lib/data/types";
+
+const TIER_LABEL: Record<string, string> = { vip: "VIP", gold: "Gold", silver: "Silver" };
 
 type Props = {
   /** The rendez-vous the receptionist tapped — the panel shows its whole réservation. */
@@ -223,60 +230,116 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto">
-          {hasAvantages && (
-            <div className="border-b border-[var(--board-groove)] px-6 py-4">
-              <Legend>Avantages</Legend>
-              <div className="mt-2 flex flex-col divide-y divide-[var(--board-groove)]">
-                {giftCard && (
-                  <AvantageRow
-                    icon={<Gift className="size-4" />}
-                    title="Carte cadeau"
-                    detail={
-                      giftCard.kind === "montant"
-                        ? "Solde à valoir sur la vente"
-                        : (giftCard.serviceIds ?? [])
-                            .map((id) => serviceById(id)?.name)
-                            .filter((name): name is string => Boolean(name))
-                            .join(" + ") || "Prestations prépayées"
-                    }
-                    value={giftCard.kind === "montant" ? formatFcfa(giftCard.balance) : undefined}
-                  />
-                )}
-                {payer && payer.points > 0 && (
-                  <AvantageRow icon={<Star className="size-4" />} title="Points fidélité" detail="Cumulés · échangeables en caisse" value={`${payer.points} pts`} />
-                )}
-                {abonnements.map((ab) => {
-                  const forfait = forfaitById(ab.forfaitId);
-                  if (!forfait) return null;
-                  const status = abonnementStatus(ab);
-                  const included = forfait.prestationIds.map((id) => serviceById(id)?.name).filter((name): name is string => Boolean(name));
-                  return (
-                    <AvantageRow
-                      key={ab.id}
-                      icon={<CalendarClock className="size-4" />}
-                      title={forfait.label}
-                      detail={included.length > 0 ? `Inclut : ${included.join(", ")}` : forfait.description}
-                      badge={{ label: ABONNEMENT_STATUS_LABEL[status], tone: status === "a_regler" ? "warning" : "neutral" }}
+          {payer && (
+            <div className="border-b border-[var(--board-groove)] px-6 py-3">
+              <Popover
+                align="start"
+                className="w-80"
+                trigger={
+                  <button
+                    type="button"
+                    className="-mx-2 flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left transition hover:bg-[var(--color-gray-50)]"
+                  >
+                    <Avatar
+                      initial={clientInitial(payer)}
+                      size={36}
+                      className="bg-[var(--brand-rose-soft)] text-sm font-semibold text-[var(--brand-taupe-muted)]"
                     />
-                  );
-                })}
-                {packs.map((pp) => {
-                  const pack = packById(pp.packId);
-                  if (!pack) return null;
-                  const remainingIds = packRemainingPrestations(pp);
-                  const used = pack.prestationIds.length - remainingIds.length;
-                  const remainingNames = remainingIds.map((id) => serviceById(id)?.name).filter((name): name is string => Boolean(name));
-                  return (
-                    <AvantageRow
-                      key={pp.id}
-                      icon={<PackageCheck className="size-4" />}
-                      title={pack.label}
-                      detail={remainingNames.length > 0 ? `Restant : ${remainingNames.join(", ")}` : "Entièrement utilisé"}
-                      value={`${used}/${pack.prestationIds.length} utilisées`}
-                    />
-                  );
-                })}
-              </div>
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-center gap-1.5">
+                        <span className="truncate text-sm font-semibold text-[var(--color-gray-900)]">{clientFullName(payer)}</span>
+                        {payer.tier && (
+                          <FlipChip
+                            value={TIER_LABEL[payer.tier]}
+                            tone={payer.tier === "vip" ? "act" : "now"}
+                            className="min-w-0 px-2 py-0.5"
+                          />
+                        )}
+                      </span>
+                      <span className="block text-xs text-[var(--color-gray-500)]">
+                        {payer.totalVisits} visite{payer.totalVisits > 1 ? "s" : ""} · {payer.phone}
+                      </span>
+                    </span>
+                    <ChevronDown className="size-4 shrink-0 text-[var(--color-gray-400)]" />
+                  </button>
+                }
+              >
+                <div className="flex flex-col gap-1 border-b border-[var(--board-groove)] pb-3">
+                  <p className="flex items-center gap-2 text-xs text-[var(--color-gray-600)]">
+                    <Phone className="size-3.5 shrink-0" /> {payer.phone}
+                  </p>
+                  {payer.email && (
+                    <p className="flex items-center gap-2 text-xs text-[var(--color-gray-600)]">
+                      <Mail className="size-3.5 shrink-0" /> {payer.email}
+                    </p>
+                  )}
+                  <Link
+                    href={`/clientele/${payer.id}`}
+                    className="mt-1 text-xs font-semibold text-[var(--brand-taupe-muted)] underline decoration-1 underline-offset-2"
+                  >
+                    Voir la fiche complète
+                  </Link>
+                </div>
+
+                {hasAvantages ? (
+                  <>
+                    <Legend className="mt-3">Avantages</Legend>
+                    <div className="mt-1 flex flex-col divide-y divide-[var(--board-groove)]">
+                      {giftCard && (
+                        <AvantageRow
+                          icon={<Gift className="size-4" />}
+                          title="Carte cadeau"
+                          detail={
+                            giftCard.kind === "montant"
+                              ? "Solde à valoir sur la vente"
+                              : (giftCard.serviceIds ?? [])
+                                  .map((id) => serviceById(id)?.name)
+                                  .filter((name): name is string => Boolean(name))
+                                  .join(" + ") || "Prestations prépayées"
+                          }
+                          value={giftCard.kind === "montant" ? formatFcfa(giftCard.balance) : undefined}
+                        />
+                      )}
+                      {payer.points > 0 && (
+                        <AvantageRow icon={<Star className="size-4" />} title="Points fidélité" detail="Cumulés · échangeables en caisse" value={`${payer.points} pts`} />
+                      )}
+                      {abonnements.map((ab) => {
+                        const forfait = forfaitById(ab.forfaitId);
+                        if (!forfait) return null;
+                        const status = abonnementStatus(ab);
+                        const included = forfait.prestationIds.map((id) => serviceById(id)?.name).filter((name): name is string => Boolean(name));
+                        return (
+                          <AvantageRow
+                            key={ab.id}
+                            icon={<CalendarClock className="size-4" />}
+                            title={forfait.label}
+                            detail={included.length > 0 ? `Inclut : ${included.join(", ")}` : forfait.description}
+                            badge={{ label: ABONNEMENT_STATUS_LABEL[status], tone: status === "a_regler" ? "warning" : "neutral" }}
+                          />
+                        );
+                      })}
+                      {packs.map((pp) => {
+                        const pack = packById(pp.packId);
+                        if (!pack) return null;
+                        const remainingIds = packRemainingPrestations(pp);
+                        const used = pack.prestationIds.length - remainingIds.length;
+                        const remainingNames = remainingIds.map((id) => serviceById(id)?.name).filter((name): name is string => Boolean(name));
+                        return (
+                          <AvantageRow
+                            key={pp.id}
+                            icon={<PackageCheck className="size-4" />}
+                            title={pack.label}
+                            detail={remainingNames.length > 0 ? `Restant : ${remainingNames.join(", ")}` : "Entièrement utilisé"}
+                            value={`${used}/${pack.prestationIds.length} utilisées`}
+                          />
+                        );
+                      })}
+                    </div>
+                  </>
+                ) : (
+                  <p className="mt-3 text-xs text-[var(--color-gray-400)]">Aucun avantage actif.</p>
+                )}
+              </Popover>
             </div>
           )}
 
