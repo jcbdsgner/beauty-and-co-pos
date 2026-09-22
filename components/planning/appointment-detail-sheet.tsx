@@ -19,13 +19,12 @@ import {
   Phone,
 } from "lucide-react";
 import { Dialog } from "@/components/ui/molecules/dialog";
-import { CloseButton } from "@/components/ui/atoms/icon-button";
+import { CloseButton, IconButton } from "@/components/ui/atoms/icon-button";
 import { Button } from "@/components/ui/atoms/button";
 import { Badge } from "@/components/ui/atoms/badge";
 import { Avatar } from "@/components/ui/atoms/avatar";
 import { Textarea } from "@/components/ui/atoms/textarea";
 import { Field } from "@/components/ui/molecules/field";
-import { Popover } from "@/components/ui/molecules/popover";
 import { FlipChip, Legend } from "@/components/ui/board";
 import { EditRendezVousDialog } from "@/components/planning/edit-rendez-vous-dialog";
 import { useAppData } from "@/components/providers/app-data-provider";
@@ -154,6 +153,14 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [editing, setEditing] = useState(false);
+  const [payerExpanded, setPayerExpanded] = useState(false);
+  // Collapse the disclosure again when the sheet swaps to a different appointment (the
+  // instance stays mounted across selections — see React's "adjusting state on prop change").
+  const [expandedFor, setExpandedFor] = useState(appointment?.id);
+  if (appointment?.id !== expandedFor) {
+    setExpandedFor(appointment?.id);
+    setPayerExpanded(false);
+  }
 
   if (!appointment) return null;
 
@@ -194,6 +201,7 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
     ? packPurchasesForClient(payer.id).filter((pp) => packRemainingPrestations(pp).length > 0)
     : [];
   const hasAvantages = Boolean(giftCard) || (payer && payer.points > 0) || abonnements.length > 0 || packs.length > 0;
+  const payerPrefLines = clientPreferenceLines(payer ?? null);
 
   return (
     <>
@@ -231,115 +239,137 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
 
         <div className="min-h-0 flex-1 overflow-y-auto">
           {payer && (
-            <div className="border-b border-[var(--board-groove)] px-6 py-3">
-              <Popover
-                align="start"
-                className="w-80"
-                trigger={
-                  <button
-                    type="button"
-                    className="-mx-2 flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition hover:bg-[var(--color-gray-50)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-ring)]"
-                  >
-                    <Avatar
-                      initial={clientInitial(payer)}
-                      size={40}
-                      className="bg-[var(--brand-rose-soft)] text-sm font-semibold text-[var(--brand-taupe-muted)]"
-                    />
-                    <span className="min-w-0 flex-1">
-                      <span className="flex items-center gap-1.5">
-                        <span className="truncate text-sm font-semibold text-[var(--color-gray-900)]">{clientFullName(payer)}</span>
-                        {payer.tier && (
-                          <FlipChip
-                            value={TIER_LABEL[payer.tier]}
-                            tone={payer.tier === "vip" ? "act" : "now"}
-                            className="min-w-0 px-2 py-0.5"
-                          />
-                        )}
-                      </span>
-                      <span className="block text-xs text-[var(--color-gray-500)]">
-                        {payer.totalVisits} visite{payer.totalVisits > 1 ? "s" : ""} · {payer.phone}
-                      </span>
+            <div className="border-b border-[var(--board-groove)] px-6 py-4">
+              <div className="flex items-start gap-3">
+                <Avatar
+                  initial={clientInitial(payer)}
+                  size={48}
+                  className="bg-[var(--brand-rose-soft)] text-base font-semibold text-[var(--brand-taupe-muted)]"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <Link
+                      href={`/clientele/${payer.id}`}
+                      className="truncate text-sm font-semibold text-[var(--color-gray-900)] underline decoration-[var(--color-gray-300)] decoration-1 underline-offset-2 transition hover:decoration-[var(--brand-taupe-muted)]"
+                    >
+                      {clientFullName(payer)}
+                    </Link>
+                    {payer.tier && (
+                      <FlipChip value={TIER_LABEL[payer.tier]} tone={payer.tier === "vip" ? "act" : "now"} className="min-w-0 px-2 py-0.5" />
+                    )}
+                  </div>
+                  <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-[var(--color-gray-500)]">
+                    <span className="inline-flex items-center gap-1">
+                      <Phone className="size-3" /> {payer.phone}
                     </span>
-                    <ChevronDown className="size-4 shrink-0 text-[var(--color-gray-400)]" />
-                  </button>
-                }
-              >
-                <div className="flex flex-col gap-1 border-b border-[var(--board-groove)] pb-3">
-                  <p className="flex items-center gap-2 text-xs text-[var(--color-gray-600)]">
-                    <Phone className="size-3.5 shrink-0" /> {payer.phone}
+                    {payer.email && (
+                      <span className="inline-flex items-center gap-1">
+                        <Mail className="size-3" /> {payer.email}
+                      </span>
+                    )}
                   </p>
-                  {payer.email && (
-                    <p className="flex items-center gap-2 text-xs text-[var(--color-gray-600)]">
-                      <Mail className="size-3.5 shrink-0" /> {payer.email}
-                    </p>
-                  )}
+                  <p className="mt-0.5 text-xs text-[var(--color-gray-400)]">
+                    {payer.totalVisits} visite{payer.totalVisits > 1 ? "s" : ""}
+                    {payer.lastVisit ? ` · dernière visite ${payer.lastVisit}` : ""}
+                  </p>
+                </div>
+                <IconButton
+                  aria-label={payerExpanded ? "Masquer les détails de la cliente" : "Voir les détails de la cliente"}
+                  onClick={() => setPayerExpanded((v) => !v)}
+                  className="size-12 shrink-0 rounded-full text-[var(--color-gray-400)] transition hover:bg-[var(--color-gray-50)] hover:text-[var(--color-gray-600)] active:bg-[var(--color-gray-100)]"
+                >
+                  <ChevronDown className={`size-5 transition-transform ${payerExpanded ? "rotate-180" : ""}`} />
+                </IconButton>
+              </div>
+
+              {payerExpanded && (
+                <div className="mt-3 flex flex-col gap-3">
                   <Link
                     href={`/clientele/${payer.id}`}
-                    className="mt-1 text-xs font-semibold text-[var(--brand-taupe-muted)] underline decoration-1 underline-offset-2"
+                    className="block w-fit text-xs font-semibold text-[var(--brand-taupe-muted)] underline decoration-1 underline-offset-2"
                   >
                     Voir la fiche complète
                   </Link>
-                </div>
 
-                {hasAvantages ? (
-                  <>
-                    <Legend className="mt-3">Avantages</Legend>
-                    <div className="mt-1 flex flex-col divide-y divide-[var(--board-groove)]">
-                      {giftCard && (
-                        <AvantageRow
-                          icon={<Gift className="size-4" />}
-                          title="Carte cadeau"
-                          detail={
-                            giftCard.kind === "montant"
-                              ? "Solde à valoir sur la vente"
-                              : (giftCard.serviceIds ?? [])
-                                  .map((id) => serviceById(id)?.name)
-                                  .filter((name): name is string => Boolean(name))
-                                  .join(" + ") || "Prestations prépayées"
-                          }
-                          value={giftCard.kind === "montant" ? formatFcfa(giftCard.balance) : undefined}
-                        />
-                      )}
-                      {payer.points > 0 && (
-                        <AvantageRow icon={<Star className="size-4" />} title="Points fidélité" detail="Cumulés · échangeables en caisse" value={`${payer.points} pts`} />
-                      )}
-                      {abonnements.map((ab) => {
-                        const forfait = forfaitById(ab.forfaitId);
-                        if (!forfait) return null;
-                        const status = abonnementStatus(ab);
-                        const included = forfait.prestationIds.map((id) => serviceById(id)?.name).filter((name): name is string => Boolean(name));
-                        return (
-                          <AvantageRow
-                            key={ab.id}
-                            icon={<CalendarClock className="size-4" />}
-                            title={forfait.label}
-                            detail={included.length > 0 ? `Inclut : ${included.join(", ")}` : forfait.description}
-                            badge={{ label: ABONNEMENT_STATUS_LABEL[status], tone: status === "a_regler" ? "warning" : "neutral" }}
-                          />
-                        );
-                      })}
-                      {packs.map((pp) => {
-                        const pack = packById(pp.packId);
-                        if (!pack) return null;
-                        const remainingIds = packRemainingPrestations(pp);
-                        const used = pack.prestationIds.length - remainingIds.length;
-                        const remainingNames = remainingIds.map((id) => serviceById(id)?.name).filter((name): name is string => Boolean(name));
-                        return (
-                          <AvantageRow
-                            key={pp.id}
-                            icon={<PackageCheck className="size-4" />}
-                            title={pack.label}
-                            detail={remainingNames.length > 0 ? `Restant : ${remainingNames.join(", ")}` : "Entièrement utilisé"}
-                            value={`${used}/${pack.prestationIds.length} utilisées`}
-                          />
-                        );
-                      })}
+                  {payerPrefLines.length > 0 && (
+                    <div className="rounded-lg bg-[var(--color-gray-50)] px-3 py-2">
+                      <Legend className="text-[var(--color-gray-500)]">Préférences</Legend>
+                      <dl className="mt-1 flex flex-col gap-1">
+                        {payerPrefLines.map((pref) => (
+                          <div key={pref.label} className="flex gap-1.5 text-xs leading-snug">
+                            <dt className="shrink-0 font-semibold text-[var(--color-gray-700)]">{pref.label} ·</dt>
+                            <dd className="text-[var(--color-gray-600)]">{pref.note}</dd>
+                          </div>
+                        ))}
+                      </dl>
                     </div>
-                  </>
-                ) : (
-                  <p className="mt-3 text-xs text-[var(--color-gray-400)]">Aucun avantage actif.</p>
-                )}
-              </Popover>
+                  )}
+
+                  {payer.internalNotes && (
+                    <div className="rounded-lg bg-[var(--color-gray-50)] px-3 py-2">
+                      <Legend className="text-[var(--color-gray-500)]">Notes</Legend>
+                      <p className="mt-1 text-xs leading-snug text-[var(--color-gray-600)]">{payer.internalNotes}</p>
+                    </div>
+                  )}
+
+                  {hasAvantages && (
+                    <div>
+                      <Legend>Avantages</Legend>
+                      <div className="mt-1 flex flex-col divide-y divide-[var(--board-groove)]">
+                        {giftCard && (
+                          <AvantageRow
+                            icon={<Gift className="size-4" />}
+                            title="Carte cadeau"
+                            detail={
+                              giftCard.kind === "montant"
+                                ? "Solde à valoir sur la vente"
+                                : (giftCard.serviceIds ?? [])
+                                    .map((id) => serviceById(id)?.name)
+                                    .filter((name): name is string => Boolean(name))
+                                    .join(" + ") || "Prestations prépayées"
+                            }
+                            value={giftCard.kind === "montant" ? formatFcfa(giftCard.balance) : undefined}
+                          />
+                        )}
+                        {payer.points > 0 && (
+                          <AvantageRow icon={<Star className="size-4" />} title="Points fidélité" detail="Cumulés · échangeables en caisse" value={`${payer.points} pts`} />
+                        )}
+                        {abonnements.map((ab) => {
+                          const forfait = forfaitById(ab.forfaitId);
+                          if (!forfait) return null;
+                          const status = abonnementStatus(ab);
+                          const included = forfait.prestationIds.map((id) => serviceById(id)?.name).filter((name): name is string => Boolean(name));
+                          return (
+                            <AvantageRow
+                              key={ab.id}
+                              icon={<CalendarClock className="size-4" />}
+                              title={forfait.label}
+                              detail={included.length > 0 ? `Inclut : ${included.join(", ")}` : forfait.description}
+                              badge={{ label: ABONNEMENT_STATUS_LABEL[status], tone: status === "a_regler" ? "warning" : "neutral" }}
+                            />
+                          );
+                        })}
+                        {packs.map((pp) => {
+                          const pack = packById(pp.packId);
+                          if (!pack) return null;
+                          const remainingIds = packRemainingPrestations(pp);
+                          const used = pack.prestationIds.length - remainingIds.length;
+                          const remainingNames = remainingIds.map((id) => serviceById(id)?.name).filter((name): name is string => Boolean(name));
+                          return (
+                            <AvantageRow
+                              key={pp.id}
+                              icon={<PackageCheck className="size-4" />}
+                              title={pack.label}
+                              detail={remainingNames.length > 0 ? `Restant : ${remainingNames.join(", ")}` : "Entièrement utilisé"}
+                              value={`${used}/${pack.prestationIds.length} utilisées`}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -374,6 +404,9 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
                   </div>
 
                   {(() => {
+                    // Payer-as-her-own-beneficiary already shows this in the payer block above
+                    // (with the rest of her identity) — no need to repeat it here.
+                    if (group.client?.id === payer?.id) return null;
                     const prefLines = clientPreferenceLines(group.client);
                     if (prefLines.length === 0) return null;
                     return (
