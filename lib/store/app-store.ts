@@ -377,6 +377,9 @@ export type AppState = {
   /** Annule toute la réservation d'un coup — chaque rendez-vous encore actif reçoit le même motif
    *  (ADR 0023). Distinct de `cancelAppointment`, qui ne touche qu'un rendez-vous précis. */
   cancelReservation: (reservationId: string, reason?: string) => void;
+  /** Lève `Reservation.seen` — appelé à l'ouverture de la fiche réservation (ADR 0030). No-op sur
+   *  une réservation déjà vue ou `source: "comptoir"` (qui ne porte jamais `seen: false`). */
+  markReservationSeen: (reservationId: string) => void;
   rescheduleRendezVous: (rvId: string, start: string) => { ok: boolean; message: string };
   updateRendezVous: (
     rvId: string,
@@ -558,6 +561,11 @@ export const useAppStore = create<AppState>((set, get) => ({
             }
           : r,
       ),
+    })),
+
+  markReservationSeen: (reservationId) =>
+    set((s) => ({
+      reservations: s.reservations.map((r) => (r.id === reservationId && r.seen === false ? { ...r, seen: true } : r)),
     })),
 
   rescheduleRendezVous: (rvId, start) => {

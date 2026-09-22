@@ -181,6 +181,10 @@ export type Reservation = {
    *  Jamais de prestation ici (elle naît toujours d'un Rendez-vous). */
   extras?: ReservationExtra[];
   createdAt?: string;
+  /** Whether the réceptionniste has noticed this réservation — only ever posed (`false`) on a
+   *  `source: "en_ligne"` réservation; absent/`true` ⇒ vue (ADR 0030). Se lève à l'ouverture de la
+   *  fiche réservation. Never set on `source: "comptoir"` — she's present for its whole creation. */
+  seen?: boolean;
 };
 
 /** How a bénéficiaire reads on the Accueil's composition line ("1 femme + 1 enfant"). Derived from

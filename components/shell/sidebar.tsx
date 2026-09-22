@@ -11,6 +11,7 @@ import { useSession } from "@/lib/session";
 import { HomeIcon, CalendarIcon, PeopleIcon, GearIcon, LogoutIcon } from "@/components/ui/atoms/icons";
 import { MessageCircle, Sparkles } from "lucide-react";
 import { useAppData } from "@/components/providers/app-data-provider";
+import { reservationDate, todayISO } from "@/lib/data/planning";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -28,8 +29,12 @@ export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { currentUser, photoUrl, logout } = useSession();
-  const { conversations } = useAppData();
+  const { conversations, reservations } = useAppData();
   const unreadCount = conversations.filter((c) => c.unread).length;
+  const todayIso = todayISO();
+  const hasUnseenReservation = reservations.some(
+    (r) => r.source === "en_ligne" && r.seen === false && reservationDate(r) === todayIso,
+  );
   const [confirmLogout, setConfirmLogout] = useState(false);
 
   return (
@@ -42,7 +47,15 @@ export function Sidebar() {
         {NAV.map((item) => {
           const active = item.match(pathname);
           const Icon = item.icon;
-          const badge = item.href === "/messages" && unreadCount > 0;
+          // Messages porte le signal ambre (« Non lu » — needs action). Accueil porte le même point
+          // en taupe (« Non vue », ADR 0030) : une réservation en ligne vient d'arriver, à noter
+          // mais pas à encaisser — l'ambre reste réservé à « à encaisser » sur cette même page.
+          const badge =
+            item.href === "/messages" && unreadCount > 0
+              ? "warning"
+              : item.href === "/" && hasUnseenReservation
+                ? "primary"
+                : null;
           return (
             <Link
               key={item.href}
@@ -54,7 +67,20 @@ export function Sidebar() {
             >
               <span className="relative">
                 <Icon className="size-6" />
-                {badge && <span className="absolute -top-1 -right-1.5 size-2 rounded-full bg-warning" />}
+                {badge && (
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "absolute -top-1 -right-1.5 size-2 rounded-full",
+                      badge === "warning"
+                        ? "bg-warning"
+                        : // Anneau clair : sans lui, le point taupe de l'Accueil disparaîtrait
+                          // sur le fond déjà taupe de l'item actif (contrairement à l'ambre de
+                          // Messages, qui contraste avec le taupe sans y avoir besoin).
+                          "bg-primary ring-2 ring-base-100",
+                    )}
+                  />
+                )}
               </span>
               <span className="text-[10.5px] leading-tight font-semibold tracking-wide uppercase">{item.label}</span>
             </Link>

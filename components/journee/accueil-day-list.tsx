@@ -7,7 +7,7 @@ import { Legend } from "@/components/ui/board";
 import { boissonById } from "@/lib/data/boissons";
 import { clientFullName, clientInitial } from "@/lib/data/clientele";
 import { produitById, serviceById } from "@/lib/data/menu";
-import { reservationComposition, timeToMinutes, type ReservationDayRow } from "@/lib/data/planning";
+import { reservationComposition, reservationDate, timeToMinutes, todayISO, type ReservationDayRow } from "@/lib/data/planning";
 import { cn, formatFcfa } from "@/lib/utils";
 import type { Cliente, Praticienne, RendezVous } from "@/lib/data/types";
 
@@ -42,6 +42,17 @@ function slotLabel(startMin: number): string {
   return `${fmt(slotStart)} – ${fmt(slotStart + SLOT_MIN)}`;
 }
 
+/** "Aujourd'hui" or "lundi 22 septembre" — only shown once the list spans more than one calendar
+ *  day (recherche + période, `AccueilPage`) ; the single-day case (le défaut) stays exactly as
+ *  before, no date header. */
+function dateGroupLabel(iso: string, todayIso: string): string {
+  if (iso === todayIso) return "Aujourd'hui";
+  const label = new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long" }).format(
+    new Date(`${iso}T00:00:00`),
+  );
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
 /**
  * « Rendez-vous » sur l'Accueil (Figma 242:1735) — une grille fixe de 3 colonnes, une carte par
  * réservation : payeuse · composition (« 1 femme + 1 enfant ») en en-tête, heure à droite, jusqu'à
@@ -65,18 +76,33 @@ export function AccueilDayList({ rows, clients, praticiennes, onOpenReservation,
     );
   }, [rows, clients]);
 
-  // Chronological already (sorted above) — a single pass keeps the Map's insertion order
-  // increasing, so slots come out in time order for free.
-  const slots = useMemo(() => {
-    const groups = new Map<number, ReservationDayRow[]>();
+  // Grouped by day first (only surfaced as a header once a search/période spans more than one
+  // day, docs/adr — recherche + période de l'Accueil), then by 2h slot within each day.
+  // Chronological already (sorted above) — a single pass keeps each Map's insertion order
+  // increasing, so both levels come out in time order for free.
+  const dateGroups = useMemo(() => {
+    const byDate = new Map<string, ReservationDayRow[]>();
     for (const row of sorted) {
-      const slotStart = Math.floor(timeToMinutes(row.start) / SLOT_MIN) * SLOT_MIN;
-      const bucket = groups.get(slotStart);
+      const d = reservationDate(row.reservation);
+      const bucket = byDate.get(d);
       if (bucket) bucket.push(row);
-      else groups.set(slotStart, [row]);
+      else byDate.set(d, [row]);
     }
-    return [...groups.entries()];
+    return [...byDate.entries()]
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([date, dateRows]) => {
+        const slots = new Map<number, ReservationDayRow[]>();
+        for (const row of dateRows) {
+          const slotStart = Math.floor(timeToMinutes(row.start) / SLOT_MIN) * SLOT_MIN;
+          const bucket = slots.get(slotStart);
+          if (bucket) bucket.push(row);
+          else slots.set(slotStart, [row]);
+        }
+        return { date, slots: [...slots.entries()] };
+      });
   }, [sorted]);
+  const showDateHeaders = dateGroups.length > 1;
+  const todayIso = todayISO();
 
   const staffName = (id?: string) => (id ? praticiennes.find((p) => p.id === id)?.name : undefined);
   const staffLine = (rv: RendezVous) => {
@@ -86,8 +112,15 @@ export function AccueilDayList({ rows, clients, praticiennes, onOpenReservation,
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      {slots.map(([slotStart, slotRows]) => (
+    <div className="flex flex-col gap-8">
+      {dateGroups.map(({ date, slots }) => (
+        <div key={date} className="flex flex-col gap-6">
+          {showDateHeaders && (
+            <p className="pl-1 font-[family-name:var(--font-heading)] text-base font-semibold text-base-content">
+              {dateGroupLabel(date, todayIso)}
+            </p>
+          )}
+          {slots.map(([slotStart, slotRows]) => (
         <div key={slotStart} className="flex flex-col gap-2">
           <Legend className="pl-1">{slotLabel(slotStart)}</Legend>
           <div className="grid grid-cols-3 gap-4">
@@ -97,6 +130,9 @@ export function AccueilDayList({ rows, clients, praticiennes, onOpenReservation,
               const active = rendezVous.filter((rv) => rv.status !== "annule");
               const hasSale = Boolean(reservation.saleId);
               const composition = reservationComposition(reservation);
+              // Vient d'arriver de la plateforme externe, pas encore remarquée (ADR 0030) — en
+              // taupe, jamais ambre : l'ambre de cette page est déjà pris par « à encaisser ».
+              const unseen = reservation.source === "en_ligne" && reservation.seen === false;
 
               const items: ItemRow[] = active.map((rv) => {
                 const service = serviceById(rv.serviceId);
@@ -149,12 +185,21 @@ export function AccueilDayList({ rows, clients, praticiennes, onOpenReservation,
                     className="flex min-w-0 items-start justify-between gap-3 text-left transition active:opacity-70"
                   >
                     <span className="flex min-w-0 items-center gap-2.5">
-                      <Avatar
-                        initial={payer ? clientInitial(payer) : "?"}
-                        size={32}
-                        className="mt-0.5 bg-accent text-xs font-bold text-base-content"
-                      />
+                      <span className="relative mt-0.5 shrink-0">
+                        <Avatar
+                          initial={payer ? clientInitial(payer) : "?"}
+                          size={32}
+                          className="bg-accent text-xs font-bold text-base-content"
+                        />
+                        {unseen && (
+                          <span
+                            aria-hidden
+                            className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-primary ring-2 ring-base-100"
+                          />
+                        )}
+                      </span>
                       <span className="min-w-0">
+                        {unseen && <span className="sr-only">Réservation non vue — </span>}
                         <span className="block truncate font-[family-name:var(--font-heading)] text-xl font-medium text-base-content">
                           {payer ? clientFullName(payer) : "Cliente"}
                         </span>
@@ -204,6 +249,8 @@ export function AccueilDayList({ rows, clients, praticiennes, onOpenReservation,
               );
             })}
           </div>
+        </div>
+          ))}
         </div>
       ))}
     </div>
