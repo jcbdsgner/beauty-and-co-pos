@@ -142,8 +142,6 @@ export const RESERVATIONS: Reservation[] = [
     payerClientId: "cl-1",
     date: seedDay(0),
     source: "en_ligne",
-    // Vient d'arriver de la plateforme externe, pas encore remarquée (ADR 0030).
-    seen: false,
     rendezVous: [
       {
         id: "rdv-5a",
@@ -161,8 +159,6 @@ export const RESERVATIONS: Reservation[] = [
     payerClientId: "cl-3",
     date: seedDay(0),
     source: "en_ligne",
-    // Vient d'arriver de la plateforme externe, pas encore remarquée (ADR 0030).
-    seen: false,
     rendezVous: [
       {
         id: "rdv-6a",
