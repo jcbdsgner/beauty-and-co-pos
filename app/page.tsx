@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import Link from "next/link";
-import { CalendarRange, ListChecks } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { CalendarRange, ChevronRight, ListChecks } from "lucide-react";
 import { Avatar } from "@/components/ui/atoms/avatar";
 import { Button } from "@/components/ui/atoms/button";
 import { SegmentedToggle } from "@/components/ui/molecules/segmented-toggle";
@@ -74,9 +75,19 @@ function monthRangeISO(d: Date): [string, string] {
  * compteurs : la journée est là, la file a son lien.
  */
 export default function AccueilPage() {
+  return (
+    <Suspense fallback={null}>
+      <AccueilPageInner />
+    </Suspense>
+  );
+}
+
+function AccueilPageInner() {
   const { reservations, praticiennes, clients, markReservationSeen } = useAppData();
   const { requestEncaissement, encaissementDialog } = useEncaissement();
   const { currentUser } = useSession();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [detail, setDetail] = useState<RendezVous | null>(null);
   const openReservation = (rv: RendezVous) => {
@@ -89,7 +100,17 @@ export default function AccueilPage() {
   // Recherche (cliente ou praticienne) + période — remplace le filtre figé sur « aujourd'hui »
   // pour retrouver un rendez-vous au-delà du jour courant. Le Calendrier (rail journalier) ne se
   // prête qu'à un seul jour : il reste réservé à la période « Aujourd'hui », voir plus bas.
-  const [query, setQuery] = useState("");
+  // `query` vit dans l'URL (`?q=`), pas un simple useState : un clic sur un résultat "Clientes"
+  // quitte l'Accueil vers la fiche, et sans ça la recherche se perdait au retour (passe impeccable
+  // du 22/09). `ClientMatchCard` relaie `q` à la fiche pour reconstruire le lien "Retour à l'Accueil".
+  const query = searchParams.get("q") ?? "";
+  function setQuery(next: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (next) params.set("q", next);
+    else params.delete("q");
+    const qs = params.toString();
+    router.replace(qs ? `/?${qs}` : "/", { scroll: false });
+  }
   const [period, setPeriod] = useState<Period>("jour");
   const [salonFilter, setSalonFilter] = useState<string>(TOUS_LES_SALONS);
   const todayIso = todayISO();
@@ -214,7 +235,7 @@ export default function AccueilPage() {
             <Legend>Clientes</Legend>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {clientMatches.map((c) => (
-                <ClientMatchCard key={c.id} client={c} />
+                <ClientMatchCard key={c.id} client={c} query={query} />
               ))}
             </div>
           </div>
@@ -266,18 +287,26 @@ export default function AccueilPage() {
 }
 
 /** Résultat "Clientes" de la recherche — mène droit à la fiche, même sans rendez-vous dans la
- *  période affichée. Même carte que le Répertoire (`ClientCard`), en plus compact. */
-function ClientMatchCard({ client: c }: { client: Cliente }) {
+ *  période affichée. Même carte que le Répertoire (`ClientCard`), en plus compact. `from=accueil`
+ *  + `q` (la recherche en cours) permettent à la fiche de proposer "Retour à l'Accueil" et de
+ *  restituer la même recherche au retour, plutôt qu'une redirection sèche vers Clientèle (passe
+ *  impeccable du 22/09). Le chevron est le signal permanent (pas seulement au survol — comptoir
+ *  tactile, pas de hover) que la carte quitte l'Accueil, contrairement aux cartes de rendez-vous
+ *  juste en dessous qui ouvrent un panneau sur place. */
+function ClientMatchCard({ client: c, query }: { client: Cliente; query: string }) {
+  const params = new URLSearchParams({ from: "accueil" });
+  if (query) params.set("q", query);
   return (
     <Link
-      href={`/clientele/${c.id}`}
+      href={`/clientele/${c.id}?${params.toString()}`}
       className="flex items-center gap-3 rounded-lg border border-base-300 bg-base-100 p-3 transition hover:-translate-y-0.5 hover:border-secondary hover:shadow-[0px_7px_16px_0px_rgba(0,0,0,0.06)]"
     >
       <Avatar initial={clientInitial(c)} size={36} className="shrink-0 bg-accent text-xs font-semibold text-secondary" />
-      <span className="min-w-0">
+      <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-semibold text-base-content">{clientFullName(c)}</span>
         <span className="block truncate text-xs text-base-content/55">{c.phone}</span>
       </span>
+      <ChevronRight aria-hidden className="size-4 shrink-0 text-base-content/35" />
     </Link>
   );
 }

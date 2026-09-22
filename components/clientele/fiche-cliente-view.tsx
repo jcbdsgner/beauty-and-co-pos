@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Printer,
   MessageCircle,
@@ -46,7 +46,22 @@ const NOTE_TARGETS: { value: string; label: string }[] = [
 ];
 
 export function FicheClienteView({ clientId }: { clientId: string }) {
+  return (
+    <Suspense fallback={null}>
+      <FicheClienteViewInner clientId={clientId} />
+    </Suspense>
+  );
+}
+
+function FicheClienteViewInner({ clientId }: { clientId: string }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // Arrivée depuis la recherche rapide de l'Accueil (`ClientMatchCard`, passe impeccable du 22/09) :
+  // "Retour" pointe vers l'Accueil avec la même recherche plutôt que Clientèle par défaut.
+  const fromAccueil = searchParams.get("from") === "accueil";
+  const accueilQuery = searchParams.get("q") ?? "";
+  const backHref = fromAccueil ? (accueilQuery ? `/?q=${encodeURIComponent(accueilQuery)}` : "/") : "/clientele";
+  const backLabel = fromAccueil ? "Accueil" : "Clientèle";
   const { clients, praticiennes, conversations, openNewTab, updateClient, noteClientViewed } = useAppData();
   const client = clients.find((c) => c.id === clientId);
   const clientExists = Boolean(client);
@@ -121,11 +136,11 @@ export function FicheClienteView({ clientId }: { clientId: string }) {
       {/* Bandeau d'identité collant — un titre nu sur le mur crème (ADR 0007), pas une plaque ardoise. */}
       <div className="sticky top-0 z-30 isolate -mx-8 -mt-8 mb-6 border-b border-base-300 bg-white px-8 py-4 shadow-[0_8px_10px_-6px_rgba(0,0,0,0.07)]">
         <Link
-          href="/clientele"
+          href={backHref}
           className="mb-2 inline-flex h-8 items-center gap-1.5 rounded-full border border-base-300 bg-accent px-3 text-xs font-medium text-secondary transition hover:bg-base-300/60"
         >
           <ChevronLeft aria-hidden className="size-3.5" />
-          Clientèle
+          {backLabel}
         </Link>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3">
