@@ -114,6 +114,13 @@ function CreateReservationBody({ onClose, onCreated }: { onClose: () => void; on
         if (l.id !== id) return l;
         const next = { ...l, ...patch };
         if (patch.serviceId && !serviceById(patch.serviceId)?.twoPractitionersEligible) next.secondStaffId = undefined;
+        // Une prestation « à 2 » implique toujours deux praticiennes du même salon (ADR 0028) —
+        // changer la 1ʳᵉ praticienne invalide une 2ᵉ déjà choisie dans l'autre salon.
+        if (patch.staffId && next.secondStaffId) {
+          const firstSalon = schedulable.find((p) => p.id === patch.staffId)?.salonId;
+          const secondSalon = schedulable.find((p) => p.id === next.secondStaffId)?.salonId;
+          if (firstSalon !== secondSalon) next.secondStaffId = undefined;
+        }
         return next;
       }),
     );
@@ -268,7 +275,11 @@ function RvDraftLine({
   const durationMin = service?.durationMinutes ?? 30;
   const activeStaff = staff.find((p) => p.id === line.staffId);
   const staffOptions = staff.map((p) => ({ value: p.id, label: p.name }));
-  const secondOptions = [{ value: NONE, label: "Aucune" }, ...staffOptions.filter((o) => o.value !== line.staffId)];
+  // Une prestation « à 2 » implique toujours deux praticiennes du même salon (ADR 0028).
+  const secondOptions = [
+    { value: NONE, label: "Aucune" },
+    ...staff.filter((p) => p.id !== line.staffId && p.salonId === activeStaff?.salonId).map((p) => ({ value: p.id, label: p.name })),
+  ];
   const end = start ? minutesToTime(timeToMinutes(start) + durationMin) : null;
 
   return (

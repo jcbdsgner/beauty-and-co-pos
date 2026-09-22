@@ -200,7 +200,12 @@ function RvEditor({
   const [error, setError] = useState<string | null>(null);
 
   const staffOptions = staff.map((p) => ({ value: p.id, label: p.name }));
-  const secondOptions = [{ value: NONE, label: "Aucune" }, ...staffOptions.filter((o) => o.value !== staffId)];
+  const firstSalonId = staff.find((p) => p.id === staffId)?.salonId;
+  // Une prestation « à 2 » implique toujours deux praticiennes du même salon (ADR 0028).
+  const secondOptions = [
+    { value: NONE, label: "Aucune" },
+    ...staff.filter((p) => p.id !== staffId && p.salonId === firstSalonId).map((p) => ({ value: p.id, label: p.name })),
+  ];
 
   const dirty =
     serviceId !== rv.serviceId ||
@@ -241,7 +246,17 @@ function RvEditor({
           <TextInput type="time" size="compact" value={start} onChange={(e) => setStart(e.target.value)} />
         </Field>
         <Field label="Praticienne">
-          <Select value={staffId} onChange={setStaffId} options={staffOptions} size="compact" />
+          <Select
+            value={staffId}
+            onChange={(id) => {
+              setStaffId(id);
+              const newSalon = staff.find((p) => p.id === id)?.salonId;
+              const secondSalon = staff.find((p) => p.id === secondStaffId)?.salonId;
+              if (secondStaffId !== NONE && secondSalon !== newSalon) setSecondStaffId(NONE);
+            }}
+            options={staffOptions}
+            size="compact"
+          />
         </Field>
         <Field label="2ᵉ praticienne (à 2)">
           <Select value={secondStaffId} onChange={setSecondStaffId} options={secondOptions} size="compact" />
