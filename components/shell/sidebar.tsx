@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Logo } from "@/components/ui/atoms/logo";
 import { Avatar } from "@/components/ui/atoms/avatar";
 import { DropdownMenu } from "@/components/ui/molecules/dropdown-menu";
-import { ConfirmDialog } from "@/components/ui/molecules/confirm-dialog";
+import { CashDrawerDialog } from "@/components/shell/cash-drawer-dialog";
 import { useSession } from "@/lib/session";
 import { HomeIcon, CalendarIcon, PeopleIcon, GearIcon, LogoutIcon } from "@/components/ui/atoms/icons";
 import { MessageCircle, Sparkles } from "lucide-react";
@@ -109,11 +109,9 @@ export function Sidebar() {
         />
       </div>
 
-      <ConfirmDialog
+      <CashDrawerDialog
         open={confirmLogout}
-        title="Se déconnecter ?"
-        description="Vous devrez ressaisir votre mot de passe pour accéder au poste."
-        confirmLabel="Se déconnecter"
+        mode="close"
         onCancel={() => setConfirmLogout(false)}
         onConfirm={() => {
           setConfirmLogout(false);

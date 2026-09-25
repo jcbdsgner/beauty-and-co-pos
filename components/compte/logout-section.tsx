@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/atoms/card";
 import { Button } from "@/components/ui/atoms/button";
 import { FieldLabel } from "@/components/ui/atoms/field-label";
-import { ConfirmDialog } from "@/components/ui/molecules/confirm-dialog";
+import { CashDrawerDialog } from "@/components/shell/cash-drawer-dialog";
 import { LogoutIcon } from "@/components/ui/atoms/icons";
 import { useSession } from "@/lib/session";
 
@@ -28,11 +28,9 @@ export function LogoutSection() {
         </Button>
       </div>
 
-      <ConfirmDialog
+      <CashDrawerDialog
         open={confirmOpen}
-        title="Se déconnecter ?"
-        description="Vous devrez ressaisir votre mot de passe pour accéder au poste."
-        confirmLabel="Se déconnecter"
+        mode="close"
         onCancel={() => setConfirmOpen(false)}
         onConfirm={() => {
           setConfirmOpen(false);

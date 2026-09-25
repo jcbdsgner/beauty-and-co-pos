@@ -9,9 +9,11 @@ import { FieldLabel } from "@/components/ui/atoms/field-label";
 import { TextInput } from "@/components/ui/atoms/text-input";
 import { Toast } from "@/components/ui/molecules/toast";
 import { useSession } from "@/lib/session";
+import { CashDrawerDialog } from "@/components/shell/cash-drawer-dialog";
 
 /**
- * Écran de verrouillage — plein écran, bloque l'app jusqu'à réauthentification (ADR 0026).
+ * Écran de verrouillage — plein écran, bloque l'app jusqu'à réauthentification (ADR 0026),
+ * puis fond de caisse à saisir avant d'entrer.
  * Démo : n'importe quelle adresse e-mail et mot de passe suffisent, aucune vérification réelle.
  */
 export function LockScreen() {
@@ -20,9 +22,10 @@ export function LockScreen() {
   const [password, setPassword] = useState("");
   const [revealed, setRevealed] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [cashOpen, setCashOpen] = useState(false);
 
   function submit() {
-    login();
+    setCashOpen(true);
   }
 
   return (
@@ -43,7 +46,7 @@ export function LockScreen() {
           <p className="text-base text-base-content/70">
             Bienvenue chez <span className="font-semibold text-primary">Beauty and Co</span>
           </p>
-          <h1 className="mt-1 font-heading text-4xl font-semibold text-base-content">Reconnexion</h1>
+          <h1 className="mt-1 font-heading text-4xl font-semibold text-base-content">Connexion</h1>
         </div>
 
         <form
@@ -110,12 +113,13 @@ export function LockScreen() {
               className="shadow-[0px_4px_19px_rgba(136,102,102,0.35)]"
               disabled={!email || !password}
             >
-              Se reconnecter
+              Se connecter
             </Button>
           </div>
         </form>
       </div>
 
+      <CashDrawerDialog open={cashOpen} mode="open" onConfirm={login} onCancel={() => setCashOpen(false)} />
       <Toast message={toast} onDismiss={() => setToast(null)} />
     </div>
   );
