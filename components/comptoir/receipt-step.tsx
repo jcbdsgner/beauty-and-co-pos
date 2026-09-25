@@ -10,6 +10,7 @@ import { computeTotals, useAppData } from "@/components/providers/app-data-provi
 import { NoterClienteDialog } from "@/components/comptoir/noter-cliente-dialog";
 import { SendReceiptButtons } from "@/components/comptoir/send-receipt-buttons";
 import { PAYMENT_MODE_LABEL, PaymentModeGlyph } from "@/components/comptoir/payment-modes";
+import { PrintedReceipt } from "@/components/comptoir/printed-receipt";
 import { TicketFrame, TicketHead, TicketLineBody, TicketTotals } from "@/components/comptoir/ticket-parts";
 import { clientFullName } from "@/lib/data/clientele";
 import { cn, formatFcfa } from "@/lib/utils";
@@ -24,7 +25,7 @@ const RECEIPT_DATE_FMT = new Intl.DateTimeFormat("fr-FR", {
 });
 
 const PRINT_PAGE_STYLE = `
-  @page { size: 80mm auto; margin: 6mm; }
+  @page { size: 80mm auto; margin: 6mm 6mm 10mm; }
   @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
 `;
 
@@ -163,9 +164,16 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
         </div>
       </section>
 
-      {/* The ticket, now the receipt */}
-      <div ref={receiptRef} className="h-full min-h-0">
-        <TicketFrame className="print:h-auto print:border-0">
+      {/* Off-screen print target — the thermal receipt (react-to-print reads the live DOM, so keep it mounted). */}
+      <div aria-hidden className="pointer-events-none fixed -left-[9999px] top-0">
+        <div ref={receiptRef}>
+          <PrintedReceipt sale={sale} client={client} />
+        </div>
+      </div>
+
+      {/* The ticket, now the receipt's on-screen preview */}
+      <div className="h-full min-h-0">
+        <TicketFrame>
           <TicketHead sale={sale} title="Reçu">
             <p className="text-xs text-base-content/55">
               Beauty and Co · {sale.label} · {RECEIPT_DATE_FMT.format(new Date(sale.encaisseeAt ?? sale.createdAt))}
@@ -177,7 +185,7 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
               )}
             </p>
           </TicketHead>
-          <ul className="min-h-0 flex-1 divide-y divide-border overflow-y-auto px-5 print:overflow-visible">
+          <ul className="min-h-0 flex-1 divide-y divide-border overflow-y-auto px-5">
             {sale.cart.map((line) => (
               <li key={line.id} className="flex py-3">
                 <TicketLineBody
