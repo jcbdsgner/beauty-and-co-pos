@@ -5,19 +5,22 @@ import { Eye, GripVertical, MoreHorizontal, Undo2, UserX, Users } from "lucide-r
 import { Avatar } from "@/components/ui/atoms/avatar";
 import { IconButton } from "@/components/ui/atoms/icon-button";
 import { DropdownMenu } from "@/components/ui/molecules/dropdown-menu";
+import { clientFullName } from "@/lib/data/clientele";
 import { serviceById } from "@/lib/data/menu";
 import { appointmentEndTime, formatHour, minutesToTime, timeToMinutes, type RendezVousRow } from "@/lib/data/planning";
 import { praticienneAccent } from "@/lib/data/praticienne-colors";
 import { scheduleFor } from "@/lib/data/praticiennes";
+import { useAppStore } from "@/lib/store/app-store";
 import { cn } from "@/lib/utils";
-import type { DayHours, Praticienne, RendezVous } from "@/lib/data/types";
+import type { Cliente, DayHours, Praticienne, RendezVous } from "@/lib/data/types";
 
 /**
  * « Planning · Jour » — reconstruit à la lettre du Figma (node 270:2466, ADR 0025), puis basculé
  * en vertical (même principe, axe renversé) : une colonne par praticienne, le temps défile verticalement, les
  * rendez-vous sont positionnés dedans (début + durée), côte à côte en sous-colonnes quand deux se
  * chevauchent (`pack`) — une praticienne ne peut jamais paraître faire deux prestations à la fois.
- * Un bloc n'affiche que l'heure et la prestation. Zone grisée = hors de l'horaire hebdomadaire du
+ * Un bloc affiche l'heure et la cliente assise dans le fauteuil (bénéficiaire, sinon la payeuse) ;
+ * la prestation suit en gris, en information secondaire, seulement si le bloc a la hauteur. Zone grisée = hors de l'horaire hebdomadaire du
  * jour affiché ; colonne entière grisée = jour de repos. C'est la seule surface du Planning — pas
  * de sidebar de filtre séparée (le Figma n'en a pas) : la poignée de glisser-déposer, l'isolement
  * et l'absence vivent directement sur l'en-tête de colonne, comme avant sur l'étiquette de ligne.
@@ -28,7 +31,9 @@ const SLOT_MIN = 30;
 const SLOT_H = 56; // px per 30 min
 const TIME_COL_W = 52;
 const HEADER_H = 72;
-const LANE_W = 152;
+/** Hauteur à partir de laquelle un bloc a la place d'afficher la prestation sous la cliente. */
+const SHOW_SERVICE_MIN_H = 60;
+const LANE_W = 192; // wide enough that a header keeps most praticienne names unabridged (parity with the old 208px row label)
 
 type Props = {
   date: Date;
@@ -44,6 +49,17 @@ type Props = {
   onMarkAbsent: (id: string) => void;
   onReorder: (draggedId: string, targetId: string) => void;
 };
+
+/** Qui est dans le fauteuil : la bénéficiaire (fiche ou nom libre), sinon la payeuse. */
+function chairClientName(row: RendezVousRow, clients: Cliente[]): string {
+  const { rv, reservation } = row;
+  const id = rv.beneficiaryClientId ?? (rv.beneficiaryName ? undefined : reservation.payerClientId);
+  if (id) {
+    const c = clients.find((x) => x.id === id);
+    if (c) return clientFullName(c);
+  }
+  return rv.beneficiaryName ?? "Cliente";
+}
 
 type Placed = { row: RendezVousRow; start: number; end: number; lane: number };
 
@@ -106,6 +122,7 @@ export function DayTimeline({
   onMarkAbsent,
   onReorder,
 }: Props) {
+  const clients = useAppStore((s) => s.clients);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
 
@@ -287,11 +304,13 @@ export function DayTimeline({
                   const h = Math.max((rv.durationMin / SLOT_MIN) * SLOT_H, SLOT_H - 6);
                   const svc = serviceById(rv.serviceId);
                   const isSecond = rv.secondStaffId === p.id && rv.staffId !== p.id;
+                  const who = chairClientName(row, clients);
                   return (
                     <button
                       key={rv.id + p.id}
                       type="button"
                       onClick={() => onOpenReservation(rv)}
+                      title={`${rv.start} · ${who} · ${svc?.name ?? "Prestation"}`}
                       style={{
                         top,
                         left: 8 + lane * (LANE_W - 8),
@@ -302,7 +321,7 @@ export function DayTimeline({
                         borderLeftColor: accent.border,
                       }}
                       className={cn(
-                        "absolute flex flex-col justify-center gap-0.5 overflow-hidden rounded-field border border-l-[3px] px-2.5 text-left shadow-sm transition hover:z-10 hover:shadow-md hover:brightness-[0.97] active:opacity-70",
+                        "absolute flex flex-col justify-start gap-0.5 overflow-hidden rounded-field border border-l-[3px] px-2.5 py-1.5 text-left shadow-sm transition hover:z-10 hover:shadow-md hover:brightness-[0.97] active:opacity-70",
                         isSecond && "opacity-75",
                       )}
                     >
@@ -310,7 +329,10 @@ export function DayTimeline({
                         {rv.start}
                         {rv.secondStaffId && <Users aria-hidden className="size-3" />}
                       </span>
-                      <span className="truncate text-xs font-semibold text-base-content">{svc?.name ?? "Prestation"}</span>
+                      <span className="truncate text-xs font-semibold text-base-content">{who}</span>
+                      {h >= SHOW_SERVICE_MIN_H && (
+                        <span className="line-clamp-2 text-[0.68rem] leading-snug text-base-content/50">{svc?.name ?? "Prestation"}</span>
+                      )}
                     </button>
                   );
                 })}
