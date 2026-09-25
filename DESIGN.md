@@ -128,10 +128,9 @@ destructive edit to a shared atom.
   (inset hairline), no ambient lift. If it would read as a Material card, it is wrong.
 - **The One-Signal rule.** Only amber says "attention". If a second colour starts meaning
   "look here", the board has lost its single channel and the receptionist has to decode a legend.
-  **Exception 1 (ADR 0022):** the Accueil calendar view (`AccueilCalendar`) is a decorative,
-  agenda-style exception — each block carries a rotating colour family purely to separate
-  same-day events visually, the way a personal calendar app does. Amber inside those blocks still
-  means only "à encaisser" / "now"; the family colour never carries status meaning.
+  *(Exception 1, ADR 0022 — the multicolour Accueil calendar — withdrawn by ADR 0033: every
+  `AccueilCalendar` block now shares one `#FFF1F1` fill, no border, so that view is back under
+  the rule.)*
   **Exception 2 (ADR 0024, palette redone à la lettre du Figma par ADR 0025):** the Planning
   calendar (`DayTimeline`/`WeekTimeline`, `praticienneAccent`) carries one accent colour per
   praticienne, for the same "who at a glance" reason — 8 saturated hues (light-tint block fill +

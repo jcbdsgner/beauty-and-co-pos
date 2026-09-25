@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: superseded by 0033
 ---
 
 # Calendrier Accueil : palette multicolore par bloc (amende ADR 0019)

@@ -148,19 +148,9 @@
   --board-taupe-plaque: rgba(136, 102, 102, 0.09);
   --board-lane-h: 3.5rem;
 
-  /* Calendrier Accueil — seule exception à la doctrine « un seul signal » (ADR 0022) : une
-     famille de couleur par bloc, comme les captures de référence. Dérivées des teintes déjà en
-     usage ailleurs dans l'app (statuts, VIP), pas de couleurs inventées. */
-  --cal-amber-bg: #fdf0e3;
-  --cal-amber-fg: #b5590a;
-  --cal-lilac-bg: #f2e9ff;
-  --cal-lilac-fg: #8b5cc7;
-  --cal-rose-bg: #fdcfca;
-  --cal-rose-fg: #b8503f;
-  --cal-mint-bg: #e3f5ee;
-  --cal-mint-fg: #12805c;
-  --cal-sky-bg: #e8f0fd;
-  --cal-sky-fg: #2662d9;
+  /* Calendrier Accueil — un seul fond rosé pour tous les blocs, sans contour (ADR 0033,
+     remplace la palette multicolore de l'ADR 0022). */
+  --cal-card: #fff1f1;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
