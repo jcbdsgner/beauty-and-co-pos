@@ -5,7 +5,6 @@ import { ArrowLeft, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/atoms/button";
 import { NumericKeypad } from "@/components/ui/molecules/numeric-keypad";
 import { SettlementTicket } from "@/components/comptoir/settlement-ticket";
-import { TipDialog } from "@/components/comptoir/tip-dialog";
 import { PAYMENT_MODES, PAYMENT_MODE_LABEL, PaymentModeGlyph } from "@/components/comptoir/payment-modes";
 import { computeTotals, useAppData } from "@/components/providers/app-data-provider";
 import { cn, formatFcfa } from "@/lib/utils";
@@ -26,21 +25,23 @@ type KeypadTarget = { kind: "amount"; index: number } | { kind: "cash" } | null;
  * part but the last is typed on the keypad; **the last part is always "le reste"**, computed — so
  * a split can never be off by a franc, only over-allotted (which is said plainly). The same mode
  * may appear twice (two cards); Espèces only once, since it carries the change calculation.
- * Confirming opens « Un pourboire ? » (`TipDialog`) — the sale is cashed in once it's answered.
+ * The tip picked at « Encaisser » (`pendingTip`, ADR 0034) is collected with the sale: it adds to
+ * the amount the parts cover, then comes back out of them on confirm — on the last part's mode.
  */
 export function SettlementStep({ sale }: { sale: Sale }) {
   const { confirmPayment, updateSale } = useAppData();
   const { amountDue } = computeTotals(sale);
+  const tipAmount = sale.pendingTip ?? 0;
+  const toCollect = amountDue + tipAmount;
 
   const [parts, setParts] = useState<Part[]>([{ id: 1, mode: null, amount: "" }]);
   const [active, setActive] = useState(0);
   const [target, setTarget] = useState<KeypadTarget>(null);
   const [cashReceived, setCashReceived] = useState("");
-  const [tipOpen, setTipOpen] = useState(false);
 
   const split = parts.length > 1;
   const typedSum = parts.slice(0, -1).reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-  const amounts = parts.map((p, i) => (!split ? amountDue : i < parts.length - 1 ? Number(p.amount) || 0 : amountDue - typedSum));
+  const amounts = parts.map((p, i) => (!split ? toCollect : i < parts.length - 1 ? Number(p.amount) || 0 : toCollect - typedSum));
   const overAllotted = split && amounts[amounts.length - 1] < 0;
   const cashIndex = parts.findIndex((p) => p.mode === "especes");
   const cashDue = cashIndex >= 0 ? Math.max(0, amounts[cashIndex]) : 0;
@@ -49,10 +50,10 @@ export function SettlementStep({ sale }: { sale: Sale }) {
 
   const missingMode = parts.findIndex((p) => p.mode === null);
   const zeroPart = split ? amounts.findIndex((a) => a <= 0) : -1;
-  const cashShort = cashIndex >= 0 && amountDue > 0 && cashGiven < cashDue;
+  const cashShort = cashIndex >= 0 && toCollect > 0 && cashGiven < cashDue;
 
   const hint =
-    amountDue === 0
+    toCollect === 0
       ? null
       : missingMode >= 0
         ? split
@@ -115,15 +116,23 @@ export function SettlementStep({ sale }: { sale: Sale }) {
     if (target?.kind === "amount") setParts(parts.map((p, i) => (i === target.index ? { ...p, amount: v } : p)));
   }
 
-  /** Called once the tip dialog is answered — « Sans pourboire » passes null. */
-  function confirm(tip: { amount: number; mode: PaymentMode } | null) {
-    const modes = parts.map((p, i) => ({ mode: p.mode!, amount: amounts[i] }));
-    let cash = cashIndex >= 0 && cashReceived !== "" ? { cashReceived: cashGiven, change } : undefined;
-    // A cash tip comes out of the change first; past that, the cliente hands over more cash.
-    if (cash && tip?.mode === "especes") {
-      cash = { cashReceived: cash.cashReceived + Math.max(0, tip.amount - cash.change), change: Math.max(0, cash.change - tip.amount) };
-    }
-    confirmPayment(sale.id, amountDue === 0 ? [] : modes, cash, tip ?? undefined);
+  function confirm() {
+    // The parts covered sale + tip; take the tip back out of them, from the last part up, so
+    // `payment.modes` stays the sale alone (ADR 0034). The tip is booked on the last part's mode.
+    let tipLeft = tipAmount;
+    const modes = parts
+      .map((p, i) => ({ mode: p.mode!, amount: amounts[i] }))
+      .reverse()
+      .map((m) => {
+        const taken = Math.min(tipLeft, m.amount);
+        tipLeft -= taken;
+        return { ...m, amount: m.amount - taken };
+      })
+      .reverse()
+      .filter((m) => m.amount > 0);
+    const cash = cashIndex >= 0 && cashReceived !== "" ? { cashReceived: cashGiven, change } : undefined;
+    const tip = tipAmount > 0 && toCollect > 0 ? { amount: tipAmount, mode: parts[parts.length - 1].mode! } : undefined;
+    confirmPayment(sale.id, amountDue === 0 ? [] : modes, cash, tip);
   }
 
   const activeMode = parts[active]?.mode;
@@ -151,11 +160,16 @@ export function SettlementStep({ sale }: { sale: Sale }) {
               Règlement
             </h2>
             <p
-              key={amountDue}
+              key={toCollect}
               className="animate-total-pulse origin-left font-[family-name:var(--font-heading)] font-semibold text-[4rem] leading-none text-base-content tabular-nums"
             >
-              {formatFcfa(amountDue)}
+              {formatFcfa(toCollect)}
             </p>
+            {tipAmount > 0 && (
+              <p className="mt-2 text-[15px] text-base-content/70 tabular-nums">
+                dont <span className="font-semibold text-base-content">{formatFcfa(tipAmount)}</span> de pourboire
+              </p>
+            )}
           </div>
           {split && (
             <p className="mt-1 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-secondary">
@@ -164,7 +178,7 @@ export function SettlementStep({ sale }: { sale: Sale }) {
           )}
         </div>
 
-        {amountDue === 0 ? (
+        {toCollect === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center">
             <p className="font-[family-name:var(--font-heading)] text-xl font-semibold text-base-content">Rien à régler</p>
             <p className="max-w-sm text-sm text-base-content/55">
@@ -370,17 +384,7 @@ export function SettlementStep({ sale }: { sale: Sale }) {
         )}
       </section>
 
-      <SettlementTicket sale={sale} onConfirm={() => setTipOpen(true)} canConfirm={canConfirm} confirmHint={hint} />
-      {tipOpen && (
-        <TipDialog
-          open
-          amountDue={amountDue}
-          defaultMode={(amountDue === 0 ? null : parts[parts.length - 1].mode) ?? "especes"}
-          cashChange={cashIndex >= 0 && cashReceived !== "" ? change : 0}
-          onCancel={() => setTipOpen(false)}
-          onDone={confirm}
-        />
-      )}
+      <SettlementTicket sale={sale} onConfirm={confirm} canConfirm={canConfirm} confirmHint={hint} />
     </div>
   );
 }

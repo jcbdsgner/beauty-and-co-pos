@@ -6,9 +6,7 @@ import { Button } from "@/components/ui/atoms/button";
 import { CloseButton } from "@/components/ui/atoms/icon-button";
 import { Dialog } from "@/components/ui/molecules/dialog";
 import { NumericKeypad } from "@/components/ui/molecules/numeric-keypad";
-import { PAYMENT_MODES, PaymentModeGlyph } from "@/components/comptoir/payment-modes";
 import { cn, formatFcfa } from "@/lib/utils";
-import type { PaymentMode } from "@/lib/data/types";
 
 const TIP_PRESETS = [2000, 4000, 5000, 10000, 12000, 15000, 20000, 25000, 30000] as const;
 
@@ -18,31 +16,29 @@ function presetLabel(amount: number) {
 }
 
 /**
- * « Un pourboire ? » — opened by « Confirmer l'encaissement », just before the receipt. Always
- * optional: « Sans pourboire » cashes the sale in as is. A preset or a free amount (« Autre », on
- * the keypad), and the rail it's paid on — preset to the mode of the sale's last part. The tip
+ * « Un pourboire ? » — opened by the panier's « Encaisser », before any payment method is chosen
+ * (ADR 0034). Always optional: « Sans pourboire » goes on to the Règlement as is. A preset or a
+ * free amount (« Autre », on the keypad); the Règlement then adds it to what is collected. The tip
  * rides on top of the sale: not in `payment.modes`, no points, not in the chiffre d'affaires.
- * « × » goes back to the Règlement without cashing anything in.
+ * « × » stays on the panier.
  */
 export function TipDialog({
   open,
   amountDue,
-  defaultMode,
-  cashChange,
+  initialAmount,
   onCancel,
   onDone,
 }: {
   open: boolean;
   amountDue: number;
-  defaultMode: PaymentMode;
-  /** Change still to hand back on the sale's espèces part — a cash tip is taken from it first. */
-  cashChange: number;
+  /** The tip already picked for this sale — back from the Règlement, it's shown selected. */
+  initialAmount?: number;
   onCancel: () => void;
-  onDone: (tip: { amount: number; mode: PaymentMode } | null) => void;
+  onDone: (tip: number | null) => void;
 }) {
-  const [preset, setPreset] = useState<number | "autre" | null>(null);
-  const [custom, setCustom] = useState("");
-  const [mode, setMode] = useState<PaymentMode>(defaultMode);
+  const isPreset = (TIP_PRESETS as readonly number[]).includes(initialAmount ?? 0);
+  const [preset, setPreset] = useState<number | "autre" | null>(!initialAmount ? null : isPreset ? initialAmount : "autre");
+  const [custom, setCustom] = useState(initialAmount && !isPreset ? String(initialAmount) : "");
 
   const amount = preset === "autre" ? Number(custom) || 0 : (preset ?? 0);
 
@@ -52,7 +48,7 @@ export function TipDialog({
 
   return (
     <Dialog open={open} labelledBy="tip-title" className="relative flex max-h-[calc(100vh-2rem)] max-w-[760px] flex-col overflow-hidden p-0">
-      <CloseButton onClick={onCancel} className="top-4 right-4" aria-label="Revenir au règlement" />
+      <CloseButton onClick={onCancel} className="top-4 right-4" aria-label="Rester sur le panier" />
 
       <div className="min-h-0 flex-1 overflow-y-auto px-9 pt-8 pb-7">
         <h2 id="tip-title" className="font-[family-name:var(--font-heading)] text-[28px] font-bold leading-tight text-base-content">
@@ -90,40 +86,6 @@ export function TipDialog({
           </div>
         )}
 
-        <div className="mt-6">
-          <p className="mb-3 text-[15px] font-medium text-base-content/70">Réglé en</p>
-          <div className="grid grid-cols-4 gap-3">
-            {PAYMENT_MODES.map((m) => {
-              const selected = mode === m.value;
-              return (
-                <button
-                  key={m.value}
-                  type="button"
-                  aria-pressed={selected}
-                  onClick={() => setMode(m.value)}
-                  className={cn(
-                    "flex h-20 flex-col items-center justify-center gap-1.5 rounded-2xl border-2 px-3 transition active:scale-[0.97]",
-                    "outline-none focus-visible:ring-4 focus-visible:ring-ring/20",
-                    selected ? "border-primary bg-accent" : "border-border bg-white hover:border-primary/40",
-                  )}
-                >
-                  <PaymentModeGlyph
-                    mode={m.value}
-                    className={cn("shrink-0", m.logo ? "max-h-7 max-w-12" : cn("size-7", selected ? "text-primary" : "text-secondary"))}
-                  />
-                  <span className="text-[15px] font-semibold text-base-content">{m.label}</span>
-                </button>
-              );
-            })}
-          </div>
-          {mode === "especes" && amount > 0 && cashChange > 0 && (
-            <p className="mt-2 text-[13px] text-base-content/55 tabular-nums">
-              {amount <= cashChange
-                ? `Pris sur la monnaie : rendre ${formatFcfa(cashChange - amount)} au lieu de ${formatFcfa(cashChange)}.`
-                : `Toute la monnaie (${formatFcfa(cashChange)}) plus ${formatFcfa(amount - cashChange)} en espèces.`}
-            </p>
-          )}
-        </div>
       </div>
 
       <footer className="flex shrink-0 items-center justify-between gap-4 border-t border-base-300 px-9 py-5">
@@ -136,7 +98,7 @@ export function TipDialog({
           className="min-w-56"
           icon={amount > 0 ? <Check className="size-5" /> : undefined}
           disabled={amount <= 0}
-          onClick={() => onDone({ amount, mode })}
+          onClick={() => onDone(amount)}
         >
           {amount > 0 ? `Ajouter ${formatFcfa(amount)}` : "Choisissez un montant"}
         </Button>

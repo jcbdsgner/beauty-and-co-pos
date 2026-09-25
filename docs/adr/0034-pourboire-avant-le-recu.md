@@ -12,13 +12,19 @@ laisser un pourboire — montants rapides 2k, 4k, 5k, 10k, 12k, 15k, 20k, 25k, 3
 
 ## Décision
 
-- **Où** : « Confirmer l'encaissement » (station Règlement) ouvre `TipDialog`. La vente n'est
-  encaissée qu'une fois le dialogue répondu — « Sans pourboire » ou « Ajouter X F ». Le « × »
-  revient au Règlement sans rien encaisser (on peut encore corriger le paiement).
-- **Montant** : 9 tuiles + « Autre », qui ouvre le `NumericKeypad` et affiche le total réglé.
-- **Moyen** : 4 tuiles compactes, pré-sélection = moyen de la dernière part (Espèces si rien à
-  régler). En espèces, le pourboire se prend d'abord sur la monnaie à rendre ; au-delà, la
-  cliente remet des espèces en plus (`cashReceived` augmente, `change` descend à 0).
+*Révisé le 25/09 : le dialogue s'ouvre désormais à « Encaisser », avant le choix des moyens de
+paiement (et non plus à « Confirmer l'encaissement »).*
+
+- **Où** : « Encaisser » (ticket du panier) ouvre `TipDialog`, avant la station Règlement.
+  « Sans pourboire » ou « Ajouter X F » y mènent ; le « × » reste sur le panier. Revenir au panier
+  puis ré-encaisser rouvre le dialogue avec le pourboire déjà choisi.
+- **Montant** : 9 tuiles + « Autre », qui ouvre le `NumericKeypad` et affiche le total réglé. Le
+  dialogue ne demande plus de moyen de paiement.
+- **Règlement** : le pourboire (`Sale.pendingTip`) s'ajoute au montant à encaisser (« dont X F de
+  pourboire » sous le total) ; les parts couvrent vente + pourboire, et la monnaie à rendre en
+  espèces se calcule sur ce total.
+- **Moyen** : celui de la dernière part. À la confirmation, le pourboire est retiré des parts en
+  partant de la dernière, pour que `payment.modes` reste la vente seule.
 - **Modèle** : `Sale.tip?: { amount, mode }`, posé par `confirmPayment`. Ce n'est **ni une part**
   (`payment.modes` reste la vente seule, le Récap et la ventilation par moyen ne bougent pas),
   **ni une remise**, et il ne rapporte **aucun point** ni ne compte dans `totalSpent`.

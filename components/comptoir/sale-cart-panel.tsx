@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { Lock, Minus, Plus, ScanLine, Search, Trash2 } from "lucide-react";
 import { Tooltip } from "@/components/ui/atoms/tooltip";
 import { Button } from "@/components/ui/atoms/button";
 import { IconButton } from "@/components/ui/atoms/icon-button";
 import { ClientSearchField } from "@/components/shared/client-search-field";
+import { TipDialog } from "@/components/comptoir/tip-dialog";
 import { TicketClientCard, TicketFrame, TicketHead, TicketLineBody, TicketTotals } from "@/components/comptoir/ticket-parts";
 import { useAppData, computeTotals, saleNeedsClient } from "@/components/providers/app-data-provider";
 import { cn } from "@/lib/utils";
@@ -19,6 +21,7 @@ import type { Sale } from "@/lib/data/types";
 export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScanner: () => void }) {
   const { updateCartQty, removeCartLine, updateSale, clients, produits } = useAppData();
   const totals = computeTotals(sale);
+  const [tipOpen, setTipOpen] = useState(false);
   const isEmpty = sale.cart.length === 0;
   const client = sale.clientId ? clients.find((c) => c.id === sale.clientId) : undefined;
   // A prestation in the basket means someone was served — the note must name her (ADR 0013). A
@@ -161,11 +164,21 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
           )}
           disabled={!canCheckout}
           icon={canCheckout ? undefined : <Lock className="size-4" />}
-          onClick={() => updateSale(sale.id, { step: "paiement" })}
+          onClick={() => setTipOpen(true)}
         >
           {canCheckout ? "Encaisser" : isEmpty ? "Panier vide" : "Choisir une cliente"}
         </Button>
       </div>
+      {/* « Un pourboire ? » first (ADR 0034) — the Règlement then collects it with the sale. */}
+      {tipOpen && (
+        <TipDialog
+          open
+          amountDue={totals.amountDue}
+          initialAmount={sale.pendingTip}
+          onCancel={() => setTipOpen(false)}
+          onDone={(tip) => updateSale(sale.id, { pendingTip: tip ?? undefined, step: "paiement" })}
+        />
+      )}
     </TicketFrame>
   );
 }
