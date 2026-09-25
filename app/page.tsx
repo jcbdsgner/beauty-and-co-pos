@@ -85,7 +85,7 @@ export default function AccueilPage() {
 function AccueilPageInner() {
   const { reservations, praticiennes, clients, markReservationSeen } = useAppData();
   const { requestEncaissement, encaissementDialog } = useEncaissement();
-  const { currentUser } = useSession();
+  const { currentUser, salon } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -167,10 +167,12 @@ function AccueilPageInner() {
   const periodLabel =
     period === "jour" ? "aujourd'hui" : period === "semaine" ? "cette semaine" : period === "mois" ? "ce mois" : "sur cette période";
 
+  const greeting = `Bon retour ${currentUser.name}${salon ? ` à ${salon.name}` : ""}`;
+
   return (
     <div className="flex flex-col gap-6">
       <BoardHeader
-        section="Accueil"
+        section={greeting}
         action={
           <div className="flex items-center gap-2">
             <ChipFilter
@@ -188,10 +190,6 @@ function AccueilPageInner() {
           </div>
         }
       />
-
-      <p className="-mt-4 pl-1 text-sm text-base-content/45">
-        {[currentUser.name, `${reservationRows.length} rendez-vous ${periodLabel}`].filter(Boolean).join(" · ")}
-      </p>
 
       <AccueilGiftCards />
 

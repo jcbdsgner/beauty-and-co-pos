@@ -9,8 +9,8 @@ export type Utilisateur = {
   name: string;
   initial: string;
   role: Role;
-  /** Lie ce compte poste à sa fiche `Praticienne` (même salon, même équipe) — voir
-   *  lib/data/praticiennes.ts. Sert à retrouver le salon du poste (ex. l'en-tête Accueil). */
+  /** Lie ce compte poste à sa fiche `Praticienne` — voir lib/data/praticiennes.ts. Le salon du
+   *  poste, lui, vient de la session (lib/session.ts) : personne n'est rattaché à un salon. */
   praticienneId: string;
   /** Mot de passe par défaut, simulé — la "vraie" valeur vit en session (voir lib/session.ts). */
   password: string;

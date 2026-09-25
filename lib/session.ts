@@ -2,6 +2,8 @@
 
 import { useCallback, useMemo, useSyncExternalStore } from "react";
 import { UTILISATEUR, type Utilisateur } from "@/lib/data/utilisateurs";
+import { salonById } from "@/lib/data/entreprises";
+import type { Salon } from "@/lib/data/types";
 
 /**
  * Session du poste — le compte unique (mot de passe + photo) et l'état connecté/verrouillé.
@@ -83,8 +85,14 @@ function writePhotoUrl(photoUrl: string | null) {
   emit();
 }
 
+/** Salon où se trouve le poste. Le salon appartient au poste, pas à la personne : l'équipe
+ *  tourne d'un salon à l'autre. Simulé, fixe. */
+const POSTE_SALON_ID = "almadies";
+
 export type Session = {
   currentUser: Utilisateur;
+  /** Salon du poste (voir `POSTE_SALON_ID`). */
+  salon: Salon | undefined;
   photoUrl: string | null;
   authenticated: boolean;
   /** Vrai si `password` correspond au mot de passe courant (valeur de session si changé, sinon défaut). */
@@ -110,6 +118,7 @@ export function useSession(): Session {
   return useMemo(
     () => ({
       currentUser: UTILISATEUR,
+      salon: salonById(POSTE_SALON_ID),
       photoUrl: snap.photoUrl,
       authenticated: snap.authenticated,
       verifyPassword,
