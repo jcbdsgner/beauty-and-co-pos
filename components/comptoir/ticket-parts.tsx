@@ -3,6 +3,7 @@
 import { Badge } from "@/components/ui/atoms/badge";
 import { DiscountBreakdown } from "@/components/comptoir/discount-breakdown";
 import { DepositLine } from "@/components/comptoir/deposit-line";
+import { ClientPreferences } from "@/components/shared/client-preferences";
 import { computeTotals } from "@/components/providers/app-data-provider";
 import { clientFullName, clientInitial } from "@/lib/data/clientele";
 import { cn, formatFcfa } from "@/lib/utils";
@@ -56,30 +57,34 @@ export function TicketHead({
   );
 }
 
+/** The identified cliente, with her preferences always shown beneath — never folded away. */
 export function TicketClientCard({ client, onRemove }: { client: Cliente; onRemove?: () => void }) {
   return (
-    <div className="flex items-center gap-3 rounded-2xl bg-accent px-3 py-2.5">
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white font-semibold text-secondary">
-        {clientInitial(client)}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-1.5">
-          <span className="truncate font-[family-name:var(--font-heading)] font-semibold text-[15px] text-base-content">
-            {clientFullName(client)}
-          </span>
-          {client.tier && <Badge {...TIER_BADGE[client.tier]}>{TIER_BADGE[client.tier].label}</Badge>}
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-3 rounded-2xl bg-accent px-3 py-2.5">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white font-semibold text-secondary">
+          {clientInitial(client)}
         </span>
-        <span className="block truncate text-xs text-base-content/55">{client.phone}</span>
-      </span>
-      {onRemove && (
-        <button
-          type="button"
-          onClick={onRemove}
-          className="-mr-1 inline-flex min-h-11 shrink-0 items-center rounded-full bg-white/70 px-3 text-xs font-semibold text-secondary transition active:scale-95 hover:bg-white"
-        >
-          Retirer
-        </button>
-      )}
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-1.5">
+            <span className="truncate font-[family-name:var(--font-heading)] font-semibold text-[15px] text-base-content">
+              {clientFullName(client)}
+            </span>
+            {client.tier && <Badge {...TIER_BADGE[client.tier]}>{TIER_BADGE[client.tier].label}</Badge>}
+          </span>
+          <span className="block truncate text-xs text-base-content/55">{client.phone}</span>
+        </span>
+        {onRemove && (
+          <button
+            type="button"
+            onClick={onRemove}
+            className="-mr-1 inline-flex min-h-11 shrink-0 items-center rounded-full bg-white/70 px-3 text-xs font-semibold text-secondary transition active:scale-95 hover:bg-white"
+          >
+            Retirer
+          </button>
+        )}
+      </div>
+      <ClientPreferences client={client} />
     </div>
   );
 }

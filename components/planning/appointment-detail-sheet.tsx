@@ -32,12 +32,13 @@ import { forfaitById } from "@/lib/data/forfaits";
 import { packPurchasesForClient, packRemainingPrestations } from "@/lib/data/pack-purchases";
 import { packById } from "@/lib/data/packs";
 import { clientFullName, clientInitial } from "@/lib/data/clientele";
+import { ClientPreferences } from "@/components/shared/client-preferences";
+import { praticienneById } from "@/lib/data/praticiennes";
 import { boissonById } from "@/lib/data/boissons";
 import { produitById, serviceById } from "@/lib/data/menu";
 import { rendezVousCoverage, type RendezVousCoverage } from "@/lib/data/coverage";
 import { appointmentEndTime, reservationComposition, reservationDate, reservationForRendezVous, timeToMinutes } from "@/lib/data/planning";
 import { formatFcfa } from "@/lib/utils";
-import { PREFERENCE_DOMAINS, PREFERENCE_DOMAIN_LABEL } from "@/lib/data/types";
 import type { BeneficiaryKind, Cliente, RendezVous } from "@/lib/data/types";
 
 
@@ -91,42 +92,6 @@ function beneficiaryGroups(lines: RendezVous[], clients: Cliente[], payer: Clien
     const bStart = Math.min(...b.lines.map((rv) => timeToMinutes(rv.start)));
     return aStart - bStart;
   });
-}
-
-/** Compact, per-beneficiary preference read: hair/color reference plus every non-empty domain
- *  note on her fiche. No photos here — this panel is a fast pre-service glance, not the fiche. */
-function clientPreferenceLines(client: Cliente | null): { label: string; note: string }[] {
-  if (!client) return [];
-  const lines: { label: string; note: string }[] = [];
-  if (client.hairType) lines.push({ label: "Type de cheveux", note: client.hairType });
-  if (client.colorReference) lines.push({ label: "Réf. couleur", note: client.colorReference });
-  for (const domain of PREFERENCE_DOMAINS) {
-    const note = client.preferenceNotes?.[domain];
-    if (note) lines.push({ label: PREFERENCE_DOMAIN_LABEL[domain], note });
-  }
-  return lines;
-}
-
-/** A cliente's preferences — always rendered, never behind a disclosure: the receptionist must
- *  see them on every passage. An empty fiche says so rather than silently showing nothing. */
-function PreferencesBlock({ lines, className = "" }: { lines: { label: string; note: string }[]; className?: string }) {
-  return (
-    <div className={`rounded-lg bg-[var(--color-gray-50)] px-3 py-2 ${className}`}>
-      <Legend className="text-[var(--color-gray-500)]">Préférences</Legend>
-      {lines.length > 0 ? (
-        <dl className="mt-1 flex flex-col gap-1">
-          {lines.map((pref) => (
-            <div key={pref.label} className="flex gap-1.5 text-xs leading-snug">
-              <dt className="shrink-0 font-semibold text-[var(--color-gray-700)]">{pref.label} ·</dt>
-              <dd className="text-[var(--color-gray-600)]">{pref.note}</dd>
-            </div>
-          ))}
-        </dl>
-      ) : (
-        <p className="mt-1 text-xs text-[var(--color-gray-500)]">Aucune préférence notée</p>
-      )}
-    </div>
-  );
 }
 
 /** One advantage on the payer's always-visible summary line — a compact segment (icon, label,
@@ -209,7 +174,6 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
     ? packPurchasesForClient(payer.id).filter((pp) => packRemainingPrestations(pp).length > 0)
     : [];
   const hasAvantages = Boolean(giftCard) || (payer && payer.points > 0) || abonnements.length > 0 || packs.length > 0;
-  const payerPrefLines = clientPreferenceLines(payer ?? null);
 
   return (
     <>
@@ -301,11 +265,14 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
 
               {/* Préférences toujours visibles, jamais derrière un dépliage (demande utilisateur 25/09). */}
               <div className="mt-3 flex flex-col gap-3">
-                <PreferencesBlock lines={payerPrefLines} />
-                {payer.internalNotes && (
+                <ClientPreferences client={payer} />
+                {payer.notes?.[0] && (
                   <div className="rounded-lg bg-[var(--color-gray-50)] px-3 py-2">
-                    <Legend className="text-[var(--color-gray-500)]">Notes</Legend>
-                    <p className="mt-1 text-xs leading-snug text-[var(--color-gray-600)]">{payer.internalNotes}</p>
+                    <Legend className="text-[var(--color-gray-500)]">
+                      Dernière note · {praticienneById(payer.notes[0].authorId)?.name ?? "Équipe"},{" "}
+                      {new Date(payer.notes[0].at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
+                    </Legend>
+                    <p className="mt-1 text-xs leading-snug text-[var(--color-gray-600)]">{payer.notes[0].text}</p>
                   </div>
                 )}
               </div>
@@ -347,7 +314,7 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
                     // (with the rest of her identity) — no need to repeat it here.
                     // A beneficiary named free-text has no fiche, hence no preferences to read.
                     if (!group.client || group.client.id === payer?.id) return null;
-                    return <PreferencesBlock lines={clientPreferenceLines(group.client)} className="mt-2" />;
+                    return <ClientPreferences client={group.client} className="mt-2" />;
                   })()}
 
                   <div className="mt-2 flex flex-col divide-y divide-[var(--board-groove)]">
