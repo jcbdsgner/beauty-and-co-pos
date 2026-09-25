@@ -45,7 +45,7 @@ type ClientSearchFieldProps = {
 /**
  * The one "Chercher une cliente" mechanism (USERFLOW.md — Modèle conceptuel + Comptoir spec):
  * a Popover of cmdk-driven results (`Command`), reused identically in the Comptoir and the
- * rendez-vous form. cmdk's own filtering is off — `searchClients` (name + phone) stays the single
+ * rendez-vous form. cmdk's own filtering is off — `searchClients` (name + phone + email) stays the single
  * source of matching logic across the app.
  */
 export function ClientSearchField({ selectedClientId, onSelect, placeholder = "Chercher une cliente…", required, className, trigger }: ClientSearchFieldProps) {

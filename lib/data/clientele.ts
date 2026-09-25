@@ -203,11 +203,24 @@ export function clientByLoyaltyCode(clients: Cliente[], raw: string) {
   return clients.find((c) => c.loyaltyCode.toUpperCase() === code);
 }
 
+/** Une cliente correspond-elle à la saisie ? Nom, téléphone (ou WhatsApp) et e-mail — les trois
+ *  façons dont on la retrouve au comptoir. Les chiffres se comparent sans espaces ni ponctuation,
+ *  pour que « 77 123 45 67 », « 771234567 » ou « +221 77… » tombent tous juste. Seule règle de
+ *  correspondance cliente : la recherche de rendez-vous de l'Accueil la réutilise. */
+export function clientMatchesQuery(c: Cliente, query: string) {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  if (clientFullName(c).toLowerCase().includes(q)) return true;
+  if (c.email?.toLowerCase().includes(q)) return true;
+  const qDigits = q.replace(/\D/g, "");
+  if (qDigits.length >= 2 && /^[\d\s+().-]+$/.test(q)) {
+    return [c.phone, c.whatsapp].some((n) => n?.replace(/\D/g, "").includes(qDigits));
+  }
+  return false;
+}
+
 /** Takes the live `clients` array (from `useAppData()`) rather than the static seed list, so a cliente created this session is searchable immediately. */
 export function searchClients(clients: Cliente[], query: string) {
-  const q = query.trim().toLowerCase();
-  if (!q) return clients;
-  return clients.filter(
-    (c) => clientFullName(c).toLowerCase().includes(q) || c.phone.replace(/\s/g, "").includes(q.replace(/\s/g, "")),
-  );
+  if (!query.trim()) return clients;
+  return clients.filter((c) => clientMatchesQuery(c, query));
 }

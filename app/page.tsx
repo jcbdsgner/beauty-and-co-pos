@@ -20,7 +20,7 @@ import { AccueilGiftCards } from "@/components/journee/accueil-gift-cards";
 import { useEncaissement } from "@/components/journee/use-encaissement";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { dateISO, groupDayByReservation, reservationDate, todayISO } from "@/lib/data/planning";
-import { clientFullName, clientInitial, searchClients } from "@/lib/data/clientele";
+import { clientFullName, clientInitial, clientMatchesQuery, searchClients } from "@/lib/data/clientele";
 import { SALONS } from "@/lib/data/entreprises";
 import { useSession } from "@/lib/session";
 import type { Cliente, RendezVous } from "@/lib/data/types";
@@ -139,14 +139,16 @@ function AccueilPageInner() {
           );
     const q = query.trim().toLowerCase();
     if (!q) return bySalon;
-    const qDigits = q.replace(/\D/g, "");
     return bySalon.filter((row) => {
       const payer = clients.find((c) => c.id === row.reservation.payerClientId);
-      const payerMatch = payer
-        ? clientFullName(payer).toLowerCase().includes(q) || (qDigits && payer.phone.replace(/\D/g, "").includes(qDigits))
-        : false;
+      const payerMatch = payer ? clientMatchesQuery(payer, q) : false;
+      // Une réservation se retrouve aussi par la personne servie (« Salématou (7 ans) ») — pas
+      // seulement par la payeuse.
+      const beneficiaryMatch = row.reservation.rendezVous.some((rdv) =>
+        rdv.beneficiaryName?.toLowerCase().includes(q),
+      );
       const staffMatch = row.staffIds.some((id) => praticiennes.find((p) => p.id === id)?.name.toLowerCase().includes(q));
-      return payerMatch || staffMatch;
+      return payerMatch || beneficiaryMatch || staffMatch;
     });
   }, [reservations, clients, praticiennes, rangeStart, rangeEnd, query, salonFilter]);
 
@@ -215,7 +217,7 @@ function AccueilPageInner() {
 
         <div className="mb-4 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center">
           <SearchInput
-            placeholder="Rechercher une cliente ou praticienne…"
+            placeholder="Cliente (nom, téléphone, e-mail) ou praticienne…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="flex-1 sm:max-w-sm"
