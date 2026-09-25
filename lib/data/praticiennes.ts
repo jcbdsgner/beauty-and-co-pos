@@ -30,6 +30,7 @@ export const PRATICIENNES: Praticienne[] = [
     name: "Bineta",
     role: "coiffeuse",
     initial: "B",
+    photoUrl: "/images/equipe/bineta.jpg",
     salonId: "sea-plaza-bco",
     weeklySchedule: {
       mar: { start: "10:00", end: "18:00" },
@@ -45,6 +46,7 @@ export const PRATICIENNES: Praticienne[] = [
     name: "Fatou",
     role: "coiffeuse",
     initial: "F",
+    photoUrl: "/images/equipe/fatou.jpg",
     salonId: "sea-plaza-bco",
     weeklySchedule: {
       lun: { start: "10:00", end: "19:00" },
@@ -60,6 +62,7 @@ export const PRATICIENNES: Praticienne[] = [
     name: "Gnagna",
     role: "estheticienne",
     initial: "G",
+    photoUrl: "/images/equipe/gnagna.jpg",
     salonId: "almadies",
     weeklySchedule: {
       mar: { start: "10:00", end: "17:00" },
@@ -74,6 +77,7 @@ export const PRATICIENNES: Praticienne[] = [
     name: "Henry",
     role: "coiffeuse",
     initial: "H",
+    photoUrl: "/images/equipe/henry.jpg",
     salonId: "almadies",
     weeklySchedule: {
       mer: { start: "10:00", end: "17:00" },
@@ -88,6 +92,7 @@ export const PRATICIENNES: Praticienne[] = [
     name: "Marie Dominique",
     role: "estheticienne",
     initial: "MD",
+    photoUrl: "/images/equipe/marie-dominique.jpg",
     salonId: "sea-plaza-bco",
     weeklySchedule: {
       lun: { start: "11:00", end: "19:00" },
@@ -103,6 +108,7 @@ export const PRATICIENNES: Praticienne[] = [
     name: "Adja",
     role: "estheticienne",
     initial: "A",
+    photoUrl: "/images/equipe/adja.jpg",
     salonId: "almadies",
     weeklySchedule: {
       mar: { start: "10:00", end: "18:30" },
@@ -118,6 +124,7 @@ export const PRATICIENNES: Praticienne[] = [
     name: "Michelle",
     role: "coiffeuse",
     initial: "M",
+    photoUrl: "/images/equipe/michelle.jpg",
     salonId: "almadies",
     weeklySchedule: {
       mar: { start: "10:00", end: "16:30" },
@@ -132,6 +139,7 @@ export const PRATICIENNES: Praticienne[] = [
     name: "Aïssatou",
     role: "menage",
     initial: "AÏ",
+    photoUrl: "/images/equipe/aissatou.jpg",
     salonId: "almadies",
     weeklySchedule: {
       mar: { start: "08:00", end: "13:00" },

@@ -20,6 +20,8 @@ export type Praticienne = {
   name: string;
   role: Role;
   initial: string;
+  /** Photo d'avatar (public/images/equipe) — absente ⇒ l'initiale s'affiche. */
+  photoUrl?: string;
   weeklySchedule: WeeklySchedule;
   /** Le salon où elle travaille (`Salon.id`, voir `lib/data/entreprises.ts`) — fixe, jamais les
    *  deux à la fois (ADR 0028). Une paire « réalisable à 2 » est toujours au même salon. */

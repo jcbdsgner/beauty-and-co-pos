@@ -213,6 +213,7 @@ export function DayTimeline({
               >
                 <GripVertical aria-hidden className="size-3.5 shrink-0 cursor-grab text-base-content/25 active:cursor-grabbing" />
                 <Avatar
+                  photoUrl={p.photoUrl}
                   initial={p.initial}
                   size={32}
                   className={cn("shrink-0 text-[0.72rem] font-semibold", absent && "bg-base-200 text-base-content/40")}

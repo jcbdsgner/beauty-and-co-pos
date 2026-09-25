@@ -185,6 +185,7 @@ export function AccueilCalendar({ rows, clients, praticiennes, onOpenReservation
                       {visibleAvatars.map((p, i) => (
                         <Avatar
                           key={p.id}
+                          photoUrl={p.photoUrl}
                           initial={p.initial}
                           size={26}
                           className={cn("bg-base-100 text-[0.65rem] font-bold text-base-content ring-2 ring-base-100", i > 0 && "-ml-2.5")}
