@@ -12,7 +12,7 @@ import { cn, formatFcfa } from "@/lib/utils";
  * sheet below. Each inactive tab shows its running total so a receptionist juggling several
  * clientes sees where each basket stands without switching.
  */
-export function SaleTabsBar() {
+export function SaleTabsBar({ locked = false }: { locked?: boolean }) {
   const { sales, openTabIds, activeSaleId, switchTab, closeTab, openNewTab } = useAppData();
   const [pendingCloseId, setPendingCloseId] = useState<string | null>(null);
 
@@ -41,14 +41,21 @@ export function SaleTabsBar() {
                 active
                   ? "relative z-10 -mb-0.5 bg-base-200 text-base-content"
                   : "bg-white/10 text-white/70 hover:bg-white/15 hover:text-white",
+                locked && !active && "opacity-40",
               )}
             >
-              <button type="button" onClick={() => switchTab(tab.id)} className="flex flex-col items-start leading-tight active:scale-[0.97]">
+              <button
+                type="button"
+                onClick={() => switchTab(tab.id)}
+                disabled={locked && !active}
+                className="flex flex-col items-start leading-tight active:scale-[0.97] disabled:pointer-events-none"
+              >
                 <span>{tab.label}</span>
                 <span className={cn("text-[11px] font-medium tabular-nums", active ? "text-base-content/55" : "text-white/70")}>
                   {amountDue > 0 ? formatFcfa(amountDue) : "—"}
                 </span>
               </button>
+              {!locked && (
               <button
                 type="button"
                 onClick={() => handleCloseRequest(tab.id)}
@@ -62,6 +69,7 @@ export function SaleTabsBar() {
               >
                 <X aria-hidden className="size-4" />
               </button>
+              )}
             </div>
           );
         })}
@@ -69,8 +77,9 @@ export function SaleTabsBar() {
         <button
           type="button"
           onClick={() => openNewTab()}
+          disabled={locked}
           aria-label="Nouvelle vente"
-          className="flex size-11 shrink-0 items-center justify-center self-center rounded-full text-white/80 transition active:scale-90 hover:bg-white/10"
+          className="disabled:pointer-events-none disabled:opacity-40 flex size-11 shrink-0 items-center justify-center self-center rounded-full text-white/80 transition active:scale-90 hover:bg-white/10"
         >
           <Plus aria-hidden className="size-5" />
         </button>

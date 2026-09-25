@@ -58,7 +58,10 @@ function FicheClienteViewInner({ clientId }: { clientId: string }) {
   const searchParams = useSearchParams();
   // Arrivée depuis la recherche rapide de l'Accueil (`ClientMatchCard`, passe impeccable du 22/09) :
   // "Retour" pointe vers l'Accueil avec la même recherche plutôt que Clientèle par défaut.
-  const fromAccueil = searchParams.get("from") === "accueil";
+  // Arrivée depuis le reçu d'une vente encaissée : l'écran s'ouvre directement sur « Notes »
+  // (préférences + note interne), que la réceptionniste doit renseigner avant de repartir.
+  const fromVente = searchParams.get("from") === "vente";
+  const fromAccueil = searchParams.get("from") === "accueil" || fromVente;
   const accueilQuery = searchParams.get("q") ?? "";
   const backHref = fromAccueil ? (accueilQuery ? `/?q=${encodeURIComponent(accueilQuery)}` : "/") : "/clientele";
   const backLabel = fromAccueil ? "Accueil" : "Clientèle";
@@ -69,6 +72,12 @@ function FicheClienteViewInner({ clientId }: { clientId: string }) {
   useEffect(() => {
     if (clientExists) noteClientViewed(clientId);
   }, [clientId, clientExists, noteClientViewed]);
+
+  useEffect(() => {
+    if (!fromVente || !clientExists) return;
+    document.getElementById("fiche-notes")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    document.getElementById("fiche-note-draft")?.focus({ preventScroll: true });
+  }, [fromVente, clientExists]);
 
   const [editCoordOpen, setEditCoordOpen] = useState(false);
   const [editPrefOpen, setEditPrefOpen] = useState(false);
@@ -226,6 +235,7 @@ function FicheClienteViewInner({ clientId }: { clientId: string }) {
             )}
           </Board>
 
+          <div id="fiche-notes" className="scroll-mt-6">
           <Board legend="Notes">
             {client.internalNotes && (
               <div className="max-h-48 overflow-y-auto whitespace-pre-line border-b border-base-300 bg-black/[0.015] px-4 py-3 text-sm text-base-content/80">
@@ -234,6 +244,7 @@ function FicheClienteViewInner({ clientId }: { clientId: string }) {
             )}
             <div className="flex flex-col gap-3 p-4">
               <Textarea
+                id="fiche-note-draft"
                 value={noteDraft}
                 onChange={(e) => setNoteDraft(e.target.value)}
                 placeholder="Une observation, une préférence exprimée en salon…"
@@ -258,6 +269,7 @@ function FicheClienteViewInner({ clientId }: { clientId: string }) {
               </p>
             </div>
           </Board>
+          </div>
 
         </div>
 
