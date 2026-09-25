@@ -69,7 +69,7 @@ function Swatch({ name, varName, fg = "#171717" }: { name: string; varName: stri
   return (
     <div className="flex flex-col gap-2">
       <div className="flex h-16 items-end rounded-2xl border border-base-300 p-2" style={{ background: `var(${varName})` }}>
-        <span className="rounded-full bg-white/70 px-2 py-0.5 text-[10px] font-medium" style={{ color: fg }}>
+        <span className="rounded-full bg-white/70 px-2 py-0.5 text-xs font-medium" style={{ color: fg }}>
           {varName}
         </span>
       </div>

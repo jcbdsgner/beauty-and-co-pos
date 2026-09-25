@@ -72,7 +72,7 @@ export function FileUpload({ files, onAdd, onRemove, accept = "image/*", multipl
               ) : (
                 <div className="flex size-full flex-col items-center justify-center gap-1 bg-base-200 text-base-content/45">
                   <ImageIcon aria-hidden className="size-6" />
-                  <span className="px-1 text-center text-[10px] leading-tight truncate">{file.name}</span>
+                  <span className="px-1 text-center text-xs leading-tight truncate">{file.name}</span>
                 </div>
               )}
               {/* A 28px badge, not the app's usual 44px minimum: removing one photo from a small,

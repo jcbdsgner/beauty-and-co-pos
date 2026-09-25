@@ -176,6 +176,12 @@
   --font-heading: var(--font-poppins);
   --font-nav: var(--font-poppins);
 
+  /* Type floor: a counter screen read at arm's length — nothing smaller than 13px.
+     Tailwind's default text-xs (12px) is raised here, and sub-12px arbitrary sizes
+     are banned in components (use text-xs). */
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.125rem;
+
   --color-card: #ffffff;
   --color-card-foreground: var(--foreground);
   --color-popover: #ffffff;

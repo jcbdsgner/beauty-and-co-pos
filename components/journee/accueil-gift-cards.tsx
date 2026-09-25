@@ -49,7 +49,7 @@ export function AccueilGiftCards() {
         <Legend>Cartes cadeaux</Legend>
         <Link
           href="/cartes-cadeaux"
-          className="flex items-center gap-1 text-[0.7rem] font-bold uppercase tracking-[0.1em] text-primary transition hover:opacity-75"
+          className="flex items-center gap-1 text-xs font-bold uppercase tracking-[0.1em] text-primary transition hover:opacity-75"
         >
           {rest > 0 ? `Voir tout · ${pending.length}` : "Ouvrir la file"}
           <ChevronRight aria-hidden className="size-3.5" />

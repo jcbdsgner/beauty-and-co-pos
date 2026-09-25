@@ -51,7 +51,7 @@ export function SaleTabsBar({ locked = false }: { locked?: boolean }) {
                 className="flex flex-col items-start leading-tight active:scale-[0.97] disabled:pointer-events-none"
               >
                 <span>{tab.label}</span>
-                <span className={cn("text-[11px] font-medium tabular-nums", active ? "text-base-content/55" : "text-white/70")}>
+                <span className={cn("text-xs font-medium tabular-nums", active ? "text-base-content/55" : "text-white/70")}>
                   {amountDue > 0 ? formatFcfa(amountDue) : "—"}
                 </span>
               </button>

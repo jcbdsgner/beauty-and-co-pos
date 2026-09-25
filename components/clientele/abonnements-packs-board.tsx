@@ -61,7 +61,7 @@ export function AbonnementsPacksBoard({ clientId }: { clientId: string }) {
                 </Legend>
                 <span
                   className={cn(
-                    "rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide",
+                    "rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-wide",
                     STATUS_CLASS[status],
                   )}
                 >
@@ -83,7 +83,7 @@ export function AbonnementsPacksBoard({ clientId }: { clientId: string }) {
                     <li key={id} className={cn("flex items-center gap-2", consumed && "text-base-content/40")}>
                       <span className={cn("size-1.5 shrink-0 rounded-full", consumed ? "bg-base-300" : "bg-success")} />
                       <span className={cn(consumed && "line-through")}>{serviceById(id)?.name ?? id}</span>
-                      {consumed && <span className="text-[11px] uppercase tracking-wide">pris ce cycle</span>}
+                      {consumed && <span className="text-xs uppercase tracking-wide">pris ce cycle</span>}
                     </li>
                   );
                 })}
@@ -107,7 +107,7 @@ export function AbonnementsPacksBoard({ clientId }: { clientId: string }) {
                 </Legend>
                 <span
                   className={cn(
-                    "rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide",
+                    "rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-wide",
                     remaining.length === 0 ? "bg-base-200 text-base-content/45" : "bg-success/12 text-success",
                   )}
                 >
@@ -125,7 +125,7 @@ export function AbonnementsPacksBoard({ clientId }: { clientId: string }) {
                     <li key={id} className={cn("flex items-center gap-2", consumed && "text-base-content/40")}>
                       <span className={cn("size-1.5 shrink-0 rounded-full", consumed ? "bg-base-300" : "bg-success")} />
                       <span className={cn(consumed && "line-through")}>{serviceById(id)?.name ?? id}</span>
-                      {consumed && <span className="text-[11px] uppercase tracking-wide">utilisée</span>}
+                      {consumed && <span className="text-xs uppercase tracking-wide">utilisée</span>}
                     </li>
                   );
                 })}

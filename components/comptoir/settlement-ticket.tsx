@@ -288,7 +288,7 @@ function RemiseComposer({
             >
               {p} %
               {p > RECEPTIONIST_MAX_PCT && (
-                <span className={cn("text-[10px] font-semibold", pct === p ? "text-primary-content/80" : "text-base-content/45")}>
+                <span className={cn("text-xs font-semibold", pct === p ? "text-primary-content/80" : "text-base-content/45")}>
                   code manager
                 </span>
               )}

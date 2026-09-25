@@ -82,7 +82,7 @@ export function Sidebar() {
                   />
                 )}
               </span>
-              <span className="text-[10.5px] leading-tight font-semibold tracking-wide uppercase">{item.label}</span>
+              <span className="text-xs leading-tight font-semibold tracking-wide uppercase">{item.label}</span>
             </Link>
           );
         })}

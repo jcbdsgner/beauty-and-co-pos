@@ -188,12 +188,12 @@ export function AccueilCalendar({ rows, clients, praticiennes, onOpenReservation
                           photoUrl={p.photoUrl}
                           initial={p.initial}
                           size={26}
-                          className={cn("bg-base-100 text-[0.65rem] font-bold text-base-content ring-2 ring-base-100", i > 0 && "-ml-2.5")}
+                          className={cn("bg-base-100 text-xs font-bold text-base-content ring-2 ring-base-100", i > 0 && "-ml-2.5")}
                         />
                       ))}
                       {hiddenAvatars > 0 && (
                         <span
-                          className="-ml-2.5 flex size-[26px] shrink-0 items-center justify-center rounded-full text-[0.65rem] font-bold text-base-100 ring-2 ring-base-100"
+                          className="-ml-2.5 flex size-[26px] shrink-0 items-center justify-center rounded-full text-xs font-bold text-base-100 ring-2 ring-base-100"
                           style={{ backgroundColor: fg }}
                         >
                           +{hiddenAvatars}

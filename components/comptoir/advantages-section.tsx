@@ -55,7 +55,7 @@ export function AdvantagesSection({ sale }: { sale: Sale }) {
           />
           <span className="w-16 text-center">
             <span className="block text-sm font-bold text-base-content tabular-nums">{sale.loyaltyPointsUsed}</span>
-            <span className={cn("block text-[11px] font-medium tabular-nums", totals.loyaltyDiscount > 0 ? "text-success" : "text-base-content/45")}>
+            <span className={cn("block text-xs font-medium tabular-nums", totals.loyaltyDiscount > 0 ? "text-success" : "text-base-content/45")}>
               {totals.loyaltyDiscount > 0 ? `−${formatFcfa(totals.loyaltyDiscount)}` : "pts"}
             </span>
           </span>

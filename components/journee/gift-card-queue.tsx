@@ -142,7 +142,7 @@ function GiftCardQueueTile({ order }: { order: GiftCardOrder }) {
       <div className="flex items-center justify-between gap-2 border-t border-base-300 pt-3">
         <span
           className={cn(
-            "shrink-0 whitespace-nowrap text-[0.7rem] font-semibold tabular-nums",
+            "shrink-0 whitespace-nowrap text-xs font-semibold tabular-nums",
             stale ? "text-warning" : "text-base-content/45",
           )}
         >

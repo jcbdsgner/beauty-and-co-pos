@@ -230,7 +230,7 @@ function RelanceCard({ message }: { message: Message }) {
       {style && (
         <p className="mt-2 text-xs text-base-content/55">Style recommandé : {style.name}</p>
       )}
-      <p className="mt-2 text-[11px] text-base-content/45">Votre conseillère beauté · Beauty and Co</p>
+      <p className="mt-2 text-xs text-base-content/45">Votre conseillère beauté · Beauty and Co</p>
     </div>
   );
 }

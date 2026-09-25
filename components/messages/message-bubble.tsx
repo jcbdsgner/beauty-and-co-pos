@@ -21,7 +21,7 @@ export function MessageBubble({ message }: { message: Message }) {
       >
         <p className="whitespace-pre-line">{message.body}</p>
       </div>
-      <span className="px-1 text-[11px] text-base-content/45" title={FULL_DATE_FMT.format(new Date(message.at))}>
+      <span className="px-1 text-xs text-base-content/45" title={FULL_DATE_FMT.format(new Date(message.at))}>
         {message.sender === "bot" && "Bot · Beauty and Co · "}
         {TIME_FMT.format(new Date(message.at))}
       </span>

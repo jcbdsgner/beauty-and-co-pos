@@ -226,7 +226,7 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
           )}
           {reservationCancelled && <FlipChip value="Annulé" tone="void" />}
           {hasSale && <FlipChip value="En cours" tone="signal" />}
-          <span className="w-full text-[0.7rem] text-white/60">
+          <span className="w-full text-xs text-white/60">
             {reservation ? `Réservé pour ${reservationComposition(reservation)}` : "Réservée en ligne"}
             {lines.length > 0 && (
               <>
@@ -393,7 +393,7 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
                         <span className="text-sm font-semibold text-[var(--color-gray-900)]">{group.label}</span>
                       )}
                       {group.kind !== "femme" && (
-                        <span className="rounded-full bg-[var(--brand-rose-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--brand-taupe-muted)]">
+                        <span className="rounded-full bg-[var(--brand-rose-soft)] px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-[var(--brand-taupe-muted)]">
                           {group.kind === "homme" ? "Homme" : "Enfant"}
                         </span>
                       )}

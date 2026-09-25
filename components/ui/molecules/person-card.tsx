@@ -35,7 +35,7 @@ export function PersonCard({ initial, name, meta, badge, trailing, online, onCli
         {online && <span className="absolute right-0 bottom-0 size-3.5 rounded-full border-2 border-white bg-success" />}
         {badge && (
           <span className="absolute -top-1.5 -left-1.5">
-            <Badge variant={badge.variant} className="px-1.5 py-0.5 text-[10px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.15)]">
+            <Badge variant={badge.variant} className="px-1.5 py-0.5 text-xs shadow-[0px_1px_3px_0px_rgba(0,0,0,0.15)]">
               {badge.label}
             </Badge>
           </span>

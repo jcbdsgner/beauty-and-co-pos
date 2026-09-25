@@ -43,7 +43,7 @@ function TierFlag({ tier }: { tier: Cliente["tier"] }) {
   if (!tier) return null;
   return (
     <span
-      className={`rounded-[6px] px-2 py-0.5 text-[0.6875rem] font-bold uppercase tracking-[0.06em] ${TIER_TONE[tier]}`}
+      className={`rounded-[6px] px-2 py-0.5 text-xs font-bold uppercase tracking-[0.06em] ${TIER_TONE[tier]}`}
     >
       {TIER_LABEL[tier]}
     </span>
@@ -209,7 +209,7 @@ function ClientCard({ client: c, trailing }: { client: Cliente; trailing?: strin
       </div>
       {!trailing && (
         <div className="mt-auto">
-          <p className="text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-base-content/35">Total dépensé</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-base-content/35">Total dépensé</p>
           <p className="text-sm font-semibold tabular-nums text-primary">{formatFcfa(c.totalSpent)}</p>
         </div>
       )}

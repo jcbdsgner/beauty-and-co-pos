@@ -69,7 +69,7 @@ export function WeekTimeline({ weekDays, today, staff, accentIndex, allRows, iso
                 )}
                 style={{ minWidth: DAY_W }}
               >
-                <span className={cn("text-[0.6rem] font-bold uppercase tracking-[0.1em]", isToday ? "text-primary" : "text-base-content/45")}>
+                <span className={cn("text-xs font-bold uppercase tracking-[0.1em]", isToday ? "text-primary" : "text-base-content/45")}>
                   {dayHead(d)}
                 </span>
                 <span className={cn("text-sm font-semibold tabular-nums", isToday ? "text-primary" : "text-base-content/70")}>{d.getDate()}</span>
@@ -84,7 +84,7 @@ export function WeekTimeline({ weekDays, today, staff, accentIndex, allRows, iso
           return (
           <div key={p.id} className="flex border-b border-l-[3px] border-base-300 last:border-b-0" style={{ borderLeftColor: accent.dot }}>
             <div className="flex shrink-0 items-center gap-2 border-r border-base-300 px-3 py-2" style={{ width: LABEL_W }}>
-              <Avatar photoUrl={p.photoUrl} initial={p.initial} size={28} className="shrink-0 text-[0.68rem] font-semibold" style={{ backgroundColor: accent.dot, color: "#fff" }} />
+              <Avatar photoUrl={p.photoUrl} initial={p.initial} size={28} className="shrink-0 text-xs font-semibold" style={{ backgroundColor: accent.dot, color: "#fff" }} />
               <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-base-content">{p.name}</span>
               <DropdownMenu
                 align="end"
@@ -129,15 +129,15 @@ export function WeekTimeline({ weekDays, today, staff, accentIndex, allRows, iso
                   style={{ minWidth: DAY_W }}
                 >
                   {absent ? (
-                    <span className="text-[0.68rem] font-semibold text-warning">Absente</span>
+                    <span className="text-xs font-semibold text-warning">Absente</span>
                   ) : hours ? (
                     <>
-                      <span className="text-[0.7rem] font-semibold tabular-nums text-base-content/70">
+                      <span className="text-xs font-semibold tabular-nums text-base-content/70">
                         {formatHour(hours.start)}–{formatHour(hours.end)}
                       </span>
                       {items.length > 0 && (
                         <span
-                          className="rounded-full px-1.5 py-px text-[0.62rem] font-bold tabular-nums"
+                          className="rounded-full px-1.5 py-px text-xs font-bold tabular-nums"
                           style={{ backgroundColor: accent.bg, color: accent.text }}
                         >
                           {items.length} rdv
@@ -145,7 +145,7 @@ export function WeekTimeline({ weekDays, today, staff, accentIndex, allRows, iso
                       )}
                     </>
                   ) : (
-                    <span className="text-[0.7rem] text-base-content/30">Repos</span>
+                    <span className="text-xs text-base-content/30">Repos</span>
                   )}
                 </button>
               );

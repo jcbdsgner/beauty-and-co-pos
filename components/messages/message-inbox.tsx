@@ -166,11 +166,11 @@ function InboxRow({
         <span className="line-clamp-1 text-[13px] text-base-content/55">{subtitle}</span>
       </span>
       <span className="flex shrink-0 flex-col items-end gap-1">
-        <span className="flex items-center gap-1.5 text-[11px] text-base-content/45 tabular-nums">
+        <span className="flex items-center gap-1.5 text-xs text-base-content/45 tabular-nums">
           {stamp}
           <ChannelGlyph channel={conv.channel} className="size-3.5" />
         </span>
-        <FlipChip value={STATE_LABEL[conv.state]} tone="neutral" className="min-w-0 px-1.5 py-0.5 text-[0.55rem]" />
+        <FlipChip value={STATE_LABEL[conv.state]} tone="neutral" className="min-w-0 px-1.5 py-0.5 text-xs" />
       </span>
     </button>
   );

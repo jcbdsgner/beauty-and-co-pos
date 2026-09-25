@@ -111,7 +111,7 @@ function CoverageGroup({
         })}
       </div>
 
-      <p className="mt-1 text-[11px] text-success/80">
+      <p className="mt-1 text-xs text-success/80">
         {noneChecked
           ? isAbo
             ? "Gardé pour ce cycle — rien décompté."

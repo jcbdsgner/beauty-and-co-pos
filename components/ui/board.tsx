@@ -23,7 +23,7 @@ export function Legend({ children, className }: { children: React.ReactNode; cla
   return (
     <span
       className={cn(
-        "font-[family-name:var(--font-heading)] text-[0.68rem] font-bold uppercase tracking-[0.13em] text-[var(--brand-taupe-muted)]",
+        "font-[family-name:var(--font-heading)] text-sm font-bold uppercase tracking-[0.08em] text-[var(--brand-taupe-muted)]",
         className,
       )}
     >
@@ -228,7 +228,7 @@ export function FlipChip({ value, tone = "neutral", className }: { value: string
   return (
     <span
       className={cn(
-        "inline-flex min-w-[4.5rem] items-center justify-center rounded-[6px] px-2 py-1 text-center font-[family-name:var(--font-heading)] text-[0.62rem] font-bold uppercase tracking-[0.1em] tabular-nums",
+        "inline-flex min-w-[4.5rem] items-center justify-center rounded-[6px] px-2 py-1 text-center font-[family-name:var(--font-heading)] text-xs font-bold uppercase tracking-[0.1em] tabular-nums",
         CHIP_TONE[tone],
         flip && "animate-chip-flip",
         className,
@@ -310,7 +310,7 @@ export function WeekStrip({ selected, onSelect, className }: { selected: Date; o
                 !active && isToday && "ring-1 ring-inset ring-[var(--brand-taupe-muted)]",
               )}
             >
-              <span className="text-[0.62rem] font-bold uppercase tracking-[0.1em]">{WEEKDAY[i]}</span>
+              <span className="text-xs font-bold uppercase tracking-[0.1em]">{WEEKDAY[i]}</span>
               <span className="text-lg font-semibold tabular-nums">{d.getDate()}</span>
             </button>
           );
@@ -393,7 +393,7 @@ export function VoletSwitch({
             type="button"
             onClick={() => onChange(o.value)}
             className={cn(
-              "relative flex min-h-12 items-center gap-2 px-4 pb-2.5 pt-1 font-[family-name:var(--font-heading)] text-[0.72rem] font-bold uppercase tracking-[0.11em] transition",
+              "relative flex min-h-12 items-center gap-2 px-4 pb-2.5 pt-1 font-[family-name:var(--font-heading)] text-xs font-bold uppercase tracking-[0.11em] transition",
               "after:absolute after:inset-x-3 after:-bottom-px after:h-[2px] after:rounded-full after:transition-colors",
               active
                 ? "text-[var(--color-gray-900)] after:bg-[var(--brand-taupe-muted)]"

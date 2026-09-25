@@ -309,7 +309,7 @@ export function MenuPanel({ saleId }: { saleId: string }) {
                             <span className="text-[17px] font-bold text-primary tabular-nums">
                               {formatFcfa(item.price)}
                             </span>
-                            <span className="flex items-center gap-1.5 text-[11px] font-medium text-base-content/55 tabular-nums">
+                            <span className="flex items-center gap-1.5 text-xs font-medium text-base-content/55 tabular-nums">
                               {"twoPractitionersEligible" in item && item.twoPractitionersEligible && (
                                 <span title="Réalisable à deux praticiennes" className="flex items-center gap-0.5">
                                   <Users aria-hidden className="size-3" />2
@@ -321,7 +321,7 @@ export function MenuPanel({ saleId }: { saleId: string }) {
                           {remaining !== null && (
                             <span
                               className={cn(
-                                "text-[11px] font-semibold tabular-nums",
+                                "text-xs font-semibold tabular-nums",
                                 soldOut
                                   ? "text-error"
                                   : remaining <= 5
