@@ -57,7 +57,7 @@ export function TicketHead({
   );
 }
 
-/** The identified cliente, with her preferences always shown beneath — never folded away. */
+/** The identified cliente, with her preferences shown beneath — foldable to free room for the règlement. */
 export function TicketClientCard({ client, onRemove }: { client: Cliente; onRemove?: () => void }) {
   return (
     <div className="flex flex-col gap-2">
@@ -84,7 +84,7 @@ export function TicketClientCard({ client, onRemove }: { client: Cliente; onRemo
           </button>
         )}
       </div>
-      <ClientPreferences client={client} />
+      <ClientPreferences client={client} collapsible />
     </div>
   );
 }
