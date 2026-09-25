@@ -15,6 +15,7 @@ Les deux modes imprimés alimentent une **file de préparation** ouverte sur l'A
 - **Accueil** : pas de bloc dédié. La cellule **« Encaissé aujourd'hui »** de « Le point du jour » (`app/page.tsx`) devient **« Cartes à préparer »** — compteur des commandes non résolues (`a_imprimer` + `imprimee`), état vide « Aucune carte à préparer » en sourdine. « Encaissé aujourd'hui » disparaît de l'Accueil (reste via le Récap des ventes).
 - **Route dédiée `/cartes-cadeaux`** (« Cartes cadeaux à préparer ») : la file complète. Une ligne = acheteur + montant + badge Retrait/Livraison + statut ; les lignes Livraison exposent nom / téléphone / adresse du bénéficiaire. Actions : **Imprimer** (impression directe de la face carte, `react-to-print`, **sans dialog de prévisualisation** — l'utilisateur ne veut pas voir la carte à l'écran) puis **Marquer comme remise / expédiée**.
 - **Face imprimée** (`components/shared/gift-card.tsx`) : conservée **riche** (code + montant + QR démo + branding) — c'est un vrai livrable client, et le code doit pouvoir être scanné/tapé au comptoir. Elle n'est **jamais rendue dans l'UI de la file**, seulement comme cible d'impression hors-écran.
+  - **Rév. 2026-09-25 :** l'impression ne sort plus la carte entière — seulement un **code-barres avec le code cadeau juste en dessous** (`components/shared/barcode.tsx`). `components/shared/gift-card.tsx` est supprimé.
 - **ADR 0001 préservé** : aucune émission, aucun encaissement, aucune surface manager — le salon ne fait que **préparer** ce qui a été acheté ailleurs.
 
 ## Conséquences

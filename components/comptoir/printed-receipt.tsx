@@ -1,4 +1,5 @@
 import { Logo } from "@/components/ui/atoms/logo";
+import { Barcode } from "@/components/shared/barcode";
 import { computeTotals } from "@/components/providers/app-data-provider";
 import { PAYMENT_MODE_LABEL } from "@/components/comptoir/payment-modes";
 import { clientFullName } from "@/lib/data/clientele";
@@ -29,27 +30,6 @@ function Row({ label, value, strong = false }: { label: React.ReactNode; value: 
       <span className="min-w-0">{label}</span>
       <span className="shrink-0 tabular-nums">{value}</span>
     </div>
-  );
-}
-
-/** Decorative barcode drawn from the sale id — deterministic, never scanned (demo, like `DemoQrBlock`). */
-function Barcode({ seed }: { seed: string }) {
-  let h = 2166136261;
-  for (let i = 0; i < seed.length; i++) h = Math.imul(h ^ seed.charCodeAt(i), 16777619) >>> 0;
-  const bars: { x: number; w: number }[] = [];
-  let x = 0;
-  while (x < 196) {
-    h = Math.imul(h ^ (h >>> 13), 1274126177) >>> 0;
-    const w = 1 + (h % 3);
-    bars.push({ x, w });
-    x += w + 1 + ((h >>> 8) % 2);
-  }
-  return (
-    <svg viewBox="0 0 200 40" preserveAspectRatio="none" className="h-12 w-full" aria-hidden>
-      {bars.map((b, i) => (
-        <rect key={i} x={b.x} y={0} width={b.w} height={40} fill="black" />
-      ))}
-    </svg>
   );
 }
 

@@ -5,7 +5,7 @@ import { useReactToPrint } from "react-to-print";
 import { Check, Printer, Store, Truck } from "lucide-react";
 import { Badge } from "@/components/ui/atoms/badge";
 import { Button } from "@/components/ui/atoms/button";
-import { GiftCard } from "@/components/shared/gift-card";
+import { Barcode } from "@/components/shared/barcode";
 import { Toast } from "@/components/ui/molecules/toast";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { clientFullName } from "@/lib/data/clientele";
@@ -93,11 +93,10 @@ export function GiftCardTile({
       {/* Off-screen print target — react-to-print reads the live DOM, so keep it mounted (pas d'aperçu à l'écran). */}
       <div aria-hidden className="pointer-events-none fixed -left-[9999px] top-0">
         <div ref={cardRef}>
-          <GiftCard
-            code={order.code}
-            balance={order.amount}
-            services={content.kind === "prestations" ? content.services : undefined}
-          />
+          <div className="w-[60mm] bg-white text-black">
+            <Barcode seed={order.code} className="h-16" />
+            <p className="mt-1.5 text-center font-mono text-sm tracking-[0.2em]">{order.code}</p>
+          </div>
         </div>
       </div>
 
