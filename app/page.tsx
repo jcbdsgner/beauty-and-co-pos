@@ -167,7 +167,7 @@ function AccueilPageInner() {
   const periodLabel =
     period === "jour" ? "aujourd'hui" : period === "semaine" ? "cette semaine" : period === "mois" ? "ce mois" : "sur cette période";
 
-  const greeting = `Bon retour ${currentUser.name}${salon ? ` à ${salon.name}` : ""}`;
+  const greeting = [currentUser.name, salon?.name].filter(Boolean).join(", ");
 
   return (
     <div className="flex flex-col gap-6">
