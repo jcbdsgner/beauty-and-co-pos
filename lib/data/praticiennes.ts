@@ -18,6 +18,8 @@ export function isWorkingOn(p: Praticienne, d: Date): boolean {
   return scheduleFor(p, d) !== undefined;
 }
 
+/** Le salon est fermé le lundi et ouvert le dimanche — son jour le plus chargé : personne ne
+ *  travaille le lundi, tout le monde le dimanche. */
 export const PRATICIENNES: Praticienne[] = [
   {
     id: "bineta",
@@ -31,6 +33,7 @@ export const PRATICIENNES: Praticienne[] = [
       jeu: { start: "10:00", end: "18:00" },
       ven: { start: "10:00", end: "18:00" },
       sam: { start: "10:00", end: "18:00" },
+      dim: { start: "10:00", end: "18:00" },
     },
   },
   {
@@ -45,6 +48,7 @@ export const PRATICIENNES: Praticienne[] = [
       jeu: { start: "10:00", end: "19:00" },
       ven: { start: "10:00", end: "19:00" },
       sam: { start: "10:00", end: "19:00" },
+      dim: { start: "10:00", end: "19:00" },
     },
   },
   {
@@ -54,11 +58,11 @@ export const PRATICIENNES: Praticienne[] = [
     initial: "G",
     salonId: "almadies",
     weeklySchedule: {
-      lun: { start: "10:00", end: "17:00" },
       mar: { start: "10:00", end: "17:00" },
       jeu: { start: "10:00", end: "17:00" },
       ven: { start: "10:00", end: "17:00" },
       sam: { start: "10:00", end: "17:00" },
+      dim: { start: "10:00", end: "17:00" },
     },
   },
   {
@@ -82,11 +86,11 @@ export const PRATICIENNES: Praticienne[] = [
     initial: "MD",
     salonId: "sea-plaza-bco",
     weeklySchedule: {
-      lun: { start: "11:00", end: "19:00" },
       mar: { start: "11:00", end: "19:00" },
       mer: { start: "11:00", end: "19:00" },
       jeu: { start: "11:00", end: "19:00" },
       ven: { start: "11:00", end: "19:00" },
+      dim: { start: "11:00", end: "19:00" },
     },
   },
   {
@@ -101,6 +105,7 @@ export const PRATICIENNES: Praticienne[] = [
       jeu: { start: "10:00", end: "18:30" },
       ven: { start: "10:00", end: "18:30" },
       sam: { start: "10:00", end: "18:30" },
+      dim: { start: "10:00", end: "18:30" },
     },
   },
   {
@@ -110,11 +115,11 @@ export const PRATICIENNES: Praticienne[] = [
     initial: "M",
     salonId: "almadies",
     weeklySchedule: {
-      lun: { start: "10:00", end: "16:30" },
       mar: { start: "10:00", end: "16:30" },
       mer: { start: "10:00", end: "16:30" },
       jeu: { start: "10:00", end: "16:30" },
       ven: { start: "10:00", end: "16:30" },
+      dim: { start: "10:00", end: "16:30" },
     },
   },
   {
@@ -124,12 +129,12 @@ export const PRATICIENNES: Praticienne[] = [
     initial: "AÏ",
     salonId: "almadies",
     weeklySchedule: {
-      lun: { start: "08:00", end: "13:00" },
       mar: { start: "08:00", end: "13:00" },
       mer: { start: "08:00", end: "13:00" },
       jeu: { start: "08:00", end: "13:00" },
       ven: { start: "08:00", end: "13:00" },
       sam: { start: "08:00", end: "13:00" },
+      dim: { start: "08:00", end: "13:00" },
     },
   },
   {
@@ -144,6 +149,7 @@ export const PRATICIENNES: Praticienne[] = [
       jeu: { start: "08:30", end: "17:30" },
       ven: { start: "08:30", end: "17:30" },
       sam: { start: "08:30", end: "17:30" },
+      dim: { start: "08:30", end: "17:30" },
     },
   },
 ];

@@ -24,6 +24,54 @@ function seedDay(offset: number): string {
   return dateISO(d);
 }
 
+/** Le dimanche qui vient (aujourd'hui si on est dimanche) — le jour le plus chargé du salon. */
+function nextSunday(): string {
+  return seedDay((7 - new Date().getDay()) % 7);
+}
+
+/** Un dimanche chargé : une réservation d'une prestation par ligne [payeuse, prestation, praticienne, heure].
+ *  Les ids `res-dim-*` évitent toute collision avec le seed écrit à la main. */
+function sundayRush(): Reservation[] {
+  const lines: [string, string, string, string][] = [
+    ["cl-1", "coiffure-silk-press", "bineta", "10:00"],
+    ["cl-2", "manucure-pedicure-manucure-spa-express", "gnagna", "10:00"],
+    ["cl-3", "soin-du-visage-hydrafacial-deep-clean", "marie-dominique", "11:00"],
+    ["cl-4", "coiffure-tresses-cheveux", "fatou", "10:30"],
+    ["cl-5", "spa-relax-me-time", "adja", "11:00"],
+    ["cl-6", "coiffure-coupe-transformation", "michelle", "11:30"],
+    ["cl-7", "manucure-pedicure-jelly-pedicure", "gnagna", "12:00"],
+    ["cl-8", "coiffure-soin-complet", "henry", "12:30"],
+    ["cl-9", "epilation-epilation-sourcils", "marie-dominique", "14:00"],
+    ["cl-10", "coiffure-silk-press", "bineta", "14:00"],
+    ["cl-1", "spa-soin-du-dos", "adja", "14:30"],
+    ["cl-3", "manucure-pedicure-smooth-pedicure", "gnagna", "15:00"],
+    ["cl-6", "coiffure-shampoing-sechage", "michelle", "15:00"],
+    ["cl-9", "soin-du-visage-golden-vip-facial", "marie-dominique", "15:30"],
+    ["cl-4", "coiffure-tresses-cheveux", "fatou", "15:30"],
+    ["cl-2", "mini-co-mini-jely-manucure", "adja", "16:30"],
+  ];
+  return lines.map(([payerClientId, serviceId, staffId, start], i) => {
+    const id = `res-dim-${i + 1}`;
+    return {
+      id,
+      payerClientId,
+      date: nextSunday(),
+      source: "en_ligne" as const,
+      rendezVous: [
+        {
+          id: `rdv-dim-${i + 1}`,
+          reservationId: id,
+          serviceId,
+          staffId,
+          start,
+          durationMin: serviceById(serviceId)?.durationMinutes ?? 60,
+          status: "actif" as const,
+        },
+      ],
+    };
+  });
+}
+
 /** A réservation's calendar day. Absent `date` ⇒ today (walk-ins, legacy). Always read it here. */
 export function reservationDate(r: Reservation): string {
   return r.date ?? todayISO();
@@ -575,7 +623,7 @@ const SEED_RESERVATIONS: Reservation[] = [
  * en même temps (le salon, lui, peut en tenir plusieurs). Pour chaque rendez-vous, par horaire
  * (l'heure écrite d'abord, puis le premier horaire libre) : même praticienne → collègue du même rôle
  * (même salon d'abord). Une 2ᵉ praticienne introuvable à l'heure écrite ⇒ prestation seule à pleine
- * durée. Un rendez-vous impossible à caser ce jour-là (ex. aucune esthéticienne le dimanche) sort
+ * durée. Un rendez-vous impossible à caser ce jour-là (ex. le lundi, salon fermé) sort
  * du seed.
  */
 function fitSeedToSchedules(seed: Reservation[]): Reservation[] {
@@ -596,6 +644,9 @@ function fitSeedToSchedules(seed: Reservation[]): Reservation[] {
     const elsewhere = salonId ? [] : sameRole.filter((x) => !inSalon.includes(x.id)).map((x) => x.id);
     return [p.id, ...inSalon, ...elsewhere];
   };
+
+  // Jour de fermeture (le lundi) : rien n'y figure, pas même un rendez-vous annulé.
+  seed = seed.filter((r) => PRATICIENNES.some((p) => scheduleFor(p, new Date(`${reservationDate(r)}T00:00:00`))));
 
   const order = seed
     .flatMap((r) => r.rendezVous.map((rv) => ({ date: reservationDate(r), rv })))
@@ -667,7 +718,7 @@ function fitSeedToSchedules(seed: Reservation[]): Reservation[] {
     .filter((r) => r.rendezVous.length > 0);
 }
 
-export const RESERVATIONS: Reservation[] = fitSeedToSchedules(SEED_RESERVATIONS);
+export const RESERVATIONS: Reservation[] = fitSeedToSchedules([...SEED_RESERVATIONS, ...sundayRush()]);
 
 /** One rendez-vous with a back-reference to its parent réservation — the rendez-vous-grained row. */
 export type RendezVousRow = { rv: RendezVous; reservation: Reservation };
