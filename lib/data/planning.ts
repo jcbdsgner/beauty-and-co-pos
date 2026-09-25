@@ -1,5 +1,5 @@
 import { serviceById } from "@/lib/data/menu";
-import { scheduleFor } from "@/lib/data/praticiennes";
+import { PRATICIENNES, scheduleFor } from "@/lib/data/praticiennes";
 import type { BeneficiaryKind, Praticienne, RendezVous, Reservation } from "@/lib/data/types";
 
 /** Périodes affichables au Planning (ADR 0020). Mois (rouvert par ADR 0024) retiré par ADR 0025 :
@@ -37,7 +37,7 @@ export function reservationDate(r: Reservation): string {
  * friend or a child (`beneficiaryName`), possibly worked by two praticiennes at once
  * (`secondStaffId`, with `durationMin` already halved). `date` absent ⇒ today.
  */
-export const RESERVATIONS: Reservation[] = [
+const SEED_RESERVATIONS: Reservation[] = [
   {
     id: "res-1",
     payerClientId: "cl-7",
@@ -567,6 +567,107 @@ export const RESERVATIONS: Reservation[] = [
     ],
   },
 ];
+
+/**
+ * Le seed est écrit en jours relatifs (`seedDay`) : selon le jour de la semaine où l'app s'ouvre, une
+ * praticienne peut s'y retrouver un jour de repos ou hors de ses horaires. On le recale donc au
+ * chargement, sans jamais violer la règle d'or : une praticienne ne tient jamais deux rendez-vous
+ * en même temps (le salon, lui, peut en tenir plusieurs). Pour chaque rendez-vous, par horaire
+ * (l'heure écrite d'abord, puis le premier horaire libre) : même praticienne → collègue du même rôle
+ * (même salon d'abord). Une 2ᵉ praticienne introuvable à l'heure écrite ⇒ prestation seule à pleine
+ * durée. Un rendez-vous impossible à caser ce jour-là (ex. aucune esthéticienne le dimanche) sort
+ * du seed.
+ */
+function fitSeedToSchedules(seed: Reservation[]): Reservation[] {
+  const placed: { staffId: string; date: string; start: number; end: number }[] = [];
+  const fits = (staffId: string, date: string, start: number, duration: number) => {
+    const p = PRATICIENNES.find((x) => x.id === staffId);
+    const hours = p && scheduleFor(p, new Date(`${date}T00:00:00`));
+    if (!hours || start < timeToMinutes(hours.start) || start + duration > timeToMinutes(hours.end)) return false;
+    return !placed.some((b) => b.staffId === staffId && b.date === date && start < b.end && b.start < start + duration);
+  };
+  /** La praticienne elle-même, puis ses collègues du même rôle — même salon d'abord ; `salonId`
+   *  impose le salon (une 2ᵉ praticienne travaille dans le salon de la première). */
+  const colleagues = (staffId: string, salonId?: string) => {
+    const p = PRATICIENNES.find((x) => x.id === staffId);
+    if (!p) return [staffId];
+    const sameRole = PRATICIENNES.filter((x) => x.role === p.role && x.id !== p.id);
+    const inSalon = sameRole.filter((x) => x.salonId === (salonId ?? p.salonId)).map((x) => x.id);
+    const elsewhere = salonId ? [] : sameRole.filter((x) => !inSalon.includes(x.id)).map((x) => x.id);
+    return [p.id, ...inSalon, ...elsewhere];
+  };
+
+  const order = seed
+    .flatMap((r) => r.rendezVous.map((rv) => ({ date: reservationDate(r), rv })))
+    .filter(({ rv }) => rv.status !== "annule")
+    .sort((a, b) => a.date.localeCompare(b.date) || a.rv.start.localeCompare(b.rv.start) || a.rv.id.localeCompare(b.rv.id));
+
+  const fixed = new Map<string, Pick<RendezVous, "staffId" | "secondStaffId" | "start" | "durationMin">>();
+  const dropped = new Set<string>();
+  for (const { date, rv } of order) {
+    const primaries = colleagues(rv.staffId);
+    const wanted = timeToMinutes(rv.start);
+    const times = [wanted, ...Array.from({ length: 48 }, (_, i) => 8 * 60 + i * 15).filter((t) => t !== wanted)];
+
+    let pick: { staffId: string; secondStaffId?: string; start: number; durationMin: number } | undefined;
+    for (const start of times) {
+      for (const staffId of primaries) {
+        if (!fits(staffId, date, start, rv.durationMin)) continue;
+        if (!rv.secondStaffId) {
+          pick = { staffId, start, durationMin: rv.durationMin };
+          break;
+        }
+        const salonId = PRATICIENNES.find((x) => x.id === staffId)?.salonId;
+        const second = colleagues(rv.secondStaffId, salonId).find(
+          (id) => id !== staffId && fits(id, date, start, rv.durationMin),
+        );
+        if (second) {
+          pick = { staffId, secondStaffId: second, start, durationMin: rv.durationMin };
+          break;
+        }
+      }
+      if (pick) break;
+      if (rv.secondStaffId && start === wanted) {
+        const full = serviceById(rv.serviceId)?.durationMinutes ?? rv.durationMin * 2;
+        const solo = primaries.find((id) => fits(id, date, start, full));
+        if (solo) {
+          pick = { staffId: solo, start, durationMin: full };
+          break;
+        }
+      }
+    }
+    if (!pick) {
+      dropped.add(rv.id);
+      continue;
+    }
+
+    for (const id of [pick.staffId, pick.secondStaffId].filter(Boolean) as string[]) {
+      placed.push({ staffId: id, date, start: pick.start, end: pick.start + pick.durationMin });
+    }
+    fixed.set(rv.id, {
+      staffId: pick.staffId,
+      secondStaffId: pick.secondStaffId,
+      start: minutesToTime(pick.start),
+      durationMin: pick.durationMin,
+    });
+  }
+
+  return seed
+    .map((r) => ({
+      ...r,
+      rendezVous: r.rendezVous
+        .filter((rv) => !dropped.has(rv.id))
+        .map((rv) => {
+          const patch = fixed.get(rv.id);
+          if (!patch) return rv;
+          const { secondStaffId, ...rest } = { ...rv, ...patch };
+          return secondStaffId ? { ...rest, secondStaffId } : rest;
+        }),
+    }))
+    .filter((r) => r.rendezVous.length > 0);
+}
+
+export const RESERVATIONS: Reservation[] = fitSeedToSchedules(SEED_RESERVATIONS);
 
 /** One rendez-vous with a back-reference to its parent réservation — the rendez-vous-grained row. */
 export type RendezVousRow = { rv: RendezVous; reservation: Reservation };
