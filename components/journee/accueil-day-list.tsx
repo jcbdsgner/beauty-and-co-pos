@@ -75,7 +75,9 @@ function SlotRail({ start, state, last }: { start: number; state: SlotState; las
             {formatHour(start)}
           </p>
           <p className={cn("mt-1 text-sm tabular-nums", past ? "text-base-content/45" : "text-base-content/65")}>
-            jusqu&apos;à {formatHour(start + SLOT_MIN)}
+            {/* Figma 352-201 : « → 12h » ; la flèche est lue « jusqu'à » par les lecteurs d'écran. */}
+            <span aria-hidden>→</span>
+            <span className="sr-only">jusqu&apos;à</span> {formatHour(start + SLOT_MIN)}
           </p>
           {current && (
             <p className="mt-2 text-xs font-bold uppercase tracking-[0.08em] text-primary">En cours</p>
