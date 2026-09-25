@@ -20,8 +20,8 @@ import { cn } from "@/lib/utils";
 
 /**
  * The board grammar's label — tracked uppercase, never a heading. `size="section"` is the
- * full-width section title of a page (« Rendez-vous », « Clientes »…) : Poppins Regular 16px,
- * tracking 1.12px (Figma 352-174 ramené de Medium 32px à Regular 16px).
+ * full-width section title of a page (« Rendez-vous », « Clientes »…) : Poppins Medium 18px,
+ * tracking 1.12px (Figma 352-174 ramené de 32px à 18px).
  */
 export function Legend({
   children,
@@ -37,7 +37,7 @@ export function Legend({
       className={cn(
         "font-[family-name:var(--font-heading)] uppercase text-[var(--brand-taupe-muted)]",
         size === "section"
-          ? "text-base font-normal leading-none tracking-[1.12px]"
+          ? "text-lg font-medium leading-none tracking-[1.12px]"
           : "text-sm font-bold tracking-[0.08em]",
         className,
       )}
