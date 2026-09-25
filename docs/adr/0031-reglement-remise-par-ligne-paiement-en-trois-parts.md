@@ -14,7 +14,7 @@ gauche change.
 |---|---|---|
 | **Panier** (`step: "vente"`) | Menu | cliente, lignes (quantité, retrait), total — **aucune remise** ; bouton **Encaisser** |
 | **Règlement** (`"paiement"`) | moyens de paiement, parts, pavé | lignes figées, **« Accorder une remise »**, avantages de la cliente, total, **Confirmer l'encaissement** |
-| **Reçu** (`"recu"`) | ce qui s'est passé, **motif** si remise, suite | le ticket devient le reçu imprimable |
+| **Reçu** (`"recu"`) | ce qui s'est passé, suite (« Continuer » → motif si remise + Noter la cliente) | le ticket devient le reçu imprimable |
 
 1. **Tout ce qui modifie ce qui est dû se règle au Règlement** : remise accordée, points fidélité,
    carte cadeau (auto-liée, ajustable), prestations déjà payées (Pack / Abonnement). Le panier ne
@@ -38,8 +38,10 @@ gauche change.
    Espèces une seule fois, puisqu'elle porte le rendu de monnaie.
 6. **Tuiles de paiement** : quatre grandes tuiles, **Carte** et **Espèces** en grosses icônes au
    trait, Wave et Orange Money avec leur logo — **toutes avec leur libellé**.
-7. **Un seul motif par vente**, saisi au Reçu (toujours après l'encaissement, ADR 0003) — plus en
-   modale : une carte inline qui tient les autres actions désactivées tant qu'il manque.
+7. **Un seul motif par vente**, saisi au Reçu (toujours après l'encaissement, ADR 0003). *Rév.
+   2026-09-25 :* plus de carte inline — « Continuer » (ex « Noter {prénom} ») ouvre le dialogue
+   « Noter la cliente », dont le motif est la 1re étape quand une remise est accordée. Le motif est
+   interne : absent du reçu imprimé, visible au Récap des ventes.
 
 ## Conséquences
 

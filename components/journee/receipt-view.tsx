@@ -47,7 +47,7 @@ export function ReceiptView({ sale }: { sale: Sale }) {
               <span>Sous-total</span>
               <span className="tabular-nums">{formatFcfa(totals.subtotal)}</span>
             </div>
-            <DiscountBreakdown sale={sale} />
+            <DiscountBreakdown sale={sale} showReason />
             <div className="flex items-center justify-between font-semibold text-base-content">
               <span>Total</span>
               <span className="tabular-nums">{formatFcfa(totals.total)}</span>

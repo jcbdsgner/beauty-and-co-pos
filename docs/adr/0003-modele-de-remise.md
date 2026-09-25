@@ -11,7 +11,7 @@ Trois mécanismes, **tous cumulables**, pouvant amener le total à **0 F** :
 **Ordre de calcul** (l'ordre compte, l'un des mécanismes est un pourcentage) :
 `remise accordée` (sur les prestations) → `points` → `carte cadeau` en dernier, clampée à ce qui reste dû.
 
-**Motif obligatoire, saisi après l'encaissement.** Quand une remise accordée est en jeu, une fois « Confirmer l'encaissement » validé et **avant** le reçu, un écran bloquant demande le **motif** (texte libre). Il apparaît ensuite sur le reçu et dans le Récap des ventes. Raison du moment choisi : ne jamais ralentir le comptoir avec une cliente en face — la justification se pose une fois l'argent pris.
+**Motif obligatoire, saisi après l'encaissement.** Quand une remise accordée est en jeu, une fois « Confirmer l'encaissement » validé et **avant** le reçu, un écran bloquant demande le **motif** (texte libre). Il est **interne** : jamais imprimé sur le reçu, visible dans le Récap des ventes. *(Rév. 2026-09-25 : saisi au Reçu via « Continuer », en 1re étape du dialogue « Noter la cliente », une fois tout ce qui touche au reçu réglé — voir ADR 0031.)* Raison du moment choisi : ne jamais ralentir le comptoir avec une cliente en face — la justification se pose une fois l'argent pris.
 
 ## Conséquences
 

@@ -425,12 +425,12 @@ Reçu (dans le Comptoir déployé — ADR 0031)
 - Rendu de monnaie calculé uniquement si Espèces est impliqué ; égalité exacte exigée sur les rails 100 % digitaux
 - Retour au panier possible sans perte d'état
 - Répartition mixte incorrecte → « Confirmer » reste désactivé, l'écart restant s'affiche en direct (« reste 500 F à répartir »), « Recommencer la répartition » remet les deux montants à zéro sans perdre les modes choisis ni revenir au panier
-- « Confirmer l'encaissement » → **Motif de remise** (si une remise accordée est en jeu) → Reçu
+- « Confirmer l'encaissement » → Reçu
 
 #### Motif de remise (uniquement si une remise accordée a été appliquée)
-- Écran bloquant intercalé entre « Confirmer » et le Reçu — jamais avant l'encaissement
+- Au Reçu, « Continuer » ouvre le dialogue « Noter la cliente » ; le motif en est la 1re étape — jamais avant l'encaissement, une fois tout ce qui touche au reçu réglé (imprimer / envoyer)
 - Rappel de la remise (X % ou montant · −Y F · code manager si > 10 %) + champ texte libre obligatoire (≥ 3 caractères)
-- « Enregistrer le motif » → Reçu. Le motif apparaît sur le reçu et dans le détail de la vente au Récap des ventes
+- « Continuer » → questions de notation. Le motif est **interne** : absent du reçu imprimé, visible dans le détail de la vente au Récap des ventes
 
 #### Reçu
 - Récapitulatif complet (salon, facture, cliente, lignes, sous-total / remises / total, détail du ou des paiements)

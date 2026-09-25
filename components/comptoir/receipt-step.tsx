@@ -3,10 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
-import { Check, Home, Star, Plus, Printer, ShieldCheck } from "lucide-react";
+import { Check, Home, Plus, Printer } from "lucide-react";
 import { Button } from "@/components/ui/atoms/button";
 import { BrandMark } from "@/components/ui/atoms/brand-mark";
-import { Textarea } from "@/components/ui/atoms/textarea";
 import { computeTotals, useAppData } from "@/components/providers/app-data-provider";
 import { NoterClienteDialog } from "@/components/comptoir/noter-cliente-dialog";
 import { SendReceiptButtons } from "@/components/comptoir/send-receipt-buttons";
@@ -37,16 +36,15 @@ export function isReceiptLocked(sale: Sale | undefined): boolean {
 
 /**
  * La station Reçu (ADR 0031). Same sheet again: the ticket, still in the right column, is now the
- * receipt that prints. On the left, what just happened — and, when a remise was granted, the one
- * thing left to do before moving on: its motif. Not a modal any more: an inline card that holds
- * every other action until it's filled, so the gesture stays mandatory without a lock-screen feel.
+ * receipt that prints. On the left, what just happened, then « Continuer »: the remise's motif
+ * (internal — never on the receipt) when one was granted, then « Noter la cliente », both in
+ * `NoterClienteDialog`, once everything that touches the receipt is settled.
  */
 export function ReceiptStep({ sale }: { sale: Sale }) {
   const router = useRouter();
-  const { closeTab, openNewTab, clients, setDiscountReason } = useAppData();
+  const { closeTab, openNewTab, clients } = useAppData();
   const [noterOpen, setNoterOpen] = useState(false);
   const [printError, setPrintError] = useState(false);
-  const [reasonDraft, setReasonDraft] = useState("");
   const receiptRef = useRef<HTMLDivElement>(null);
   const totals = computeTotals(sale);
   const client = sale.clientId ? clients.find((c) => c.id === sale.clientId) : undefined;
@@ -120,49 +118,15 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
             </ul>
           )}
 
-          {/* The remise's motif — the one blocking gesture left */}
-          {needsReason && (
-            <div className="rounded-2xl border-2 border-warning bg-warning/[0.06] p-5">
-              <p className="flex items-center gap-2 font-[family-name:var(--font-heading)] text-lg font-semibold text-base-content">
-                <ShieldCheck aria-hidden className="size-5 text-warning" />
-                Motif de la remise
-              </p>
-              <p className="mt-1 text-sm text-base-content/70">
-                {totals.remiseBreakdown
-                  .map((r) => `${r.mode === "pourcentage" ? `${r.value} %` : formatFcfa(r.amount)} sur ${r.lineIds.length} prestation${r.lineIds.length > 1 ? "s" : ""}${r.managerCode ? ` (code ${r.managerCode})` : ""}`)
-                  .join(" · ")}{" "}
-                — pourquoi ce geste ? Il figurera sur le reçu et dans le récap.
-              </p>
-              <Textarea
-                className="mt-3"
-                rows={2}
-                value={reasonDraft}
-                onChange={(e) => setReasonDraft(e.target.value)}
-                placeholder="Ex. Geste commercial — attente de 40 min."
-                aria-label="Motif de la remise"
-                autoFocus
-              />
-              <Button
-                variant="brand"
-                size="default"
-                className="mt-3 w-full"
-                disabled={reasonDraft.trim().length < 3}
-                onClick={() => setDiscountReason(sale.id, reasonDraft)}
-              >
-                Enregistrer le motif
-              </Button>
-            </div>
-          )}
-
           {/* Next */}
-          <div className={cn("flex flex-col gap-3", needsReason && "pointer-events-none opacity-40")} aria-disabled={needsReason}>
-            {client && mustRate ? (
+          <div className="flex flex-col gap-3">
+            {client && (mustRate || needsReason) ? (
               <div className="flex flex-col gap-1.5">
-                <Button variant="brand" size="xl" className="w-full" icon={<Star className="size-5" />} onClick={() => setNoterOpen(true)}>
-                  Noter {client.firstName}
+                <Button variant="brand" size="xl" className="w-full" onClick={() => setNoterOpen(true)}>
+                  Continuer
                 </Button>
                 <p className="text-center text-xs text-base-content/55">
-                  Ce qu&apos;elle a fait et aimé, puis une note interne — avant de passer à la suite.
+                  {needsReason ? "Le motif de la remise, puis ce qu’elle a fait et aimé" : "Ce qu’elle a fait et aimé, puis une note interne"} — avant de passer à la suite.
                 </p>
               </div>
             ) : (
@@ -235,7 +199,7 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
         </TicketFrame>
       </div>
       {client && (
-        <NoterClienteDialog open={noterOpen} sale={sale} client={client} onClose={() => setNoterOpen(false)} />
+        <NoterClienteDialog open={noterOpen} sale={sale} client={client} needsReason={needsReason} onClose={() => setNoterOpen(false)} />
       )}
     </div>
   );

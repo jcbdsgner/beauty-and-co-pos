@@ -6,15 +6,17 @@ import { Button } from "@/components/ui/atoms/button";
 import { CloseButton } from "@/components/ui/atoms/icon-button";
 import { Textarea } from "@/components/ui/atoms/textarea";
 import { Dialog } from "@/components/ui/molecules/dialog";
-import { useAppData } from "@/components/providers/app-data-provider";
+import { computeTotals, useAppData } from "@/components/providers/app-data-provider";
 import { NOTATION_QUESTIONS, type NotationOption, type NotationQuestion } from "@/lib/data/notation";
-import { cn } from "@/lib/utils";
+import { cn, formatFcfa } from "@/lib/utils";
 import type { Cliente, Sale } from "@/lib/data/types";
 
 const STAMP_FMT = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
 /**
- * « Noter la cliente » — run from the receipt once the sale is cashed in. One question per screen,
+ * « Noter la cliente » — run from the receipt (« Continuer ») once the sale is cashed in. When a
+ * remise was granted, its motif comes first (`needsReason`) — internal, never on the receipt, it
+ * lands in `Sale.remiseReason` for Récap des ventes. Then one question per screen,
  * answered by tapping photo tiles (several answers allowed), then a free internal note. Answers
  * go into the cliente's onglerie préférence, the note into her internal log; finishing stamps
  * `Sale.clientRatedAt`, which releases the Comptoir. Closing with « × » keeps the answers and
@@ -24,20 +26,28 @@ export function NoterClienteDialog({
   open,
   sale,
   client,
+  needsReason,
   onClose,
 }: {
   open: boolean;
   sale: Sale;
   client: Cliente;
+  needsReason: boolean;
   onClose: () => void;
 }) {
-  const { updateClient, updateSale } = useAppData();
+  const { updateClient, updateSale, setDiscountReason } = useAppData();
   const [stepIndex, setStepIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string[]>>({});
   const [note, setNote] = useState("");
+  const [reason, setReason] = useState("");
 
-  const totalSteps = NOTATION_QUESTIONS.length + 1;
-  const question: NotationQuestion | undefined = NOTATION_QUESTIONS[stepIndex];
+  // The motif step is kept once entered, so « Retour » from the first question can reach it again.
+  const [withReason] = useState(needsReason);
+  const offset = withReason ? 1 : 0;
+  const onReasonStep = withReason && stepIndex === 0;
+  const totalSteps = offset + NOTATION_QUESTIONS.length + 1;
+  const question: NotationQuestion | undefined = onReasonStep ? undefined : NOTATION_QUESTIONS[stepIndex - offset];
+  const reasonOk = reason.trim().length >= 3;
   const selected = question ? (answers[question.id] ?? []) : [];
 
   function toggle(optionId: string) {
@@ -70,6 +80,7 @@ export function NoterClienteDialog({
         internalNotes: client.internalNotes ? `[${stamp}] ${trimmedNote}\n\n${client.internalNotes}` : `[${stamp}] ${trimmedNote}`,
       }),
     });
+    if (withReason) setDiscountReason(sale.id, reason);
     updateSale(sale.id, { clientRatedAt: new Date().toISOString() });
     onClose();
   }
@@ -100,7 +111,28 @@ export function NoterClienteDialog({
 
       {/* The question */}
       <div key={stepIndex} className="min-h-0 flex-1 overflow-y-auto px-9 pt-5 pb-7 animate-in fade-in-0 slide-in-from-right-6 duration-300 ease-out">
-        {question ? (
+        {onReasonStep ? (
+          <>
+            <h2 id="noter-cliente-title" className="font-[family-name:var(--font-heading)] text-[28px] font-bold leading-tight text-base-content">
+              Pourquoi cette remise ?
+            </h2>
+            <p className="mt-1 text-[15px] text-base-content/55">
+              {computeTotals(sale)
+                .remiseBreakdown.map((r) => `${r.mode === "pourcentage" ? `${r.value} %` : formatFcfa(r.amount)} sur ${r.lineIds.length} prestation${r.lineIds.length > 1 ? "s" : ""}`)
+                .join(" · ")}{" "}
+              — interne, n&apos;apparaît pas sur le reçu. Visible dans le récap des ventes.
+            </p>
+            <Textarea
+              className="mt-6 text-[17px]"
+              rows={4}
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Ex. Geste commercial — attente de 40 min."
+              aria-label="Motif de la remise"
+              autoFocus
+            />
+          </>
+        ) : question ? (
           <>
             <h2 id="noter-cliente-title" className="font-[family-name:var(--font-heading)] text-[28px] font-bold leading-tight text-balance text-base-content">
               {question.title}
@@ -167,7 +199,11 @@ export function NoterClienteDialog({
               {selected.length === 0 ? "Choisissez au moins une réponse" : `${selected.length} sélectionnée${selected.length > 1 ? "s" : ""}`}
             </p>
           )}
-          {question ? (
+          {onReasonStep ? (
+            <Button variant="brand" size="xl" className="min-w-48" disabled={!reasonOk} onClick={() => setStepIndex((i) => i + 1)}>
+              Continuer
+            </Button>
+          ) : question ? (
             <Button variant="brand" size="xl" className="min-w-48" disabled={selected.length === 0} onClick={() => setStepIndex((i) => i + 1)}>
               Continuer
             </Button>
