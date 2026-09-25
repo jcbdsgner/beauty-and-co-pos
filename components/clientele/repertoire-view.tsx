@@ -43,7 +43,7 @@ function TierFlag({ tier }: { tier: Cliente["tier"] }) {
   if (!tier) return null;
   return (
     <span
-      className={`rounded-[6px] px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.08em] ${TIER_TONE[tier]}`}
+      className={`rounded-[6px] px-2 py-0.5 text-[0.6875rem] font-bold uppercase tracking-[0.06em] ${TIER_TONE[tier]}`}
     >
       {TIER_LABEL[tier]}
     </span>

@@ -89,16 +89,17 @@
   --pos-accent: #886666;
   --pos-accent-on: #ffffff;
   /* Paliers de fidélité — dégradé métallique (from → via → to) + encre du libellé. Contraste
-     vérifié sur chaque stop, pire cas ≥ 4,5:1 (AA) : silver 8,1 · gold 5,4 · platinum 4,7 · vip 5,0. */
+     vérifié sur chaque stop, pire cas ≥ 5:1 : silver 8,1 · gold 6,2 · platinum 5,2 · vip 5,0. L'or reste jaune (teinte 44–48°)
+     pour ne pas se confondre avec l'ambre signal (28°). */
   --pos-tier-silver-from: #f4f5f7;
   --pos-tier-silver-via: #dfe2e7;
   --pos-tier-silver-to: #b9bfc8;
   --pos-tier-silver-ink: #1f2733;
-  --pos-tier-gold-from: #fbeaa6;
-  --pos-tier-gold-via: #e8c35a;
-  --pos-tier-gold-to: #c9962b;
-  --pos-tier-gold-ink: #3a2600;
-  --pos-tier-platinum-from: #6b7482;
+  --pos-tier-gold-from: #faeaa8;
+  --pos-tier-gold-via: #e9c85a;
+  --pos-tier-gold-to: #cfa634;
+  --pos-tier-gold-ink: #382800;
+  --pos-tier-platinum-from: #646d7b;
   --pos-tier-platinum-via: #4a515d;
   --pos-tier-platinum-to: #2c313a;
   --pos-tier-platinum-ink: #ffffff;

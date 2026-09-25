@@ -27,10 +27,10 @@ const DOT_TONE: Record<string, string> = {
 
 /** Dégradés métalliques des paliers de fidélité — réutilisées hors `Badge` (mini-drapeau du répertoire, carte). */
 export const TIER_TONE: Record<"vip" | "platinum" | "gold" | "silver", string> = {
-  vip: "bg-[image:var(--pos-tier-vip)] text-[var(--pos-tier-vip-ink)] shadow-[inset_0_1px_0_rgb(255_255_255/0.45)]",
-  platinum: "bg-[image:var(--pos-tier-platinum)] text-[var(--pos-tier-platinum-ink)] shadow-[inset_0_1px_0_rgb(255_255_255/0.45)]",
-  gold: "bg-[image:var(--pos-tier-gold)] text-[var(--pos-tier-gold-ink)] shadow-[inset_0_1px_0_rgb(255_255_255/0.45)]",
-  silver: "bg-[image:var(--pos-tier-silver)] text-[var(--pos-tier-silver-ink)] shadow-[inset_0_1px_0_rgb(255_255_255/0.45)]",
+  vip: "bg-[image:var(--pos-tier-vip)] text-[var(--pos-tier-vip-ink)] shadow-[inset_0_1px_0_rgb(255_255_255/0.45),inset_0_0_0_1px_rgb(16_24_40/0.08)]",
+  platinum: "bg-[image:var(--pos-tier-platinum)] text-[var(--pos-tier-platinum-ink)] shadow-[inset_0_1px_0_rgb(255_255_255/0.45),inset_0_0_0_1px_rgb(16_24_40/0.08)]",
+  gold: "bg-[image:var(--pos-tier-gold)] text-[var(--pos-tier-gold-ink)] shadow-[inset_0_1px_0_rgb(255_255_255/0.45),inset_0_0_0_1px_rgb(16_24_40/0.08)]",
+  silver: "bg-[image:var(--pos-tier-silver)] text-[var(--pos-tier-silver-ink)] shadow-[inset_0_1px_0_rgb(255_255_255/0.45),inset_0_0_0_1px_rgb(16_24_40/0.08)]",
 };
 
 const FLAG_TONE: Record<string, string> = {
