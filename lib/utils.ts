@@ -16,3 +16,12 @@ const fcfaFormatter = new Intl.NumberFormat("fr-FR");
 export function formatFcfa(amount: number) {
   return `${fcfaFormatter.format(Math.round(amount)).replace(/ /g, " ")} F`;
 }
+
+/** Senegalese numbers in one shape — `+221 77 412 08 55` — whatever spacing the source used.
+ *  Anything that isn't a 9-digit national number (after the +221) is returned untouched. */
+export function formatPhone(raw: string) {
+  const digits = raw.replace(/\D/g, "");
+  const national = digits.startsWith("221") ? digits.slice(3) : digits;
+  if (national.length !== 9) return raw;
+  return `+221 ${national.slice(0, 2)} ${national.slice(2, 5)} ${national.slice(5, 7)} ${national.slice(7)}`;
+}

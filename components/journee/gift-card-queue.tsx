@@ -1,187 +1,254 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { useReactToPrint } from "react-to-print";
-import { Printer } from "lucide-react";
-import { Badge } from "@/components/ui/atoms/badge";
+import { useState } from "react";
+import { ScanLine, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/atoms/button";
+import { CloseButton, IconButton } from "@/components/ui/atoms/icon-button";
+import { TextInput } from "@/components/ui/atoms/text-input";
+import { Dialog } from "@/components/ui/molecules/dialog";
 import { BoardHeader, Legend } from "@/components/ui/board";
-import { GiftCard } from "@/components/shared/gift-card";
-import { Toast } from "@/components/ui/molecules/toast";
+import { ScanCamera } from "@/components/shared/scan-camera";
+import { GIFT_CARD_GRID, GiftCardTile } from "@/components/journee/gift-card-tile";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { clientFullName } from "@/lib/data/clientele";
-import { cn } from "@/lib/utils";
-import type { GiftCardOrder } from "@/lib/data/types";
+import { giftCardContent, normalizeGiftCardCode } from "@/lib/data/cartes-cadeaux";
+import type { Cliente, GiftCardOrder } from "@/lib/data/types";
 
-const PRINT_PAGE_STYLE = `@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }`;
+const byOrdered = (a: GiftCardOrder, b: GiftCardOrder) => a.orderedAt.localeCompare(b.orderedAt);
+const isOpen = (o: GiftCardOrder) => o.status === "a_imprimer" || o.status === "imprimee";
 
-/** A card left waiting this long carries the amber edge — the one signal, "this needs you now". */
-export const STALE_DAYS = 4;
-
-export function daysWaiting(orderedAt: string): number {
-  const then = new Date(`${orderedAt}T00:00:00`);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return Math.max(0, Math.round((today.getTime() - then.getTime()) / 86_400_000));
+/** Accents and case don't matter when searching a name. */
+function fold(text: string) {
+  return text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 }
 
-export function waitLabel(days: number): string {
-  if (days <= 0) return "auj.";
-  if (days === 1) return "hier";
-  return `${days} j`;
+function matches(order: GiftCardOrder, buyer: Cliente | undefined, query: string): boolean {
+  const q = fold(query.trim());
+  if (!q) return true;
+  const code = normalizeGiftCardCode(query);
+  if (code.length >= 3 && normalizeGiftCardCode(order.code).includes(code)) return true;
+  const content = giftCardContent(order);
+  const haystack = [
+    buyer ? clientFullName(buyer) : "",
+    order.recipientName ?? "",
+    content.kind === "prestations" ? content.services.join(" ") : "",
+  ];
+  if (haystack.some((field) => fold(field).includes(q))) return true;
+  const digits = query.replace(/\D/g, "");
+  if (digits.length >= 4) {
+    const phones = [buyer?.phone, order.recipientPhone].map((p) => (p ?? "").replace(/\D/g, ""));
+    if (phones.some((p) => p.includes(digits))) return true;
+  }
+  return false;
 }
 
 /**
  * Cartes cadeaux à préparer (ADR 0012) — les cartes achetées en version imprimée : d'abord les
  * imprimer, puis les remettre (retrait) ou les confier à la livraison. Aucun encaissement, c'est
- * déjà payé. Deux grilles de blocs pour les deux gestes ; une commande `remise` / `livree` quitte
- * la file. Blocs identiques à ceux de « Cartes cadeaux à préparer » sur l'Accueil (audit UX du
- * 19/09) : pas d'aperçu de la carte, elle n'est rendue que hors-écran pour l'impression.
+ * déjà payé. Deux grilles pour les deux gestes, avec les mêmes tuiles que l'aperçu de l'Accueil
+ * (`GiftCardTile`). En tête : recherche (nom, n° de carte, prestation, téléphone) + scan. Une
+ * recherche remonte aussi les cartes déjà remises / expédiées, en lecture seule ; un code exact
+ * met sa tuile en évidence (ombre rosée) ; après un scan, le focus va sur son action.
  */
 export function GiftCardQueue() {
-  const { giftCardOrders } = useAppData();
+  const { giftCardOrders, clients } = useAppData();
+  const [query, setQuery] = useState("");
+  const [scanOpen, setScanOpen] = useState(false);
+  // Focus jumps to the found tile's action only after a scan — never while typing in the field.
+  const [scanned, setScanned] = useState(false);
 
-  const byWait = (a: GiftCardOrder, b: GiftCardOrder) => a.orderedAt.localeCompare(b.orderedAt);
-  const toPrint = giftCardOrders.filter((o) => o.status === "a_imprimer").sort(byWait);
-  const toHandOver = giftCardOrders.filter((o) => o.status === "imprimee").sort(byWait);
-  const total = toPrint.length + toHandOver.length;
+  const searching = query.trim().length > 0;
+  const exactCode = normalizeGiftCardCode(query);
+  const found = giftCardOrders.filter((o) =>
+    matches(o, clients.find((c) => c.id === o.buyerClientId), query),
+  );
+
+  const toPrint = found.filter((o) => o.status === "a_imprimer").sort(byOrdered);
+  const toHandOver = found.filter((o) => o.status === "imprimee").sort(byOrdered);
+  const history = searching
+    ? found
+        .filter((o) => !isOpen(o))
+        .sort((a, b) => (b.handedOverAt ?? b.orderedAt).localeCompare(a.handedOverAt ?? a.orderedAt))
+    : [];
+  const total = toPrint.length + toHandOver.length + history.length;
+
+  const highlightedId =
+    exactCode.length > 0 ? found.find((o) => normalizeGiftCardCode(o.code) === exactCode)?.id : undefined;
+
+  const section = (title: string, orders: GiftCardOrder[]) =>
+    orders.length > 0 && (
+      <section>
+        <Legend size="section" className="mb-2 block pl-1">
+          {title} · {orders.length}
+        </Legend>
+        <div className={GIFT_CARD_GRID}>
+          {orders.map((order) => (
+            <GiftCardTile
+              key={order.id}
+              order={order}
+              highlighted={order.id === highlightedId}
+              focusAction={scanned && order.id === highlightedId}
+            />
+          ))}
+        </div>
+      </section>
+    );
 
   return (
     <div className="flex flex-col gap-6">
       <BoardHeader section="Cartes cadeaux" backHref="/" backLabel="Accueil" />
 
+      <div className="flex max-w-3xl gap-3">
+        <div className="relative flex-1">
+          <Search aria-hidden className="pointer-events-none absolute left-4 top-1/2 z-10 size-5 -translate-y-1/2 text-base-content/45" />
+          <TextInput
+            type="search"
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setScanned(false);
+            }}
+            placeholder="Nom, n° de carte, prestation ou téléphone"
+            aria-label="Rechercher une carte cadeau"
+            spellCheck={false}
+            className="pl-12 pr-14 [&::-webkit-search-cancel-button]:hidden"
+          />
+          {searching && (
+            <IconButton
+              aria-label="Effacer la recherche"
+              onClick={() => {
+                setQuery("");
+                setScanned(false);
+              }}
+              className="absolute right-1 top-1/2 size-12 -translate-y-1/2 rounded-full text-base-content/55 hover:bg-base-200 active:bg-base-300"
+            >
+              <X className="size-5" />
+            </IconButton>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => setScanOpen(true)}
+          className="highlight-rose flex h-14 shrink-0 items-center gap-2 rounded-field border bg-base-100 px-5 text-[15px] font-semibold text-primary transition hover:bg-accent active:scale-[0.99]"
+        >
+          <ScanLine aria-hidden className="size-5" />
+          Scanner une carte
+        </button>
+      </div>
+
       {total === 0 ? (
         <div className="rounded-field border border-dashed border-base-300 px-4 py-12 text-center">
           <p className="font-[family-name:var(--font-heading)] text-[15px] font-semibold text-base-content/60">
-            Aucune carte à préparer
+            {searching ? `Aucune carte ne correspond à « ${query.trim()} »` : "Aucune carte à préparer"}
           </p>
           <p className="mt-1 text-sm text-base-content/45">
-            Les cartes cadeaux achetées en version imprimée apparaîtront ici.
+            {searching
+              ? "Essayez le nom de l'acheteuse, de la destinataire, ou le code imprimé sur la carte."
+              : "Les cartes cadeaux achetées en version imprimée apparaîtront ici."}
           </p>
         </div>
       ) : (
         <>
-          {toPrint.length > 0 && (
-            <section>
-              <Legend size="section" className="mb-2 block pl-1">À imprimer · {toPrint.length}</Legend>
-              <div className="grid grid-cols-2 gap-4 xl:grid-cols-3">
-                {toPrint.map((order) => (
-                  <GiftCardQueueTile key={order.id} order={order} />
-                ))}
-              </div>
-            </section>
-          )}
-          {toHandOver.length > 0 && (
-            <section>
-              <Legend size="section" className="mb-2 block pl-1">Prêtes à remettre · {toHandOver.length}</Legend>
-              <div className="grid grid-cols-2 gap-4 xl:grid-cols-3">
-                {toHandOver.map((order) => (
-                  <GiftCardQueueTile key={order.id} order={order} />
-                ))}
-              </div>
-            </section>
-          )}
+          {section("À imprimer", toPrint)}
+          {section("Prêtes à remettre", toHandOver)}
+          {section("Remises / expédiées", history)}
         </>
       )}
+
+      <ScanGiftCardDialog
+        open={scanOpen}
+        onClose={() => setScanOpen(false)}
+        onFound={(code) => {
+          setQuery(code);
+          setScanned(true);
+          setScanOpen(false);
+        }}
+      />
     </div>
   );
 }
 
-function GiftCardQueueTile({ order }: { order: GiftCardOrder }) {
-  const { clients, printGiftCardOrder, markGiftCardOrderHandedOver } = useAppData();
-  const buyer = clients.find((c) => c.id === order.buyerClientId);
-  const buyerName = buyer ? clientFullName(buyer) : "Cliente inconnue";
-  const [toast, setToast] = useState<string | null>(null);
+/** Prototype: no real card carries a resolvable code or QR payload, so whatever is scanned or
+ *  typed and matches nothing stands in for a real one — the oldest card awaiting hand-over, or
+ *  failing that the oldest still in the queue. C'est le parcours qui compte pour la démo. */
+function demoScanFallback(orders: GiftCardOrder[]) {
+  const open = orders.filter(isOpen).sort(byOrdered);
+  return open.find((o) => o.status === "imprimee") ?? open[0];
+}
 
-  const cardRef = useRef<HTMLDivElement>(null);
-  const print = useReactToPrint({
-    contentRef: cardRef,
-    documentTitle: `Carte-cadeau-${order.code}`,
-    pageStyle: PRINT_PAGE_STYLE,
-  });
+/**
+ * Scanner (ou saisir) le code d'une carte : la recherche de la page se remplit avec ce code, et la
+ * tuile trouvée ressort — y compris une carte déjà remise, qui le dit alors d'elle-même.
+ * Même dialogue que l'identification cliente côté comptoir (caméra + champ code, `ScanCamera`).
+ */
+function ScanGiftCardDialog({
+  open,
+  onClose,
+  onFound,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onFound: (code: string) => void;
+}) {
+  const { giftCardOrders } = useAppData();
+  const [code, setCode] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
-  const printed = order.status === "imprimee";
-  const isLivraison = order.fulfillment === "livraison";
-  const days = daysWaiting(order.orderedAt);
-  const stale = days >= STALE_DAYS;
+  function close() {
+    setCode("");
+    setError(null);
+    onClose();
+  }
 
-  const detail = isLivraison
-    ? printed
-      ? `Livrer à ${order.recipientName} — ${order.recipientPhone} · ${order.deliveryAddress}`
-      : `Pour ${order.recipientName}`
-    : printed && buyer
-      ? `Retrait au comptoir — prévenir au ${buyer.phone}`
-      : "Retrait au comptoir";
+  function resolve(raw: string) {
+    const value = normalizeGiftCardCode(raw);
+    if (!value) return;
+    const order =
+      giftCardOrders.find((o) => normalizeGiftCardCode(o.code) === value) ?? demoScanFallback(giftCardOrders);
+    if (!order) {
+      setError("Aucune carte cadeau ne correspond à ce code.");
+      return;
+    }
+    setCode("");
+    setError(null);
+    onFound(order.code);
+  }
 
   return (
-    <div
-      className={cn(
-        "flex flex-col gap-3 rounded-field border bg-base-100 p-4",
-        stale ? "border-warning" : "border-base-300",
-      )}
-    >
-      {/* Off-screen print target — react-to-print reads the live DOM, so keep it mounted (pas d'aperçu à l'écran). */}
-      <div aria-hidden className="pointer-events-none fixed -left-[9999px] top-0">
-        <div ref={cardRef}>
-          <GiftCard code={order.code} balance={order.amount} />
-        </div>
-      </div>
+    <Dialog open={open} labelledBy="scan-gift-card-title" className="relative max-w-sm rounded-3xl p-6">
+      <CloseButton onClick={close} />
+      <h2 id="scan-gift-card-title" className="font-[family-name:var(--font-heading)] text-xl font-semibold text-base-content">
+        Scanner une carte cadeau
+      </h2>
 
-      <div className="flex items-start justify-between gap-2">
-        <span className="min-w-0">
-          <span className="block truncate font-[family-name:var(--font-heading)] text-[15px] font-semibold text-base-content">
-            {buyerName}
-          </span>
-          <span className="mt-0.5 line-clamp-2 text-[13px] text-base-content/55">{detail}</span>
-        </span>
-        <Badge variant={isLivraison ? "livraison" : "neutral"} className="shrink-0">
-          {isLivraison ? "Livraison" : "Retrait"}
-        </Badge>
-      </div>
+      <ScanCamera
+        active={open}
+        onDetect={(raw) => resolve(raw)}
+        hint="Présentez le QR de la carte cadeau, ou saisissez son code."
+      />
 
-      <div className="flex items-center justify-between gap-2 border-t border-base-300 pt-3">
-        <span
-          className={cn(
-            "shrink-0 whitespace-nowrap text-xs font-semibold tabular-nums",
-            stale ? "text-warning" : "text-base-content/45",
-          )}
-        >
-          {waitLabel(days)}
-        </span>
-
-        {printed ? (
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              icon={<Printer className="size-4" />}
-              onClick={() => {
-                print();
-                setToast(`Carte-cadeau ${order.code} envoyée à l'impression.`);
-              }}
-            >
-              Réimprimer
-            </Button>
-            <Button variant="dark" size="sm" onClick={() => markGiftCardOrderHandedOver(order.id)}>
-              {isLivraison ? "Marquer comme expédiée" : "Marquer comme remise"}
-            </Button>
-          </div>
-        ) : (
-          <Button
-            variant="dark"
-            size="sm"
-            icon={<Printer className="size-4" />}
-            onClick={() => {
-              print();
-              printGiftCardOrder(order.id);
-              setToast(`Carte-cadeau ${order.code} envoyée à l'impression.`);
-            }}
-          >
-            Imprimer
-          </Button>
-        )}
-      </div>
-      <Toast message={toast} onDismiss={() => setToast(null)} />
-    </div>
+      <form
+        className="mt-4 flex gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          resolve(code);
+        }}
+      >
+        <TextInput
+          size="compact"
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          placeholder="Code de la carte"
+          autoFocus
+          autoCapitalize="characters"
+          spellCheck={false}
+          aria-label="Code de la carte cadeau"
+        />
+        <Button type="submit" variant="brand" size="sm" className="shrink-0" disabled={!code.trim()}>
+          Valider
+        </Button>
+      </form>
+      {error && <p className="mt-3 text-sm font-medium text-destructive">{error}</p>}
+    </Dialog>
   );
 }

@@ -301,6 +301,8 @@ export type GiftCardOrder = {
   recipientName?: string;
   recipientPhone?: string;
   deliveryAddress?: string;
+  /** ISO date — set when the order leaves the queue (`remise` / `livree`); shown in the search history. */
+  handedOverAt?: string;
 };
 
 /* ── Forfaits, Abonnements & Packs (ADR 0017) — instruments prépayés b&co, décomptés au comptoir ── */

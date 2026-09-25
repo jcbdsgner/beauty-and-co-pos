@@ -1148,7 +1148,11 @@ export const useAppStore = create<AppState>((set, get) => ({
     set((s) => ({
       giftCardOrders: s.giftCardOrders.map((o) =>
         o.id === orderId && o.status === "imprimee"
-          ? { ...o, status: o.fulfillment === "retrait" ? "remise" : "livree" }
+          ? {
+              ...o,
+              status: o.fulfillment === "retrait" ? "remise" : "livree",
+              handedOverAt: new Date().toISOString().slice(0, 10),
+            }
           : o,
       ),
     })),

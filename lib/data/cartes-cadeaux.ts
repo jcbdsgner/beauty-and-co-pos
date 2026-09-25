@@ -1,3 +1,4 @@
+import { serviceById } from "@/lib/data/menu";
 import type { CarteCadeau, GiftCardOrder } from "@/lib/data/types";
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -27,6 +28,13 @@ export const CARTES_CADEAUX: CarteCadeau[] = [
     kind: "prestations",
     serviceIds: ["soin-du-visage-glow-me-facial", "spa-relax-me-time"],
     holderClientId: "cl-2",
+  },
+  {
+    code: "BACO-MANI-DUO",
+    balance: 65000,
+    status: "used",
+    kind: "prestations",
+    serviceIds: ["manucure-pedicure-manucure-permanent", "manucure-pedicure-gel-sur-ongle-naturel-gainage"],
   },
 ];
 
@@ -90,7 +98,68 @@ export const GIFT_CARD_ORDERS: GiftCardOrder[] = [
     recipientPhone: "+221 76 905 47 32",
     deliveryAddress: "Villa 214, Sicap Mermoz, Dakar",
   },
+  {
+    id: "gco-6",
+    buyerClientId: "cl-4",
+    code: "BACO-DUO-EVASION",
+    amount: 109000,
+    fulfillment: "livraison",
+    orderedAt: "2026-09-20",
+    status: "a_imprimer",
+    recipientName: "Ndeye Fatou Sy",
+    recipientPhone: "+221771234567",
+    deliveryAddress: "Résidence Les Filaos, appartement 3B, Point E, Dakar",
+  },
+  // Déjà sorties de la file — n'apparaissent que dans les résultats de recherche.
+  {
+    id: "gco-7",
+    buyerClientId: "cl-6",
+    code: "BACO-GIFT-50000",
+    amount: 50000,
+    fulfillment: "livraison",
+    orderedAt: "2026-08-18",
+    status: "livree",
+    handedOverAt: "2026-08-21",
+    recipientName: "Khady Diop",
+    recipientPhone: "+221 77 845 19 02",
+    deliveryAddress: "Cité Keur Gorgui, immeuble 12, Dakar",
+  },
+  {
+    id: "gco-8",
+    buyerClientId: "cl-8",
+    code: "BACO-MANI-DUO",
+    amount: 65000,
+    fulfillment: "retrait",
+    orderedAt: "2026-08-10",
+    status: "remise",
+    handedOverAt: "2026-08-12",
+  },
 ];
+
+/** A code as typed or scanned — case, spaces and dashes don't matter. */
+export function normalizeGiftCardCode(raw: string): string {
+  return raw.toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
+export function carteCadeauByCode(code: string): CarteCadeau | undefined {
+  const key = normalizeGiftCardCode(code);
+  return CARTES_CADEAUX.find((c) => normalizeGiftCardCode(c.code) === key);
+}
+
+/** What an order's card pays for — a free amount, or the names of the prestations it offers. The
+ *  kind comes from the card itself (the ledger), not from the order. */
+export type GiftCardContent = { kind: "montant"; amount: number } | { kind: "prestations"; services: string[] };
+
+export function giftCardContent(order: GiftCardOrder): GiftCardContent {
+  const card = carteCadeauByCode(order.code);
+  if (card?.kind === "prestations" && card.serviceIds?.length) {
+    return {
+      kind: "prestations",
+      services: card.serviceIds.map((id) => serviceById(id)?.name ?? id),
+    };
+  }
+  return { kind: "montant", amount: order.amount };
+}
 
 /**
  * The active gift card a cliente holds, if any — the one auto-linked to her sale the moment she's

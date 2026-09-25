@@ -1,15 +1,22 @@
 import { DemoQrBlock } from "@/components/clientele/loyalty-card";
 import { cn, formatFcfa } from "@/lib/utils";
 
-type GiftCardProps = { code: string; balance: number; className?: string };
+type GiftCardProps = {
+  code: string;
+  balance: number;
+  /** A prestations card prints what it offers instead of a price — never the value of a gift. */
+  services?: string[];
+  className?: string;
+};
 
 /**
  * Carte cadeau — même famille visuelle que LoyaltyCard (plaque taupe/rose plate, DESIGN.md
  * Flat-Fill Rule) mais sans identité cliente : la dénomination est l'information vedette, le
  * code le repère qu'on scannera ou tapera au comptoir. Pas de génération de code à la volée
- * (ADR 0002) — on imprime toujours la face d'un code déjà provisionné dans le mock.
+ * (ADR 0002) — on imprime toujours la face d'un code déjà provisionné dans le mock. Une carte
+ * prestations imprime la liste de ses prestations à la place du montant (ADR 0012).
  */
-export function GiftCard({ code, balance, className }: GiftCardProps) {
+export function GiftCard({ code, balance, services, className }: GiftCardProps) {
   return (
     <div
       className={cn(
@@ -28,7 +35,15 @@ export function GiftCard({ code, balance, className }: GiftCardProps) {
 
         <div className="flex items-end justify-between gap-4">
           <div>
-            <p className="font-[family-name:var(--font-heading)] font-semibold text-4xl leading-none">{formatFcfa(balance)}</p>
+            {services?.length ? (
+              <ul className="font-[family-name:var(--font-heading)] text-xl font-semibold leading-tight">
+                {services.map((name) => (
+                  <li key={name}>{name}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="font-[family-name:var(--font-heading)] font-semibold text-4xl leading-none">{formatFcfa(balance)}</p>
+            )}
             <p className="mt-1.5 font-mono text-sm tracking-[0.15em] text-white/70">{code}</p>
           </div>
           <DemoQrBlock seed={code} size={72} className="shrink-0 border-0" />

@@ -28,3 +28,10 @@ Les deux modes imprimés alimentent une **file de préparation** ouverte sur l'A
 ## Alternative écartée
 
 Un bloc `Board` dédié sur l'Accueil (la piste initiale). Écarté : l'Accueil doit rester calme (pas de hero-metrics, cf. ADR 0005) et une file d'actions par ligne + les détails de livraison débordent d'une cellule ou d'un bloc d'atterrissage — ça mérite sa route, atteinte par un compteur.
+
+## Révision 2026-09-25 — tuile unique, cartes prestations, recherche
+
+- **Une seule tuile** (`components/journee/gift-card-tile.tsx`) pour l'aperçu de l'Accueil et la page `/cartes-cadeaux`, même grille. Le bouton « Scanner le code cadeau » quitte l'Accueil pour la page dédiée.
+- **Cartes prestations** : une commande peut pointer sur une carte `kind: "prestations"` du ledger. La tuile affiche alors les noms des prestations au lieu du montant ; la **face imprimée n'affiche jamais de prix** pour ces cartes (on n'imprime pas la valeur d'un cadeau). Le type vient du ledger (`giftCardContent`), pas d'un champ recopié sur la commande.
+- **Recherche + scan** en tête de `/cartes-cadeaux` : nom (acheteuse / destinataire), n° de carte, prestation, téléphone. Une recherche remonte aussi les commandes **déjà remises / expédiées**, en lecture seule (nouveau champ `GiftCardOrder.handedOverAt`, posé par `markGiftCardOrderHandedOver`) — pour répondre à « où en est ma carte ? ». Pas de Réimprimer sur une carte déjà partie (risque de doublon).
+- **Fin du bord ambré** (≥ 4 j) : toutes les commandes finissaient par l'avoir, le signal ne distinguait plus rien. L'ancienneté est un texte neutre ; la mise en évidence d'une carte (trouvée par code / scan) utilise l'ombre rosée `highlight-rose` (`app/globals.css`), désormais la recette de référence pour faire ressortir un élément.
