@@ -245,6 +245,7 @@ export default function DesignSystemPage() {
                 <Badge variant="error">Erreur</Badge>
                 <Badge variant="info">Info</Badge>
                 <Badge variant="vip">VIP</Badge>
+                <Badge variant="platinum">Platinum</Badge>
                 <Badge variant="gold">Gold</Badge>
                 <Badge variant="silver">Silver</Badge>
                 <Badge variant="brand">Brand</Badge>

@@ -7,11 +7,11 @@ import { Button } from "@/components/ui/atoms/button";
 import { LoyaltyCard, qrCells } from "@/components/clientele/loyalty-card";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { clientFullName } from "@/lib/data/clientele";
+import { TIER_LABEL } from "@/lib/data/tiers";
 import { cn } from "@/lib/utils";
 
 type FideliteViewProps = { clientId: string };
 
-const TIER_LABEL: Record<string, string> = { vip: "VIP", gold: "Gold", silver: "Silver" };
 
 export function FideliteView({ clientId }: FideliteViewProps) {
   const { clients } = useAppData();
@@ -66,13 +66,20 @@ export function FideliteView({ clientId }: FideliteViewProps) {
     ctx.fillText("Carte de fidélité", 48, 90);
 
     if (client.tier) {
-      const label = TIER_LABEL[client.tier] ?? "";
+      const label = TIER_LABEL[client.tier];
+      const tokens = getComputedStyle(document.documentElement);
       ctx.font = "600 18px Arial";
       const w = ctx.measureText(label).width;
-      ctx.fillStyle = "rgba(255,255,255,0.15)";
-      roundRect(ctx, width - w - 90, 40, w + 42, 40, 20);
+      const x = width - w - 90;
+      const tierFill = ctx.createLinearGradient(x, 40, x + w + 42, 80);
+      const stop = (s: string) => tokens.getPropertyValue(`--pos-tier-${client.tier}-${s}`).trim();
+      tierFill.addColorStop(0, stop("from"));
+      tierFill.addColorStop(0.55, stop("via"));
+      tierFill.addColorStop(1, stop("to"));
+      ctx.fillStyle = tierFill;
+      roundRect(ctx, x, 40, w + 42, 40, 20);
       ctx.fill();
-      ctx.fillStyle = "#ffffff";
+      ctx.fillStyle = tokens.getPropertyValue(`--pos-tier-${client.tier}-ink`).trim();
       ctx.fillText(label, width - w - 68, 66);
     }
 

@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Avatar } from "@/components/ui/atoms/avatar";
+import { TIER_TONE } from "@/components/ui/atoms/badge";
+import { TIER_LABEL } from "@/lib/data/tiers";
 import { SearchInput } from "@/components/ui/atoms/search-input";
 import { Button } from "@/components/ui/atoms/button";
 import { Legend, ChipFilter } from "@/components/ui/board";
@@ -12,7 +14,6 @@ import { clientFullName, clientInitial, searchClients } from "@/lib/data/cliente
 import { formatFcfa } from "@/lib/utils";
 import type { Cliente } from "@/lib/data/types";
 
-const TIER_LABEL: Record<string, string> = { vip: "VIP", gold: "Gold", silver: "Silver" };
 
 const FILTERS = [
   { value: "toutes", label: "Toutes" },
@@ -42,11 +43,7 @@ function TierFlag({ tier }: { tier: Cliente["tier"] }) {
   if (!tier) return null;
   return (
     <span
-      className={
-        tier === "vip"
-          ? "rounded-[6px] bg-[var(--brand-lilac)] px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.08em] text-base-content/70"
-          : "rounded-[6px] bg-primary px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.08em] text-white"
-      }
+      className={`rounded-[6px] px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.08em] ${TIER_TONE[tier]}`}
     >
       {TIER_LABEL[tier]}
     </span>
@@ -75,7 +72,7 @@ export function RepertoireView() {
       case "historique":
         return base.filter((c) => c.totalVisits >= HISTORIQUE_MIN_VISITS);
       case "vip":
-        return base.filter((c) => c.tier === "vip" || c.tier === "gold");
+        return base.filter((c) => c.tier === "vip" || c.tier === "platinum" || c.tier === "gold");
       default:
         return base;
     }

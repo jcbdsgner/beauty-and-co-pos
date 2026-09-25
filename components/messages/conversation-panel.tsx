@@ -19,6 +19,7 @@ import type { Conversation, Message } from "@/lib/data/types";
 
 const TIER_BADGE = {
   vip: { label: "VIP", variant: "vip" as const },
+  platinum: { label: "Platinum", variant: "platinum" as const },
   gold: { label: "Gold", variant: "gold" as const },
   silver: { label: "Silver", variant: "silver" as const },
 };

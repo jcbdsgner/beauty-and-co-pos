@@ -147,7 +147,7 @@ export const CLIENTS: Cliente[] = [
     email: "yacine.wade@example.com",
     residenceCountry: "Sénégal",
     address: "Ouakam, Cité Assemblée, Dakar",
-    tier: "vip",
+    tier: "platinum",
     birthday: "1990-06-27",
     points: 950,
     hairType: "Locks",

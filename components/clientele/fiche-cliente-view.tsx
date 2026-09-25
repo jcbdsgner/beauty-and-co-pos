@@ -17,12 +17,14 @@ import {
   Globe,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/atoms/avatar";
+import { Badge } from "@/components/ui/atoms/badge";
+import { TIER_LABEL } from "@/lib/data/tiers";
 import { Button } from "@/components/ui/atoms/button";
 import { IconButton } from "@/components/ui/atoms/icon-button";
 import { Textarea } from "@/components/ui/atoms/textarea";
 import { Select } from "@/components/ui/atoms/select";
 import { PhotoPlaceholder } from "@/components/ui/atoms/photo-placeholder";
-import { Board, Lane, Legend, BoardEmpty, FlipChip } from "@/components/ui/board";
+import { Board, Lane, Legend, BoardEmpty } from "@/components/ui/board";
 import { DemoQrBlock } from "@/components/clientele/loyalty-card";
 import { ChannelGlyph } from "@/components/messages/channel-glyph";
 import { AbonnementsPacksBoard } from "@/components/clientele/abonnements-packs-board";
@@ -37,7 +39,6 @@ import {
   type PreferenceDomain,
 } from "@/lib/data/types";
 
-const TIER_LABEL: Record<string, string> = { vip: "VIP", gold: "Gold", silver: "Silver" };
 
 /** Where "Ajouter une note" files the text: the internal log, or one of the five préférence domains. */
 const NOTE_TARGETS: { value: string; label: string }[] = [
@@ -157,7 +158,7 @@ function FicheClienteViewInner({ clientId }: { clientId: string }) {
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <h1 className="truncate font-[family-name:var(--font-heading)] text-2xl font-medium text-base-content">{clientFullName(client)}</h1>
-                {client.tier && <FlipChip value={TIER_LABEL[client.tier]} tone={client.tier === "vip" ? "act" : "now"} className="min-w-0 px-2" />}
+                {client.tier && <Badge variant={client.tier}>{TIER_LABEL[client.tier]}</Badge>}
               </div>
               <p className="truncate text-sm text-base-content/55">
                 Cliente depuis {new Date(client.createdAt).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}

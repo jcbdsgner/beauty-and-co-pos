@@ -26,6 +26,7 @@ function draftFromQuery(query: string): { firstName?: string; lastName?: string;
 
 const TIER_BADGE: Record<string, { label: string; variant: BadgeVariant }> = {
   vip: { label: "VIP", variant: "vip" },
+  platinum: { label: "Platinum", variant: "platinum" },
   gold: { label: "Gold", variant: "gold" },
   silver: { label: "Silver", variant: "silver" },
 };

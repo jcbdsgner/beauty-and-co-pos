@@ -1,12 +1,9 @@
 import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ClientTier } from "@/lib/data/types";
+import { TIER_LABEL } from "@/lib/data/tiers";
+import { TIER_TONE } from "@/components/ui/atoms/badge";
 
-const TIER_LABEL: Record<Exclude<ClientTier, null>, string> = {
-  vip: "VIP",
-  gold: "Gold",
-  silver: "Silver",
-};
 
 type LoyaltyCardProps = {
   name: string;
@@ -43,7 +40,7 @@ export function LoyaltyCard({ name, tier, points, clientId, className }: Loyalty
             <p className="mt-0.5 text-xs text-white/50">Carte de fidélité</p>
           </div>
           {tier && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">
+            <span className={cn("inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold", TIER_TONE[tier])}>
               <Sparkles aria-hidden className="size-3.5" />
               {TIER_LABEL[tier]}
             </span>

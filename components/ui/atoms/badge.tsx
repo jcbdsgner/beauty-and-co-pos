@@ -10,6 +10,7 @@ export type BadgeVariant =
   | "error"
   | "info"
   | "vip"
+  | "platinum"
   | "gold"
   | "silver"
   | "brand"
@@ -24,10 +25,19 @@ const DOT_TONE: Record<string, string> = {
   info: "bg-info",
 };
 
+/** Dégradés métalliques des paliers de fidélité — réutilisées hors `Badge` (mini-drapeau du répertoire, carte). */
+export const TIER_TONE: Record<"vip" | "platinum" | "gold" | "silver", string> = {
+  vip: "bg-[image:var(--pos-tier-vip)] text-[var(--pos-tier-vip-ink)] shadow-[inset_0_1px_0_rgb(255_255_255/0.45)]",
+  platinum: "bg-[image:var(--pos-tier-platinum)] text-[var(--pos-tier-platinum-ink)] shadow-[inset_0_1px_0_rgb(255_255_255/0.45)]",
+  gold: "bg-[image:var(--pos-tier-gold)] text-[var(--pos-tier-gold-ink)] shadow-[inset_0_1px_0_rgb(255_255_255/0.45)]",
+  silver: "bg-[image:var(--pos-tier-silver)] text-[var(--pos-tier-silver-ink)] shadow-[inset_0_1px_0_rgb(255_255_255/0.45)]",
+};
+
 const FLAG_TONE: Record<string, string> = {
-  vip: "bg-[var(--brand-lilac)] text-base-content/70 border-transparent",
-  gold: "bg-primary text-primary-content border-transparent",
-  silver: "bg-[var(--pos-tier-silver)] text-white border-transparent",
+  vip: `${TIER_TONE.vip} border-transparent`,
+  platinum: `${TIER_TONE.platinum} border-transparent`,
+  gold: `${TIER_TONE.gold} border-transparent`,
+  silver: `${TIER_TONE.silver} border-transparent`,
   brand: "bg-primary text-primary-content border-transparent",
   dark: "bg-neutral text-neutral-content border-transparent",
   livraison: "bg-[var(--pos-fulfillment-livraison-soft)] text-base-content border-transparent text-[13px] font-medium",

@@ -22,6 +22,7 @@ import { Dialog } from "@/components/ui/molecules/dialog";
 import { CloseButton, IconButton } from "@/components/ui/atoms/icon-button";
 import { Button } from "@/components/ui/atoms/button";
 import { Badge } from "@/components/ui/atoms/badge";
+import { TIER_LABEL } from "@/lib/data/tiers";
 import { Avatar } from "@/components/ui/atoms/avatar";
 import { Textarea } from "@/components/ui/atoms/textarea";
 import { Field } from "@/components/ui/molecules/field";
@@ -41,7 +42,6 @@ import { formatFcfa } from "@/lib/utils";
 import { PREFERENCE_DOMAINS, PREFERENCE_DOMAIN_LABEL } from "@/lib/data/types";
 import type { BeneficiaryKind, Cliente, RendezVous } from "@/lib/data/types";
 
-const TIER_LABEL: Record<string, string> = { vip: "VIP", gold: "Gold", silver: "Silver" };
 
 type Props = {
   /** The rendez-vous the receptionist tapped — the panel shows its whole réservation. */
@@ -255,7 +255,7 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
                       {clientFullName(payer)}
                     </Link>
                     {payer.tier && (
-                      <FlipChip value={TIER_LABEL[payer.tier]} tone={payer.tier === "vip" ? "act" : "now"} className="min-w-0 px-2 py-0.5" />
+                      <Badge variant={payer.tier}>{TIER_LABEL[payer.tier]}</Badge>
                     )}
                   </div>
                   <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-[var(--color-gray-500)]">

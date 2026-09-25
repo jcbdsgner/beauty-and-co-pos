@@ -30,7 +30,7 @@ export type Praticienne = {
   unavailableToday?: boolean;
 };
 
-export type ClientTier = "vip" | "gold" | "silver" | null;
+export type ClientTier = "vip" | "platinum" | "gold" | "silver" | null;
 
 /** Les cinq domaines de préférence tenus sur une fiche cliente — chacun un texte libre + des photos. */
 export type PreferenceDomain = "onglerie" | "coiffure" | "spa" | "epilation" | "boisson";
