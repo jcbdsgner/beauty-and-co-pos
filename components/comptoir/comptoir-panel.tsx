@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { ChevronDown, Plus } from "lucide-react";
 import { Button } from "@/components/ui/atoms/button";
 import { SaleTabsBar } from "@/components/comptoir/sale-tabs-bar";
@@ -23,6 +24,7 @@ import { useAppData } from "@/components/providers/app-data-provider";
 export function ComptoirPanel() {
   const { comptoirDeployed, collapseComptoir, sales, activeSaleId, openNewTab } = useAppData();
   const [scanOpen, setScanOpen] = useState(false);
+  const router = useRouter();
 
   if (!comptoirDeployed) return null;
 
@@ -35,9 +37,19 @@ export function ComptoirPanel() {
       {/* Taupe desk strip */}
       <div className="flex shrink-0 items-end justify-between gap-4 px-5 pt-3">
         <div className="flex items-end gap-3">
-          <div className="mb-2 flex h-12 shrink-0 items-center rounded-full bg-white px-4">
+          <button
+            type="button"
+            onClick={() => {
+              collapseComptoir();
+              router.push("/");
+            }}
+            disabled={locked}
+            aria-label="Retour à l'accueil"
+            title={locked ? "Complétez d'abord la fiche cliente" : "Retour à l'accueil"}
+            className="mb-2 flex h-12 shrink-0 items-center rounded-full bg-white px-4 transition active:scale-[0.97] hover:bg-white/90 disabled:pointer-events-none disabled:opacity-40"
+          >
             <Logo size="footer" className="relative h-5 w-[43px] shrink-0" />
-          </div>
+          </button>
           <SaleTabsBar locked={locked} />
         </div>
         <button
