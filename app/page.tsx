@@ -182,11 +182,6 @@ function AccueilPageInner() {
               ]}
             />
             <Separator orientation="vertical" className="h-6" />
-            {/* /recap-ventes était une route orpheline, jamais atteignable qu'en tapant l'URL
-                (audit UX du 19/09) — point d'entrée depuis l'Accueil. */}
-            <Button href="/recap-ventes" variant="outline" size="sm">
-              Voir le récap
-            </Button>
             <Button variant="outline" size="sm" onClick={() => setCreatingRdv(true)}>
               Créer un rendez-vous
             </Button>
