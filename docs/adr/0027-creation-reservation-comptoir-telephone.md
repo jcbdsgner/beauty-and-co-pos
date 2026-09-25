@@ -1,3 +1,7 @@
+---
+status: superseded by ADR 0032
+---
+
 # Création de réservation au comptoir, sans le parcours b&co
 
 ADR 0006 puis 0009 avaient délibérément exclu la création : le parcours de réservation en ligne
