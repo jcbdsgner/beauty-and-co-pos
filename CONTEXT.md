@@ -29,7 +29,7 @@ La prise de rendez-vous **au niveau de la payeuse** : une cliente (celle qui rè
 _Avoid_: Panier de réservation, Commande, Dossier
 
 **Non vue**:
-L'état d'une réservation **en ligne** dont l'arrivée n'a pas encore été remarquée par la réceptionniste — se lève à l'ouverture de sa **fiche réservation**. Ne s'applique jamais à une réservation créée **au comptoir** (voir **Créer un rendez-vous**, ADR 0032) : la réceptionniste assiste à sa création de bout en bout, elle ne peut pas lui être nouvelle. Porte un signal sur l'**Accueil** uniquement (ADR 0030) — depuis l'ADR 0020, seul endroit où les réservations du jour se consultent. Même logique que **Non lu** (Messages), appliquée à un autre objet.
+L'état d'une réservation **en ligne** dont l'arrivée n'a pas encore été remarquée par la réceptionniste — se lève à l'ouverture de sa **fiche réservation**. Ne s'applique jamais à une réservation créée **au comptoir** (voir **Créer un rendez-vous**, ADR 0032) : la réceptionniste assiste à sa création de bout en bout, elle ne peut pas lui être nouvelle. Porte un signal sur l'**Accueil** uniquement (ADR 0030) : la bande rose « Réservations reçues » tout en haut, quel que soit le jour réservé, + un point sur l'item de sidebar. Même logique que **Non lu** (Messages), appliquée à un autre objet.
 _Avoid_: Nouvelle réservation (implique une fraîcheur temporelle plutôt qu'un état remarqué ou non — même écart que pour **Non lu**)
 
 **Acompte**:

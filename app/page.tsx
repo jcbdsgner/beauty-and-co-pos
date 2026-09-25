@@ -16,6 +16,7 @@ import { PriseRdvModal } from "@/components/prise-rdv/prise-rdv-modal";
 import { AccueilCalendar } from "@/components/journee/accueil-calendar";
 import { AccueilDayList } from "@/components/journee/accueil-day-list";
 import { AccueilGiftCards } from "@/components/journee/accueil-gift-cards";
+import { AccueilUnseenReservations } from "@/components/journee/accueil-unseen-reservations";
 import { useEncaissement } from "@/components/journee/use-encaissement";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { dateISO, groupDayByReservation, reservationDate, todayISO } from "@/lib/data/planning";
@@ -52,7 +53,9 @@ function reservationNumberMatches(reservationId: string, q: string): boolean {
 }
 
 /**
- * Accueil — l'écran d'atterrissage (Figma 242:1735). Deux sections seulement : « Cartes cadeaux »,
+ * Accueil — l'écran d'atterrissage (Figma 242:1735). Tout en haut, la bande rose « Réservations
+ * reçues » (ADR 0030, rév. 25/09), présente seulement s'il y a des réservations en ligne pas
+ * encore vues. Puis deux sections : « Cartes cadeaux »,
  * un aperçu de la file de préparation (docs/adr/0012), qui s'efface quand il n'y a rien ; puis
  * « Rendez-vous » (docs/adr/0014), plus figée sur le seul jour courant (docs/adr/0029) — une
  * recherche (cliente ou numéro de rendez-vous) et deux dates Du/Au (défaut aujourd'hui) filtrent
@@ -177,6 +180,8 @@ function AccueilPageInner() {
           </div>
         }
       />
+
+      <AccueilUnseenReservations onOpenReservation={openReservation} />
 
       <AccueilGiftCards />
 

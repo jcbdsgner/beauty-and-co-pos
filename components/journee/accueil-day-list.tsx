@@ -186,9 +186,6 @@ export function AccueilDayList({ rows, clients, praticiennes, onOpenReservation,
               const active = rendezVous.filter((rv) => rv.status !== "annule");
               const hasSale = Boolean(reservation.saleId);
               const composition = reservationComposition(reservation);
-              // Vient d'arriver de la plateforme externe, pas encore remarquée (ADR 0030) — en
-              // taupe, jamais ambre : l'ambre de cette page est déjà pris par « à encaisser ».
-              const unseen = reservation.source === "en_ligne" && reservation.seen === false;
 
               const items: ItemRow[] = active.map((rv) => {
                 const service = serviceById(rv.serviceId);
@@ -241,21 +238,12 @@ export function AccueilDayList({ rows, clients, praticiennes, onOpenReservation,
                     className="flex min-w-0 items-start justify-between gap-3 text-left transition active:opacity-70"
                   >
                     <span className="flex min-w-0 items-center gap-2.5">
-                      <span className="relative mt-0.5 shrink-0">
-                        <Avatar
-                          initial={payer ? clientInitial(payer) : "?"}
-                          size={32}
-                          className="bg-accent text-xs font-bold text-base-content"
-                        />
-                        {unseen && (
-                          <span
-                            aria-hidden
-                            className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-primary ring-2 ring-base-100"
-                          />
-                        )}
-                      </span>
+                      <Avatar
+                        initial={payer ? clientInitial(payer) : "?"}
+                        size={32}
+                        className="mt-0.5 shrink-0 bg-accent text-xs font-bold text-base-content"
+                      />
                       <span className="min-w-0">
-                        {unseen && <span className="sr-only">Réservation non vue — </span>}
                         <span className="block truncate font-[family-name:var(--font-heading)] text-xl font-medium text-base-content">
                           {payer ? clientFullName(payer) : "Cliente"}
                         </span>

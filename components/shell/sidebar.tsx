@@ -11,7 +11,7 @@ import { useSession } from "@/lib/session";
 import { HomeIcon, CalendarIcon, PeopleIcon, GearIcon, LogoutIcon } from "@/components/ui/atoms/icons";
 import { MessageCircle, Sparkles } from "lucide-react";
 import { useAppData } from "@/components/providers/app-data-provider";
-import { reservationDate, todayISO } from "@/lib/data/planning";
+import { isUnseenReservation } from "@/lib/data/planning";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -31,10 +31,8 @@ export function Sidebar() {
   const { currentUser, photoUrl, logout } = useSession();
   const { conversations, reservations } = useAppData();
   const unreadCount = conversations.filter((c) => c.unread).length;
-  const todayIso = todayISO();
-  const hasUnseenReservation = reservations.some(
-    (r) => r.source === "en_ligne" && r.seen === false && reservationDate(r) === todayIso,
-  );
+  // Quel que soit le jour réservé — comme la bande « Réservations reçues » de l'Accueil qui le résout.
+  const hasUnseenReservation = reservations.some(isUnseenReservation);
   const [confirmLogout, setConfirmLogout] = useState(false);
 
   return (
@@ -48,7 +46,8 @@ export function Sidebar() {
           const active = item.match(pathname);
           const Icon = item.icon;
           // Messages porte le signal ambre (« Non lu » — needs action). Accueil porte le même point
-          // en taupe (« Non vue », ADR 0030) : une réservation en ligne vient d'arriver, à noter
+          // en taupe (« Non vue », ADR 0030) : une réservation en ligne vient d'arriver — la bande rose
+          // en tête de l'Accueil la montre —, à noter
           // mais pas à encaisser — l'ambre reste réservé à « à encaisser » sur cette même page.
           const badge =
             item.href === "/messages" && unreadCount > 0

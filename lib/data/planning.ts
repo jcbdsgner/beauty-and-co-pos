@@ -24,6 +24,12 @@ function seedDay(offset: number): string {
   return dateISO(d);
 }
 
+/** ISO timestamp `n` minutes before now — `createdAt` of the seed's fresh online bookings, so the
+ *  « Réservations reçues » band of the Accueil can say « reçue il y a 4 min ». */
+function minutesAgo(n: number): string {
+  return new Date(Date.now() - n * 60_000).toISOString();
+}
+
 /** Le dimanche qui vient (aujourd'hui si on est dimanche) — le jour le plus chargé du salon. */
 function nextSunday(): string {
   return seedDay((7 - new Date().getDay()) % 7);
@@ -86,6 +92,12 @@ function sundayRush(): Reservation[] {
 /** A réservation's calendar day. Absent `date` ⇒ today (walk-ins, legacy). Always read it here. */
 export function reservationDate(r: Reservation): string {
   return r.date ?? todayISO();
+}
+
+/** Réservation en ligne pas encore remarquée (« Non vue », ADR 0030) — jamais une réservation
+ *  `comptoir`. Quel que soit son jour : c'est l'arrivée qui compte, pas le passage. */
+export function isUnseenReservation(r: Reservation): boolean {
+  return r.source === "en_ligne" && r.seen === false;
 }
 
 /**
@@ -203,6 +215,7 @@ const SEED_RESERVATIONS: Reservation[] = [
     source: "en_ligne",
     // Vient d'arriver de la plateforme externe, pas encore remarquée (ADR 0030).
     seen: false,
+    createdAt: minutesAgo(4),
     rendezVous: [
       {
         id: "rdv-5a",
@@ -222,6 +235,7 @@ const SEED_RESERVATIONS: Reservation[] = [
     source: "en_ligne",
     // Vient d'arriver de la plateforme externe, pas encore remarquée (ADR 0030).
     seen: false,
+    createdAt: minutesAgo(26),
     rendezVous: [
       {
         id: "rdv-6a",
@@ -486,6 +500,10 @@ const SEED_RESERVATIONS: Reservation[] = [
     payerClientId: "cl-3",
     date: seedDay(1),
     source: "en_ligne",
+    // Réservée en ligne il y a peu pour demain — la bande « Réservations reçues » ne se limite
+    // pas au jour affiché (ADR 0030, rév. 25/09).
+    seen: false,
+    createdAt: minutesAgo(72),
     rendezVous: [
       { id: "rdv-13a", reservationId: "RV-1787710800000-9okrrqjlp", serviceId: "coiffure-tissage-versatile", staffId: "bineta", secondStaffId: "fatou", start: "10:00", durationMin: 60, status: "actif" },
       { id: "rdv-13b", reservationId: "RV-1787710800000-9okrrqjlp", serviceId: "manucure-pedicure-manucure-spa-express", staffId: "gnagna", start: "10:30", durationMin: 45, status: "actif" },
