@@ -15,7 +15,6 @@ import {
   Star,
   CalendarClock,
   PackageCheck,
-  ChevronDown,
 } from "lucide-react";
 import { Dialog } from "@/components/ui/molecules/dialog";
 import { CloseButton, IconButton } from "@/components/ui/atoms/icon-button";
@@ -110,6 +109,28 @@ function clientPreferenceLines(client: Cliente | null): { label: string; note: s
   return lines;
 }
 
+/** A cliente's preferences — always rendered, never behind a disclosure: the receptionist must
+ *  see them on every passage. An empty fiche says so rather than silently showing nothing. */
+function PreferencesBlock({ lines, className = "" }: { lines: { label: string; note: string }[]; className?: string }) {
+  return (
+    <div className={`rounded-lg bg-[var(--color-gray-50)] px-3 py-2 ${className}`}>
+      <Legend className="text-[var(--color-gray-500)]">Préférences</Legend>
+      {lines.length > 0 ? (
+        <dl className="mt-1 flex flex-col gap-1">
+          {lines.map((pref) => (
+            <div key={pref.label} className="flex gap-1.5 text-xs leading-snug">
+              <dt className="shrink-0 font-semibold text-[var(--color-gray-700)]">{pref.label} ·</dt>
+              <dd className="text-[var(--color-gray-600)]">{pref.note}</dd>
+            </div>
+          ))}
+        </dl>
+      ) : (
+        <p className="mt-1 text-xs text-[var(--color-gray-500)]">Aucune préférence notée</p>
+      )}
+    </div>
+  );
+}
+
 /** One advantage on the payer's always-visible summary line — a compact segment (icon, label,
  *  optional trailing status badge) rather than a full row: the detail lives on her fiche. */
 function AvantageChip({
@@ -148,21 +169,12 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [editing, setEditing] = useState(false);
-  const [payerExpanded, setPayerExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
   useEffect(() => {
     if (!copied) return;
     const id = setTimeout(() => setCopied(false), 1500);
     return () => clearTimeout(id);
   }, [copied]);
-  // Collapse the disclosure again when the sheet swaps to a different appointment (the
-  // instance stays mounted across selections — see React's "adjusting state on prop change").
-  const [expandedFor, setExpandedFor] = useState(appointment?.id);
-  if (appointment?.id !== expandedFor) {
-    setExpandedFor(appointment?.id);
-    setPayerExpanded(false);
-  }
-
   if (!appointment) return null;
 
   const reservation = reservationForRendezVous(reservations, appointment.id);
@@ -206,7 +218,6 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
     : [];
   const hasAvantages = Boolean(giftCard) || (payer && payer.points > 0) || abonnements.length > 0 || packs.length > 0;
   const payerPrefLines = clientPreferenceLines(payer ?? null);
-  const hasPayerDetails = payerPrefLines.length > 0 || Boolean(payer?.internalNotes);
 
   function copyReference() {
     if (!reservation) return;
@@ -273,16 +284,6 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
                 >
                   Fiche
                 </Button>
-                {hasPayerDetails && (
-                  <IconButton
-                    aria-label={payerExpanded ? "Masquer préférences et notes" : "Voir préférences et notes"}
-                    aria-expanded={payerExpanded}
-                    onClick={() => setPayerExpanded((v) => !v)}
-                    className="size-12 shrink-0 rounded-full text-[var(--color-gray-400)] transition hover:bg-[var(--color-gray-50)] hover:text-[var(--color-gray-600)] active:bg-[var(--color-gray-100)]"
-                  >
-                    <ChevronDown className={`size-5 transition-transform ${payerExpanded ? "rotate-180" : ""}`} />
-                  </IconButton>
-                )}
               </div>
 
               {hasAvantages && (
@@ -320,30 +321,16 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
                 </div>
               )}
 
-              {payerExpanded && hasPayerDetails && (
-                <div className="mt-3 flex flex-col gap-3">
-                  {payerPrefLines.length > 0 && (
-                    <div className="rounded-lg bg-[var(--color-gray-50)] px-3 py-2">
-                      <Legend className="text-[var(--color-gray-500)]">Préférences</Legend>
-                      <dl className="mt-1 flex flex-col gap-1">
-                        {payerPrefLines.map((pref) => (
-                          <div key={pref.label} className="flex gap-1.5 text-xs leading-snug">
-                            <dt className="shrink-0 font-semibold text-[var(--color-gray-700)]">{pref.label} ·</dt>
-                            <dd className="text-[var(--color-gray-600)]">{pref.note}</dd>
-                          </div>
-                        ))}
-                      </dl>
-                    </div>
-                  )}
-
-                  {payer.internalNotes && (
-                    <div className="rounded-lg bg-[var(--color-gray-50)] px-3 py-2">
-                      <Legend className="text-[var(--color-gray-500)]">Notes</Legend>
-                      <p className="mt-1 text-xs leading-snug text-[var(--color-gray-600)]">{payer.internalNotes}</p>
-                    </div>
-                  )}
-                </div>
-              )}
+              {/* Préférences toujours visibles, jamais derrière un dépliage (demande utilisateur 25/09). */}
+              <div className="mt-3 flex flex-col gap-3">
+                <PreferencesBlock lines={payerPrefLines} />
+                {payer.internalNotes && (
+                  <div className="rounded-lg bg-[var(--color-gray-50)] px-3 py-2">
+                    <Legend className="text-[var(--color-gray-500)]">Notes</Legend>
+                    <p className="mt-1 text-xs leading-snug text-[var(--color-gray-600)]">{payer.internalNotes}</p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -380,22 +367,9 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
                   {(() => {
                     // Payer-as-her-own-beneficiary already shows this in the payer block above
                     // (with the rest of her identity) — no need to repeat it here.
-                    if (group.client?.id === payer?.id) return null;
-                    const prefLines = clientPreferenceLines(group.client);
-                    if (prefLines.length === 0) return null;
-                    return (
-                      <div className="mt-2 rounded-lg bg-[var(--color-gray-50)] px-3 py-2">
-                        <Legend className="text-[var(--color-gray-500)]">Préférences</Legend>
-                        <dl className="mt-1 flex flex-col gap-1">
-                          {prefLines.map((pref) => (
-                            <div key={pref.label} className="flex gap-1.5 text-xs leading-snug">
-                              <dt className="shrink-0 font-semibold text-[var(--color-gray-700)]">{pref.label} ·</dt>
-                              <dd className="text-[var(--color-gray-600)]">{pref.note}</dd>
-                            </div>
-                          ))}
-                        </dl>
-                      </div>
-                    );
+                    // A beneficiary named free-text has no fiche, hence no preferences to read.
+                    if (!group.client || group.client.id === payer?.id) return null;
+                    return <PreferencesBlock lines={clientPreferenceLines(group.client)} className="mt-2" />;
                   })()}
 
                   <div className="mt-2 flex flex-col divide-y divide-[var(--board-groove)]">
