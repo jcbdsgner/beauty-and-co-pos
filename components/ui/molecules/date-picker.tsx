@@ -42,7 +42,7 @@ export function DatePicker({ value, onChange, placeholder = "Choisir une date", 
   const [visibleMonth, setVisibleMonth] = useState(() => startOfMonth(value ?? new Date()));
 
   const label = value
-    ? new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric" }).format(value)
+    ? new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "2-digit", year: "2-digit" }).format(value)
     : placeholder;
 
   const monthLabel = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" }).format(visibleMonth);
@@ -56,7 +56,8 @@ export function DatePicker({ value, onChange, placeholder = "Choisir une date", 
         <button
           type="button"
           className={cn(
-            "flex h-14 w-full items-center gap-2 rounded-xl border border-border bg-white px-4 text-left text-[15px] transition focus:border-ring focus:ring-4 focus:ring-ring/15 focus:outline-none",
+            // Même champ daisyUI que SearchInput / TextInput : rayon et hauteur du reste de la plateforme.
+            "input w-full items-center gap-2 bg-base-100 text-left text-[15px] tabular-nums",
             value ? "text-base-content" : "text-base-content/45",
             className,
           )}
