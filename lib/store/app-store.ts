@@ -447,6 +447,7 @@ export type AppState = {
     saleId: string,
     modes: { mode: PaymentMode; amount: number }[],
     cash?: { cashReceived: number; change: number },
+    tip?: { amount: number; mode: PaymentMode },
   ) => void;
   activeSale: () => Sale | undefined;
 
@@ -966,7 +967,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   setLoyaltyPointsUsed: (saleId, points) => get().updateSale(saleId, { loyaltyPointsUsed: points }),
 
-  confirmPayment: (saleId, modes, cash) => {
+  confirmPayment: (saleId, modes, cash, tip) => {
     const sale = get().sales.find((s) => s.id === saleId);
     if (!sale) return;
     const { total, giftCardRemaining, coverageByInstance } = computeTotals(sale);
@@ -997,7 +998,15 @@ export const useAppStore = create<AppState>((set, get) => ({
     set((s) => ({
       sales: s.sales.map((x) =>
         x.id === saleId
-          ? { ...x, status: "encaissee", step: "recu", payment: { modes, ...(cash ?? {}) }, loyaltyPointsEarned: earned, encaisseeAt: new Date().toISOString() }
+          ? {
+              ...x,
+              status: "encaissee",
+              step: "recu",
+              payment: { modes, ...(cash ?? {}) },
+              ...(tip && tip.amount > 0 && { tip }),
+              loyaltyPointsEarned: earned,
+              encaisseeAt: new Date().toISOString(),
+            }
           : x,
       ),
       // Take the produits sold off the shelf — their stock is now real for the next sale.

@@ -76,12 +76,15 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
               <p className="font-[family-name:var(--font-heading)] text-[3rem] leading-tight font-semibold text-base-content tabular-nums">
                 {formatFcfa(totals.amountDue)}
               </p>
+              {sale.tip && (
+                <p className="text-[15px] font-medium text-base-content/70 tabular-nums">+ {formatFcfa(sale.tip.amount)} de pourboire</p>
+              )}
               {client && <p className="text-sm text-base-content/55">{clientFullName(client)}</p>}
             </div>
           </div>
 
           {/* How it was paid */}
-          {modes.length > 0 && (
+          {(modes.length > 0 || sale.tip) && (
             <ul className="flex flex-col divide-y divide-border rounded-2xl border border-border">
               {modes.map((m, i) => (
                 <li key={i} className="flex items-center gap-3 px-4 py-3">
@@ -102,6 +105,21 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
                   <span className="text-[15px] font-semibold tabular-nums">{formatFcfa(m.amount)}</span>
                 </li>
               ))}
+              {sale.tip && (
+                <li className="flex items-center gap-3 px-4 py-3">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent">
+                    <PaymentModeGlyph
+                      mode={sale.tip.mode}
+                      className={sale.tip.mode === "carte" || sale.tip.mode === "especes" ? "size-6 text-secondary" : "max-h-6 max-w-8"}
+                    />
+                  </span>
+                  <span className="flex-1 text-[15px] font-medium text-base-content">
+                    Pourboire
+                    <span className="block text-xs font-normal text-base-content/55">{PAYMENT_MODE_LABEL[sale.tip.mode]}</span>
+                  </span>
+                  <span className="text-[15px] font-semibold tabular-nums">{formatFcfa(sale.tip.amount)}</span>
+                </li>
+              )}
               {client && (
                 <li className="flex items-center justify-between px-4 py-3 text-sm">
                   <span className="text-base-content/55">Points fidélité</span>
@@ -196,6 +214,11 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
             {modes.length > 0 && (
               <p className="mt-2 text-xs text-base-content/55 tabular-nums">
                 {modes.map((m) => `${PAYMENT_MODE_LABEL[m.mode]} · ${formatFcfa(m.amount)}`).join("  +  ")}
+              </p>
+            )}
+            {sale.tip && (
+              <p className="mt-1 text-xs text-base-content/55 tabular-nums">
+                Pourboire · {formatFcfa(sale.tip.amount)} ({PAYMENT_MODE_LABEL[sale.tip.mode]})
               </p>
             )}
           </div>

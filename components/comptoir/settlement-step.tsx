@@ -5,6 +5,7 @@ import { ArrowLeft, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/atoms/button";
 import { NumericKeypad } from "@/components/ui/molecules/numeric-keypad";
 import { SettlementTicket } from "@/components/comptoir/settlement-ticket";
+import { TipDialog } from "@/components/comptoir/tip-dialog";
 import { PAYMENT_MODES, PAYMENT_MODE_LABEL, PaymentModeGlyph } from "@/components/comptoir/payment-modes";
 import { computeTotals, useAppData } from "@/components/providers/app-data-provider";
 import { cn, formatFcfa } from "@/lib/utils";
@@ -25,6 +26,7 @@ type KeypadTarget = { kind: "amount"; index: number } | { kind: "cash" } | null;
  * part but the last is typed on the keypad; **the last part is always "le reste"**, computed — so
  * a split can never be off by a franc, only over-allotted (which is said plainly). The same mode
  * may appear twice (two cards); Espèces only once, since it carries the change calculation.
+ * Confirming opens « Un pourboire ? » (`TipDialog`) — the sale is cashed in once it's answered.
  */
 export function SettlementStep({ sale }: { sale: Sale }) {
   const { confirmPayment, updateSale } = useAppData();
@@ -34,6 +36,7 @@ export function SettlementStep({ sale }: { sale: Sale }) {
   const [active, setActive] = useState(0);
   const [target, setTarget] = useState<KeypadTarget>(null);
   const [cashReceived, setCashReceived] = useState("");
+  const [tipOpen, setTipOpen] = useState(false);
 
   const split = parts.length > 1;
   const typedSum = parts.slice(0, -1).reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
@@ -112,13 +115,15 @@ export function SettlementStep({ sale }: { sale: Sale }) {
     if (target?.kind === "amount") setParts(parts.map((p, i) => (i === target.index ? { ...p, amount: v } : p)));
   }
 
-  function confirm() {
+  /** Called once the tip dialog is answered — « Sans pourboire » passes null. */
+  function confirm(tip: { amount: number; mode: PaymentMode } | null) {
     const modes = parts.map((p, i) => ({ mode: p.mode!, amount: amounts[i] }));
-    confirmPayment(
-      sale.id,
-      amountDue === 0 ? [] : modes,
-      cashIndex >= 0 && cashReceived !== "" ? { cashReceived: cashGiven, change } : undefined,
-    );
+    let cash = cashIndex >= 0 && cashReceived !== "" ? { cashReceived: cashGiven, change } : undefined;
+    // A cash tip comes out of the change first; past that, the cliente hands over more cash.
+    if (cash && tip?.mode === "especes") {
+      cash = { cashReceived: cash.cashReceived + Math.max(0, tip.amount - cash.change), change: Math.max(0, cash.change - tip.amount) };
+    }
+    confirmPayment(sale.id, amountDue === 0 ? [] : modes, cash, tip ?? undefined);
   }
 
   const activeMode = parts[active]?.mode;
@@ -356,7 +361,17 @@ export function SettlementStep({ sale }: { sale: Sale }) {
         )}
       </section>
 
-      <SettlementTicket sale={sale} onConfirm={confirm} canConfirm={canConfirm} confirmHint={hint} />
+      <SettlementTicket sale={sale} onConfirm={() => setTipOpen(true)} canConfirm={canConfirm} confirmHint={hint} />
+      {tipOpen && (
+        <TipDialog
+          open
+          amountDue={amountDue}
+          defaultMode={(amountDue === 0 ? null : parts[parts.length - 1].mode) ?? "especes"}
+          cashChange={cashIndex >= 0 && cashReceived !== "" ? change : 0}
+          onCancel={() => setTipOpen(false)}
+          onDone={confirm}
+        />
+      )}
     </div>
   );
 }

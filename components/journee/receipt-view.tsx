@@ -70,6 +70,7 @@ export function ReceiptView({ sale }: { sale: Sale }) {
         {sale.payment && (
           <p className="mt-2 border-t border-base-300 pt-2 text-xs text-base-content/55">
             {sale.payment.modes.map((m) => `${MODE_LABEL[m.mode]} · ${formatFcfa(m.amount)}`).join(" + ")}
+            {sale.tip && ` · pourboire ${formatFcfa(sale.tip.amount)} (${MODE_LABEL[sale.tip.mode]})`}
           </p>
         )}
       </div>

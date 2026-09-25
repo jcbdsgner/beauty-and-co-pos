@@ -426,6 +426,9 @@ export type Sale = {
   /** Up to three parts (ADR 0031), the same mode may repeat (two cards…). `cashReceived` /
    *  `change` are kept when an espèces part gave change back. */
   payment?: { modes: { mode: PaymentMode; amount: number }[]; cashReceived?: number; change?: number };
+  /** Pourboire, proposé juste avant le reçu — facultatif. En sus de la vente : hors `payment.modes`,
+   *  hors points fidélité et hors chiffre d'affaires. */
+  tip?: { amount: number; mode: PaymentMode };
   loyaltyPointsEarned?: number;
   createdAt: string;
   encaisseeAt?: string;

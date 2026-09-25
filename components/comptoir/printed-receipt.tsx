@@ -130,6 +130,16 @@ export function PrintedReceipt({ sale, client }: { sale: Sale; client?: Cliente 
         </>
       )}
 
+      {sale.tip && (
+        <>
+          <Rule />
+          <div className="flex flex-col gap-0.5 text-[12px] uppercase">
+            <Row label={`Pourboire (${PAYMENT_MODE_LABEL[sale.tip.mode]})`} value={formatFcfa(sale.tip.amount)} />
+            <Row label="Total réglé" value={formatFcfa(t.amountDue + sale.tip.amount)} strong />
+          </div>
+        </>
+      )}
+
       {client && (sale.loyaltyPointsEarned ?? 0) > 0 && (
         <p className="mt-2 text-center text-[11px]">+{sale.loyaltyPointsEarned} points fidélité · solde {client.points} pts</p>
       )}
