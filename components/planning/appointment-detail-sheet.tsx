@@ -32,8 +32,6 @@ import { forfaitById } from "@/lib/data/forfaits";
 import { packPurchasesForClient, packRemainingPrestations } from "@/lib/data/pack-purchases";
 import { packById } from "@/lib/data/packs";
 import { clientFullName, clientInitial } from "@/lib/data/clientele";
-import { notationSummary } from "@/lib/data/notation";
-import { praticienneById } from "@/lib/data/praticiennes";
 import { boissonById } from "@/lib/data/boissons";
 import { produitById, serviceById } from "@/lib/data/menu";
 import { rendezVousCoverage, type RendezVousCoverage } from "@/lib/data/coverage";
@@ -103,7 +101,7 @@ function clientPreferenceLines(client: Cliente | null): { label: string; note: s
   if (client.hairType) lines.push({ label: "Type de cheveux", note: client.hairType });
   if (client.colorReference) lines.push({ label: "Réf. couleur", note: client.colorReference });
   for (const domain of PREFERENCE_DOMAINS) {
-    const note = [notationSummary(client, domain), client.preferenceNotes?.[domain]].filter(Boolean).join(" · ");
+    const note = client.preferenceNotes?.[domain];
     if (note) lines.push({ label: PREFERENCE_DOMAIN_LABEL[domain], note });
   }
   return lines;
@@ -304,13 +302,10 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
               {/* Préférences toujours visibles, jamais derrière un dépliage (demande utilisateur 25/09). */}
               <div className="mt-3 flex flex-col gap-3">
                 <PreferencesBlock lines={payerPrefLines} />
-                {payer.notes?.[0] && (
+                {payer.internalNotes && (
                   <div className="rounded-lg bg-[var(--color-gray-50)] px-3 py-2">
-                    <Legend className="text-[var(--color-gray-500)]">
-                      Dernière note · {praticienneById(payer.notes[0].authorId)?.name ?? "Équipe"},{" "}
-                      {new Date(payer.notes[0].at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
-                    </Legend>
-                    <p className="mt-1 text-xs leading-snug text-[var(--color-gray-600)]">{payer.notes[0].text}</p>
+                    <Legend className="text-[var(--color-gray-500)]">Notes</Legend>
+                    <p className="mt-1 text-xs leading-snug text-[var(--color-gray-600)]">{payer.internalNotes}</p>
                   </div>
                 )}
               </div>
