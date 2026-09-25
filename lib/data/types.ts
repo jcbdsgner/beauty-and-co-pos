@@ -402,6 +402,9 @@ export type Sale = {
   remises: RemiseAccordee[];
   /** The one motif covering every remise of the sale — captured after the sale is cashed in. */
   remiseReason: string | null;
+  /** When the receptionist finished « Noter la cliente » on the receipt (préférences ongles + note
+   *  interne). Until then a sale with an identified cliente holds the Comptoir. */
+  clientRatedAt?: string;
   status: SaleStatus;
   step: SaleStep;
   /** The réservation this sale was opened from, via "Encaisser". Absent for a walk-in sale. */

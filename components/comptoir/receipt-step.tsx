@@ -3,11 +3,12 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
-import { Check, Home, NotebookPen, Plus, Printer, ShieldCheck } from "lucide-react";
+import { Check, Home, Star, Plus, Printer, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/atoms/button";
 import { BrandMark } from "@/components/ui/atoms/brand-mark";
 import { Textarea } from "@/components/ui/atoms/textarea";
 import { computeTotals, useAppData } from "@/components/providers/app-data-provider";
+import { NoterClienteDialog } from "@/components/comptoir/noter-cliente-dialog";
 import { SendReceiptButtons } from "@/components/comptoir/send-receipt-buttons";
 import { PAYMENT_MODE_LABEL, PaymentModeGlyph } from "@/components/comptoir/payment-modes";
 import { TicketFrame, TicketHead, TicketLineBody, TicketTotals } from "@/components/comptoir/ticket-parts";
@@ -28,20 +29,22 @@ const PRINT_PAGE_STYLE = `
   @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
 `;
 
+/** A cashed-in sale with an identified cliente holds the Comptoir until she has been noted
+ *  (« Noter la cliente », `Sale.clientRatedAt`). */
+export function isReceiptLocked(sale: Sale | undefined): boolean {
+  return !!sale && sale.step === "recu" && !!sale.clientId && !sale.clientRatedAt;
+}
+
 /**
  * La station Reçu (ADR 0031). Same sheet again: the ticket, still in the right column, is now the
  * receipt that prints. On the left, what just happened — and, when a remise was granted, the one
  * thing left to do before moving on: its motif. Not a modal any more: an inline card that holds
  * every other action until it's filled, so the gesture stays mandatory without a lock-screen feel.
  */
-/** A cashed-in sale with an identified cliente holds the Comptoir until her fiche has been opened. */
-export function isReceiptLocked(sale: Sale | undefined): boolean {
-  return !!sale && sale.step === "recu" && !!sale.clientId;
-}
-
 export function ReceiptStep({ sale }: { sale: Sale }) {
   const router = useRouter();
-  const { closeTab, openNewTab, collapseComptoir, clients, setDiscountReason } = useAppData();
+  const { closeTab, openNewTab, clients, setDiscountReason } = useAppData();
+  const [noterOpen, setNoterOpen] = useState(false);
   const [printError, setPrintError] = useState(false);
   const [reasonDraft, setReasonDraft] = useState("");
   const receiptRef = useRef<HTMLDivElement>(null);
@@ -60,15 +63,9 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
 
   const modes = sale.payment?.modes ?? [];
 
-  // With an identified cliente, the only way out of the receipt is her fiche, opened on « Notes »
-  // (préférences + note interne) — the tabs, « Replier » and « Nouvelle vente » are locked until
-  // then (see `isReceiptLocked`). Printing and sending the receipt stay available.
-  function goToFiche() {
-    if (!client) return;
-    router.push(`/clientele/${client.id}?from=vente`);
-    collapseComptoir();
-    closeTab(sale.id);
-  }
+  // With an identified cliente, the receipt holds everything but printing / sending until she has
+  // been noted (`isReceiptLocked`) — the tabs and « Replier » are locked in the panel too.
+  const mustRate = !!client && !sale.clientRatedAt;
 
   return (
     <div className="grid h-full grid-cols-[minmax(0,1fr)_440px] gap-5 p-5">
@@ -159,13 +156,13 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
 
           {/* Next */}
           <div className={cn("flex flex-col gap-3", needsReason && "pointer-events-none opacity-40")} aria-disabled={needsReason}>
-            {client ? (
+            {client && mustRate ? (
               <div className="flex flex-col gap-1.5">
-                <Button variant="brand" size="xl" className="w-full" icon={<NotebookPen className="size-5" />} onClick={goToFiche}>
-                  Compléter la fiche de {client.firstName}
+                <Button variant="brand" size="xl" className="w-full" icon={<Star className="size-5" />} onClick={() => setNoterOpen(true)}>
+                  Noter {client.firstName}
                 </Button>
                 <p className="text-center text-xs text-base-content/55">
-                  Préférences et note interne à renseigner avant de passer à la suite.
+                  Ce qu&apos;elle a fait et aimé, puis une note interne — avant de passer à la suite.
                 </p>
               </div>
             ) : (
@@ -173,7 +170,7 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
                 Nouvelle vente
               </Button>
             )}
-            <div className={cn("grid gap-3", client ? "grid-cols-1" : "grid-cols-2")}>
+            <div className={cn("grid gap-3", mustRate ? "grid-cols-1" : "grid-cols-2")}>
               {printError ? (
                 <Button variant="danger-outline" size="default" onClick={() => print()}>
                   Réessayer l&apos;impression
@@ -183,7 +180,7 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
                   Imprimer le reçu
                 </Button>
               )}
-              {!client && (
+              {!mustRate && (
               <Button
                 variant="outline"
                 size="default"
@@ -237,6 +234,9 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
           </div>
         </TicketFrame>
       </div>
+      {client && (
+        <NoterClienteDialog open={noterOpen} sale={sale} client={client} onClose={() => setNoterOpen(false)} />
+      )}
     </div>
   );
 }
