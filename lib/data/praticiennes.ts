@@ -1,3 +1,4 @@
+import { salonById } from "@/lib/data/entreprises";
 import type { DayHours, DayOfWeek, Praticienne } from "@/lib/data/types";
 
 /** `Date.getDay()` (0 = dimanche) -> jour du glossaire, dans cet ordre. */
@@ -7,9 +8,12 @@ export function dayOfWeek(d: Date): DayOfWeek {
   return DAY_KEYS[d.getDay()];
 }
 
-/** L'horaire de présence d'une praticienne pour cette date — absent ⇒ jour de repos ce jour-là. */
+/** L'horaire de présence d'une praticienne pour cette date — absent ⇒ jour de repos ce jour-là
+ *  (le sien, ou la fermeture hebdomadaire de son salon). */
 export function scheduleFor(p: Praticienne, d: Date): DayHours | undefined {
-  return p.weeklySchedule[dayOfWeek(d)];
+  const day = dayOfWeek(d);
+  if (salonById(p.salonId)?.closedDays?.includes(day)) return undefined;
+  return p.weeklySchedule[day];
 }
 
 /** Vrai si la praticienne est censée être au salon ce jour-là (horaire hebdomadaire seul — ne
@@ -18,8 +22,8 @@ export function isWorkingOn(p: Praticienne, d: Date): boolean {
   return scheduleFor(p, d) !== undefined;
 }
 
-/** Le salon est fermé le lundi et ouvert le dimanche — son jour le plus chargé : personne ne
- *  travaille le lundi, tout le monde le dimanche. */
+/** Sea Plaza ouvre 7j/7, Almadies du mardi au dimanche (fermé le lundi, cf. `Salon.closedDays`),
+ *  de 10h à 20h ; le dimanche est le jour le plus chargé — toute l'équipe y travaille. */
 export const PRATICIENNES: Praticienne[] = [
   {
     id: "bineta",
@@ -43,8 +47,8 @@ export const PRATICIENNES: Praticienne[] = [
     initial: "F",
     salonId: "sea-plaza-bco",
     weeklySchedule: {
+      lun: { start: "10:00", end: "19:00" },
       mar: { start: "10:00", end: "19:00" },
-      mer: { start: "10:00", end: "19:00" },
       jeu: { start: "10:00", end: "19:00" },
       ven: { start: "10:00", end: "19:00" },
       sam: { start: "10:00", end: "19:00" },
@@ -86,6 +90,7 @@ export const PRATICIENNES: Praticienne[] = [
     initial: "MD",
     salonId: "sea-plaza-bco",
     weeklySchedule: {
+      lun: { start: "11:00", end: "19:00" },
       mar: { start: "11:00", end: "19:00" },
       mer: { start: "11:00", end: "19:00" },
       jeu: { start: "11:00", end: "19:00" },
@@ -144,8 +149,8 @@ export const PRATICIENNES: Praticienne[] = [
     initial: "N",
     salonId: "sea-plaza-bco",
     weeklySchedule: {
+      lun: { start: "08:30", end: "17:30" },
       mar: { start: "08:30", end: "17:30" },
-      mer: { start: "08:30", end: "17:30" },
       jeu: { start: "08:30", end: "17:30" },
       ven: { start: "08:30", end: "17:30" },
       sam: { start: "08:30", end: "17:30" },

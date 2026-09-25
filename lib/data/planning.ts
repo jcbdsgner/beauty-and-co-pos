@@ -622,8 +622,8 @@ const SEED_RESERVATIONS: Reservation[] = [
  * chargement, sans jamais violer la règle d'or : une praticienne ne tient jamais deux rendez-vous
  * en même temps (le salon, lui, peut en tenir plusieurs). Pour chaque rendez-vous, par horaire
  * (l'heure écrite d'abord, puis le premier horaire libre) : même praticienne → collègue du même rôle
- * (même salon d'abord). Une 2ᵉ praticienne introuvable à l'heure écrite ⇒ prestation seule à pleine
- * durée. Un rendez-vous impossible à caser ce jour-là (ex. le lundi, salon fermé) sort
+ * (même salon, jamais un autre). Une 2ᵉ praticienne introuvable à l'heure écrite ⇒ prestation seule à pleine
+ * durée. Un rendez-vous impossible à caser ce jour-là (ex. Almadies le lundi, salon fermé) sort
  * du seed.
  */
 function fitSeedToSchedules(seed: Reservation[]): Reservation[] {
@@ -634,19 +634,24 @@ function fitSeedToSchedules(seed: Reservation[]): Reservation[] {
     if (!hours || start < timeToMinutes(hours.start) || start + duration > timeToMinutes(hours.end)) return false;
     return !placed.some((b) => b.staffId === staffId && b.date === date && start < b.end && b.start < start + duration);
   };
-  /** La praticienne elle-même, puis ses collègues du même rôle — même salon d'abord ; `salonId`
-   *  impose le salon (une 2ᵉ praticienne travaille dans le salon de la première). */
+  /** La praticienne elle-même, puis ses collègues du même rôle et du même salon — un rendez-vous
+   *  ne change jamais de salon ; `salonId` impose celui de la première praticienne. */
   const colleagues = (staffId: string, salonId?: string) => {
     const p = PRATICIENNES.find((x) => x.id === staffId);
     if (!p) return [staffId];
-    const sameRole = PRATICIENNES.filter((x) => x.role === p.role && x.id !== p.id);
-    const inSalon = sameRole.filter((x) => x.salonId === (salonId ?? p.salonId)).map((x) => x.id);
-    const elsewhere = salonId ? [] : sameRole.filter((x) => !inSalon.includes(x.id)).map((x) => x.id);
-    return [p.id, ...inSalon, ...elsewhere];
+    const inSalon = PRATICIENNES.filter((x) => x.role === p.role && x.id !== p.id && x.salonId === (salonId ?? p.salonId));
+    return [p.id, ...inSalon.map((x) => x.id)];
   };
 
-  // Jour de fermeture (le lundi) : rien n'y figure, pas même un rendez-vous annulé.
-  seed = seed.filter((r) => PRATICIENNES.some((p) => scheduleFor(p, new Date(`${reservationDate(r)}T00:00:00`))));
+  // Salon fermé ce jour-là (Almadies le lundi) : rien n'y figure, pas même un rendez-vous annulé.
+  const salonOpen = (staffId: string, date: string) => {
+    const salonId = PRATICIENNES.find((x) => x.id === staffId)?.salonId;
+    return PRATICIENNES.some((p) => p.salonId === salonId && scheduleFor(p, new Date(`${date}T00:00:00`)));
+  };
+  seed = seed.map((r) => ({
+    ...r,
+    rendezVous: r.rendezVous.filter((rv) => salonOpen(rv.staffId, reservationDate(r))),
+  }));
 
   const order = seed
     .flatMap((r) => r.rendezVous.map((rv) => ({ date: reservationDate(r), rv })))

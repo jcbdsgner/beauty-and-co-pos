@@ -5,7 +5,7 @@ export const COMPANIES: Company[] = [
 ];
 
 export const SALONS: Salon[] = [
-  { id: "almadies", companyId: "beauty-and-co", name: "Almadies", address: "Route des Almadies, Dakar", active: true },
+  { id: "almadies", companyId: "beauty-and-co", name: "Almadies", address: "Route des Almadies, Dakar", active: true, closedDays: ["lun"] },
   { id: "sea-plaza-bco", companyId: "beauty-and-co", name: "Sea Plaza", address: "Sea Plaza, Corniche Ouest, Dakar", active: true },
 ];
 

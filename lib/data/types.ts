@@ -471,4 +471,6 @@ export type Salon = {
   name: string;
   address: string;
   active: boolean;
+  /** Jours de fermeture hebdomadaire — personne n'y travaille, quel que soit son horaire. */
+  closedDays?: DayOfWeek[];
 };
