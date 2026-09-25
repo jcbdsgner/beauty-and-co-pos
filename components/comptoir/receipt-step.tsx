@@ -10,21 +10,12 @@ import { NoterClienteDialog } from "@/components/comptoir/noter-cliente-dialog";
 import { SendReceiptButtons } from "@/components/comptoir/send-receipt-buttons";
 import { PAYMENT_MODE_LABEL, PaymentModeGlyph } from "@/components/comptoir/payment-modes";
 import { PrintedReceipt } from "@/components/comptoir/printed-receipt";
-import { TicketFrame, TicketHead, TicketLineBody, TicketTotals } from "@/components/comptoir/ticket-parts";
 import { clientFullName } from "@/lib/data/clientele";
 import { cn, formatFcfa } from "@/lib/utils";
 import type { Sale } from "@/lib/data/types";
 
-const RECEIPT_DATE_FMT = new Intl.DateTimeFormat("fr-FR", {
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-});
-
 const PRINT_PAGE_STYLE = `
-  @page { size: 80mm auto; margin: 6mm 6mm 10mm; }
+  @page { size: 80mm auto; margin: 4mm 4mm 10mm; }
   @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
 `;
 
@@ -177,52 +168,12 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
         </div>
       </section>
 
-      {/* Off-screen print target — the thermal receipt (react-to-print reads the live DOM, so keep it mounted). */}
-      <div aria-hidden className="pointer-events-none fixed -left-[9999px] top-0">
-        <div ref={receiptRef}>
+      {/* Le reçu imprimé lui-même, en aperçu sur son fond — c'est aussi la cible d'impression
+          (react-to-print lit ce DOM). */}
+      <div className="flex h-full min-h-0 justify-center overflow-y-auto rounded-[14px] border border-border bg-base-200 p-6">
+        <div ref={receiptRef} className="h-fit shadow-[0_2px_12px_rgb(0_0_0/0.08)]">
           <PrintedReceipt sale={sale} client={client} />
         </div>
-      </div>
-
-      {/* The ticket, now the receipt's on-screen preview */}
-      <div className="h-full min-h-0">
-        <TicketFrame>
-          <TicketHead sale={sale} title="Reçu">
-            <p className="text-xs text-base-content/55">
-              Beauty and Co · {sale.label} · {RECEIPT_DATE_FMT.format(new Date(sale.encaisseeAt ?? sale.createdAt))}
-              {client && (
-                <>
-                  <br />
-                  Cliente : {clientFullName(client)}
-                </>
-              )}
-            </p>
-          </TicketHead>
-          <ul className="min-h-0 flex-1 divide-y divide-border overflow-y-auto px-5">
-            {sale.cart.map((line) => (
-              <li key={line.id} className="flex py-3">
-                <TicketLineBody
-                  line={line}
-                  covered={totals.coveredAmountByService[line.refId] ?? 0}
-                  discount={totals.lineDiscount[line.id] ?? 0}
-                />
-              </li>
-            ))}
-          </ul>
-          <div className="shrink-0 border-t border-border px-5 pt-3 pb-5">
-            <TicketTotals sale={sale} />
-            {modes.length > 0 && (
-              <p className="mt-2 text-xs text-base-content/55 tabular-nums">
-                {modes.map((m) => `${PAYMENT_MODE_LABEL[m.mode]} · ${formatFcfa(m.amount)}`).join("  +  ")}
-              </p>
-            )}
-            {sale.tip && (
-              <p className="mt-1 text-xs text-base-content/55 tabular-nums">
-                Pourboire · {formatFcfa(sale.tip.amount)} ({PAYMENT_MODE_LABEL[sale.tip.mode]})
-              </p>
-            )}
-          </div>
-        </TicketFrame>
       </div>
       {client && (
         <NoterClienteDialog open={noterOpen} sale={sale} client={client} needsReason={needsReason} onClose={() => setNoterOpen(false)} />

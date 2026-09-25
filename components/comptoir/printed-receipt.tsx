@@ -26,7 +26,7 @@ function Rule({ double = false }: { double?: boolean }) {
 
 function Row({ label, value, strong = false }: { label: React.ReactNode; value: string; strong?: boolean }) {
   return (
-    <div className={strong ? "flex justify-between gap-3 text-[15px] font-bold" : "flex justify-between gap-3"}>
+    <div className={strong ? "flex justify-between gap-3 text-[14px] font-bold" : "flex justify-between gap-3"}>
       <span className="min-w-0">{label}</span>
       <span className="shrink-0 tabular-nums">{value}</span>
     </div>
@@ -34,9 +34,9 @@ function Row({ label, value, strong = false }: { label: React.ReactNode; value: 
 }
 
 /**
- * Le reçu tel qu'il sort de l'imprimante thermique 80 mm — jamais rendu à l'écran (le ticket de
- * la colonne droite reste l'aperçu). Noir sur blanc, filets pointillés, logo Beauty & Co en tête,
- * MERCI et code-barres en pied. Même ventilation que `DiscountBreakdown`, sans le motif de remise
+ * Le reçu tel qu'il sort de l'imprimante thermique 80 mm — et tel que la station Reçu l'affiche
+ * en aperçu, à l'identique. 72 mm imprimables dont 5 mm de marge de chaque côté. Noir sur blanc,
+ * filets pointillés, logo Beauty & Co en tête, MERCI et code-barres en pied. Même ventilation que `DiscountBreakdown`, sans le motif de remise
  * (interne, ADR 0003).
  */
 export function PrintedReceipt({ sale, client }: { sale: Sale; client?: Cliente }) {
@@ -45,14 +45,14 @@ export function PrintedReceipt({ sale, client }: { sale: Sale; client?: Cliente 
   const touched = t.totalDiscount > 0 || t.coverageDiscount > 0;
 
   return (
-    <div className="w-[68mm] bg-white font-[family-name:var(--font-sans)] text-[13px] leading-snug text-black">
-      <Logo size="footer" className="mx-auto h-[26mm] w-[56mm]" />
+    <div className="w-[72mm] bg-white px-[5mm] py-[5mm] font-[family-name:var(--font-sans)] text-[12px] leading-snug text-black">
+      <Logo size="footer" className="mx-auto h-[17mm] w-[38mm]" />
 
       <Rule double />
-      <p className="text-center font-[family-name:var(--font-heading)] text-[26px] font-bold tracking-[0.08em]">REÇU</p>
+      <p className="text-center font-[family-name:var(--font-heading)] text-[20px] font-bold tracking-[0.08em]">REÇU</p>
       <Rule double />
 
-      <div className="flex flex-col gap-0.5 text-[12px]">
+      <div className="flex flex-col gap-0.5 text-[11px]">
         <Row label="Date" value={PRINT_DATE_FMT.format(new Date(sale.encaisseeAt ?? sale.createdAt))} />
         <Row label="Vente" value={sale.label} />
         {client && <Row label="Cliente" value={clientFullName(client)} />}
@@ -96,7 +96,7 @@ export function PrintedReceipt({ sale, client }: { sale: Sale; client?: Cliente 
       {modes.length > 0 && (
         <>
           <Rule />
-          <div className="flex flex-col gap-0.5 text-[12px] uppercase">
+          <div className="flex flex-col gap-0.5 text-[11px] uppercase">
             {modes.map((m, i) => (
               <Row key={i} label={PAYMENT_MODE_LABEL[m.mode]} value={formatFcfa(m.amount)} />
             ))}
@@ -113,7 +113,7 @@ export function PrintedReceipt({ sale, client }: { sale: Sale; client?: Cliente 
       {sale.tip && (
         <>
           <Rule />
-          <div className="flex flex-col gap-0.5 text-[12px] uppercase">
+          <div className="flex flex-col gap-0.5 text-[11px] uppercase">
             <Row label={`Pourboire (${PAYMENT_MODE_LABEL[sale.tip.mode]})`} value={formatFcfa(sale.tip.amount)} />
             <Row label="Total réglé" value={formatFcfa(t.amountDue + sale.tip.amount)} strong />
           </div>
@@ -128,7 +128,7 @@ export function PrintedReceipt({ sale, client }: { sale: Sale; client?: Cliente 
       )}
 
       <Rule />
-      <p className="text-center font-[family-name:var(--font-heading)] text-[26px] font-bold tracking-[0.08em]">MERCI</p>
+      <p className="text-center font-[family-name:var(--font-heading)] text-[20px] font-bold tracking-[0.08em]">MERCI</p>
       <Rule />
 
       <Barcode seed={sale.id} />

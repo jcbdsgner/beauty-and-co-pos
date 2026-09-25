@@ -154,7 +154,7 @@ Bureau taupe + feuille crème. Étape courante = `activeSale.step` : `"vente"` |
 | Avantages de la cliente | `AdvantagesSection` | [`components/comptoir/advantages-section.tsx`](../components/comptoir/advantages-section.tsx) — déjà payé (`CoverageSection`), carte cadeau dépliable, points ±100 |
 | Moyens de paiement | `PAYMENT_MODES`, `PaymentModeGlyph` | [`components/comptoir/payment-modes.tsx`](../components/comptoir/payment-modes.tsx) |
 | Ventilation remises | `DiscountBreakdown` | [`components/comptoir/discount-breakdown.tsx`](../components/comptoir/discount-breakdown.tsx) — une ligne par remise, partagée avec le Récap |
-| Station Reçu (`"recu"`) | `ReceiptStep` | [`components/comptoir/receipt-step.tsx`](../components/comptoir/receipt-step.tsx) — gauche : vente encaissée, parts, motif de remise inline bloquant, suite ; droite : le ticket devenu reçu imprimable (`react-to-print`) |
+| Station Reçu (`"recu"`) | `ReceiptStep` | [`components/comptoir/receipt-step.tsx`](../components/comptoir/receipt-step.tsx) — gauche : vente encaissée, parts, motif de remise inline bloquant, suite ; droite : le `PrintedReceipt` lui-même en aperçu (feuille sur fond gris), qui est aussi la cible d'impression (`react-to-print`) |
 | Scanner | `IdentifyDialog` | [`components/comptoir/identify-dialog.tsx`](../components/comptoir/identify-dialog.tsx) — `<video>` réel + lecture QR (`BarcodeDetector`) + **un seul champ code de fidélité** → attache la fiche (sa carte cadeau se lie ensuite d'elle-même), bouton « Annuler » (ADR 0013) |
 | Envoi reçu | `SendReceiptButtons` | [`components/comptoir/send-receipt-buttons.tsx`](../components/comptoir/send-receipt-buttons.tsx) — partagé avec Récap |
 
@@ -163,7 +163,7 @@ Bureau taupe + feuille crème. Étape courante = `activeSale.step` : `"vente"` |
 |---|---|---|
 | `useEncaissement` | [`components/journee/use-encaissement.tsx`](../components/journee/use-encaissement.tsx) | Hook « Encaisser » partagé (Accueil, Planning, fiche réservation). Garde : praticienne absente → choisir remplaçante. |
 | `ReplaceStaffDialog` | [`components/journee/replace-staff-dialog.tsx`](../components/journee/replace-staff-dialog.tsx) | Choix de la remplaçante avant ouverture du Comptoir. |
-| `PrintedReceipt` | [`components/comptoir/printed-receipt.tsx`](../components/comptoir/printed-receipt.tsx) | Reçu thermique 80 mm imprimé (hors écran) : logo, REÇU, lignes, total, espèces/rendu, MERCI, code-barres. |
+| `PrintedReceipt` | [`components/comptoir/printed-receipt.tsx`](../components/comptoir/printed-receipt.tsx) | Reçu thermique 80 mm (72 mm imprimables, 5 mm de marge par côté), imprimé et affiché tel quel en aperçu à la station Reçu : logo, REÇU, lignes, total, espèces/rendu, MERCI, code-barres. |
 | `ReceiptView` | [`components/journee/receipt-view.tsx`](../components/journee/receipt-view.tsx) | Reçu lecture seule (Récap des ventes). |
 
 ---
