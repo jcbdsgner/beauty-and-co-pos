@@ -193,10 +193,12 @@ export function SettlementStep({ sale }: { sale: Sale }) {
                       key={m.value}
                       type="button"
                       aria-pressed={selected}
+                      aria-label={m.logo ? m.label : undefined}
                       disabled={cashTaken}
                       onClick={() => pickMode(m.value)}
                       className={cn(
-                        "group relative flex h-40 flex-col items-center justify-center gap-3 rounded-2xl border-2 p-4 transition active:scale-[0.97]",
+                        "group relative flex h-40 flex-col items-center justify-center gap-3 rounded-2xl border-2 transition active:scale-[0.97]",
+                        m.logo ? "p-3" : "p-4",
                         "outline-none focus-visible:ring-4 focus-visible:ring-ring/20",
                         selected
                           ? "border-primary bg-accent"
@@ -207,15 +209,22 @@ export function SettlementStep({ sale }: { sale: Sale }) {
                       {selected && (
                         <span className="absolute top-2.5 right-2.5 size-3 rounded-full bg-primary" aria-hidden />
                       )}
-                      <span className="flex h-16 items-center justify-center">
-                        <PaymentModeGlyph
-                          mode={m.value}
-                          className={cn(m.logo ? "max-h-14 max-w-[7rem]" : "size-16", !m.logo && (selected ? "text-primary" : "text-secondary"))}
-                        />
-                      </span>
-                      <span className="font-[family-name:var(--font-heading)] text-lg font-semibold text-base-content">
-                        {m.label}
-                      </span>
+                      {m.logo ? (
+                        /* Wave / Orange Money : la marque suffit, elle remplit la tuile sans libellé. */
+                        <PaymentModeGlyph mode={m.value} className="size-full object-contain" />
+                      ) : (
+                        <>
+                          <span className="flex h-16 items-center justify-center">
+                            <PaymentModeGlyph
+                              mode={m.value}
+                              className={cn("size-16", selected ? "text-primary" : "text-secondary")}
+                            />
+                          </span>
+                          <span className="font-[family-name:var(--font-heading)] text-lg font-semibold text-base-content">
+                            {m.label}
+                          </span>
+                        </>
+                      )}
                     </button>
                   );
                 })}

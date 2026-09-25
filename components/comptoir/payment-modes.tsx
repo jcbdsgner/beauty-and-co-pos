@@ -5,9 +5,8 @@ import type { PaymentMode } from "@/lib/data/types";
 
 /**
  * The four payment rails of the counter, in tile order. Carte and Espèces are drawn as big line
- * icons, Wave and Orange Money carry their own brand mark; every mode keeps its word label under
- * the glyph so a tile never relies on recognising a logo. `hint` is what the receptionist checks
- * before confirming.
+ * icons, Wave and Orange Money carry their own brand mark (on the Règlement tiles the mark fills the
+ * tile on its own, no word label). `hint` is what the receptionist checks before confirming.
  */
 export const PAYMENT_MODES: {
   value: PaymentMode;
