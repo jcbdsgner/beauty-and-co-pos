@@ -9,8 +9,9 @@ import { FieldLabel } from "@/components/ui/atoms/field-label";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { clientFullName } from "@/lib/data/clientele";
 import { serviceById } from "@/lib/data/menu";
+import { reservationDate, timeToMinutes, todayISO } from "@/lib/data/planning";
 import { isWorkingOn } from "@/lib/data/praticiennes";
-import type { Reservation } from "@/lib/data/types";
+import type { RendezVous, Reservation } from "@/lib/data/types";
 
 type ReplaceStaffDialogProps = {
   open: boolean;
@@ -27,7 +28,7 @@ type ReplaceStaffDialogProps = {
  * must be chosen before the Comptoir opens.
  */
 export function ReplaceStaffDialog({ open, reservation, onCancel, onConfirm }: ReplaceStaffDialogProps) {
-  const { praticiennes, clients } = useAppData();
+  const { praticiennes, clients, reservations } = useAppData();
   const [picks, setPicks] = useState<Record<string, string>>({});
 
   if (!open || !reservation) return null;
@@ -36,6 +37,20 @@ export function ReplaceStaffDialog({ open, reservation, onCancel, onConfirm }: R
   const affected = reservation.rendezVous.filter(
     (rv) => rv.status !== "annule" && praticiennes.find((p) => p.id === rv.staffId)?.unavailableToday,
   );
+  // Le salon peut tenir plusieurs rendez-vous en parallèle, une praticienne jamais : on ne propose
+  // que celles qui n'ont rien d'autre sur ce créneau aujourd'hui.
+  const todays = reservations.filter((r) => reservationDate(r) === todayISO()).flatMap((r) => r.rendezVous);
+  const isBusy = (staffId: string, rv: RendezVous) => {
+    const start = timeToMinutes(rv.start);
+    return todays.some(
+      (o) =>
+        o.id !== rv.id &&
+        o.status !== "annule" &&
+        (o.staffId === staffId || o.secondStaffId === staffId) &&
+        timeToMinutes(o.start) < start + rv.durationMin &&
+        start < timeToMinutes(o.start) + o.durationMin,
+    );
+  };
   const allChosen = affected.every((rv) => picks[rv.id]);
 
   return (
@@ -61,6 +76,8 @@ export function ReplaceStaffDialog({ open, reservation, onCancel, onConfirm }: R
               isWorkingOn(p, new Date()) &&
               !p.unavailableToday &&
               p.id !== rv.staffId &&
+              p.id !== rv.secondStaffId &&
+              !isBusy(p.id, rv) &&
               (!original || p.role === original.role),
           );
           return (

@@ -2,7 +2,14 @@
 
 import { create } from "zustand";
 import { CLIENTS, clientFullName } from "@/lib/data/clientele";
-import { RESERVATIONS, reservationById, timeToMinutes } from "@/lib/data/planning";
+import {
+  RESERVATIONS,
+  reservationById,
+  reservationDate,
+  reservationForRendezVous,
+  timeToMinutes,
+  todayISO,
+} from "@/lib/data/planning";
 import { PRODUITS, serviceById } from "@/lib/data/menu";
 import { boissonById } from "@/lib/data/boissons";
 import { PRATICIENNES } from "@/lib/data/praticiennes";
@@ -61,14 +68,16 @@ function timeRangesOverlap(a: { start: string; durationMin: number }, b: { start
 
 /**
  * The one hard guard on rendez-vous edits (ADR 0009): a praticienne can't hold two rendez-vous that
- * overlap. Checks a candidate slot against every other active rendez-vous that shares a praticienne.
+ * overlap — le salon, lui, peut en tenir plusieurs en parallèle. Checks a candidate slot against
+ * every other active rendez-vous of the same day that shares a praticienne.
  */
 function findStaffClash(
   reservations: Reservation[],
   rvId: string,
-  cand: { staffIds: string[]; start: string; durationMin: number },
+  cand: { date: string; staffIds: string[]; start: string; durationMin: number },
 ): { staffId: string; other: RendezVous } | null {
   for (const r of reservations) {
+    if (reservationDate(r) !== cand.date) continue;
     for (const rv of r.rendezVous) {
       if (rv.id === rvId || rv.status === "annule") continue;
       const otherStaff = [rv.staffId, rv.secondStaffId].filter(Boolean) as string[];
@@ -500,7 +509,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       const staffIds = [data.staffId, data.secondStaffId].filter(Boolean) as string[];
       const cand = { start: data.start, durationMin };
 
-      const clash = findStaffClash(reservations, "", { staffIds, ...cand });
+      const clash = findStaffClash(reservations, "", { date: options?.date ?? todayISO(), staffIds, ...cand });
       if (clash) {
         return { ok: false, message: `${staffName(clash.staffId)} a déjà un rendez-vous à ${clash.other.start} — choisissez un autre horaire.` };
       }
@@ -570,11 +579,12 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   rescheduleRendezVous: (rvId, start) => {
     const { reservations } = get();
-    const rv = reservations.flatMap((r) => r.rendezVous).find((x) => x.id === rvId);
-    if (!rv) return { ok: false, message: "Rendez-vous introuvable." };
+    const parent = reservationForRendezVous(reservations, rvId);
+    const rv = parent?.rendezVous.find((x) => x.id === rvId);
+    if (!parent || !rv) return { ok: false, message: "Rendez-vous introuvable." };
     if (!/^\d{2}:\d{2}$/.test(start)) return { ok: false, message: "Indiquez une heure valide (HH:MM)." };
     const staffIds = [rv.staffId, rv.secondStaffId].filter(Boolean) as string[];
-    const clash = findStaffClash(reservations, rvId, { staffIds, start, durationMin: rv.durationMin });
+    const clash = findStaffClash(reservations, rvId, { date: reservationDate(parent), staffIds, start, durationMin: rv.durationMin });
     if (clash) {
       const who = get().praticiennes.find((p) => p.id === clash.staffId)?.name ?? "La praticienne";
       return { ok: false, message: `${who} a déjà un rendez-vous à ${clash.other.start} — choisissez un autre créneau.` };
@@ -585,8 +595,9 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   updateRendezVous: (rvId, patch) => {
     const { reservations } = get();
-    const rv = reservations.flatMap((r) => r.rendezVous).find((x) => x.id === rvId);
-    if (!rv) return { ok: false, message: "Rendez-vous introuvable." };
+    const parent = reservationForRendezVous(reservations, rvId);
+    const rv = parent?.rendezVous.find((x) => x.id === rvId);
+    if (!parent || !rv) return { ok: false, message: "Rendez-vous introuvable." };
 
     const next: RendezVous = { ...rv, ...patch };
     // Changing the prestation carries its duration unless the caller set one explicitly.
@@ -599,7 +610,12 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     if (patch.staffId || patch.secondStaffId !== undefined || patch.serviceId || patch.durationMin !== undefined) {
       const staffIds = [next.staffId, next.secondStaffId].filter(Boolean) as string[];
-      const clash = findStaffClash(reservations, rvId, { staffIds, start: next.start, durationMin: next.durationMin });
+      const clash = findStaffClash(reservations, rvId, {
+        date: reservationDate(parent),
+        staffIds,
+        start: next.start,
+        durationMin: next.durationMin,
+      });
       if (clash) {
         const who = get().praticiennes.find((p) => p.id === clash.staffId)?.name ?? "La praticienne";
         return { ok: false, message: `${who} est déjà prise à ${clash.other.start} — impossible sur ce créneau.` };
@@ -615,7 +631,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (!reservation) return { ok: false, message: "Réservation introuvable." };
     const durationMin = data.durationMin ?? serviceById(data.serviceId)?.durationMinutes ?? 30;
     const staffIds = [data.staffId, data.secondStaffId].filter(Boolean) as string[];
-    const clash = findStaffClash(reservations, "", { staffIds, start: data.start, durationMin });
+    const clash = findStaffClash(reservations, "", { date: reservationDate(reservation), staffIds, start: data.start, durationMin });
     if (clash) {
       const who = get().praticiennes.find((p) => p.id === clash.staffId)?.name ?? "La praticienne";
       return { ok: false, message: `${who} a déjà un rendez-vous à ${clash.other.start} — choisissez un autre créneau.` };
