@@ -34,7 +34,12 @@ export function SegmentedToggle({ options, value, onChange, className }: Segment
       <span
         aria-hidden
         className="absolute top-1 bottom-1 rounded-[calc(var(--radius-selector)-0.25rem)] bg-base-100 shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1)] transition-[left] duration-200 ease-out"
-        style={{ left: `calc(${index} * (100% / ${count}))`, width: `calc(100% / ${count})` }}
+        // Le thumb se positionne sur la boîte de padding : on retire le p-1 des deux côtés pour
+        // qu'il garde le même retrait de 4px à gauche/droite qu'en haut/bas.
+        style={{
+          left: `calc(0.25rem + ${index} * ((100% - 0.5rem) / ${count}))`,
+          width: `calc((100% - 0.5rem) / ${count})`,
+        }}
       />
       {options.map((option) => {
         const active = option.value === value;
