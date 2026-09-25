@@ -143,6 +143,7 @@ Bureau taupe + feuille crème. Étape courante = `activeSale.step` : `"vente"` |
 | Étape / zone | Composant | Fichier |
 |---|---|---|
 | Barre d'onglets de vente | `SaleTabsBar` | [`components/comptoir/sale-tabs-bar.tsx`](../components/comptoir/sale-tabs-bar.tsx) |
+| Bandeau taupe, à droite | « Créer un rendez-vous » + « Replier » | [`components/comptoir/comptoir-panel.tsx`](../components/comptoir/comptoir-panel.tsx) — ouvre `PriseRdvModal` (ADR 0032) par-dessus la vente, sans replier |
 | Panneau menu (gauche) | `MenuPanel` | [`components/comptoir/menu-panel.tsx`](../components/comptoir/menu-panel.tsx) — onglets Prestations/Produits/Boissons, rail de catégories (2 niveaux), recherche |
 | Blocs ticket partagés | `TicketFrame`/`TicketHead`/`TicketClientCard`/`TicketLineBody`/`TicketTotals` | [`components/comptoir/ticket-parts.tsx`](../components/comptoir/ticket-parts.tsx) — le même ticket dans la colonne de droite des 3 stations (ADR 0031) |
 | Ticket panier (droite, `step: "vente"`) | `SaleCartPanel` | [`components/comptoir/sale-cart-panel.tsx`](../components/comptoir/sale-cart-panel.tsx) — cliente en tête, lignes (qty, retrait), total, Encaisser. **Plus de remise ici** |
