@@ -96,6 +96,23 @@
 > - Hors périmètre : créer un rendez-vous en cliquant une case vide du Planning (fast-follow
 >   possible, pas couvert par cette passe).
 
+> **Amendement 2026-09-25 (v2.8) — Le parcours de prise de rendez-vous b&co, recopié au comptoir
+> (ADR 0032, remplace v2.7).** « Créer un rendez-vous » (en-tête de l'Accueil) **et** « Modifier »
+> (fiche réservation) ouvrent le même grand dialogue : le parcours du site de rendez-vous b&co à
+> l'identique — même apparence, contenu réduit proportionnellement pour tenir.
+> - Nombre de personnes → **Clientes** → Services → Créneau → Confirmation. « Clientes » remplace
+>   la connexion et l'étape Informations du site : la payeuse se cherche par n° client, nom, email
+>   ou téléphone (ou se crée sur place) ; les autres personnes, fiche ou simple prénom, facultatives.
+> - « Prestations déjà payées » (packs, abonnements) ou suggestion de pack juste après Clientes.
+> - Créneau : horaires réellement libres ; salon pré-rempli avec le filtre de l'Accueil,
+>   modifiable ; bloc **Praticiennes** — la moins chargée du jour proposée d'office, modifiable
+>   parmi les libres.
+> - Confirmation : Bar Beauty, Boutique, note ; les CGV deviennent une mention. **Terminé** →
+>   acompte (Mobile money, **Espèces**, carte/PayPal) → « Rendez-vous confirmé » ; **Encaisser
+>   maintenant** → enregistre et ouvre la vente de la réservation au Comptoir.
+> - Modifier : même parcours pré-rempli ; une prestation retirée annule son rendez-vous ; un
+>   acompte déjà réglé n'est pas redemandé. L'ancien éditeur d'ajustement disparaît.
+
 > **Amendement 2026-08-27 (v2.2) — Refonte 2 : Planning · Clientèle · Relances · Catalogue.** Ces
 > quatre sections (et leurs sous-écrans : Équipe, Fiche cliente, Carte de fidélité, Détail planche)
 > ont été **redesignées à partir des seules job stories**, dans un **nouveau langage visuel

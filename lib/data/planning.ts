@@ -1,6 +1,6 @@
 import { serviceById } from "@/lib/data/menu";
 import { PRATICIENNES, scheduleFor } from "@/lib/data/praticiennes";
-import type { BeneficiaryKind, Praticienne, RendezVous, Reservation } from "@/lib/data/types";
+import type { BeneficiaryKind, RendezVous, Reservation } from "@/lib/data/types";
 
 /** Périodes affichables au Planning (ADR 0020). Mois (rouvert par ADR 0024) retiré par ADR 0025 :
  *  absent du Figma de référence, qui ne montre que Jour/Semaine. */
@@ -842,37 +842,4 @@ export function appointmentEndTime(appointment: Pick<RendezVous, "start" | "dura
 export function formatHour(time: string) {
   const [h, m] = time.split(":");
   return m === "00" ? `${Number(h)}h` : `${Number(h)}h${m}`;
-}
-
-/**
- * Les horaires réellement libres d'une praticienne, un jour donné, pour une durée donnée : son
- * horaire hebdomadaire moins ses rendez-vous actifs déjà posés ce jour-là (ADR 0027 — « Créer un
- * rendez-vous » au comptoir). Pas de réification en objet « Créneau » (mot réservé au vocabulaire
- * b&co côté client, cf. `CONTEXT.md`) : une simple liste d'horaires "HH:mm" à choisir.
- */
-export function freeSlotsForStaff(
-  staff: Praticienne,
-  date: string,
-  reservations: Reservation[],
-  durationMin: number,
-  stepMin = 15,
-): string[] {
-  if (staff.unavailableToday && date === todayISO()) return [];
-  const hours = scheduleFor(staff, new Date(`${date}T00:00:00`));
-  if (!hours) return [];
-
-  const dayStart = timeToMinutes(hours.start);
-  const dayEnd = timeToMinutes(hours.end);
-  const busy = reservations
-    .filter((r) => reservationDate(r) === date)
-    .flatMap((r) => r.rendezVous)
-    .filter((rv) => rv.status !== "annule" && (rv.staffId === staff.id || rv.secondStaffId === staff.id))
-    .map((rv) => ({ start: timeToMinutes(rv.start), end: timeToMinutes(rv.start) + rv.durationMin }));
-
-  const slots: string[] = [];
-  for (let t = dayStart; t + durationMin <= dayEnd; t += stepMin) {
-    const clashes = busy.some((b) => t < b.end && b.start < t + durationMin);
-    if (!clashes) slots.push(minutesToTime(t));
-  }
-  return slots;
 }

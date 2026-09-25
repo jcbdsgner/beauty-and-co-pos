@@ -8,7 +8,6 @@ import {
   reservationDate,
   reservationForRendezVous,
   timeToMinutes,
-  todayISO,
 } from "@/lib/data/planning";
 import { PRODUITS, serviceById } from "@/lib/data/menu";
 import { boissonById } from "@/lib/data/boissons";
@@ -32,6 +31,8 @@ import type {
   RemiseMode,
   RendezVous,
   Reservation,
+  ReservationExtra,
+  DepositMode,
   Sale,
   SaleCoverage,
 } from "@/lib/data/types";
@@ -405,21 +406,27 @@ export type AppState = {
   noteClientViewed: (id: string) => void;
 
   // Rendez-vous (atomic, nested inside their Réservation). Most réservations still arrive from the
-  // external booking journey, but the receptionist can also create one at the counter — a phone
-  // booking, no upsell, no acompte (ADR 0027) — and adjusts what arrives either way (ADR 0009):
+  // external booking journey, but the receptionist can also create one at the counter through the
+  // copied b&co journey (ADR 0032) — and adjusts what arrives either way (ADR 0009):
   // reschedule, reassign, swap prestation / bénéficiaire, add / remove a rendez-vous, cancel with a
   // reason. The one hard block is a praticienne double-booked (findStaffClash).
-  /** Crée une réservation `source: "comptoir"` avec 1..N rendez-vous — voir ADR 0027. Chaque ligne
-   *  est vérifiée contre les réservations existantes et entre elles (`findStaffClash`) ; la
-   *  première ligne en clash arrête tout, rien n'est enregistré. */
-  createReservation: (
-    payerClientId: string,
+  /** Enregistre le parcours de prise de rendez-vous (ADR 0032) — crée une réservation `comptoir`,
+   *  ou, avec `reservationId`, réécrit celle-ci : chaque rendez-vous existant retrouvé (même
+   *  bénéficiaire, même prestation) garde son id, ceux qui ne figurent plus sont **annulés**, les
+   *  nouveaux sont ajoutés. `deposit` s'ajoute à l'acompte déjà porté. Tout ou rien : un clash de
+   *  praticienne (`findStaffClash`) n'enregistre rien. */
+  saveParcoursReservation: (input: {
+    reservationId?: string;
+    payerClientId: string;
+    date: string;
     lines: Array<
-      Pick<RendezVous, "serviceId" | "staffId" | "start"> &
-        Partial<Pick<RendezVous, "secondStaffId" | "beneficiaryClientId" | "beneficiaryName" | "beneficiaryKind" | "durationMin">>
-    >,
-    options?: { date?: string },
-  ) => { ok: boolean; message: string; reservationId?: string };
+      Pick<RendezVous, "serviceId" | "staffId" | "start" | "durationMin"> &
+        Partial<Pick<RendezVous, "secondStaffId" | "beneficiaryClientId" | "beneficiaryName" | "beneficiaryKind">>
+    >;
+    extras?: ReservationExtra[];
+    note?: string;
+    deposit?: { amount: number; mode: DepositMode };
+  }) => { ok: boolean; message: string; reservationId?: string };
   cancelAppointment: (rvId: string, reason?: string) => void;
   /** Annule toute la réservation d'un coup — chaque rendez-vous encore actif reçoit le même motif
    *  (ADR 0023). Distinct de `cancelAppointment`, qui ne touche qu'un rendez-vous précis. */
@@ -539,57 +546,67 @@ export const useAppStore = create<AppState>((set, get) => ({
   noteClientViewed: (id) =>
     set((s) => ({ recentClientIds: [id, ...s.recentClientIds.filter((x) => x !== id)].slice(0, 8) })),
 
-  createReservation: (payerClientId, lines, options) => {
-    if (!payerClientId) return { ok: false, message: "Choisissez la cliente qui règle." };
-    if (lines.length === 0) return { ok: false, message: "Ajoutez au moins un rendez-vous." };
-
+  saveParcoursReservation: (input) => {
     const { reservations, praticiennes } = get();
-    const reservationId = nextId("res");
+    if (!input.payerClientId) return { ok: false, message: "Choisissez la cliente qui règle." };
+    if (input.lines.length === 0) return { ok: false, message: "Ajoutez au moins une prestation." };
+    const existing = input.reservationId ? reservationById(reservations, input.reservationId) : undefined;
+    if (input.reservationId && !existing) return { ok: false, message: "Réservation introuvable." };
+    const reservationId = existing?.id ?? nextId("res");
+    const others = reservations.filter((r) => r.id !== reservationId);
     const staffName = (id: string) => praticiennes.find((p) => p.id === id)?.name ?? "La praticienne";
-    const newRvs: RendezVous[] = [];
 
-    for (const data of lines) {
-      const durationMin = data.durationMin ?? serviceById(data.serviceId)?.durationMinutes ?? 30;
-      const staffIds = [data.staffId, data.secondStaffId].filter(Boolean) as string[];
-      const cand = { start: data.start, durationMin };
+    const identity = (rv: Pick<RendezVous, "serviceId" | "beneficiaryClientId" | "beneficiaryName">) =>
+      `${rv.beneficiaryClientId ?? rv.beneficiaryName ?? ""}|${rv.serviceId}`;
+    const reusable = (existing?.rendezVous ?? []).filter((rv) => rv.status !== "annule");
+    const kept = new Set<string>();
+    const next: RendezVous[] = [];
 
-      const clash = findStaffClash(reservations, "", { date: options?.date ?? todayISO(), staffIds, ...cand });
+    for (const line of input.lines) {
+      const staffIds = [line.staffId, line.secondStaffId].filter(Boolean) as string[];
+      const clash = findStaffClash(others, "", { date: input.date, staffIds, start: line.start, durationMin: line.durationMin });
       if (clash) {
-        return { ok: false, message: `${staffName(clash.staffId)} a déjà un rendez-vous à ${clash.other.start} — choisissez un autre horaire.` };
+        return { ok: false, message: `${staffName(clash.staffId)} a déjà un rendez-vous à ${clash.other.start} — choisissez un autre créneau.` };
       }
-      const localClash = newRvs.find((rv) => {
-        const otherStaff = [rv.staffId, rv.secondStaffId].filter(Boolean) as string[];
-        return staffIds.some((id) => otherStaff.includes(id)) && timeRangesOverlap(cand, rv);
-      });
-      if (localClash) {
-        return { ok: false, message: `${staffName(localClash.staffId)} est déjà prise à ${localClash.start} sur un autre rendez-vous de cette réservation.` };
-      }
-
-      newRvs.push({
-        id: nextId("rdv"),
+      const match = reusable.find((rv) => !kept.has(rv.id) && identity(rv) === identity(line));
+      if (match) kept.add(match.id);
+      next.push({
+        id: match?.id ?? nextId("rdv"),
         reservationId,
-        serviceId: data.serviceId,
-        staffId: data.staffId,
-        start: data.start,
-        durationMin,
+        serviceId: line.serviceId,
+        staffId: line.staffId,
+        start: line.start,
+        durationMin: line.durationMin,
         status: "actif",
-        ...(data.secondStaffId ? { secondStaffId: data.secondStaffId } : {}),
-        ...(data.beneficiaryClientId ? { beneficiaryClientId: data.beneficiaryClientId } : {}),
-        ...(data.beneficiaryName ? { beneficiaryName: data.beneficiaryName } : {}),
-        ...(data.beneficiaryKind ? { beneficiaryKind: data.beneficiaryKind } : {}),
+        ...(line.secondStaffId ? { secondStaffId: line.secondStaffId } : {}),
+        ...(line.beneficiaryClientId ? { beneficiaryClientId: line.beneficiaryClientId } : {}),
+        ...(line.beneficiaryName ? { beneficiaryName: line.beneficiaryName } : {}),
+        ...(line.beneficiaryKind ? { beneficiaryKind: line.beneficiaryKind } : {}),
       });
     }
+    // Retirée du parcours ⇒ annulée, pas effacée (ADR 0009 : l'historique des annulés reste lisible).
+    const dropped: RendezVous[] = (existing?.rendezVous ?? [])
+      .filter((rv) => !kept.has(rv.id))
+      .map((rv) => (rv.status === "annule" ? rv : { ...rv, status: "annule" }));
 
+    const deposit = input.deposit;
     const reservation: Reservation = {
-      id: reservationId,
-      payerClientId,
-      source: "comptoir",
-      rendezVous: newRvs,
-      ...(options?.date ? { date: options.date } : {}),
-      createdAt: new Date().toISOString(),
+      ...(existing ?? { id: reservationId, source: "comptoir" as const, createdAt: new Date().toISOString() }),
+      payerClientId: input.payerClientId,
+      date: input.date,
+      rendezVous: [...next, ...dropped],
+      ...(input.extras?.length ? { extras: input.extras } : {}),
+      ...(input.note?.trim() ? { note: input.note.trim() } : {}),
+      ...(deposit
+        ? { depositPaid: (existing?.depositPaid ?? 0) + deposit.amount, depositMode: deposit.mode, depositPaidAt: new Date().toISOString() }
+        : {}),
     };
-    set((s) => ({ reservations: [...s.reservations, reservation] }));
-    return { ok: true, message: "Rendez-vous enregistré.", reservationId };
+    set((s) => ({
+      reservations: existing
+        ? s.reservations.map((r) => (r.id === reservationId ? reservation : r))
+        : [...s.reservations, reservation],
+    }));
+    return { ok: true, message: existing ? "Réservation modifiée." : "Rendez-vous enregistré.", reservationId };
   },
 
   cancelAppointment: (rvId, reason) =>

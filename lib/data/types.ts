@@ -178,6 +178,12 @@ export type Reservation = {
    *  verbatim like the rest of the réservation, never entered or edited in this app. Deducted from
    *  the sale's total at the counter (see `Sale.depositPaid`, ADR 0015). Absent ⇒ no acompte. */
   depositPaid?: number;
+  /** Set only when the acompte was taken at the counter, at the end of the booking journey (ADR 0032)
+   *  — how and when it was paid, so it counts in that day's sales. Absent ⇒ paid online (or none). */
+  depositMode?: DepositMode;
+  depositPaidAt?: string;
+  /** « Note pour le salon » left in the booking journey (ADR 0032). */
+  note?: string;
   /** Boissons / produits pré-commandés en ligne avec la réservation, pour retrait le jour même —
    *  arrivent verbatim comme le reste et s'ajoutent au panier avec les prestations à « Encaisser ».
    *  Jamais de prestation ici (elle naît toujours d'un Rendez-vous). */
@@ -222,6 +228,9 @@ export type RendezVous = {
   /** Free-text reason captured when the receptionist cancels — visible in the annulés history (ADR 0009). */
   cancelReason?: string;
 };
+
+/** Moyens d'acompte du parcours de prise de rendez-vous : ceux du site b&co, plus les espèces (ADR 0032). */
+export type DepositMode = "especes" | "mobile_money" | "carte";
 
 export type PaymentMode = "wave" | "orange_money" | "especes" | "carte";
 

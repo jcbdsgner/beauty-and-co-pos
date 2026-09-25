@@ -27,7 +27,7 @@ import { Avatar } from "@/components/ui/atoms/avatar";
 import { Textarea } from "@/components/ui/atoms/textarea";
 import { Field } from "@/components/ui/molecules/field";
 import { FlipChip, Legend } from "@/components/ui/board";
-import { EditRendezVousDialog } from "@/components/planning/edit-rendez-vous-dialog";
+import { PriseRdvModal } from "@/components/prise-rdv/prise-rdv-modal";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { giftCardForClient } from "@/lib/data/cartes-cadeaux";
 import { abonnementsForClient, abonnementStatus, ABONNEMENT_STATUS_LABEL } from "@/lib/data/abonnements";
@@ -551,7 +551,7 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
         </div>
       </Dialog>
 
-      <EditRendezVousDialog reservationId={editing && reservation ? reservation.id : null} onClose={() => setEditing(false)} />
+      <PriseRdvModal open={editing && Boolean(reservation)} reservationId={reservation?.id} onClose={() => setEditing(false)} />
     </>
   );
 }
