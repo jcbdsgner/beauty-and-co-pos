@@ -177,7 +177,7 @@ export function NoterClienteDialog({
               rows={6}
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="Ex. Très pointilleuse sur la forme amande, préfère Fatou pour la pose."
+              placeholder="Texte libre (facultatif)"
               autoFocus
             />
           </>

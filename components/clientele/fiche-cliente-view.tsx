@@ -169,7 +169,7 @@ function FicheClienteViewInner({ clientId }: { clientId: string }) {
         {!canContact && <p className="mt-2 text-xs text-base-content/40">Aucune coordonnée enregistrée — ajoutez un téléphone pour pouvoir la contacter.</p>}
       </div>
 
-      <div className="grid items-start gap-6 lg:grid-cols-[1.35fr_1fr]">
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
         {/* Le maintenant */}
         <div className="flex flex-col gap-6">
           <Board legend="Valeur cliente">
@@ -179,7 +179,7 @@ function FicheClienteViewInner({ clientId }: { clientId: string }) {
                 { k: "Visites", v: String(client.totalVisits) },
                 { k: "Points fidélité", v: String(client.points) },
               ].map((m) => (
-                <div key={m.k} className="bg-white px-4 py-4">
+                <div key={m.k} className="flex flex-col justify-between bg-white px-4 py-4">
                   <Legend>{m.k}</Legend>
                   <p className="mt-1 font-[family-name:var(--font-heading)] text-lg font-semibold tabular-nums text-base-content">{m.v}</p>
                 </div>
@@ -219,7 +219,7 @@ function FicheClienteViewInner({ clientId }: { clientId: string }) {
                         {conversation && <ChannelGlyph channel={conversation.channel} className="size-3.5" />}
                       </span>
                     }
-                    meta={<span className="line-clamp-2">{m.body}</span>}
+                    meta={<span className="line-clamp-2 whitespace-normal">{m.body}</span>}
                     className="items-start py-3"
                   />
                 );
