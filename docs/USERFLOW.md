@@ -321,14 +321,9 @@ Comptoir (déployé)
   - ouverture via « Encaisser » depuis une réservation → panier auto-rempli avec toutes ses prestations (payeuse + « pour {bénéficiaire} » sur les lignes concernées), message explicite (« Prestations de la réservation ajoutées »)
   - **identification conditionnelle** (ADR 0013) : une vente **produits et/ou boissons uniquement** (le cas d'une « + Nouvelle vente » à froid — une prestation ne naît jamais au comptoir) s'encaisse **sans cliente**, l'identification est facultative (helper en sourdine « Cliente facultative — à ajouter pour la fidélité ou une carte cadeau ») ; dès qu'une **prestation** entre au panier, la cliente redevient **obligatoire** — verrou dynamique, signal ambre
 - trois onglets **Prestations · Produits · Boissons**, recherche, rail de catégories (Prestations : grandes catégories + familles ; Produits : marques — Kérastase et ses gammes, Saryna Keys, Nefertiti, Beccy Wave, Autres ; Boissons : sans rail), grille de tuiles → ajout au panier (incrémente si déjà présent) ; **le Menu s'ouvre sur Produits** (la vente à froid est une revente ; l'onglet Prestations reste accessible). Une boisson compte dans le total et les points gagnés, jamais dans l'assiette d'une remise (ADR 0016)
-- panier : stepper qty, retrait de ligne, section Remise (panneau **déroulant**, en pied de panier, juste au-dessus du total — pas une popup : la réceptionniste y touche avec la cliente en face). **Trois mécanismes, cumulables, pouvant amener le total à 0 F :**
-  1. **Carte cadeau** — **rien à saisir ni à scanner** (ADR 0013). Dès que la cliente est identifiée, sa carte cadeau active se **lie d'elle-même** à la vente ; la section Remise n'affiche alors que la carte liée, **ajustable** comme les points (carte en montant → combien du solde on consomme, le **reliquat reste sur la carte** : « couvre −18 000 F · reste 7 000 F sur la carte » ; carte en prestations → quelles lignes du panier elle couvre) et **retirable**. Retirer la cliente retire la carte. Détentrice avec plusieurs cartes → montant avant prestations, puis plus gros solde. Carte au porteur / offerte par un tiers → **pas encaissable** dans ce prototype.
-  2. **Points fidélité** — stepper ±100 pts, borné au solde de la cliente (100 pts = 1 000 F). Masqué si la cliente a < 100 pts.
-  3. **Remise accordée** — la réceptionniste choisit **Montant** ou **Pourcentage**, puis la valeur — **aucun code** jusqu'à **10 % du total des prestations** ; **de 10 à 20 %**, un champ **code manager** (4–6 chiffres, non vérifié — mock) apparaît et devient obligatoire. **20 % est le plafond absolu** — au-delà, refus explicite. Services seuls, les produits n'en bénéficient jamais. Le **motif** n'est PAS demandé ici : il est saisi juste après l'encaissement (voir Paiement). Cf. ADR 0008.
-  - ordre de calcul : remise accordée (sur les prestations) → points → carte cadeau en dernier, clampée à ce qui reste dû
-  - le pied de ticket et le reçu **ventilent** les lignes de remise, jamais un total « Remises » agrégé
+- panier : stepper qty, retrait de ligne — **plus aucune remise ici** (ADR 0031). Le total du panier montre déjà l'effet de ce qui est automatique (prestations déjà payées, carte cadeau auto-liée, acompte), en lecture seule ; tout ce qui s'**ajuste** se fait au Règlement, sur le même bloc ticket.
 - **Acompte** (ADR 0015) — quand la vente vient d'une réservation qui en porte un : **pas une remise**, juste un paiement déjà réglé sur la plateforme externe. Affiché en lecture seule (rien à saisir) sous le Total, déduit pour obtenir le grand chiffre final relabellisé **« Reste à encaisser »**. Les points fidélité gagnés restent calculés sur le Total complet, acompte compris.
-- « Encaisser » (désactivé + texte d'aide tant que panier vide, **ou** panier avec prestation sans cliente identifiée — ADR 0013) → Paiement
+- « Encaisser » (désactivé + texte d'aide tant que panier vide, **ou** panier avec prestation sans cliente identifiée — ADR 0013) → Règlement
 
 Identifier la cliente (dialogue unique, caméra réelle — atteint du bouton « Scanner » du ticket)
 - cadre de visée, erreur caméra affichée si besoin
@@ -339,16 +334,26 @@ Identifier la cliente (dialogue unique, caméra réelle — atteint du bouton «
 - [ Caméra refuse l'accès en pleine vente → le panier et l'onglet en cours restent strictement intacts ; message discret (« Caméra indisponible — saisissez le code »), le champ reste au premier plan, jamais un blocage qui force à fermer l'onglet ]
 - [ Code qui ne résout ni une carte ni une fiche → message clair (« Code non reconnu — vérifiez-le ou cherchez la cliente par son nom »), jamais un silence ]
 
-Paiement (dans le Comptoir déployé)
-- À payer affiché en évidence ; si une remise s'applique, le sous-total barré + le total des remises sont rappelés dessous
-- si un acompte a été versé (réservation d'origine), le libellé devient **« Reste à encaisser »** et le Total complet + l'acompte versé sont rappelés dessous ; les modes de règlement se répartissent sur ce reste, pas sur le Total
-- 4 modes (Wave / Orange Money / Espèces / Carte), sélection simple ou mixte (2 modes, jamais deux fois le même)
-- rendu de monnaie calculé uniquement si Espèces est impliqué ; égalité exacte exigée sur les rails 100 % digitaux
-- [ Répartition mixte qui ne tombe jamais juste (erreur de saisie) → « Confirmer » reste désactivé, l'écart restant s'affiche en direct (« reste 500 F à répartir »), un bouton « Recommencer la répartition » remet les deux montants à zéro sans perdre les 2 modes choisis ni renvoyer au panier — se tromper ne doit jamais coûter de tout reprendre depuis le Menu ]
-- « Confirmer l'encaissement » → (si une remise accordée est en jeu) **Motif de remise** → Reçu
-- **Motif de remise** : écran bloquant, **après** « Confirmer » et **avant** le reçu, uniquement si une remise accordée a été appliquée. Texte libre obligatoire (≥ 3 caractères). Jamais demandé avant l'encaissement — ne pas ralentir le comptoir avec une cliente en face ; la justification se pose une fois l'argent pris. Apparaît ensuite sur le reçu et dans le Récap des ventes.
+Règlement (dans le Comptoir déployé — ADR 0031)
+- **même feuille, même ticket** : le ticket reste dans la colonne de droite (même bloc qu'au panier, lignes figées) ; la colonne de gauche, qui portait le Menu, porte maintenant le paiement. « ← Panier » ramène à la composition sans rien perdre
+- en tête de gauche : **À encaisser** (ou **Reste à encaisser** si acompte), en très grand
+- **Remise accordée — par ligne**, dans le ticket, sans modale : « Accorder une remise » → les lignes de prestation remisables reçoivent une case (produits, boissons, lignes entièrement déjà payées : « pas remisable ») → la réceptionniste coche une, plusieurs ou « Tout le ticket » → le compositeur prend le pied du ticket : **%** (5 / 10 / 15 / 20) ou **Montant**, **code manager** (4–6 chiffres, mock) dès que la remise dépasse **10 % de l'assiette** (le net des lignes cochées), **20 %** plafond absolu → « Appliquer −X F ». Chaque ligne remisée montre son prix barré, son nouveau prix et l'étiquette « Remise −10 % · modifier » (rouvre la remise : modifier / retirer). Plusieurs remises peuvent coexister ; une ligne n'en porte qu'une. Un montant fixe se répartit au prorata. Motif : **pas ici** (voir Reçu)
+- **Avantages de la cliente**, sous les lignes du ticket (rien à saisir, tout est déjà appliqué — on ajuste) :
+  1. **Prestations déjà payées** (Pack / Abonnement, ADR 0017) — cochées d'office, décocher pour garder pour plus tard
+  2. **Carte cadeau** — auto-liée à la cliente identifiée (ADR 0013), une ligne « −X F » qui se déplie : montant consommé (reliquat gardé sur la carte) ou prestations couvertes ; « Ne pas utiliser la carte »
+  3. **Points fidélité** — stepper ±100 pts (100 pts = 1 000 F), borné au solde
+- ordre de calcul : déjà payé → remises accordées (par ligne) → points → carte cadeau (clampée à ce qui reste dû) → acompte ; le pied de ticket **ventile** chaque mécanisme, jamais un total « Remises » agrégé
+- **Moyens de paiement** : 4 grandes tuiles — **Carte** et **Espèces** en grosses icônes, Wave et Orange Money avec leur logo, **toutes libellées**
+- **Paiement en 1 à 3 parts** : une part = tout le montant, rien à saisir. « Payer en plusieurs fois · jusqu'à 3 » ajoute une part ; toutes les parts sauf la dernière se tapent au pavé, **la dernière est toujours « le reste », calculée**. Un même moyen peut revenir (deux cartes) ; Espèces une seule fois. Choisir un moyen passe à la part suivante sans moyen (3 parts = 3 touches)
+- Espèces : « Reçu » tapé au pavé → **Rendu** calculé en direct
+- à droite du pavé, ou à sa place : ce qu'il faut vérifier (« Passez la carte sur le terminal… », « Vérifiez la réception sur le téléphone du salon »)
+- [ Parts qui dépassent le total → « Confirmer » désactivé, message « Les parts dépassent le total de X F » — corriger une part au pavé, jamais tout reprendre ]
+- [ Remises + avantages + acompte couvrent tout → « Rien à encaisser », « Confirmer » clôture la vente ]
+- **Confirmer l'encaissement** (pied du ticket, à la place exacte d'« Encaisser » au panier) → Reçu ; sous le bouton, la raison tant qu'il est désactivé
 
-Reçu (dans le Comptoir déployé)
+Reçu (dans le Comptoir déployé — ADR 0031)
+- le ticket, toujours à droite, **devient le reçu imprimable** ; à gauche : « Vente encaissée », le montant, chaque part payée (icône + moyen + montant, reçu / rendu pour les espèces), points gagnés
+- **Motif de remise** (si une remise accordée est en jeu) : **carte inline** en tête des actions, signal ambre, texte libre ≥ 3 caractères, **un seul motif pour toutes les remises** de la vente ; les autres actions restent désactivées tant qu'il manque (remplace l'ancienne modale bloquante)
 - récap complet : lignes de prestations, **sous-total, puis chaque remise ventilée** (remise accordée X % + motif · points fidélité N pts · carte cadeau « CODE » + reliquat), total, puis — si un acompte existait — **acompte versé** et **reste à encaisser**, détail du/des paiements
 - points fidélité réellement écrits dans le profil cliente (gagnés sur le total après remises)
 - « Imprimer le reçu »

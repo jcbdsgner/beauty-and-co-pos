@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/atoms/button";
 import { SaleTabsBar } from "@/components/comptoir/sale-tabs-bar";
 import { MenuPanel } from "@/components/comptoir/menu-panel";
 import { SaleCartPanel } from "@/components/comptoir/sale-cart-panel";
-import { PaymentStep } from "@/components/comptoir/payment-step";
-import { ReceiptStep } from "@/components/comptoir/receipt-step";
+import { SettlementStep } from "@/components/comptoir/settlement-step";
+import { ReceiptStep, isReceiptLocked } from "@/components/comptoir/receipt-step";
 import { IdentifyDialog } from "@/components/comptoir/identify-dialog";
 import { BrandMark } from "@/components/ui/atoms/brand-mark";
 import { Logo } from "@/components/ui/atoms/logo";
@@ -17,7 +17,8 @@ import { useAppData } from "@/components/providers/app-data-provider";
  * The Comptoir, deployed — a `fixed inset-0` mode change (not a Dialog): a warm taupe desk with a
  * cream working sheet on it. Rendered once from the root layout, shown/hidden by
  * `comptoirDeployed` so collapsing never unmounts (or resets) the sale tabs underneath. Three
- * stations live on the sheet: the counter (menu + ticket), payment, and the receipt.
+ * stations live on the sheet — panier, règlement, reçu (ADR 0031) — and all three keep the ticket
+ * in the right column; only the left side changes (menu → payment → what happened).
  */
 export function ComptoirPanel() {
   const { comptoirDeployed, collapseComptoir, sales, activeSaleId, openNewTab } = useAppData();
@@ -27,6 +28,7 @@ export function ComptoirPanel() {
 
   const activeSale = sales.find((s) => s.id === activeSaleId);
   const step = activeSale?.step ?? "vente";
+  const locked = isReceiptLocked(activeSale);
 
   return (
     <div className="fixed inset-0 z-40 flex flex-col bg-primary">
@@ -36,12 +38,14 @@ export function ComptoirPanel() {
           <div className="mb-2 flex h-12 shrink-0 items-center rounded-full bg-white px-4">
             <Logo size="footer" className="relative h-5 w-[43px] shrink-0" />
           </div>
-          <SaleTabsBar />
+          <SaleTabsBar locked={locked} />
         </div>
         <button
           type="button"
           onClick={collapseComptoir}
-          className="mb-2 flex h-12 shrink-0 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-primary transition active:scale-[0.97] hover:bg-white/90"
+          disabled={locked}
+          title={locked ? "Complétez d'abord la fiche cliente" : undefined}
+          className="mb-2 disabled:pointer-events-none disabled:opacity-40 flex h-12 shrink-0 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-primary transition active:scale-[0.97] hover:bg-white/90"
         >
           <ChevronDown aria-hidden className="size-4" />
           Replier
@@ -62,7 +66,7 @@ export function ComptoirPanel() {
         ) : (
           <div key={step} className="h-full animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
             {step === "paiement" ? (
-              <PaymentStep sale={activeSale} />
+              <SettlementStep sale={activeSale} />
             ) : step === "recu" ? (
               <ReceiptStep sale={activeSale} />
             ) : (

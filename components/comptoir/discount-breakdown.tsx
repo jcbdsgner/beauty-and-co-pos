@@ -22,16 +22,16 @@ export function DiscountBreakdown({ sale, className }: { sale: Sale; className?:
           <span className="tabular-nums">−{formatFcfa(c.amount)}</span>
         </div>
       ))}
-      {t.grantedDiscount > 0 && (
-        <div className="flex justify-between gap-3">
+      {t.remiseBreakdown.map((r) => (
+        <div key={r.id} className="flex justify-between gap-3">
           <span>
-            Remise accordée
-            {sale.discountGranted?.mode === "pourcentage" && ` (${sale.discountGranted.value} %)`}
-            {sale.discountGranted?.managerCode && " · code manager"}
+            Remise {r.mode === "pourcentage" ? `${r.value} %` : "accordée"} · {r.lineIds.length}{" "}
+            {r.lineIds.length > 1 ? "prestations" : "prestation"}
+            {r.managerCode && " · code manager"}
           </span>
-          <span className="tabular-nums">−{formatFcfa(t.grantedDiscount)}</span>
+          <span className="tabular-nums">−{formatFcfa(r.amount)}</span>
         </div>
-      )}
+      ))}
       {t.loyaltyDiscount > 0 && (
         <div className="flex justify-between gap-3">
           <span>Points fidélité ({sale.loyaltyPointsUsed} pts)</span>
@@ -46,8 +46,8 @@ export function DiscountBreakdown({ sale, className }: { sale: Sale; className?:
           <span className="tabular-nums">−{formatFcfa(t.giftCardDiscount)}</span>
         </div>
       )}
-      {sale.discountGranted?.reason && (
-        <p className="text-xs text-base-content/55">Motif de la remise : {sale.discountGranted.reason}</p>
+      {sale.remiseReason && t.grantedDiscount > 0 && (
+        <p className="text-xs text-base-content/55">Motif de la remise : {sale.remiseReason}</p>
       )}
       {t.giftCardDiscount > 0 && t.giftCardRemaining > 0 && (
         <p className="text-xs text-base-content/55">Reste {formatFcfa(t.giftCardRemaining)} sur la carte cadeau.</p>

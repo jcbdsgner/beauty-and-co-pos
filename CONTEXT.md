@@ -137,7 +137,7 @@ Toute réduction appliquée à une vente. Trois mécanismes, **cumulables**, pou
 _Avoid_: Réduction, Rabais, Ristourne, Promo (« code promo » réservé au cas où il en existerait un un jour)
 
 **Remise accordée**:
-La réduction discrétionnaire qu'une réceptionniste accorde : un montant fixe ou un pourcentage, calculé sur le **total des prestations** (les produits n'en bénéficient jamais). Deux seuils : **jusqu'à 10 %**, la réceptionniste l'accorde **sans aucun code** ; **de 10 à 20 %**, il faut un **code manager**. **20 % est le plafond absolu** — au-delà, rien n'est possible dans l'app. La réceptionniste n'a **pas de code personnel** (il n'y a pas de comptes nominatifs au comptoir — persona unique, ADR 0001) ; la traçabilité tient au **motif** obligatoire après l'encaissement et au code manager au-delà de 10 % (ADR 0008). Voir aussi **Code manager**, **Motif de remise**.
+La réduction discrétionnaire qu'une réceptionniste accorde **au Règlement** (jamais au panier) sur **une ou plusieurs lignes de prestation** qu'elle sélectionne — « tout le ticket » n'est que le cas où toutes sont cochées : un montant fixe (réparti au prorata) ou un pourcentage, calculé sur l'**assiette** de la remise, le net des lignes choisies (produits et boissons n'en bénéficient jamais). Plusieurs remises peuvent coexister sur un ticket ; une ligne n'en porte qu'une (ADR 0031). Deux seuils, mesurés sur l'assiette : **jusqu'à 10 %**, la réceptionniste l'accorde **sans aucun code** ; **de 10 à 20 %**, il faut un **code manager**. **20 % est le plafond absolu** — au-delà, rien n'est possible dans l'app. La réceptionniste n'a **pas de code personnel** (il n'y a pas de comptes nominatifs au comptoir — persona unique, ADR 0001) ; la traçabilité tient au **motif** obligatoire après l'encaissement et au code manager au-delà de 10 % (ADR 0008). Voir aussi **Code manager**, **Motif de remise**.
 _Avoid_: Remise manager (c'est une remise accordée avec code manager, pas un objet distinct), remise responsable, override, code réceptionniste / code personnel (n'existe plus)
 
 **Code manager**:
@@ -145,7 +145,15 @@ Un code que la manager communique **au cas par cas** à la réceptionniste pour 
 _Avoid_: Code direction, code responsable, code superviseur, PIN admin
 
 **Motif de remise**:
-La justification en texte libre d'une remise accordée, saisie sur un écran bloquant **après** « Confirmer l'encaissement » et avant le reçu — jamais avant, pour ne pas ralentir le comptoir avec une cliente en face. Visible ensuite sur le reçu et dans le Récap des ventes.
+La justification en texte libre des remises accordées d'une vente — **un seul motif** pour toutes —, saisie sur une carte bloquante du **Reçu**, **après** « Confirmer l'encaissement » — jamais avant, pour ne pas ralentir le comptoir avec une cliente en face. Visible ensuite sur le reçu et dans le Récap des ventes.
+
+**Règlement**:
+La deuxième station d'une vente au Comptoir, entre le **panier** et le **Reçu** : le ticket reste à droite, la gauche porte le paiement. C'est là — et seulement là — que se règle tout ce qui change ce qui est dû (remises accordées, points, carte cadeau, prestations déjà payées), puis que se choisit le paiement, **en une à trois parts** (ADR 0031).
+_Avoid_: Paiement (pour désigner la station — le paiement est ce qu'on y fait), checkout, caisse
+
+**Part (de paiement)**:
+Une fraction du montant à encaisser réglée par un moyen (Carte, Espèces, Wave, Orange Money). Une vente se règle en 1 à 3 parts ; la dernière est toujours « le reste », calculée. Un même moyen peut revenir, Espèces une fois seulement.
+_Avoid_: Paiement mixte, paiement en deux fois, échéance (rien n'est différé dans le temps : tout est réglé au comptoir, maintenant)
 
 **Carte cadeau**:
 Un instrument **prépayé** — pas une remise. **Achetée et payée sur une plateforme externe** (le parcours d'achat ne vit pas dans cette app), avec un mode de remise choisi à l'achat : e-carte (hors périmètre), **retrait** au salon en version imprimée, ou **livraison** de la version imprimée. Elle couvre soit un **montant**, soit des **prestations** précises, et elle est **rattachée à la fiche de sa détentrice** (`holderClientId`). Au comptoir, **rien à scanner ni à saisir** : dès que la cliente est identifiée (carte de fidélité, recherche par nom, ou vente ouverte depuis une réservation à son nom), **sa carte cadeau active se lie d'elle-même** à la vente. Retirer la cliente retire la carte ; la réceptionniste peut aussi retirer la carte à la main (elle reste retirée tant que la même cliente est identifiée). Ce qui est appliqué est **ajustable**, comme le nombre de points fidélité utilisés : pour une carte en montant, combien du solde on consomme (le **reliquat reste sur la carte**) ; pour une carte en prestations, quelles lignes du panier elle couvre. Si la détentrice tient **plusieurs** cartes actives, celle en **montant** passe avant celle en prestations, puis le plus gros solde. Une carte **au porteur** (sans détentrice connue) ou présentée par un tiers **n'est pas encaissable** dans ce prototype. Statuts (au comptoir) : active, utilisée (solde épuisé), expirée (ADR 0002, 0012, 0013).

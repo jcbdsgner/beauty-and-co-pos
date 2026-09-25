@@ -145,10 +145,14 @@ Bureau taupe + feuille crème. Étape courante = `activeSale.step` : `"vente"` |
 |---|---|---|
 | Barre d'onglets de vente | `SaleTabsBar` | [`components/comptoir/sale-tabs-bar.tsx`](../components/comptoir/sale-tabs-bar.tsx) |
 | Panneau menu (gauche) | `MenuPanel` | [`components/comptoir/menu-panel.tsx`](../components/comptoir/menu-panel.tsx) — onglets Prestations/Produits/Boissons, rail de catégories (2 niveaux), recherche |
-| Ticket (droite) | `SaleCartPanel` | [`components/comptoir/sale-cart-panel.tsx`](../components/comptoir/sale-cart-panel.tsx) — cliente en tête, lignes, total, Encaisser |
-| Remises | `DiscountSection` (+ `DiscountBreakdown`) | [`components/comptoir/discount-section.tsx`](../components/comptoir/discount-section.tsx) — carte cadeau auto-liée (ajustable/retirable, pas de saisie), points, remise accordée (≤ 10 % sans code, ≤ 20 % + code manager) |
-| Étape paiement | `PaymentStep` | [`components/comptoir/payment-step.tsx`](../components/comptoir/payment-step.tsx) — tuiles Wave / Orange Money (logos) / Carte / Espèces, `NumericKeypad`, paiement mixte |
-| Étape reçu | `ReceiptStep` | [`components/comptoir/receipt-step.tsx`](../components/comptoir/receipt-step.tsx) — impression `react-to-print`, motif de remise bloquant post-paiement |
+| Blocs ticket partagés | `TicketFrame`/`TicketHead`/`TicketClientCard`/`TicketLineBody`/`TicketTotals` | [`components/comptoir/ticket-parts.tsx`](../components/comptoir/ticket-parts.tsx) — le même ticket dans la colonne de droite des 3 stations (ADR 0031) |
+| Ticket panier (droite, `step: "vente"`) | `SaleCartPanel` | [`components/comptoir/sale-cart-panel.tsx`](../components/comptoir/sale-cart-panel.tsx) — cliente en tête, lignes (qty, retrait), total, Encaisser. **Plus de remise ici** |
+| Station Règlement (`"paiement"`) | `SettlementStep` | [`components/comptoir/settlement-step.tsx`](../components/comptoir/settlement-step.tsx) — gauche : À encaisser, 4 tuiles (Carte/Espèces grosses icônes, Wave/OM logos, toutes libellées), 1 à 3 parts (dernière = reste calculé), `NumericKeypad`, rendu espèces |
+| Ticket règlement (droite) | `SettlementTicket` (+ `RemiseComposer`) | [`components/comptoir/settlement-ticket.tsx`](../components/comptoir/settlement-ticket.tsx) — « Accorder une remise » → sélection de lignes → compositeur %/montant/code manager en pied ; étiquette « Remise −X · modifier » par ligne ; Confirmer l'encaissement |
+| Avantages de la cliente | `AdvantagesSection` | [`components/comptoir/advantages-section.tsx`](../components/comptoir/advantages-section.tsx) — déjà payé (`CoverageSection`), carte cadeau dépliable, points ±100 |
+| Moyens de paiement | `PAYMENT_MODES`, `PaymentModeGlyph` | [`components/comptoir/payment-modes.tsx`](../components/comptoir/payment-modes.tsx) |
+| Ventilation remises | `DiscountBreakdown` | [`components/comptoir/discount-breakdown.tsx`](../components/comptoir/discount-breakdown.tsx) — une ligne par remise, partagée avec le Récap |
+| Station Reçu (`"recu"`) | `ReceiptStep` | [`components/comptoir/receipt-step.tsx`](../components/comptoir/receipt-step.tsx) — gauche : vente encaissée, parts, motif de remise inline bloquant, suite ; droite : le ticket devenu reçu imprimable (`react-to-print`) |
 | Scanner | `IdentifyDialog` | [`components/comptoir/identify-dialog.tsx`](../components/comptoir/identify-dialog.tsx) — `<video>` réel + lecture QR (`BarcodeDetector`) + **un seul champ code de fidélité** → attache la fiche (sa carte cadeau se lie ensuite d'elle-même), bouton « Annuler » (ADR 0013) |
 | Envoi reçu | `SendReceiptButtons` | [`components/comptoir/send-receipt-buttons.tsx`](../components/comptoir/send-receipt-buttons.tsx) — partagé avec Récap |
 
@@ -169,7 +173,7 @@ State : `clients`, `reservations`, `praticiennes`, `produits`, `sales`, `openTab
 Actions clés : `addClient`/`updateClient`, `cancelAppointment`/`rescheduleRendezVous`/`updateRendezVous`/`addRendezVous`/`removeRendezVous`, `markStaffUnavailable`,
 `deployComptoir`/`collapseComptoir`, `openNewTab`(prefill résa)/`switchTab`/`closeTab`,
 `addCartLine`/`updateCartQty`/`removeCartLine`, `setGiftCardAdjustment` (la carte se lie seule via `updateSale`/`openNewTab` → `syncGiftCardToClient`, cf. `giftCardForClient`), `grantDiscount`/`setDiscountReason`, `setLoyaltyPointsUsed`, `confirmPayment`.
-- **`computeTotals(sale)`** — pure, ligne 112 : ordre remise accordée → points → carte cadeau. Constantes `RECEPTIONIST_MAX_PCT = 10`, `MAX_REMISE_PCT = 20`.
+- **`computeTotals(sale)`** — pure, ligne 112 : ordre déjà payé → remises accordées (par ligne, ADR 0031) → points → carte cadeau → acompte. Constantes `RECEPTIONIST_MAX_PCT = 10`, `MAX_REMISE_PCT = 20`.
 
 ### Données mock — [`lib/data/`](../lib/data/)
 | Fichier | Contient |
@@ -217,8 +221,8 @@ Tokens de marque : [`app/globals.css`](../app/globals.css) — `--core-brand-col
 | Cartes cadeaux (file, impression) | [`components/journee/gift-card-queue.tsx`](../components/journee/gift-card-queue.tsx) + [`components/shared/gift-card.tsx`](../components/shared/gift-card.tsx) ; ledger [`lib/data/cartes-cadeaux.ts`](../lib/data/cartes-cadeaux.ts) |
 | Produits / boissons du Catalogue | [`app/catalogue/page.tsx`](../app/catalogue/page.tsx) + `components/catalogue/*` |
 | Panier, encaissement, paiement, reçu | `components/comptoir/*` (voir §4), état dans `lib/store/app-store.ts` |
-| Remises (carte cadeau, points, remise accordée, code manager) | [`components/comptoir/discount-section.tsx`](../components/comptoir/discount-section.tsx) + `computeTotals` / `grantDiscount` dans `app-store.ts` (ADR 0002/0003/0008) |
-| Modes de paiement (Wave, Orange Money…) | [`components/comptoir/payment-step.tsx`](../components/comptoir/payment-step.tsx) |
+| Remises (par ligne, code manager), carte cadeau, points | `settlement-ticket.tsx` + `advantages-section.tsx` + `computeTotals` / `grantDiscount` / `removeRemise` dans `app-store.ts` (ADR 0002/0003/0008/0031) |
+| Modes de paiement, paiement en 3 parts | [`components/comptoir/settlement-step.tsx`](../components/comptoir/settlement-step.tsx) + `payment-modes.tsx` |
 | Nouvelle vente / barre du comptoir | [`components/shell/comptoir-bar.tsx`](../components/shell/comptoir-bar.tsx) |
 | Sidebar / navigation / menu identité | [`components/shell/sidebar.tsx`](../components/shell/sidebar.tsx) |
 | Profil, PIN, changer d'utilisateur | `app/compte/page.tsx` + `components/compte/*` ; `lib/session.ts` |

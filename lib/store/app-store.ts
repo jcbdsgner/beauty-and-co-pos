@@ -106,7 +106,8 @@ function emptySale(label: string): Sale {
     giftCardApplied: null,
     loyaltyPointsUsed: 0,
     coverage: [],
-    discountGranted: null,
+    remises: [],
+    remiseReason: null,
     status: "ouverte",
     step: "vente",
     createdAt: new Date().toISOString(),
@@ -213,6 +214,24 @@ export const RECEPTIONIST_MAX_PCT = 10;
 export const MAX_REMISE_PCT = 20;
 
 /**
+ * What each prestation line can still be discounted on (ADR 0031): its gross minus whatever a Pack
+ * / Abonnement already covers. Produits and boissons never enter — they are not remisables.
+ * Coverage is keyed by serviceId, so it is charged to the first line(s) carrying that prestation.
+ */
+function remiseAssiette(sale: Sale, coveredAmountByService: Record<string, number>) {
+  const coveredLeft = { ...coveredAmountByService };
+  const out: Record<string, number> = {};
+  for (const l of sale.cart) {
+    if (l.kind !== "service") continue;
+    const gross = l.unitPrice * l.qty;
+    const covered = Math.min(gross, coveredLeft[l.refId] ?? 0);
+    coveredLeft[l.refId] = (coveredLeft[l.refId] ?? 0) - covered;
+    out[l.id] = gross - covered;
+  }
+  return out;
+}
+
+/**
  * Pure. The three discount mechanisms stack and can bring the total to 0 F. Order matters because
  * one is a percentage: (1) the receptionist's granted discount, always figured against the
  * *prestations* total (services only — products are never discounted this way) and capped at
@@ -268,14 +287,32 @@ export function computeTotals(sale: Sale) {
   // facturée 0 n'est pas remisable).
   const prestations = Math.max(0, prestationsGross - coverageDiscount);
 
-  const maxGrantedDiscount = Math.round((prestations * MAX_REMISE_PCT) / 100);
-  const receptionistMaxDiscount = Math.round((prestations * RECEPTIONIST_MAX_PCT) / 100);
-  const g = sale.discountGranted;
-  const grantedDiscount = !g
-    ? 0
-    : g.mode === "pourcentage"
-      ? Math.round((prestations * Math.min(Math.max(g.value, 0), MAX_REMISE_PCT)) / 100)
-      : Math.min(Math.max(g.value, 0), maxGrantedDiscount);
+  // Remises accordées, ligne par ligne (ADR 0031). Each remise targets prestation lines; its
+  // assiette is those lines' net (gross − what a Pack / Abonnement already covers). A percentage
+  // applies to every line; a flat amount is spread across the lines pro rata to their net, the
+  // rounding remainder landing on the last one. Each remise is clamped to MAX_REMISE_PCT of its
+  // own assiette.
+  const lineAssiette = remiseAssiette(sale, coveredAmountByService);
+  const lineDiscount: Record<string, number> = {};
+  const claimedLines = new Set<string>();
+  const remiseBreakdown = (sale.remises ?? []).map((r) => {
+    const ids = r.lineIds.filter((id) => (lineAssiette[id] ?? 0) > 0 && !claimedLines.has(id));
+    ids.forEach((id) => claimedLines.add(id));
+    const base = ids.reduce((sum, id) => sum + lineAssiette[id], 0);
+    const cap = Math.round((base * MAX_REMISE_PCT) / 100);
+    const amount =
+      r.mode === "pourcentage"
+        ? Math.min(cap, Math.round((base * Math.min(Math.max(r.value, 0), MAX_REMISE_PCT)) / 100))
+        : Math.min(Math.max(r.value, 0), cap);
+    let left = amount;
+    ids.forEach((id, i) => {
+      const share = i === ids.length - 1 ? left : Math.round((amount * lineAssiette[id]) / base);
+      lineDiscount[id] = share;
+      left -= share;
+    });
+    return { id: r.id, mode: r.mode, value: r.value, managerCode: r.managerCode, lineIds: ids, base, amount };
+  }).filter((r) => r.amount > 0);
+  const grantedDiscount = remiseBreakdown.reduce((sum, r) => sum + r.amount, 0);
 
   const loyaltyDiscount = Math.floor(sale.loyaltyPointsUsed / 100) * 1000;
 
@@ -313,13 +350,14 @@ export function computeTotals(sale: Sale) {
     coverageDiscount,
     coverageByInstance,
     coveredAmountByService,
+    lineAssiette,
+    lineDiscount,
+    remiseBreakdown,
     grantedDiscount,
     loyaltyDiscount,
     giftCardDiscount,
     giftCardRemaining,
     giftCardCovered,
-    maxGrantedDiscount,
-    receptionistMaxDiscount,
     totalDiscount,
     total,
     depositPaid,
@@ -421,23 +459,29 @@ export type AppState = {
     saleId: string,
     patch: { appliedAmount?: number; coveredServiceIds?: string[] },
   ) => void;
-  /** Attach a discretionary discount to a sale: ≤ 10 % of the prestations with no code at all,
-   *  up to 20 % only with a `managerCode` (ADR 0008). The `reason` is captured later, after the
-   *  sale is cashed in. */
+  /** Grant a remise on a set of prestation lines, at the règlement step (ADR 0031): ≤ 10 % of those
+   *  lines' net with no code at all, up to 20 % only with a `managerCode` (ADR 0008). Lines already
+   *  under another remise move to this one. The motif is captured after the sale is cashed in. */
   grantDiscount: (
     saleId: string,
+    lineIds: string[],
     mode: RemiseMode,
     value: number,
     managerCode?: string,
   ) => { ok: boolean; message: string };
-  /** Store the free-text justification for a granted discount (the post-payment step). */
+  removeRemise: (saleId: string, remiseId: string) => void;
+  /** Store the one free-text motif covering the sale's remises (the post-payment step). */
   setDiscountReason: (saleId: string, reason: string) => void;
   setLoyaltyPointsUsed: (saleId: string, points: number) => void;
   /** Tick / un-tick which prestations of a coverage group (Pack or Abonnement) to draw down —
    *  pass the full ticked set for that instrument; the store clamps it to what the instrument can
    *  actually cover. An empty set keeps the group but honours nothing from it (ADR 0017). */
   setCoverageChecked: (saleId: string, instanceId: string, checkedServiceIds: string[]) => void;
-  confirmPayment: (saleId: string, modes: { mode: PaymentMode; amount: number }[]) => void;
+  confirmPayment: (
+    saleId: string,
+    modes: { mode: PaymentMode; amount: number }[],
+    cash?: { cashReceived: number; change: number },
+  ) => void;
   activeSale: () => Sale | undefined;
 
   // Messages (ADR 0011)
@@ -843,7 +887,11 @@ export const useAppStore = create<AppState>((set, get) => ({
         const coverage = sale.coverage
           .map((c) => ({ ...c, serviceIds: stillCovered(c.serviceIds), checkedServiceIds: stillCovered(c.checkedServiceIds) }))
           .filter((c) => c.serviceIds.length > 0);
-        return { ...sale, cart, coverage };
+        // A remise never outlives its line (ADR 0031).
+        const remises = sale.remises
+          .map((r) => ({ ...r, lineIds: r.lineIds.filter((id) => id !== lineId) }))
+          .filter((r) => r.lineIds.length > 0);
+        return { ...sale, cart, coverage, remises };
       }),
     })),
 
@@ -880,61 +928,69 @@ export const useAppStore = create<AppState>((set, get) => ({
       }),
     })),
 
-  grantDiscount: (saleId, mode, value, managerCode) => {
+  grantDiscount: (saleId, lineIds, mode, value, managerCode) => {
     const sale = get().sales.find((s) => s.id === saleId);
     if (!sale) return { ok: false, message: "Vente introuvable." };
-    const { prestations, maxGrantedDiscount, receptionistMaxDiscount } = computeTotals(sale);
-    if (prestations <= 0) return { ok: false, message: "Ajoutez une prestation avant d'accorder une remise." };
+    const { lineAssiette } = computeTotals(sale);
+    const ids = [...new Set(lineIds)].filter((id) => (lineAssiette[id] ?? 0) > 0);
+    const base = ids.reduce((sum, id) => sum + lineAssiette[id], 0);
+    if (ids.length === 0 || base <= 0) return { ok: false, message: "Sélectionnez au moins une prestation à remiser." };
     if (!Number.isFinite(value) || value <= 0) return { ok: false, message: "Indiquez le montant ou le pourcentage de la remise." };
 
-    // The request as a share of the prestations, whichever way it was entered.
-    const requestedPct = mode === "pourcentage" ? value : (value / prestations) * 100;
+    // The request as a share of the selected lines, whichever way it was entered.
+    const requestedPct = mode === "pourcentage" ? value : (value / base) * 100;
     const mgr = managerCode?.trim() ?? "";
 
     if (requestedPct > MAX_REMISE_PCT + 1e-6) {
       return mode === "pourcentage"
         ? { ok: false, message: `${MAX_REMISE_PCT} % est le plafond absolu — aucune remise plus forte n'est possible ici.` }
-        : { ok: false, message: `Le maximum absolu sur ce panier est ${formatFcfa(maxGrantedDiscount)} — ${MAX_REMISE_PCT} % des prestations.` };
+        : { ok: false, message: `Le maximum sur ces prestations est ${formatFcfa(Math.round((base * MAX_REMISE_PCT) / 100))} — ${MAX_REMISE_PCT} % de leur prix.` };
     }
     if (requestedPct > RECEPTIONIST_MAX_PCT + 1e-6) {
       if (!mgr) {
         return mode === "pourcentage"
           ? { ok: false, message: `Au-delà de ${RECEPTIONIST_MAX_PCT} %, saisissez le code manager.` }
-          : { ok: false, message: `Au-delà de ${formatFcfa(receptionistMaxDiscount)} (${RECEPTIONIST_MAX_PCT} % des prestations), saisissez le code manager.` };
+          : { ok: false, message: `Au-delà de ${formatFcfa(Math.round((base * RECEPTIONIST_MAX_PCT) / 100))} (${RECEPTIONIST_MAX_PCT} % de ces prestations), saisissez le code manager.` };
       }
       if (!/^\d{4,6}$/.test(mgr)) {
         return { ok: false, message: "Le code manager doit faire 4 à 6 chiffres." };
       }
     }
 
+    const taken = new Set(ids);
+    const others = sale.remises
+      .map((r) => ({ ...r, lineIds: r.lineIds.filter((id) => !taken.has(id)) }))
+      .filter((r) => r.lineIds.length > 0);
     get().updateSale(saleId, {
-      discountGranted: {
-        mode,
-        value,
-        ...(requestedPct > RECEPTIONIST_MAX_PCT && mgr ? { managerCode: mgr } : {}),
-        reason: null,
-      },
+      remises: [
+        ...others,
+        {
+          id: nextId("remise"),
+          lineIds: ids,
+          mode,
+          value,
+          ...(requestedPct > RECEPTIONIST_MAX_PCT && mgr ? { managerCode: mgr } : {}),
+        },
+      ],
     });
-    return {
-      ok: true,
-      message: mgr
-        ? "Remise accordée avec le code manager. Le motif vous sera demandé après l'encaissement."
-        : "Remise accordée. Le motif vous sera demandé après l'encaissement.",
-    };
+    return { ok: true, message: "Remise accordée. Le motif vous sera demandé après l'encaissement." };
   },
+
+  removeRemise: (saleId, remiseId) =>
+    set((s) => ({
+      sales: s.sales.map((sale) =>
+        sale.id === saleId ? { ...sale, remises: sale.remises.filter((r) => r.id !== remiseId) } : sale,
+      ),
+    })),
 
   setDiscountReason: (saleId, reason) =>
     set((s) => ({
-      sales: s.sales.map((sale) =>
-        sale.id === saleId && sale.discountGranted
-          ? { ...sale, discountGranted: { ...sale.discountGranted, reason: reason.trim() || null } }
-          : sale,
-      ),
+      sales: s.sales.map((sale) => (sale.id === saleId ? { ...sale, remiseReason: reason.trim() || null } : sale)),
     })),
 
   setLoyaltyPointsUsed: (saleId, points) => get().updateSale(saleId, { loyaltyPointsUsed: points }),
 
-  confirmPayment: (saleId, modes) => {
+  confirmPayment: (saleId, modes, cash) => {
     const sale = get().sales.find((s) => s.id === saleId);
     if (!sale) return;
     const { total, giftCardRemaining, coverageByInstance } = computeTotals(sale);
@@ -965,7 +1021,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     set((s) => ({
       sales: s.sales.map((x) =>
         x.id === saleId
-          ? { ...x, status: "encaissee", step: "recu", payment: { modes }, loyaltyPointsEarned: earned, encaisseeAt: new Date().toISOString() }
+          ? { ...x, status: "encaissee", step: "recu", payment: { modes, ...(cash ?? {}) }, loyaltyPointsEarned: earned, encaisseeAt: new Date().toISOString() }
           : x,
       ),
       // Take the produits sold off the shelf — their stock is now real for the next sale.

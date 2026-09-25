@@ -22,7 +22,7 @@ export function CoverageSection({ sale }: { sale: Sale }) {
   if (sale.coverage.length === 0) return null;
 
   return (
-    <div className="mb-3 overflow-hidden rounded-[10px] border border-success/40 bg-success/[0.06]">
+    <div className="overflow-hidden rounded-[10px] border border-success/40 bg-success/[0.06]">
       <div className="flex items-center justify-between gap-2 px-4 py-3 text-[15px] font-medium text-success">
         <span className="flex items-center gap-2">
           <CheckCircle2 aria-hidden className="size-4" />

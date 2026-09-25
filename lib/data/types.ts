@@ -232,15 +232,18 @@ export type PaymentMode = "wave" | "orange_money" | "especes" | "carte";
 export type RemiseMode = "montant" | "pourcentage";
 
 export type RemiseAccordee = {
+  id: string;
+  /** The ticket lines this remise applies to (ADR 0031) — prestation lines only, never a produit or
+   *  a boisson. A line belongs to at most one remise; "tout le ticket" is just every eligible line
+   *  selected. The 10 % / 20 % ceilings are measured against these lines' net amount (the assiette). */
+  lineIds: string[];
   mode: RemiseMode;
   /** FCFA when `mode === "montant"`, a 1–20 percentage when `mode === "pourcentage"`. */
   value: number;
-  /** A manager's one-off code, present only when the discount went past 10 % of the prestations —
+  /** A manager's one-off code, present only when the remise went past 10 % of its assiette —
    *  the receptionist grants everything up to 10 % with no code at all. Not verified (mock) — kept
    *  on the sale for traceability. See ADR 0008. */
   managerCode?: string;
-  /** Free-text justification, captured after the sale is cashed in (never before). */
-  reason: string | null;
 };
 
 export type CarteCadeauStatus = "active" | "used" | "expired";
@@ -394,9 +397,11 @@ export type Sale = {
    *  décomptable ; la réceptionniste décoche une ligne (ou tout un groupe) à garder pour plus tard.
    *  Décompté dans le ledger à « Confirmer l'encaissement ». */
   coverage: SaleCoverage[];
-  /** A discretionary discount a receptionist granted with her personal code, capped at 20 % of the
-   *  prestations total. `reason` is filled in after the sale is cashed in. */
-  discountGranted: RemiseAccordee | null;
+  /** Remises accordées au règlement (ADR 0031) — each one targets a set of prestation lines. Set on
+   *  the payment step, never on the panier. */
+  remises: RemiseAccordee[];
+  /** The one motif covering every remise of the sale — captured after the sale is cashed in. */
+  remiseReason: string | null;
   status: SaleStatus;
   step: SaleStep;
   /** The réservation this sale was opened from, via "Encaisser". Absent for a walk-in sale. */
@@ -404,7 +409,9 @@ export type Sale = {
   /** Copied from `Reservation.depositPaid` when the sale opens — not an acquittable Remise (it
    *  doesn't change the sale's value), just what's left to ask for at the counter. See ADR 0015. */
   depositPaid?: number;
-  payment?: { modes: { mode: PaymentMode; amount: number }[] };
+  /** Up to three parts (ADR 0031), the same mode may repeat (two cards…). `cashReceived` /
+   *  `change` are kept when an espèces part gave change back. */
+  payment?: { modes: { mode: PaymentMode; amount: number }[]; cashReceived?: number; change?: number };
   loyaltyPointsEarned?: number;
   createdAt: string;
   encaisseeAt?: string;
