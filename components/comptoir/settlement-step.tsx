@@ -143,7 +143,7 @@ export function SettlementStep({ sale }: { sale: Sale }) {
               Panier
             </Button>
             <h2 id="reglement-title" className="mt-4 text-xs font-semibold tracking-[0.12em] text-base-content/55 uppercase">
-              Règlement · {sale.depositPaid ? "reste à encaisser" : "à encaisser"}
+              Règlement
             </h2>
             <p
               key={amountDue}
@@ -161,7 +161,7 @@ export function SettlementStep({ sale }: { sale: Sale }) {
 
         {amountDue === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center">
-            <p className="font-[family-name:var(--font-heading)] text-xl font-semibold text-base-content">Rien à encaisser</p>
+            <p className="font-[family-name:var(--font-heading)] text-xl font-semibold text-base-content">Rien à régler</p>
             <p className="max-w-sm text-sm text-base-content/55">
               Remises, avantages et acompte couvrent tout le ticket. Confirmez pour clôturer la vente.
             </p>

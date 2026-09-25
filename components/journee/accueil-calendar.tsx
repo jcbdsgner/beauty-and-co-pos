@@ -146,7 +146,6 @@ export function AccueilCalendar({ rows, clients, praticiennes, onOpenReservation
                     </span>
                     <span className="opacity-80">{composition}</span>
                     {staffList.length > 0 && <span className="opacity-80">{staffList.map((p) => p.name).join(", ")}</span>}
-                    {awaitingCheckout && <span className="font-semibold text-warning">à encaisser</span>}
                   </div>
                 }
               >

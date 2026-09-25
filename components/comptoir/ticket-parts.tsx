@@ -166,7 +166,7 @@ export function TicketTotals({ sale, className }: { sale: Sale; className?: stri
       )}
       <div className="flex items-end justify-between">
         <span className="pb-1.5 text-xs font-semibold tracking-[0.12em] text-base-content/55 uppercase">
-          {totals.depositPaid > 0 ? "Reste à encaisser" : "Total"}
+          {totals.depositPaid > 0 ? "Reste à payer" : "Total"}
         </span>
         <span
           key={totals.amountDue}

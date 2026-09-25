@@ -58,7 +58,7 @@ export function ComptoirPanel() {
           <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
             <BrandMark className="size-12 text-border" />
             <p className="font-[family-name:var(--font-heading)] font-semibold text-xl text-base-content">Aucune vente ouverte</p>
-            <p className="text-sm text-base-content/55">Ouvrez une vente pour commencer à encaisser.</p>
+            <p className="text-sm text-base-content/55">Ouvrez une vente pour commencer.</p>
             <Button variant="brand" size="default" icon={<Plus className="size-4" />} onClick={() => openNewTab()} className="mt-1">
               Nouvelle vente
             </Button>

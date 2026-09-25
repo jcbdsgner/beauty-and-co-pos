@@ -62,7 +62,7 @@ export function ReceiptView({ sale }: { sale: Sale }) {
             </div>
             <DepositLine sale={sale} />
             <div className="flex items-center justify-between font-semibold text-base-content">
-              <span>Reste à encaisser</span>
+              <span>Reste à payer</span>
               <span className="tabular-nums">{formatFcfa(totals.amountDue)}</span>
             </div>
           </>
