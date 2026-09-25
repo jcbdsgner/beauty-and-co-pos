@@ -29,8 +29,19 @@ function nextSunday(): string {
   return seedDay((7 - new Date().getDay()) % 7);
 }
 
+/** Id de réservation : `RV-<epoch ms>-<9 caractères base36>` (ex. RV-1787664806861-hupke9br1). */
+export function newReservationId(): string {
+  return `RV-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+}
+
+/** Même format que `newReservationId`, mais fixe et déterministe pour le seed — pas de
+ *  `Date.now()` ni de `Math.random()` au chargement du module, sinon l'hydratation SSR/CSR diverge. */
+function seedReservationId(n: number): string {
+  return `RV-${1787664000000 + n * 3_600_000}-${((n * 48271 * 2147483647) % 36 ** 9).toString(36).padStart(9, "0")}`;
+}
+
 /** Un dimanche chargé : une réservation d'une prestation par ligne [payeuse, prestation, praticienne, heure].
- *  Les ids `res-dim-*` évitent toute collision avec le seed écrit à la main. */
+ *  Leurs ids (`seedReservationId(101…)`) évitent toute collision avec le seed écrit à la main (1…99). */
 function sundayRush(): Reservation[] {
   const lines: [string, string, string, string][] = [
     ["cl-1", "coiffure-silk-press", "bineta", "10:00"],
@@ -51,7 +62,7 @@ function sundayRush(): Reservation[] {
     ["cl-2", "mini-co-mini-jely-manucure", "adja", "16:30"],
   ];
   return lines.map(([payerClientId, serviceId, staffId, start], i) => {
-    const id = `res-dim-${i + 1}`;
+    const id = seedReservationId(100 + i + 1);
     return {
       id,
       payerClientId,
@@ -87,7 +98,7 @@ export function reservationDate(r: Reservation): string {
  */
 const SEED_RESERVATIONS: Reservation[] = [
   {
-    id: "res-1",
+    id: "RV-1787667600000-0qtafz9td",
     payerClientId: "cl-7",
     date: seedDay(0),
     source: "en_ligne",
@@ -96,7 +107,7 @@ const SEED_RESERVATIONS: Reservation[] = [
       // Tissage éligible « à 2 » : deux coiffeuses, temps de chaise divisé (120 → 60).
       {
         id: "rdv-1a",
-        reservationId: "res-1",
+        reservationId: "RV-1787667600000-0qtafz9td",
         serviceId: "coiffure-tissage-versatile",
         staffId: "bineta",
         secondStaffId: "fatou",
@@ -107,7 +118,7 @@ const SEED_RESERVATIONS: Reservation[] = [
       // …pendant qu'une amie (sans fiche) est en manucure à la même heure.
       {
         id: "rdv-1b",
-        reservationId: "res-1",
+        reservationId: "RV-1787667600000-0qtafz9td",
         serviceId: "manucure-pedicure-manucure-spa-express",
         staffId: "gnagna",
         beneficiaryName: "Awa",
@@ -118,14 +129,14 @@ const SEED_RESERVATIONS: Reservation[] = [
     ],
   },
   {
-    id: "res-2",
+    id: "RV-1787671200000-1hmkvyjmq",
     payerClientId: "cl-6",
     date: seedDay(0),
     source: "en_ligne",
     rendezVous: [
       {
         id: "rdv-2a",
-        reservationId: "res-2",
+        reservationId: "RV-1787671200000-1hmkvyjmq",
         serviceId: "soin-du-visage-glow-me-facial",
         staffId: "marie-dominique",
         start: "11:30",
@@ -134,7 +145,7 @@ const SEED_RESERVATIONS: Reservation[] = [
       },
       {
         id: "rdv-2b",
-        reservationId: "res-2",
+        reservationId: "RV-1787671200000-1hmkvyjmq",
         serviceId: "epilation-epilation-sourcils",
         staffId: "marie-dominique",
         start: "12:30",
@@ -144,7 +155,7 @@ const SEED_RESERVATIONS: Reservation[] = [
     ],
   },
   {
-    id: "res-3",
+    id: "RV-1787674800000-28fvbxtg3",
     payerClientId: "cl-8",
     date: seedDay(0),
     source: "en_ligne",
@@ -157,7 +168,7 @@ const SEED_RESERVATIONS: Reservation[] = [
     rendezVous: [
       {
         id: "rdv-3a",
-        reservationId: "res-3",
+        reservationId: "RV-1787674800000-28fvbxtg3",
         serviceId: "spa-relax-me-time",
         staffId: "gnagna",
         start: "13:40",
@@ -167,7 +178,7 @@ const SEED_RESERVATIONS: Reservation[] = [
     ],
   },
   {
-    id: "res-4",
+    id: "RV-1787678400000-2z95rx39g",
     payerClientId: "cl-2",
     date: seedDay(0),
     source: "en_ligne",
@@ -176,7 +187,7 @@ const SEED_RESERVATIONS: Reservation[] = [
     rendezVous: [
       {
         id: "rdv-4a",
-        reservationId: "res-4",
+        reservationId: "RV-1787678400000-2z95rx39g",
         serviceId: "coiffure-shampoing-brushing-shampoing-inclus-et-obligatoire",
         staffId: "michelle",
         start: "10:00",
@@ -186,7 +197,7 @@ const SEED_RESERVATIONS: Reservation[] = [
     ],
   },
   {
-    id: "res-5",
+    id: "RV-1787682000000-3q2g7wd2t",
     payerClientId: "cl-1",
     date: seedDay(0),
     source: "en_ligne",
@@ -195,7 +206,7 @@ const SEED_RESERVATIONS: Reservation[] = [
     rendezVous: [
       {
         id: "rdv-5a",
-        reservationId: "res-5",
+        reservationId: "RV-1787682000000-3q2g7wd2t",
         serviceId: "spa-soin-du-dos",
         staffId: "adja",
         start: "16:00",
@@ -205,7 +216,7 @@ const SEED_RESERVATIONS: Reservation[] = [
     ],
   },
   {
-    id: "res-6",
+    id: "RV-1787685600000-4gvqnvmw6",
     payerClientId: "cl-3",
     date: seedDay(0),
     source: "en_ligne",
@@ -214,7 +225,7 @@ const SEED_RESERVATIONS: Reservation[] = [
     rendezVous: [
       {
         id: "rdv-6a",
-        reservationId: "res-6",
+        reservationId: "RV-1787685600000-4gvqnvmw6",
         serviceId: "coiffure-silk-press",
         staffId: "fatou",
         start: "13:00",
@@ -224,7 +235,7 @@ const SEED_RESERVATIONS: Reservation[] = [
       // Une prestation Mini&Co pour sa fille, réglée sur la même note.
       {
         id: "rdv-6b",
-        reservationId: "res-6",
+        reservationId: "RV-1787685600000-4gvqnvmw6",
         serviceId: "mini-co-mini-jely-manucure",
         staffId: "adja",
         beneficiaryName: "Salématou (7 ans)",
@@ -239,7 +250,7 @@ const SEED_RESERVATIONS: Reservation[] = [
   // total sur ce seul rendez-vous — plus deux boissons pré-commandées. Pas de lien de parenté
   // précisé (audit UX du 19/09) — non pertinent, non vérifiable dans l'app.
   {
-    id: "res-22",
+    id: "RV-1787743200000-gdwdrjzxy",
     payerClientId: "cl-5",
     date: seedDay(0),
     source: "en_ligne",
@@ -250,7 +261,7 @@ const SEED_RESERVATIONS: Reservation[] = [
     rendezVous: [
       {
         id: "rdv-22a",
-        reservationId: "res-22",
+        reservationId: "RV-1787743200000-gdwdrjzxy",
         serviceId: "coiffure-tissage-versatile",
         staffId: "bineta",
         secondStaffId: "fatou",
@@ -260,7 +271,7 @@ const SEED_RESERVATIONS: Reservation[] = [
       },
       {
         id: "rdv-22b",
-        reservationId: "res-22",
+        reservationId: "RV-1787743200000-gdwdrjzxy",
         serviceId: "coiffure-tissage-versatile",
         staffId: "michelle",
         secondStaffId: "henry",
@@ -274,7 +285,7 @@ const SEED_RESERVATIONS: Reservation[] = [
 
   // Trois femmes sur une même note — la payeuse et deux amies, chacune sa prestation d'onglerie.
   {
-    id: "res-23",
+    id: "RV-1787746800000-h4po7j9rb",
     payerClientId: "cl-9",
     date: seedDay(0),
     source: "en_ligne",
@@ -285,7 +296,7 @@ const SEED_RESERVATIONS: Reservation[] = [
     rendezVous: [
       {
         id: "rdv-23a",
-        reservationId: "res-23",
+        reservationId: "RV-1787746800000-h4po7j9rb",
         serviceId: "manucure-pedicure-manucure-spa-express",
         staffId: "gnagna",
         start: "11:35",
@@ -294,7 +305,7 @@ const SEED_RESERVATIONS: Reservation[] = [
       },
       {
         id: "rdv-23b",
-        reservationId: "res-23",
+        reservationId: "RV-1787746800000-h4po7j9rb",
         serviceId: "manucure-pedicure-jelly-pedicure",
         staffId: "adja",
         beneficiaryName: "Rokhaya",
@@ -304,7 +315,7 @@ const SEED_RESERVATIONS: Reservation[] = [
       },
       {
         id: "rdv-23c",
-        reservationId: "res-23",
+        reservationId: "RV-1787746800000-h4po7j9rb",
         serviceId: "manucure-pedicure-smooth-pedicure",
         staffId: "marie-dominique",
         beneficiaryName: "Marème",
@@ -318,7 +329,7 @@ const SEED_RESERVATIONS: Reservation[] = [
   // La payeuse + son mari, chacun sa prestation — composition « 1 femme + 1 homme » — avec trois
   // produits à emporter.
   {
-    id: "res-24",
+    id: "RV-1787750400000-hviynijko",
     payerClientId: "cl-4",
     date: seedDay(0),
     source: "en_ligne",
@@ -330,7 +341,7 @@ const SEED_RESERVATIONS: Reservation[] = [
     rendezVous: [
       {
         id: "rdv-24a",
-        reservationId: "res-24",
+        reservationId: "RV-1787750400000-hviynijko",
         serviceId: "coiffure-shampoing-sechage",
         staffId: "michelle",
         start: "15:00",
@@ -339,7 +350,7 @@ const SEED_RESERVATIONS: Reservation[] = [
       },
       {
         id: "rdv-24b",
-        reservationId: "res-24",
+        reservationId: "RV-1787750400000-hviynijko",
         serviceId: "manucure-pedicure-manucure-spa-express",
         staffId: "gnagna",
         beneficiaryName: "Moussa",
@@ -354,14 +365,14 @@ const SEED_RESERVATIONS: Reservation[] = [
   // Une mère dépose ses deux enfants — composition « 2 enfants », elle ne reçoit elle-même aucune
   // prestation.
   {
-    id: "res-25",
+    id: "RV-1787754000000-imc93hte1",
     payerClientId: "cl-10",
     date: seedDay(0),
     source: "en_ligne",
     rendezVous: [
       {
         id: "rdv-25a",
-        reservationId: "res-25",
+        reservationId: "RV-1787754000000-imc93hte1",
         serviceId: "mini-co-mini-jely-manucure",
         staffId: "adja",
         beneficiaryName: "Khady (8 ans)",
@@ -371,7 +382,7 @@ const SEED_RESERVATIONS: Reservation[] = [
       },
       {
         id: "rdv-25b",
-        reservationId: "res-25",
+        reservationId: "RV-1787754000000-imc93hte1",
         serviceId: "mini-co-mini-cutie-pedicure",
         staffId: "gnagna",
         beneficiaryName: "Aïcha (5 ans)",
@@ -384,234 +395,234 @@ const SEED_RESERVATIONS: Reservation[] = [
 
   /* ── Il y a trois jours ─────────────────────────────────────── */
   {
-    id: "res-26",
+    id: "RV-1787757600000-jd5jjh37e",
     payerClientId: "cl-3",
     date: seedDay(-3),
     source: "en_ligne",
     rendezVous: [
-      { id: "rdv-26a", reservationId: "res-26", serviceId: "coiffure-coupe-transformation", staffId: "michelle", start: "10:00", durationMin: 40, status: "actif" },
+      { id: "rdv-26a", reservationId: "RV-1787757600000-jd5jjh37e", serviceId: "coiffure-coupe-transformation", staffId: "michelle", start: "10:00", durationMin: 40, status: "actif" },
     ],
   },
   {
-    id: "res-27",
+    id: "RV-1787761200000-k3ytzgd0r",
     payerClientId: "cl-8",
     date: seedDay(-3),
     source: "en_ligne",
     rendezVous: [
-      { id: "rdv-27a", reservationId: "res-27", serviceId: "soin-du-visage-hydrafacial-deep-clean", staffId: "adja", start: "12:00", durationMin: 75, status: "actif" },
+      { id: "rdv-27a", reservationId: "RV-1787761200000-k3ytzgd0r", serviceId: "soin-du-visage-hydrafacial-deep-clean", staffId: "adja", start: "12:00", durationMin: 75, status: "actif" },
     ],
   },
   {
-    id: "res-28",
+    id: "RV-1787764800000-kus4ffmu4",
     payerClientId: "cl-10",
     date: seedDay(-3),
     source: "en_ligne",
     rendezVous: [
-      { id: "rdv-28a", reservationId: "res-28", serviceId: "manucure-pedicure-jelly-pedicure", staffId: "gnagna", start: "16:30", durationMin: 65, status: "actif" },
+      { id: "rdv-28a", reservationId: "RV-1787764800000-kus4ffmu4", serviceId: "manucure-pedicure-jelly-pedicure", staffId: "gnagna", start: "16:30", durationMin: 65, status: "actif" },
     ],
   },
 
   /* ── Avant-hier ─────────────────────────────────────────────── */
   {
-    id: "res-7",
+    id: "RV-1787689200000-57p13uwpj",
     payerClientId: "cl-4",
     date: seedDay(-2),
     source: "en_ligne",
     rendezVous: [
-      { id: "rdv-7a", reservationId: "res-7", serviceId: "manucure-pedicure-jelly-pedicure", staffId: "gnagna", start: "10:00", durationMin: 65, status: "actif" },
+      { id: "rdv-7a", reservationId: "RV-1787689200000-57p13uwpj", serviceId: "manucure-pedicure-jelly-pedicure", staffId: "gnagna", start: "10:00", durationMin: 65, status: "actif" },
     ],
   },
   {
-    id: "res-8",
+    id: "RV-1787692800000-5yibju6iw",
     payerClientId: "cl-5",
     date: seedDay(-2),
     source: "en_ligne",
     rendezVous: [
-      { id: "rdv-8a", reservationId: "res-8", serviceId: "coiffure-silk-press", staffId: "bineta", start: "14:00", durationMin: 180, status: "actif" },
+      { id: "rdv-8a", reservationId: "RV-1787692800000-5yibju6iw", serviceId: "coiffure-silk-press", staffId: "bineta", start: "14:00", durationMin: 180, status: "actif" },
     ],
   },
   {
-    id: "res-9",
+    id: "RV-1787696400000-6pblztgc9",
     payerClientId: "cl-9",
     date: seedDay(-2),
     source: "en_ligne",
     rendezVous: [
-      { id: "rdv-9a", reservationId: "res-9", serviceId: "soin-du-visage-hydrafacial-deep-clean", staffId: "marie-dominique", start: "11:00", durationMin: 75, status: "actif" },
+      { id: "rdv-9a", reservationId: "RV-1787696400000-6pblztgc9", serviceId: "soin-du-visage-hydrafacial-deep-clean", staffId: "marie-dominique", start: "11:00", durationMin: 75, status: "actif" },
     ],
   },
 
   /* ── Hier ───────────────────────────────────────────────────── */
   {
-    id: "res-10",
+    id: "RV-1787700000000-7g4wfsq5m",
     payerClientId: "cl-2",
     date: seedDay(-1),
     source: "en_ligne",
     rendezVous: [
-      { id: "rdv-10a", reservationId: "res-10", serviceId: "coiffure-soin-complet", staffId: "fatou", start: "10:00", durationMin: 130, status: "actif" },
+      { id: "rdv-10a", reservationId: "RV-1787700000000-7g4wfsq5m", serviceId: "coiffure-soin-complet", staffId: "fatou", start: "10:00", durationMin: 130, status: "actif" },
     ],
   },
   {
-    id: "res-11",
+    id: "RV-1787703600000-86y6vrzyz",
     payerClientId: "cl-6",
     date: seedDay(-1),
     source: "en_ligne",
     rendezVous: [
-      { id: "rdv-11a", reservationId: "res-11", serviceId: "spa-relax-me-time", staffId: "adja", start: "15:00", durationMin: 80, status: "actif" },
+      { id: "rdv-11a", reservationId: "RV-1787703600000-86y6vrzyz", serviceId: "spa-relax-me-time", staffId: "adja", start: "15:00", durationMin: 80, status: "actif" },
     ],
   },
   {
-    id: "res-12",
+    id: "RV-1787707200000-8xrhbr9sc",
     payerClientId: "cl-1",
     date: seedDay(-1),
     source: "en_ligne",
     rendezVous: [
-      { id: "rdv-12a", reservationId: "res-12", serviceId: "manucure-pedicure-perfect-manucure-russe-gel-sur-ongles-naturels-gainage", staffId: "gnagna", start: "10:00", durationMin: 90, status: "actif" },
+      { id: "rdv-12a", reservationId: "RV-1787707200000-8xrhbr9sc", serviceId: "manucure-pedicure-perfect-manucure-russe-gel-sur-ongles-naturels-gainage", staffId: "gnagna", start: "10:00", durationMin: 90, status: "actif" },
     ],
   },
 
   /* ── Demain ─────────────────────────────────────────────────── */
   {
-    id: "res-13",
+    id: "RV-1787710800000-9okrrqjlp",
     payerClientId: "cl-3",
     date: seedDay(1),
     source: "en_ligne",
     rendezVous: [
-      { id: "rdv-13a", reservationId: "res-13", serviceId: "coiffure-tissage-versatile", staffId: "bineta", secondStaffId: "fatou", start: "10:00", durationMin: 60, status: "actif" },
-      { id: "rdv-13b", reservationId: "res-13", serviceId: "manucure-pedicure-manucure-spa-express", staffId: "gnagna", start: "10:30", durationMin: 45, status: "actif" },
+      { id: "rdv-13a", reservationId: "RV-1787710800000-9okrrqjlp", serviceId: "coiffure-tissage-versatile", staffId: "bineta", secondStaffId: "fatou", start: "10:00", durationMin: 60, status: "actif" },
+      { id: "rdv-13b", reservationId: "RV-1787710800000-9okrrqjlp", serviceId: "manucure-pedicure-manucure-spa-express", staffId: "gnagna", start: "10:30", durationMin: 45, status: "actif" },
     ],
   },
   {
-    id: "res-14",
+    id: "RV-1787714400000-afe27ptf2",
     payerClientId: "cl-7",
     date: seedDay(1),
     source: "en_ligne",
     rendezVous: [
-      { id: "rdv-14a", reservationId: "res-14", serviceId: "soin-du-visage-golden-vip-facial", staffId: "marie-dominique", start: "14:00", durationMin: 90, status: "actif" },
+      { id: "rdv-14a", reservationId: "RV-1787714400000-afe27ptf2", serviceId: "soin-du-visage-golden-vip-facial", staffId: "marie-dominique", start: "14:00", durationMin: 90, status: "actif" },
     ],
   },
   {
-    id: "res-15",
+    id: "RV-1787718000000-b67cnp38f",
     payerClientId: "cl-8",
     date: seedDay(1),
     source: "en_ligne",
     rendezVous: [
-      { id: "rdv-15a", reservationId: "res-15", serviceId: "spa-soin-du-dos", staffId: "adja", start: "16:00", durationMin: 90, status: "actif" },
+      { id: "rdv-15a", reservationId: "RV-1787718000000-b67cnp38f", serviceId: "spa-soin-du-dos", staffId: "adja", start: "16:00", durationMin: 90, status: "actif" },
     ],
   },
 
   /* ── Après-demain ───────────────────────────────────────────── */
   {
-    id: "res-16",
+    id: "RV-1787721600000-bx0n3od1s",
     payerClientId: "cl-5",
     date: seedDay(2),
     source: "en_ligne",
     rendezVous: [
-      { id: "rdv-16a", reservationId: "res-16", serviceId: "coiffure-coupe-transformation", staffId: "michelle", start: "10:00", durationMin: 40, status: "actif" },
-      { id: "rdv-16b", reservationId: "res-16", serviceId: "coiffure-silk-press", staffId: "fatou", start: "11:00", durationMin: 180, status: "actif" },
+      { id: "rdv-16a", reservationId: "RV-1787721600000-bx0n3od1s", serviceId: "coiffure-coupe-transformation", staffId: "michelle", start: "10:00", durationMin: 40, status: "actif" },
+      { id: "rdv-16b", reservationId: "RV-1787721600000-bx0n3od1s", serviceId: "coiffure-silk-press", staffId: "fatou", start: "11:00", durationMin: 180, status: "actif" },
     ],
   },
   {
-    id: "res-17",
+    id: "RV-1787725200000-cntxjnmv5",
     payerClientId: "cl-9",
     date: seedDay(2),
     source: "en_ligne",
     rendezVous: [
-      { id: "rdv-17a", reservationId: "res-17", serviceId: "manucure-pedicure-smooth-pedicure", staffId: "gnagna", start: "13:00", durationMin: 80, status: "actif" },
+      { id: "rdv-17a", reservationId: "RV-1787725200000-cntxjnmv5", serviceId: "manucure-pedicure-smooth-pedicure", staffId: "gnagna", start: "13:00", durationMin: 80, status: "actif" },
     ],
   },
   {
-    id: "res-29",
+    id: "RV-1787768400000-lllevewnh",
     payerClientId: "cl-1",
     date: seedDay(2),
     source: "en_ligne",
     rendezVous: [
-      { id: "rdv-29a", reservationId: "res-29", serviceId: "spa-relax-me-time", staffId: "adja", start: "09:30", durationMin: 80, status: "actif" },
+      { id: "rdv-29a", reservationId: "RV-1787768400000-lllevewnh", serviceId: "spa-relax-me-time", staffId: "adja", start: "09:30", durationMin: 80, status: "actif" },
     ],
   },
 
   /* ── Dans trois jours ───────────────────────────────────────── */
   {
-    id: "res-18",
+    id: "RV-1787728800000-den7zmwoi",
     payerClientId: "cl-4",
     date: seedDay(3),
     source: "en_ligne",
     rendezVous: [
-      { id: "rdv-18a", reservationId: "res-18", serviceId: "coiffure-tresses-cheveux", staffId: "bineta", start: "09:30", durationMin: 60, status: "actif" },
+      { id: "rdv-18a", reservationId: "RV-1787728800000-den7zmwoi", serviceId: "coiffure-tresses-cheveux", staffId: "bineta", start: "09:30", durationMin: 60, status: "actif" },
     ],
   },
   {
-    id: "res-19",
+    id: "RV-1787732400000-e5gifm6hv",
     payerClientId: "cl-1",
     date: seedDay(3),
     source: "en_ligne",
     rendezVous: [
-      { id: "rdv-19a", reservationId: "res-19", serviceId: "soin-du-visage-face-lift-and-glow-raffermissant-lift-et-glow", staffId: "marie-dominique", start: "11:00", durationMin: 70, status: "actif" },
-      { id: "rdv-19b", reservationId: "res-19", serviceId: "epilation-epilation-sourcils", staffId: "marie-dominique", start: "12:30", durationMin: 15, status: "actif" },
+      { id: "rdv-19a", reservationId: "RV-1787732400000-e5gifm6hv", serviceId: "soin-du-visage-face-lift-and-glow-raffermissant-lift-et-glow", staffId: "marie-dominique", start: "11:00", durationMin: 70, status: "actif" },
+      { id: "rdv-19b", reservationId: "RV-1787732400000-e5gifm6hv", serviceId: "epilation-epilation-sourcils", staffId: "marie-dominique", start: "12:30", durationMin: 15, status: "actif" },
     ],
   },
   {
-    id: "res-30",
+    id: "RV-1787772000000-mcepbe6gu",
     payerClientId: "cl-7",
     date: seedDay(3),
     source: "en_ligne",
     rendezVous: [
-      { id: "rdv-30a", reservationId: "res-30", serviceId: "coiffure-tresses-cheveux", staffId: "henry", start: "14:30", durationMin: 60, status: "actif" },
+      { id: "rdv-30a", reservationId: "RV-1787772000000-mcepbe6gu", serviceId: "coiffure-tresses-cheveux", staffId: "henry", start: "14:30", durationMin: 60, status: "actif" },
     ],
   },
 
   /* ── Dans quatre / cinq / six jours ─────────────────────────── */
   {
-    id: "res-20",
+    id: "RV-1787736000000-ew9svlgb8",
     payerClientId: "cl-6",
     date: seedDay(4),
     source: "en_ligne",
     rendezVous: [
-      { id: "rdv-20a", reservationId: "res-20", serviceId: "spa-hot-stone-pierres-chaudes", staffId: "adja", start: "10:00", durationMin: 60, status: "actif" },
+      { id: "rdv-20a", reservationId: "RV-1787736000000-ew9svlgb8", serviceId: "spa-hot-stone-pierres-chaudes", staffId: "adja", start: "10:00", durationMin: 60, status: "actif" },
     ],
   },
   {
-    id: "res-31",
+    id: "RV-1787775600000-n37zrdga7",
     payerClientId: "cl-10",
     date: seedDay(4),
     source: "en_ligne",
     rendezVous: [
-      { id: "rdv-31a", reservationId: "res-31", serviceId: "coiffure-soin-complet", staffId: "bineta", start: "13:30", durationMin: 130, status: "actif" },
+      { id: "rdv-31a", reservationId: "RV-1787775600000-n37zrdga7", serviceId: "coiffure-soin-complet", staffId: "bineta", start: "13:30", durationMin: 130, status: "actif" },
     ],
   },
   {
-    id: "res-32",
+    id: "RV-1787779200000-nu1a7cq3k",
     payerClientId: "cl-3",
     date: seedDay(5),
     source: "en_ligne",
     rendezVous: [
-      { id: "rdv-32a", reservationId: "res-32", serviceId: "manucure-pedicure-perfect-manucure-russe-gel-sur-ongles-naturels-gainage", staffId: "gnagna", start: "10:00", durationMin: 90, status: "actif" },
+      { id: "rdv-32a", reservationId: "RV-1787779200000-nu1a7cq3k", serviceId: "manucure-pedicure-perfect-manucure-russe-gel-sur-ongles-naturels-gainage", staffId: "gnagna", start: "10:00", durationMin: 90, status: "actif" },
     ],
   },
   {
-    id: "res-33",
+    id: "RV-1787782800000-okuknbzwx",
     payerClientId: "cl-9",
     date: seedDay(5),
     source: "en_ligne",
     rendezVous: [
-      { id: "rdv-33a", reservationId: "res-33", serviceId: "coiffure-tissage-versatile", staffId: "michelle", secondStaffId: "henry", start: "10:00", durationMin: 60, status: "actif" },
+      { id: "rdv-33a", reservationId: "RV-1787782800000-okuknbzwx", serviceId: "coiffure-tissage-versatile", staffId: "michelle", secondStaffId: "henry", start: "10:00", durationMin: 60, status: "actif" },
     ],
   },
   {
-    id: "res-21",
+    id: "RV-1787739600000-fn33bkq4l",
     payerClientId: "cl-2",
     date: seedDay(6),
     source: "en_ligne",
     rendezVous: [
-      { id: "rdv-21a", reservationId: "res-21", serviceId: "coiffure-ponytail", staffId: "fatou", start: "14:00", durationMin: 90, status: "actif" },
+      { id: "rdv-21a", reservationId: "RV-1787739600000-fn33bkq4l", serviceId: "coiffure-ponytail", staffId: "fatou", start: "14:00", durationMin: 90, status: "actif" },
     ],
   },
   {
-    id: "res-34",
+    id: "RV-1787786400000-pbnv3b9qa",
     payerClientId: "cl-5",
     date: seedDay(6),
     source: "en_ligne",
     rendezVous: [
-      { id: "rdv-34a", reservationId: "res-34", serviceId: "soin-du-visage-golden-vip-facial", staffId: "adja", start: "11:00", durationMin: 90, status: "actif" },
+      { id: "rdv-34a", reservationId: "RV-1787786400000-pbnv3b9qa", serviceId: "soin-du-visage-golden-vip-facial", staffId: "adja", start: "11:00", durationMin: 90, status: "actif" },
     ],
   },
 ];

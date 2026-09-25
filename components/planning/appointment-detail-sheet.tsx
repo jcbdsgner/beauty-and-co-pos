@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
-  Clock,
+  Check,
   Coffee,
+  Copy,
   ShoppingBag,
-  Scissors,
   User,
+  UserRound,
   Users,
   SlidersHorizontal,
   Gift,
@@ -15,8 +16,6 @@ import {
   CalendarClock,
   PackageCheck,
   ChevronDown,
-  Mail,
-  Phone,
 } from "lucide-react";
 import { Dialog } from "@/components/ui/molecules/dialog";
 import { CloseButton, IconButton } from "@/components/ui/atoms/icon-button";
@@ -24,6 +23,7 @@ import { Button } from "@/components/ui/atoms/button";
 import { Badge } from "@/components/ui/atoms/badge";
 import { TIER_LABEL } from "@/lib/data/tiers";
 import { Avatar } from "@/components/ui/atoms/avatar";
+import { ServiceCategoryIcon } from "@/components/ui/atoms/service-category-icons";
 import { Textarea } from "@/components/ui/atoms/textarea";
 import { Field } from "@/components/ui/molecules/field";
 import { FlipChip, Legend } from "@/components/ui/board";
@@ -37,7 +37,8 @@ import { packById } from "@/lib/data/packs";
 import { clientFullName, clientInitial } from "@/lib/data/clientele";
 import { boissonById } from "@/lib/data/boissons";
 import { produitById, serviceById } from "@/lib/data/menu";
-import { appointmentEndTime, reservationComposition, reservationForRendezVous, timeToMinutes } from "@/lib/data/planning";
+import { rendezVousCoverage, type RendezVousCoverage } from "@/lib/data/coverage";
+import { appointmentEndTime, reservationComposition, reservationDate, reservationForRendezVous, timeToMinutes } from "@/lib/data/planning";
 import { formatFcfa } from "@/lib/utils";
 import { PREFERENCE_DOMAINS, PREFERENCE_DOMAIN_LABEL } from "@/lib/data/types";
 import type { BeneficiaryKind, Cliente, RendezVous } from "@/lib/data/types";
@@ -109,39 +110,33 @@ function clientPreferenceLines(client: Cliente | null): { label: string; note: s
   return lines;
 }
 
-/** One "Avantages" line: icon, title, the detail that used to be hidden behind a count (which
- *  prestations, what's included, what's left), and either a trailing figure or a status badge —
- *  never both, one advantage never needs two competing values. */
-function AvantageRow({
+/** One advantage on the payer's always-visible summary line — a compact segment (icon, label,
+ *  optional trailing status badge) rather than a full row: the detail lives on her fiche. */
+function AvantageChip({
   icon,
-  title,
-  detail,
-  value,
+  children,
   badge,
 }: {
   icon: React.ReactNode;
-  title: string;
-  detail: string;
-  value?: string;
+  children: React.ReactNode;
   badge?: { label: string; tone: "warning" | "neutral" };
 }) {
   return (
-    <div className="flex items-start gap-3 py-2.5">
-      <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-[var(--brand-rose-soft)] text-[var(--brand-taupe-muted)]">
-        {icon}
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-[var(--color-gray-900)]">{title}</p>
-        <p className="mt-0.5 text-xs leading-snug text-[var(--color-gray-500)]">{detail}</p>
-      </div>
-      {value && <span className="shrink-0 text-sm font-semibold tabular-nums text-[var(--color-gray-800)]">{value}</span>}
-      {badge && (
-        <Badge variant={badge.tone} className="shrink-0">
-          {badge.label}
-        </Badge>
-      )}
-    </div>
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-gray-50)] py-1 pr-2.5 pl-2 text-xs font-semibold text-[var(--color-gray-700)] ring-1 ring-inset ring-[var(--board-groove)]">
+      <span className="text-[var(--brand-taupe-muted)]">{icon}</span>
+      <span className="tabular-nums">{children}</span>
+      {badge && <Badge variant={badge.tone}>{badge.label}</Badge>}
+    </span>
   );
+}
+
+/** « Jeu. 25 sept » — short fr-FR day for the header's slot line (no trailing abbreviation dot). */
+function formatShortDay(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const label = new Date(y, m - 1, d)
+    .toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })
+    .replace(/\.$/, "");
+  return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
 /** Fiche réservation — panneau latéral droit (payeuse, avantages, prestations groupées par
@@ -154,6 +149,12 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
   const [cancelReason, setCancelReason] = useState("");
   const [editing, setEditing] = useState(false);
   const [payerExpanded, setPayerExpanded] = useState(false);
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    if (!copied) return;
+    const id = setTimeout(() => setCopied(false), 1500);
+    return () => clearTimeout(id);
+  }, [copied]);
   // Collapse the disclosure again when the sheet swaps to a different appointment (the
   // instance stays mounted across selections — see React's "adjusting state on prop change").
   const [expandedFor, setExpandedFor] = useState(appointment?.id);
@@ -170,8 +171,11 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
   const extras = reservation?.extras ?? [];
   const reservationCancelled = lines.length > 0 && lines.every((rv) => rv.status === "annule");
   const hasSale = Boolean(reservation?.saleId);
+  // Lignes décomptées d'un pack / abonnement : facturées 0 F (ADR 0017), hors Total et sous-totaux.
+  const coverage = reservation ? rendezVousCoverage(reservation.payerClientId, lines) : new Map<string, RendezVousCoverage>();
+  const billable = (rv: RendezVous) => rv.status !== "annule" && !coverage.has(rv.id);
   const prestationsTotal = lines
-    .filter((rv) => rv.status !== "annule")
+    .filter(billable)
     .reduce((sum, rv) => sum + (serviceById(rv.serviceId)?.price ?? 0), 0);
   const extrasTotal = extras.reduce((sum, extra) => {
     const unitPrice = extra.kind === "boisson" ? (boissonById(extra.refId)?.price ?? 0) : (produitById(extra.refId)?.price ?? 0);
@@ -202,36 +206,46 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
     : [];
   const hasAvantages = Boolean(giftCard) || (payer && payer.points > 0) || abonnements.length > 0 || packs.length > 0;
   const payerPrefLines = clientPreferenceLines(payer ?? null);
+  const hasPayerDetails = payerPrefLines.length > 0 || Boolean(payer?.internalNotes);
+
+  function copyReference() {
+    if (!reservation) return;
+    navigator.clipboard?.writeText(reservation.id).then(() => setCopied(true), () => {});
+  }
 
   return (
     <>
       <Dialog open variant="side" onClose={onClose} labelledBy="rdv-detail-title" className="relative flex flex-col p-0">
-        <CloseButton onClick={onClose} className="text-white/70 hover:bg-white/10 hover:text-white active:bg-white/15" />
+        <CloseButton onClick={onClose} />
 
-        <div className="flex shrink-0 flex-wrap items-center gap-2 bg-[var(--board-slate)] px-6 py-5 text-white">
-          {payer ? (
-            <Link
-              href={`/clientele/${payer.id}`}
-              id="rdv-detail-title"
-              className="font-[family-name:var(--font-heading)] text-xl font-semibold underline decoration-white/30 decoration-2 underline-offset-4 transition hover:decoration-white/70"
+        <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-[var(--board-groove)] bg-base-100 py-4 pr-16 pl-6 text-base-content">
+          {/* Référence de la réservation plutôt que le nom de la payeuse (audit UX du 19/09) —
+              son nom reste lisible plus bas, dans le bloc payeuse. */}
+          <h2 id="rdv-detail-title" className="font-[family-name:var(--font-heading)] text-xl font-semibold tabular-nums">
+            {reservation?.id ?? "Réservation"}
+          </h2>
+          {reservation && (
+            <IconButton
+              aria-label={copied ? "Référence copiée" : "Copier la référence"}
+              onClick={copyReference}
+              className="-ml-1 size-12 rounded-full text-[var(--color-gray-400)] hover:bg-[var(--color-gray-50)] hover:text-[var(--color-gray-600)] active:bg-[var(--color-gray-100)]"
             >
-              {/* Référence de la réservation plutôt que le nom de la payeuse (audit UX du 19/09) —
-                  son nom reste lisible plus bas, sur sa propre ligne de bénéficiaire. */}
-              {reservation?.id ?? clientFullName(payer)}
-            </Link>
-          ) : (
-            <h2 id="rdv-detail-title" className="font-[family-name:var(--font-heading)] text-xl font-semibold">
-              Cliente
-            </h2>
+              {copied ? <Check className="size-4 text-[var(--color-success)]" /> : <Copy className="size-4" />}
+            </IconButton>
           )}
           {reservationCancelled && <FlipChip value="Annulé" tone="void" />}
           {hasSale && <FlipChip value="En cours" tone="signal" />}
-          <span className="w-full text-xs text-white/60">
-            {reservation ? `Réservé pour ${reservationComposition(reservation)}` : "Réservée en ligne"}
-            {lines.length > 0 && (
+          <span className="w-full text-xs text-[var(--color-gray-500)]">
+            {reservation ? (
               <>
-                {" · "}
-                {fmtMin(rangeStart)} – {fmtMin(rangeEnd)}
+                {formatShortDay(reservationDate(reservation))}
+                {lines.length > 0 && ` · ${fmtMin(rangeStart)} – ${fmtMin(rangeEnd)}`}
+                {` · Réservé pour ${reservationComposition(reservation)}`}
+              </>
+            ) : (
+              <>
+                Réservée en ligne
+                {lines.length > 0 && ` · ${fmtMin(rangeStart)} – ${fmtMin(rangeEnd)}`}
               </>
             )}
           </span>
@@ -240,57 +254,74 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
         <div className="min-h-0 flex-1 overflow-y-auto">
           {payer && (
             <div className="border-b border-[var(--board-groove)] px-6 py-4">
-              <div className="flex items-start gap-3">
+              <div className="flex items-center gap-3">
                 <Avatar
                   initial={clientInitial(payer)}
                   size={48}
                   className="bg-[var(--brand-rose-soft)] text-base font-semibold text-[var(--brand-taupe-muted)]"
                 />
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <Link
-                      href={`/clientele/${payer.id}`}
-                      className="truncate text-sm font-semibold text-[var(--color-gray-900)] underline decoration-[var(--color-gray-300)] decoration-1 underline-offset-2 transition hover:decoration-[var(--brand-taupe-muted)]"
-                    >
-                      {clientFullName(payer)}
-                    </Link>
-                    {payer.tier && (
-                      <Badge variant={payer.tier}>{TIER_LABEL[payer.tier]}</Badge>
-                    )}
-                  </div>
-                  <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-[var(--color-gray-500)]">
-                    <span className="inline-flex items-center gap-1">
-                      <Phone className="size-3" /> {payer.phone}
-                    </span>
-                    {payer.email && (
-                      <span className="inline-flex items-center gap-1">
-                        <Mail className="size-3" /> {payer.email}
-                      </span>
-                    )}
-                  </p>
-                  <p className="mt-0.5 text-xs text-[var(--color-gray-400)]">
-                    {payer.totalVisits} visite{payer.totalVisits > 1 ? "s" : ""}
-                    {payer.lastVisit ? ` · dernière visite ${payer.lastVisit}` : ""}
-                  </p>
+                <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
+                  <span className="truncate text-sm font-semibold text-[var(--color-gray-900)]">{clientFullName(payer)}</span>
+                  {payer.tier && <Badge variant={payer.tier}>{TIER_LABEL[payer.tier]}</Badge>}
                 </div>
-                <IconButton
-                  aria-label={payerExpanded ? "Masquer les détails de la cliente" : "Voir les détails de la cliente"}
-                  onClick={() => setPayerExpanded((v) => !v)}
-                  className="size-12 shrink-0 rounded-full text-[var(--color-gray-400)] transition hover:bg-[var(--color-gray-50)] hover:text-[var(--color-gray-600)] active:bg-[var(--color-gray-100)]"
+                <Button
+                  href={`/clientele/${payer.id}`}
+                  variant="outline"
+                  size="sm"
+                  icon={<UserRound className="size-4" />}
+                  className="h-12 min-h-12 shrink-0"
                 >
-                  <ChevronDown className={`size-5 transition-transform ${payerExpanded ? "rotate-180" : ""}`} />
-                </IconButton>
+                  Fiche
+                </Button>
+                {hasPayerDetails && (
+                  <IconButton
+                    aria-label={payerExpanded ? "Masquer préférences et notes" : "Voir préférences et notes"}
+                    aria-expanded={payerExpanded}
+                    onClick={() => setPayerExpanded((v) => !v)}
+                    className="size-12 shrink-0 rounded-full text-[var(--color-gray-400)] transition hover:bg-[var(--color-gray-50)] hover:text-[var(--color-gray-600)] active:bg-[var(--color-gray-100)]"
+                  >
+                    <ChevronDown className={`size-5 transition-transform ${payerExpanded ? "rotate-180" : ""}`} />
+                  </IconButton>
+                )}
               </div>
 
-              {payerExpanded && (
-                <div className="mt-3 flex flex-col gap-3">
-                  <Link
-                    href={`/clientele/${payer.id}`}
-                    className="block w-fit text-xs font-semibold text-[var(--brand-taupe-muted)] underline decoration-1 underline-offset-2"
-                  >
-                    Voir la fiche complète
-                  </Link>
+              {hasAvantages && (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {payer.points > 0 && <AvantageChip icon={<Star className="size-3.5" />}>{payer.points} pts</AvantageChip>}
+                  {giftCard && (
+                    <AvantageChip icon={<Gift className="size-3.5" />}>
+                      Carte cadeau · {giftCard.kind === "montant" ? formatFcfa(giftCard.balance) : "prestations prépayées"}
+                    </AvantageChip>
+                  )}
+                  {packs.map((pp) => {
+                    const pack = packById(pp.packId);
+                    if (!pack) return null;
+                    const remaining = packRemainingPrestations(pp).length;
+                    return (
+                      <AvantageChip key={pp.id} icon={<PackageCheck className="size-3.5" />}>
+                        {pack.label} · {remaining} restante{remaining > 1 ? "s" : ""} sur {pack.prestationIds.length}
+                      </AvantageChip>
+                    );
+                  })}
+                  {abonnements.map((ab) => {
+                    const forfait = forfaitById(ab.forfaitId);
+                    if (!forfait) return null;
+                    const status = abonnementStatus(ab);
+                    return (
+                      <AvantageChip
+                        key={ab.id}
+                        icon={<CalendarClock className="size-3.5" />}
+                        badge={{ label: ABONNEMENT_STATUS_LABEL[status], tone: status === "a_regler" ? "warning" : "neutral" }}
+                      >
+                        {forfait.label}
+                      </AvantageChip>
+                    );
+                  })}
+                </div>
+              )}
 
+              {payerExpanded && hasPayerDetails && (
+                <div className="mt-3 flex flex-col gap-3">
                   {payerPrefLines.length > 0 && (
                     <div className="rounded-lg bg-[var(--color-gray-50)] px-3 py-2">
                       <Legend className="text-[var(--color-gray-500)]">Préférences</Legend>
@@ -311,63 +342,6 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
                       <p className="mt-1 text-xs leading-snug text-[var(--color-gray-600)]">{payer.internalNotes}</p>
                     </div>
                   )}
-
-                  {hasAvantages && (
-                    <div>
-                      <Legend>Avantages</Legend>
-                      <div className="mt-1 flex flex-col divide-y divide-[var(--board-groove)]">
-                        {giftCard && (
-                          <AvantageRow
-                            icon={<Gift className="size-4" />}
-                            title="Carte cadeau"
-                            detail={
-                              giftCard.kind === "montant"
-                                ? "Solde à valoir sur la vente"
-                                : (giftCard.serviceIds ?? [])
-                                    .map((id) => serviceById(id)?.name)
-                                    .filter((name): name is string => Boolean(name))
-                                    .join(" + ") || "Prestations prépayées"
-                            }
-                            value={giftCard.kind === "montant" ? formatFcfa(giftCard.balance) : undefined}
-                          />
-                        )}
-                        {payer.points > 0 && (
-                          <AvantageRow icon={<Star className="size-4" />} title="Points fidélité" detail="Cumulés · échangeables en caisse" value={`${payer.points} pts`} />
-                        )}
-                        {abonnements.map((ab) => {
-                          const forfait = forfaitById(ab.forfaitId);
-                          if (!forfait) return null;
-                          const status = abonnementStatus(ab);
-                          const included = forfait.prestationIds.map((id) => serviceById(id)?.name).filter((name): name is string => Boolean(name));
-                          return (
-                            <AvantageRow
-                              key={ab.id}
-                              icon={<CalendarClock className="size-4" />}
-                              title={forfait.label}
-                              detail={included.length > 0 ? `Inclut : ${included.join(", ")}` : forfait.description}
-                              badge={{ label: ABONNEMENT_STATUS_LABEL[status], tone: status === "a_regler" ? "warning" : "neutral" }}
-                            />
-                          );
-                        })}
-                        {packs.map((pp) => {
-                          const pack = packById(pp.packId);
-                          if (!pack) return null;
-                          const remainingIds = packRemainingPrestations(pp);
-                          const used = pack.prestationIds.length - remainingIds.length;
-                          const remainingNames = remainingIds.map((id) => serviceById(id)?.name).filter((name): name is string => Boolean(name));
-                          return (
-                            <AvantageRow
-                              key={pp.id}
-                              icon={<PackageCheck className="size-4" />}
-                              title={pack.label}
-                              detail={remainingNames.length > 0 ? `Restant : ${remainingNames.join(", ")}` : "Entièrement utilisé"}
-                              value={`${used}/${pack.prestationIds.length} utilisées`}
-                            />
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
             </div>
@@ -376,7 +350,7 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
           <div className="flex flex-col">
             {groups.map((group) => {
               const groupTotal = group.lines
-                .filter((rv) => rv.status !== "annule")
+                .filter(billable)
                 .reduce((sum, rv) => sum + (serviceById(rv.serviceId)?.price ?? 0), 0);
               return (
                 <div key={group.key} className="border-b border-[var(--board-groove)] px-6 py-4">
@@ -427,26 +401,31 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
                   <div className="mt-2 flex flex-col divide-y divide-[var(--board-groove)]">
                     {group.lines.map((rv) => {
                       const service = serviceById(rv.serviceId);
+                      const covered = coverage.get(rv.id);
                       return (
                         <div key={rv.id} className="flex items-start gap-3 py-2.5">
                           <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-[var(--brand-rose-soft)] text-[var(--brand-taupe-muted)]">
-                            <Scissors className="size-4" />
+                            <ServiceCategoryIcon categoryId={service?.categoryId ?? ""} className="size-4" />
                           </span>
                           <div className="min-w-0 flex-1">
                             <p className="text-sm font-semibold text-[var(--color-gray-900)]">
                               {service?.name ?? "Prestation"}
                               {rv.status === "annule" && <span className="ml-1.5 text-[var(--color-gray-400)]">· annulé</span>}
                             </p>
-                            <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-[var(--color-gray-500)]">
-                              <span className="inline-flex items-center gap-1">
-                                <Clock className="size-3" /> {rv.start} – {appointmentEndTime(rv)}
-                              </span>
+                            <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[var(--color-gray-500)]">
                               <span className="inline-flex items-center gap-1">
                                 {rv.secondStaffId ? <Users className="size-3" /> : <User className="size-3" />} {staffLabel(rv)}
                               </span>
+                              {covered && (
+                                <span className="rounded-full bg-[var(--color-gray-100)] px-2 py-0.5 font-semibold text-[var(--color-gray-600)]">
+                                  Couverte · {covered.planLabel}
+                                </span>
+                              )}
                             </p>
                           </div>
-                          <span className="shrink-0 text-sm font-semibold tabular-nums text-[var(--color-gray-800)]">
+                          <span
+                            className={`shrink-0 text-sm font-semibold tabular-nums ${covered ? "text-[var(--color-gray-400)] line-through" : "text-[var(--color-gray-800)]"}`}
+                          >
                             {service ? formatFcfa(service.price) : "—"}
                           </span>
                         </div>
@@ -490,27 +469,33 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
         </div>
 
         <div className="shrink-0 border-t border-[var(--board-groove)] px-6 py-3">
-          <div className="flex items-center justify-between">
+          <div className="flex items-baseline justify-between">
             <Legend>Total</Legend>
-            <span className="text-sm font-bold tabular-nums text-[var(--color-gray-900)]">{formatFcfa(total)}</span>
+            <span className="text-xl font-bold tabular-nums text-[var(--color-gray-900)]">{formatFcfa(total)}</span>
           </div>
         </div>
 
         <div className="flex shrink-0 flex-col gap-2 p-5">
           {reservation && !reservationCancelled && (
-            <Button variant="dark" onClick={() => onEncaisser(reservation.id)}>
+            <Button variant="dark" className="highlight-rose w-full" onClick={() => onEncaisser(reservation.id)}>
               {hasSale ? "Voir la vente" : "Encaisser"}
             </Button>
           )}
-          {reservation && !reservationCancelled && (
-            <Button variant="outline" icon={<SlidersHorizontal className="size-4" />} onClick={() => setEditing(true)}>
-              Modifier
-            </Button>
-          )}
           {!reservationCancelled && (
-            <Button variant="danger-outline" onClick={() => setConfirmCancel(true)}>
-              Annuler la réservation
-            </Button>
+            <div className="flex gap-2">
+              {reservation && (
+                <Button variant="outline" icon={<SlidersHorizontal className="size-4" />} className="shrink-0 px-6" onClick={() => setEditing(true)}>
+                  Modifier
+                </Button>
+              )}
+              <button
+                type="button"
+                onClick={() => setConfirmCancel(true)}
+                className="btn btn-ghost btn-md flex-1 whitespace-nowrap border-transparent text-[16px] font-medium text-error normal-case hover:bg-error/10 active:scale-[0.97]"
+              >
+                Annuler la réservation
+              </button>
+            </div>
           )}
           {reservationCancelled && appointment.cancelReason && (
             <p className="px-1 text-xs text-[var(--color-gray-500)]">Motif : {appointment.cancelReason}</p>

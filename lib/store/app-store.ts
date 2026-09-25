@@ -6,6 +6,7 @@ import {
   RESERVATIONS,
   reservationById,
   reservationDate,
+  newReservationId,
   reservationForRendezVous,
   timeToMinutes,
 } from "@/lib/data/planning";
@@ -14,10 +15,9 @@ import { boissonById } from "@/lib/data/boissons";
 import { PRATICIENNES } from "@/lib/data/praticiennes";
 import { CONVERSATIONS } from "@/lib/data/conversations";
 import { CARTES_CADEAUX, GIFT_CARD_ORDERS, giftCardForClient } from "@/lib/data/cartes-cadeaux";
-import { forfaitById } from "@/lib/data/forfaits";
-import { packById } from "@/lib/data/packs";
-import { ABONNEMENTS, abonnementsForClient, abonnementAvailablePrestations } from "@/lib/data/abonnements";
-import { PACK_PURCHASES, packPurchasesForClient, packRemainingPrestations } from "@/lib/data/pack-purchases";
+import { ABONNEMENTS } from "@/lib/data/abonnements";
+import { PACK_PURCHASES } from "@/lib/data/pack-purchases";
+import { detectCoverage } from "@/lib/data/coverage";
 import { formatFcfa } from "@/lib/utils";
 import type {
   CarteCadeau,
@@ -113,47 +113,6 @@ function emptySale(label: string): Sale {
     step: "vente",
     createdAt: new Date().toISOString(),
   };
-}
-
-/**
- * Auto-detect which cart prestations the payer's Pack(s) / Abonnement(s) can cover (ADR 0017).
- * Abonnement before Pack (it recharges next cycle — cheaper to burn), most recent first; one
- * instrument per serviceId; one unit each. Everything it returns is ticked by default — the
- * receptionist un-ticks what the cliente wants to keep for later.
- */
-function detectCoverage(clientId: string | null, cart: CartLine[]): SaleCoverage[] {
-  if (!clientId) return [];
-  const serviceIds = cart.filter((l) => l.kind === "service").map((l) => l.refId);
-  if (serviceIds.length === 0) return [];
-
-  const claimed = new Set<string>();
-  const out: SaleCoverage[] = [];
-
-  const abos = abonnementsForClient(clientId)
-    .filter((a) => abonnementAvailablePrestations(a).length > 0)
-    .sort((a, b) => b.subscribedAt.localeCompare(a.subscribedAt));
-  for (const ab of abos) {
-    const forfait = forfaitById(ab.forfaitId);
-    if (!forfait) continue;
-    const available = abonnementAvailablePrestations(ab);
-    const hit = [...new Set(serviceIds.filter((id) => available.includes(id) && !claimed.has(id)))];
-    if (hit.length === 0) continue;
-    hit.forEach((id) => claimed.add(id));
-    out.push({ source: "abonnement", instanceId: ab.id, planId: forfait.id, planLabel: forfait.label, serviceIds: hit, checkedServiceIds: hit });
-  }
-
-  const packs = packPurchasesForClient(clientId).sort((a, b) => b.purchasedAt.localeCompare(a.purchasedAt));
-  for (const pp of packs) {
-    const pack = packById(pp.packId);
-    if (!pack) continue;
-    const remaining = packRemainingPrestations(pp);
-    const hit = [...new Set(serviceIds.filter((id) => remaining.includes(id) && !claimed.has(id)))];
-    if (hit.length === 0) continue;
-    hit.forEach((id) => claimed.add(id));
-    out.push({ source: "pack", instanceId: pp.id, planId: pack.id, planLabel: pack.label, serviceIds: hit, checkedServiceIds: hit });
-  }
-
-  return out;
 }
 
 /**
@@ -552,7 +511,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (input.lines.length === 0) return { ok: false, message: "Ajoutez au moins une prestation." };
     const existing = input.reservationId ? reservationById(reservations, input.reservationId) : undefined;
     if (input.reservationId && !existing) return { ok: false, message: "Réservation introuvable." };
-    const reservationId = existing?.id ?? nextId("res");
+    const reservationId = existing?.id ?? newReservationId();
     const others = reservations.filter((r) => r.id !== reservationId);
     const staffName = (id: string) => praticiennes.find((p) => p.id === id)?.name ?? "La praticienne";
 

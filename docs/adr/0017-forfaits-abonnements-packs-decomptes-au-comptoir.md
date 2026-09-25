@@ -62,6 +62,10 @@ cliente encaisse — mais rien de plus.
   abonnements (statut de cycle) + packs (prestations restantes, ou « entièrement utilisé »).
   C'est la seule vue d'ensemble de ce qu'une cliente a pris — au comptoir on ne voit que
   ce qui touche la vente en cours.
+- **Précision 2026-09-25** : un Pack de la payeuse couvre, comme un Abonnement, n'importe quelle
+  ligne de sa vente ou de sa réservation, invitée comprise. La **Fiche réservation** signale déjà
+  les lignes couvertes et les sort de son Total (`rendezVousCoverage`, `lib/data/coverage.ts`,
+  mêmes règles que la détection au comptoir).
 - `CONTEXT.md` : entrées **Forfait**, **Abonnement**, **Pack**, **Prestation déjà payée**
   (vocabulaire b&co, non renommé).
 

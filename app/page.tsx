@@ -41,11 +41,14 @@ function formatShortDate(iso: string): string {
   return new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "2-digit", year: "2-digit" }).format(isoToDate(iso));
 }
 
-/** Numéro de rendez-vous tel qu'affiché (`res-22`) : « res-22 », « #22 » ou « 22 » le
- *  retrouvent — correspondance exacte, pas d'inclusion (« 2 » ne doit pas sortir res-22). */
+/** Numéro de rendez-vous tel qu'affiché (`RV-1787664806861-hupke9br1`) : l'id complet ou son
+ *  suffixe de 9 caractères (`hupke9br1`, `#hupke9br1`) le retrouvent — correspondance exacte, pas
+ *  d'inclusion (un bout de numéro ne doit pas sortir d'autres réservations). */
 function reservationNumberMatches(reservationId: string, q: string): boolean {
-  const wanted = q.replace(/^#/, "").replace(/^res-?/, "").trim();
-  return wanted !== "" && reservationId.toLowerCase().replace(/^res-/, "") === wanted;
+  const wanted = q.replace(/^#/, "").trim();
+  if (wanted === "") return false;
+  const id = reservationId.toLowerCase();
+  return id === wanted || id.slice(id.lastIndexOf("-") + 1) === wanted;
 }
 
 /**

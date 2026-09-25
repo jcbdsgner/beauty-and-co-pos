@@ -1,3 +1,4 @@
+import { Scissors } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type IconProps = { className?: string };
@@ -139,4 +140,21 @@ export function EpilationIcon({ className }: IconProps) {
       </g>
     </svg>
   );
+}
+
+const CATEGORY_ICONS: Record<string, (props: IconProps) => React.JSX.Element> = {
+  coiffure: CoiffureIcon,
+  "manucure-pedicure": ManucurePedicureIcon,
+  onglerie: OnglerieIcon,
+  spa: SpaIcon,
+  "soin-du-visage": SoinVisageIcon,
+  epilation: EpilationIcon,
+  "mini-co": CoiffureIcon,
+};
+
+/** Pictogramme d'une catégorie du Menu (`Service.categoryId`), ciseaux en repli pour une catégorie inconnue. */
+export function ServiceCategoryIcon({ categoryId, className }: { categoryId: string; className?: string }) {
+  const Icon = CATEGORY_ICONS[categoryId];
+  if (Icon) return <Icon className={className} />;
+  return <Scissors aria-hidden className={cn("shrink-0", className)} />;
 }
