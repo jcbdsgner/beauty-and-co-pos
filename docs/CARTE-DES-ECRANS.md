@@ -104,10 +104,10 @@ Recherche d'abord (mécanisme partagé = `ClientSearchField` / `searchClients`).
 - `NewClientDialog` — [`components/clientele/new-client-dialog.tsx`](../components/clientele/new-client-dialog.tsx) — création cliente, pré-remplissage depuis la requête, garde anti-doublon téléphone, pays de résidence.
 
 ### Fiche cliente — `/clientele/[id]` — [`components/clientele/fiche-cliente-view.tsx`](../components/clientele/fiche-cliente-view.tsx)
-En-tête collant (avatar + nom sur bandeau) + 2 colonnes de `Board` :
-- Gauche : **Valeur cliente**, **Échanges** (aperçu 2 derniers messages + « Voir les échanges » → `/messages?client=<id>`), **Notes** (rangeables par domaine de préférence).
-- Droite : **Carte de fidélité** (→ `/clientele/[id]/fidelite`), **Coordonnées** (+ praticienne préférée), **Préférences beauté** (5 domaines), **Abonnement** (vide).
-- Dialogs : `EditCoordonneesDialog`, `EditPreferencesDialog` ([`components/clientele/`](../components/clientele/)). `StyleDetailDialog` pour une reco.
+En-tête collant : retour + avatar + nom + **N° cliente** + Contacter / Nouvelle vente, puis ligne « d'un coup d'œil » (`AtAGlance` : abonnement + statut, pack + restantes, points, visites, total dépensé). 2 colonnes de `Board` (ADR 0035) :
+- Gauche : **Abonnements & Packs** ([`abonnements-packs-board.tsx`](../components/clientele/abonnements-packs-board.tsx)), **Préférences** (une ligne par domaine ; réponses de Noter la cliente en photos via [`notation-photo.tsx`](../components/clientele/notation-photo.tsx)), **Notes internes** (saisie + « Par … », journal signé `Cliente.notes`).
+- Droite : **Coordonnées** (+ praticienne préférée), **Carte de fidélité** (→ `/clientele/[id]/fidelite`), **Échanges** en dernier (2 derniers messages + « Voir tout » → `/messages?client=<id>`).
+- Dialogs : `EditCoordonneesDialog`, `EditPreferencesDialog` (coche aussi les réponses photo) ([`components/clientele/`](../components/clientele/)).
 - `noteClientViewed(id)` appelé au montage (alimente « Vues récemment »).
 
 ### Carte de fidélité — `/clientele/[id]/fidelite` — [`components/clientele/fidelite-view.tsx`](../components/clientele/fidelite-view.tsx)

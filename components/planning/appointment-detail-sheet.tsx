@@ -1,11 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import {
-  Check,
   Coffee,
-  Copy,
   ShoppingBag,
   User,
   UserRound,
@@ -17,7 +15,7 @@ import {
   PackageCheck,
 } from "lucide-react";
 import { Dialog } from "@/components/ui/molecules/dialog";
-import { CloseButton, IconButton } from "@/components/ui/atoms/icon-button";
+import { CloseButton } from "@/components/ui/atoms/icon-button";
 import { Button } from "@/components/ui/atoms/button";
 import { Badge } from "@/components/ui/atoms/badge";
 import { TIER_LABEL } from "@/lib/data/tiers";
@@ -34,6 +32,8 @@ import { forfaitById } from "@/lib/data/forfaits";
 import { packPurchasesForClient, packRemainingPrestations } from "@/lib/data/pack-purchases";
 import { packById } from "@/lib/data/packs";
 import { clientFullName, clientInitial } from "@/lib/data/clientele";
+import { notationSummary } from "@/lib/data/notation";
+import { praticienneById } from "@/lib/data/praticiennes";
 import { boissonById } from "@/lib/data/boissons";
 import { produitById, serviceById } from "@/lib/data/menu";
 import { rendezVousCoverage, type RendezVousCoverage } from "@/lib/data/coverage";
@@ -103,7 +103,7 @@ function clientPreferenceLines(client: Cliente | null): { label: string; note: s
   if (client.hairType) lines.push({ label: "Type de cheveux", note: client.hairType });
   if (client.colorReference) lines.push({ label: "Réf. couleur", note: client.colorReference });
   for (const domain of PREFERENCE_DOMAINS) {
-    const note = client.preferenceNotes?.[domain];
+    const note = [notationSummary(client, domain), client.preferenceNotes?.[domain]].filter(Boolean).join(" · ");
     if (note) lines.push({ label: PREFERENCE_DOMAIN_LABEL[domain], note });
   }
   return lines;
@@ -169,12 +169,6 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [editing, setEditing] = useState(false);
-  const [copied, setCopied] = useState(false);
-  useEffect(() => {
-    if (!copied) return;
-    const id = setTimeout(() => setCopied(false), 1500);
-    return () => clearTimeout(id);
-  }, [copied]);
   if (!appointment) return null;
 
   const reservation = reservationForRendezVous(reservations, appointment.id);
@@ -219,11 +213,6 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
   const hasAvantages = Boolean(giftCard) || (payer && payer.points > 0) || abonnements.length > 0 || packs.length > 0;
   const payerPrefLines = clientPreferenceLines(payer ?? null);
 
-  function copyReference() {
-    if (!reservation) return;
-    navigator.clipboard?.writeText(reservation.id).then(() => setCopied(true), () => {});
-  }
-
   return (
     <>
       <Dialog open variant="side" onClose={onClose} labelledBy="rdv-detail-title" className="relative flex flex-col p-0">
@@ -235,15 +224,6 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
           <h2 id="rdv-detail-title" className="font-[family-name:var(--font-heading)] text-xl font-semibold tabular-nums">
             {reservation?.id ?? "Réservation"}
           </h2>
-          {reservation && (
-            <IconButton
-              aria-label={copied ? "Référence copiée" : "Copier la référence"}
-              onClick={copyReference}
-              className="-ml-1 size-12 rounded-full text-[var(--color-gray-400)] hover:bg-[var(--color-gray-50)] hover:text-[var(--color-gray-600)] active:bg-[var(--color-gray-100)]"
-            >
-              {copied ? <Check className="size-4 text-[var(--color-success)]" /> : <Copy className="size-4" />}
-            </IconButton>
-          )}
           {reservationCancelled && <FlipChip value="Annulé" tone="void" />}
           {hasSale && <FlipChip value="En cours" tone="signal" />}
           <span className="w-full text-xs text-[var(--color-gray-500)]">
@@ -324,10 +304,13 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
               {/* Préférences toujours visibles, jamais derrière un dépliage (demande utilisateur 25/09). */}
               <div className="mt-3 flex flex-col gap-3">
                 <PreferencesBlock lines={payerPrefLines} />
-                {payer.internalNotes && (
+                {payer.notes?.[0] && (
                   <div className="rounded-lg bg-[var(--color-gray-50)] px-3 py-2">
-                    <Legend className="text-[var(--color-gray-500)]">Notes</Legend>
-                    <p className="mt-1 text-xs leading-snug text-[var(--color-gray-600)]">{payer.internalNotes}</p>
+                    <Legend className="text-[var(--color-gray-500)]">
+                      Dernière note · {praticienneById(payer.notes[0].authorId)?.name ?? "Équipe"},{" "}
+                      {new Date(payer.notes[0].at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
+                    </Legend>
+                    <p className="mt-1 text-xs leading-snug text-[var(--color-gray-600)]">{payer.notes[0].text}</p>
                   </div>
                 )}
               </div>

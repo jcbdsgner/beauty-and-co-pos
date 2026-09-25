@@ -7,18 +7,19 @@ import { CloseButton } from "@/components/ui/atoms/icon-button";
 import { Textarea } from "@/components/ui/atoms/textarea";
 import { Dialog } from "@/components/ui/molecules/dialog";
 import { computeTotals, useAppData } from "@/components/providers/app-data-provider";
-import { NOTATION_QUESTIONS, type NotationOption, type NotationQuestion } from "@/lib/data/notation";
+import { NOTATION_QUESTIONS, mergeNotationChoices, type NotationOption, type NotationQuestion } from "@/lib/data/notation";
+import { NotationPhoto } from "@/components/clientele/notation-photo";
+import { UTILISATEUR } from "@/lib/data/utilisateurs";
 import { cn, formatFcfa } from "@/lib/utils";
 import type { Cliente, Sale } from "@/lib/data/types";
-
-const STAMP_FMT = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
 /**
  * « Noter la cliente » — run from the receipt (« Continuer ») once the sale is cashed in. When a
  * remise was granted, its motif comes first (`needsReason`) — internal, never on the receipt, it
  * lands in `Sale.remiseReason` for Récap des ventes. Then one question per screen,
  * answered by tapping photo tiles (several answers allowed), then a free internal note. Answers
- * go into the cliente's onglerie préférence, the note into her internal log; finishing stamps
+ * fold into her `notationChoices` (shown as photos beside her préférences on the fiche), the note
+ * into her internal log, signed by the poste's account; finishing stamps
  * `Sale.clientRatedAt`, which releases the Comptoir. Closing with « × » keeps the answers and
  * leaves the lock in place.
  */
@@ -35,7 +36,7 @@ export function NoterClienteDialog({
   needsReason: boolean;
   onClose: () => void;
 }) {
-  const { updateClient, updateSale, setDiscountReason } = useAppData();
+  const { updateClient, addClientNote, updateSale, setDiscountReason } = useAppData();
   const [stepIndex, setStepIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string[]>>({});
   const [note, setNote] = useState("");
@@ -67,19 +68,9 @@ export function NoterClienteDialog({
   }
 
   function finish() {
-    const stamp = STAMP_FMT.format(new Date());
-    const preference = `${NOTATION_QUESTIONS.map((q) => `${q.noteLabel} : ${answerSummary(q)}`).join(" · ")} (${stamp})`;
-    const currentPref = client.preferenceNotes?.onglerie;
     const trimmedNote = note.trim();
-    updateClient(client.id, {
-      preferenceNotes: {
-        ...client.preferenceNotes,
-        onglerie: currentPref ? `${preference}\n${currentPref}` : preference,
-      },
-      ...(trimmedNote && {
-        internalNotes: client.internalNotes ? `[${stamp}] ${trimmedNote}\n\n${client.internalNotes}` : `[${stamp}] ${trimmedNote}`,
-      }),
-    });
+    updateClient(client.id, { notationChoices: mergeNotationChoices(client.notationChoices, answers) });
+    if (trimmedNote) addClientNote(client.id, { authorId: UTILISATEUR.praticienneId, text: trimmedNote, origin: "encaissement" });
     if (withReason) setDiscountReason(sale.id, reason);
     updateSale(sale.id, { clientRatedAt: new Date().toISOString() });
     onClose();
@@ -143,14 +134,13 @@ export function NoterClienteDialog({
               role="group"
               aria-labelledby="noter-cliente-title"
             >
-              {question.options.map((option, i) => (
+              {question.options.map((option) => (
                 <PhotoTile
                   key={option.id}
+                  question={question}
                   option={option}
                   selected={selected.includes(option.id)}
                   onToggle={() => toggle(option.id)}
-                  // Length tiles draw a nail that grows from short to very long.
-                  lengthRank={question.id === "ongles-longueur" ? i : undefined}
                   tall={question.options.length === 4}
                 />
               ))}
@@ -219,16 +209,16 @@ export function NoterClienteDialog({
 }
 
 function PhotoTile({
+  question,
   option,
   selected,
   onToggle,
-  lengthRank,
   tall,
 }: {
+  question: NotationQuestion;
   option: NotationOption;
   selected: boolean;
   onToggle: () => void;
-  lengthRank?: number;
   tall: boolean;
 }) {
   return (
@@ -243,12 +233,7 @@ function PhotoTile({
       )}
     >
       <div className={cn("relative w-full overflow-hidden bg-accent", tall ? "aspect-[3/4]" : "aspect-[4/3]")}>
-        {option.photo ? (
-          // eslint-disable-next-line @next/next/no-img-element -- local fixture photos, sizes vary
-          <img src={option.photo} alt="" className="size-full object-cover transition duration-300 group-active:scale-[1.02]" />
-        ) : (
-          <NailPlaceholder lengthRank={lengthRank} />
-        )}
+        <NotationPhoto question={question} option={option} />
         <span
           aria-hidden
           className={cn(
@@ -266,23 +251,5 @@ function PhotoTile({
         {option.hint && <span className="mt-0.5 text-[13px] text-base-content/55">{option.hint}</span>}
       </div>
     </button>
-  );
-}
-
-/** Stand-in until the real photos arrive: a nail silhouette in the brand tint. With `lengthRank`,
- *  the free edge grows from short (0) to very long (3) so the length question still reads. */
-function NailPlaceholder({ lengthRank }: { lengthRank?: number }) {
-  const free = lengthRank === undefined ? 16 : 6 + lengthRank * 12;
-  const top = 58 - free;
-  return (
-    <svg viewBox="0 0 100 100" aria-hidden className="absolute inset-0 m-auto h-3/4 w-auto text-primary/25">
-      {/* finger */}
-      <path d="M30 100 V62 a20 20 0 0 1 40 0 V100 Z" fill="currentColor" opacity="0.45" />
-      {/* nail bed + free edge */}
-      <path
-        d={`M37 84 V${top + 12} Q37 ${top} 50 ${top} Q63 ${top} 63 ${top + 12} V84 Q50 90 37 84 Z`}
-        fill="currentColor"
-      />
-    </svg>
   );
 }

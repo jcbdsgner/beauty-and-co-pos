@@ -3,6 +3,7 @@ import type { Cliente } from "@/lib/data/types";
 export const CLIENTS: Cliente[] = [
   {
     id: "cl-1",
+    number: 1006,
     loyaltyCode: "BACO-FID-1042",
     firstName: "Awa",
     lastName: "Sarr",
@@ -22,11 +23,17 @@ export const CLIENTS: Cliente[] = [
     lastVisit: "Il y a 6 j",
     totalSpent: 245000,
     totalVisits: 9,
+    notationChoices: { "ongles-type": ["gel-x", "french"], "ongles-longueur": ["moyens"] },
+    notes: [
+      { id: "note-cl1-2", at: "2026-09-19T16:40:00.000Z", authorId: "ndiole", origin: "encaissement", text: "A demandé à être prévenue dès qu'un créneau se libère le samedi matin." },
+      { id: "note-cl1-1", at: "2026-08-02T11:15:00.000Z", authorId: "bineta", origin: "fiche", text: "Cuir chevelu sensible — éviter les produits mentholés au shampooing." },
+    ],
     createdAt: "2026-02-01",
     preferredStaffId: "bineta",
   },
   {
     id: "cl-2",
+    number: 1009,
     loyaltyCode: "BACO-FID-2170",
     firstName: "Fatou",
     lastName: "Camara",
@@ -38,10 +45,15 @@ export const CLIENTS: Cliente[] = [
     lastVisit: "1 sem.",
     totalSpent: 98000,
     totalVisits: 4,
+    notationChoices: { "ongles-type": ["vernis-permanent", "decoration"], "ongles-longueur": ["courts"] },
+    notes: [
+      { id: "note-cl2-1", at: "2026-09-10T15:05:00.000Z", authorId: "aissatou", origin: "encaissement", text: "Vient souvent avec sa fille, prévoir un fauteuil en plus." },
+    ],
     createdAt: "2026-05-10",
   },
   {
     id: "cl-3",
+    number: 1010,
     loyaltyCode: "BACO-FID-3388",
     firstName: "Coumba",
     lastName: "Thiam",
@@ -57,6 +69,7 @@ export const CLIENTS: Cliente[] = [
   },
   {
     id: "cl-4",
+    number: 1005,
     loyaltyCode: "BACO-FID-4519",
     firstName: "Bineta",
     lastName: "Diagne",
@@ -72,6 +85,7 @@ export const CLIENTS: Cliente[] = [
   },
   {
     id: "cl-5",
+    number: 1007,
     loyaltyCode: "BACO-FID-5024",
     firstName: "Mariam",
     lastName: "Kane",
@@ -87,6 +101,7 @@ export const CLIENTS: Cliente[] = [
   },
   {
     id: "cl-6",
+    number: 1002,
     loyaltyCode: "BACO-FID-6607",
     firstName: "Awa",
     lastName: "Niang",
@@ -104,11 +119,15 @@ export const CLIENTS: Cliente[] = [
     lastVisit: "2 mois",
     totalSpent: 890000,
     totalVisits: 22,
+    notes: [
+      { id: "note-cl6-1", at: "2026-07-22T10:30:00.000Z", authorId: "ndiole", origin: "fiche", text: "Préfère régler par Wave. Arrive en général 10 min en avance." },
+    ],
     createdAt: "2025-09-01",
     preferredStaffId: "fatou",
   },
   {
     id: "cl-7",
+    number: 1003,
     loyaltyCode: "BACO-FID-7731",
     firstName: "Sokhna",
     lastName: "Ndiaye",
@@ -124,6 +143,7 @@ export const CLIENTS: Cliente[] = [
   },
   {
     id: "cl-8",
+    number: 1004,
     loyaltyCode: "BACO-FID-8890",
     firstName: "Ndèye",
     lastName: "Diop",
@@ -139,6 +159,7 @@ export const CLIENTS: Cliente[] = [
   },
   {
     id: "cl-9",
+    number: 1001,
     loyaltyCode: "BACO-FID-9276",
     firstName: "Yacine",
     lastName: "Wade",
@@ -163,6 +184,7 @@ export const CLIENTS: Cliente[] = [
   },
   {
     id: "cl-10",
+    number: 1008,
     loyaltyCode: "BACO-FID-1038",
     firstName: "Aminata",
     lastName: "Fall",
@@ -203,8 +225,13 @@ export function clientByLoyaltyCode(clients: Cliente[], raw: string) {
   return clients.find((c) => c.loyaltyCode.toUpperCase() === code);
 }
 
-/** Une cliente correspond-elle à la saisie ? Nom, téléphone (ou WhatsApp) et e-mail — les trois
- *  façons dont on la retrouve au comptoir. Les chiffres se comparent sans espaces ni ponctuation,
+/** « N° 1042 » — le numéro cliente tel qu'il s'affiche partout. */
+export function clientNumberLabel(c: Pick<Cliente, "number">) {
+  return `N° ${c.number}`;
+}
+
+/** Une cliente correspond-elle à la saisie ? Nom, téléphone (ou WhatsApp), e-mail et numéro cliente
+ *  (« 1042 », « N° 1042 », « #1042 ») — les façons dont on la retrouve au comptoir. Les chiffres se comparent sans espaces ni ponctuation,
  *  pour que « 77 123 45 67 », « 771234567 » ou « +221 77… » tombent tous juste. Seule règle de
  *  correspondance cliente : la recherche de rendez-vous de l'Accueil la réutilise. */
 export function clientMatchesQuery(c: Cliente, query: string) {
@@ -212,6 +239,8 @@ export function clientMatchesQuery(c: Cliente, query: string) {
   if (!q) return true;
   if (clientFullName(c).toLowerCase().includes(q)) return true;
   if (c.email?.toLowerCase().includes(q)) return true;
+  const asNumber = q.match(/^(?:n°|no|#)?\s*(\d+)$/);
+  if (asNumber && Number(asNumber[1]) === c.number) return true;
   const qDigits = q.replace(/\D/g, "");
   if (qDigits.length >= 2 && /^[\d\s+().-]+$/.test(q)) {
     return [c.phone, c.whatsapp].some((n) => n?.replace(/\D/g, "").includes(qDigits));

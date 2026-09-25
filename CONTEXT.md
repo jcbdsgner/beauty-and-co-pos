@@ -80,8 +80,16 @@ _Avoid_: Décaler, Déplacer, Reporter
 La section de consultation de la relation cliente dans la durée. Porte d'entrée **recherche d'abord** : grande recherche cliente (mécanisme unique, partagé avec le Comptoir) + « Vues récemment » + « Attendues aujourd'hui » ; l'annuaire complet filtrable (Toutes / Nouvelles / Historique / VIP) vit sur la même page, en dessous. Mène à la **Fiche cliente** (identité, historique de visites, abonnement, fidélité, **préférences**, accès « Voir les échanges »). Ne contient ni tournée de relance ni campagnes — les échanges avec la cliente vivent dans la section **Messages**.
 _Avoid_: Clients (ancien nom de la section), Répertoire / Annuaire (une vue de la section, pas la section), Fichier client, CRM
 
+**Numéro cliente**:
+Le numéro séquentiel de chaque fiche, attribué à la création et jamais réattribué, affiché « N° 1042 ». La recherche cliente le retrouve. Ce n'est pas le code de la carte de fidélité, qui sert de jeton d'identification (ADR 0035).
+_Avoid_: ID cliente, matricule
+
+**Journal interne**:
+L'historique des notes internes d'une fiche, la plus récente d'abord. Chaque note est **signée** (une personne de l'équipe, par défaut le compte du poste, modifiable), **datée**, et marquée « Après encaissement » quand elle vient de Noter la cliente. Jamais montré à la cliente (ADR 0035).
+_Avoid_: Commentaires, Mémo
+
 **Préférence**:
-Ce que le salon retient des goûts d'une cliente, sur sa fiche : le **type de cheveux**, la **référence couleur**, puis un texte libre par domaine — **mani-pédi-onglerie**, **coiffure**, **spa**, **épilation** — et les **préférences de boisson**. Des photos de référence peuvent être attachées par domaine. Une **note** ajoutée à la fiche peut être rangée dans l'un de ces domaines : son texte vient alors compléter la préférence correspondante (sinon elle reste une note interne).
+Ce que le salon retient des goûts d'une cliente, sur sa fiche : le **type de cheveux**, la **référence couleur**, puis un texte libre par domaine — **mani-pédi-onglerie**, **coiffure**, **spa**, **épilation** — et les **préférences de boisson**. Des photos de référence peuvent être attachées par domaine. Les réponses de **Noter la cliente** (type d'ongles, longueur…) s'y cumulent et s'affichent en **photos** sur la ligne de leur domaine, les mêmes que sur le questionnaire (ADR 0035). Une **note** ajoutée à la fiche peut être rangée dans l'un de ces domaines : son texte vient alors compléter la préférence correspondante (sinon elle entre au **journal interne**).
 _Avoid_: Profil beauté (le libellé d'une carte, pas le concept), Goûts
 
 **Messages**:

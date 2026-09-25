@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ImagePlus, X } from "lucide-react";
+import { Check, ImagePlus, X } from "lucide-react";
 import { Dialog } from "@/components/ui/molecules/dialog";
 import { CloseButton } from "@/components/ui/atoms/icon-button";
 import { Field } from "@/components/ui/molecules/field";
@@ -9,7 +9,10 @@ import { TextInput } from "@/components/ui/atoms/text-input";
 import { Textarea } from "@/components/ui/atoms/textarea";
 import { Button } from "@/components/ui/atoms/button";
 import { PhotoPlaceholder } from "@/components/ui/atoms/photo-placeholder";
+import { NotationPhoto } from "@/components/clientele/notation-photo";
 import { useAppData } from "@/components/providers/app-data-provider";
+import { NOTATION_QUESTIONS } from "@/lib/data/notation";
+import { cn } from "@/lib/utils";
 import { PREFERENCE_DOMAINS, PREFERENCE_DOMAIN_LABEL, type Cliente, type PreferenceDomain } from "@/lib/data/types";
 
 type EditPreferencesDialogProps = {
@@ -18,11 +21,12 @@ type EditPreferencesDialogProps = {
   onClose: () => void;
 };
 
-/** Edit dialog for the Fiche cliente's "Préférences beauté" card — type de cheveux + référence
- *  couleur, puis un texte libre et des photos de référence par domaine (mock : pas de vrai upload). */
+/** Edit dialog for the Fiche cliente's "Préférences" card — type de cheveux + référence couleur,
+ *  puis par domaine : les réponses de « Noter la cliente » (tuiles photo à cocher), un texte libre et
+ *  des photos de référence (mock : pas de vrai upload). */
 export function EditPreferencesDialog({ open, client, onClose }: EditPreferencesDialogProps) {
   return (
-    <Dialog open={open} labelledBy="edit-preferences-title" className="relative flex max-h-[90vh] w-full max-w-lg flex-col rounded-3xl p-0">
+    <Dialog open={open} labelledBy="edit-preferences-title" className="relative flex max-h-[90vh] w-full max-w-xl flex-col rounded-3xl p-0">
       {open && <EditPreferencesForm key={client.id} client={client} onClose={onClose} />}
     </Dialog>
   );
@@ -38,6 +42,15 @@ function EditPreferencesForm({ client, onClose }: { client: Cliente; onClose: ()
     for (const d of PREFERENCE_DOMAINS) seed[d] = [...(client.preferencePhotos?.[d] ?? [])];
     return seed;
   });
+
+  const [choices, setChoices] = useState<Record<string, string[]>>(() => ({ ...client.notationChoices }));
+
+  function toggleChoice(questionId: string, optionId: string) {
+    setChoices((prev) => {
+      const current = prev[questionId] ?? [];
+      return { ...prev, [questionId]: current.includes(optionId) ? current.filter((id) => id !== optionId) : [...current, optionId] };
+    });
+  }
 
   function addPhoto(domain: PreferenceDomain) {
     setPhotos((prev) => ({ ...prev, [domain]: [...(prev[domain] ?? []), `photo-${domain}-${Date.now()}`] }));
@@ -60,6 +73,7 @@ function EditPreferencesForm({ client, onClose }: { client: Cliente; onClose: ()
       colorReference: colorReference.trim() || undefined,
       preferenceNotes: Object.keys(cleanNotes).length ? cleanNotes : undefined,
       preferencePhotos: Object.keys(cleanPhotos).length ? cleanPhotos : undefined,
+      notationChoices: Object.fromEntries(Object.entries(choices).filter(([, ids]) => ids.length > 0)),
     });
     onClose();
   }
@@ -68,7 +82,7 @@ function EditPreferencesForm({ client, onClose }: { client: Cliente; onClose: ()
     <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
       <div className="flex items-start justify-between gap-4 border-b border-base-300 p-6 pb-4">
         <h2 id="edit-preferences-title" className="font-[family-name:var(--font-heading)] text-xl font-semibold text-base-content">
-          Modifier les préférences beauté
+          Modifier les préférences
         </h2>
         <CloseButton onClick={onClose} />
       </div>
@@ -85,6 +99,40 @@ function EditPreferencesForm({ client, onClose }: { client: Cliente; onClose: ()
 
         {PREFERENCE_DOMAINS.map((domain) => (
           <Field key={domain} label={PREFERENCE_DOMAIN_LABEL[domain]}>
+            {NOTATION_QUESTIONS.filter((q) => q.domain === domain).map((question) => (
+              <div key={question.id} className="mb-3">
+                <p className="mb-1.5 text-xs font-medium text-base-content/55">{question.noteLabel}</p>
+                <div className="flex flex-wrap gap-2" role="group" aria-label={question.noteLabel}>
+                  {question.options.map((option) => {
+                    const on = (choices[question.id] ?? []).includes(option.id);
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        aria-pressed={on}
+                        onClick={() => toggleChoice(question.id, option.id)}
+                        className={cn(
+                          "w-[4.5rem] overflow-hidden rounded-xl border-2 text-center transition active:scale-[0.97]",
+                          on ? "border-primary" : "border-base-300 hover:border-primary/40",
+                        )}
+                      >
+                        <span className="relative block aspect-square bg-accent">
+                          <NotationPhoto question={question} option={option} />
+                          {on && (
+                            <span className="absolute top-1 right-1 flex size-5 items-center justify-center rounded-full bg-primary text-primary-content">
+                              <Check className="size-3" strokeWidth={3} />
+                            </span>
+                          )}
+                        </span>
+                        <span className={cn("block px-1 py-1 text-[11px] leading-tight", on ? "font-semibold" : "text-base-content/70")}>
+                          {option.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
             <Textarea
               value={notes[domain] ?? ""}
               onChange={(e) => setNotes((prev) => ({ ...prev, [domain]: e.target.value }))}

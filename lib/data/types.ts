@@ -45,8 +45,22 @@ export const PREFERENCE_DOMAIN_LABEL: Record<PreferenceDomain, string> = {
   boisson: "Boisson",
 };
 
+/** Une entrée du journal interne d'une fiche cliente — jamais montrée à la cliente. `authorId` est
+ *  une praticienne de l'équipe (le compte du poste par défaut, modifiable à la saisie). */
+export type ClientNote = {
+  id: string;
+  at: string; // ISO
+  authorId: string;
+  text: string;
+  /** Où la note a été prise : sur la fiche, ou dans « Noter la cliente » après l'encaissement. */
+  origin: "fiche" | "encaissement";
+};
+
 export type Cliente = {
   id: string;
+  /** Numéro cliente — séquentiel, attribué à la création, jamais réattribué. Affiché « N° 1042 »,
+   *  retrouvable par la recherche. Distinct du `loyaltyCode`, qui est un jeton d'identification. */
+  number: number;
   firstName: string;
   lastName: string;
   phone: string;
@@ -69,7 +83,11 @@ export type Cliente = {
   preferenceNotes?: Partial<Record<PreferenceDomain, string>>;
   /** Photos de référence par domaine (mock : identifiants de placeholder, pas de vrai upload). */
   preferencePhotos?: Partial<Record<PreferenceDomain, string[]>>;
-  internalNotes?: string;
+  /** Réponses cumulées de « Noter la cliente » : id de question → ids d'options (lib/data/notation.ts),
+   *  les plus récentes d'abord. Affichées en photos à côté des préférences de la fiche. */
+  notationChoices?: Record<string, string[]>;
+  /** Journal interne, le plus récent d'abord. */
+  notes?: ClientNote[];
   lastVisit?: string;
   totalSpent: number;
   totalVisits: number;

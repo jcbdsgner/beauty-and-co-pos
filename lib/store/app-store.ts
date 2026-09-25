@@ -23,6 +23,7 @@ import type {
   CarteCadeau,
   CartLine,
   Cliente,
+  ClientNote,
   Conversation,
   GiftCardOrder,
   PaymentMode,
@@ -358,8 +359,10 @@ export type AppState = {
   giftCardOrders: GiftCardOrder[];
 
   // Clients
-  addClient: (data: Omit<Cliente, "id" | "loyaltyCode" | "points" | "totalSpent" | "totalVisits" | "createdAt" | "tier">) => Cliente;
+  addClient: (data: Omit<Cliente, "id" | "number" | "loyaltyCode" | "points" | "totalSpent" | "totalVisits" | "createdAt" | "tier">) => Cliente;
   updateClient: (id: string, patch: Partial<Cliente>) => void;
+  /** Ajoute une entrée en tête du journal interne de la fiche. */
+  addClientNote: (clientId: string, note: Omit<ClientNote, "id" | "at">) => void;
   findDuplicatePhone: (phone: string) => Cliente | undefined;
   /** Record that a cliente's fiche was opened (called from FicheClienteView). */
   noteClientViewed: (id: string) => void;
@@ -488,6 +491,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     const client: Cliente = {
       ...data,
       id: nextId("cl"),
+      number: Math.max(1000, ...get().clients.map((c) => c.number)) + 1,
       loyaltyCode: `BACO-FID-${Math.floor(1000 + Math.random() * 9000)}`,
       tier: null,
       points: 0,
@@ -500,6 +504,15 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   updateClient: (id, patch) => set((s) => ({ clients: s.clients.map((c) => (c.id === id ? { ...c, ...patch } : c)) })),
+
+  addClientNote: (clientId, note) =>
+    set((s) => ({
+      clients: s.clients.map((c) =>
+        c.id === clientId
+          ? { ...c, notes: [{ ...note, id: nextId("note"), at: new Date().toISOString() }, ...(c.notes ?? [])] }
+          : c,
+      ),
+    })),
 
   findDuplicatePhone: (phone) => get().clients.find((c) => c.phone.replace(/\s/g, "") === phone.replace(/\s/g, "")),
 
