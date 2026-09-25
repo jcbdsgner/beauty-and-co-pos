@@ -18,12 +18,27 @@ import { cn } from "@/lib/utils";
 
 /* ── Legend ──────────────────────────────────────────────────────────────── */
 
-/** The board grammar's label — tracked uppercase, never a heading. */
-export function Legend({ children, className }: { children: React.ReactNode; className?: string }) {
+/**
+ * The board grammar's label — tracked uppercase, never a heading. `size="section"` is the
+ * full-width section title of a page (« Rendez-vous », « Clientes »…), per Figma 352-174 :
+ * Poppins Medium 32px, tracking 1.12px.
+ */
+export function Legend({
+  children,
+  className,
+  size = "label",
+}: {
+  children: React.ReactNode;
+  className?: string;
+  size?: "label" | "section";
+}) {
   return (
     <span
       className={cn(
-        "font-[family-name:var(--font-heading)] text-sm font-bold uppercase tracking-[0.08em] text-[var(--brand-taupe-muted)]",
+        "font-[family-name:var(--font-heading)] uppercase text-[var(--brand-taupe-muted)]",
+        size === "section"
+          ? "text-[32px] font-medium leading-none tracking-[1.12px]"
+          : "text-sm font-bold tracking-[0.08em]",
         className,
       )}
     >

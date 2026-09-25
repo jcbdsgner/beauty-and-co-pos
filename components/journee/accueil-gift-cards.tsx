@@ -46,7 +46,7 @@ export function AccueilGiftCards() {
   return (
     <section>
       <div className="mb-2 flex items-center justify-between gap-3 pl-1">
-        <Legend>Cartes cadeaux</Legend>
+        <Legend size="section">Cartes cadeaux</Legend>
         <Link
           href="/cartes-cadeaux"
           className="flex items-center gap-1 text-xs font-bold uppercase tracking-[0.1em] text-primary transition hover:opacity-75"

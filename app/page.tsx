@@ -195,7 +195,7 @@ function AccueilPageInner() {
 
       <section>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3 pl-1">
-          <Legend>Rendez-vous</Legend>
+          <Legend size="section">Rendez-vous</Legend>
           {canShowCalendar && reservationRows.length > 0 && (
             <SegmentedToggle
               value={view}
@@ -227,7 +227,7 @@ function AccueilPageInner() {
 
         {clientMatches.length > 0 && (
           <div className="mb-5 flex flex-col gap-2">
-            <Legend>Clientes</Legend>
+            <Legend size="section">Clientes</Legend>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {clientMatches.map((c) => (
                 <ClientMatchCard key={c.id} client={c} query={query} />

@@ -63,7 +63,7 @@ export function GiftCardQueue() {
         <>
           {toPrint.length > 0 && (
             <section>
-              <Legend className="mb-2 block pl-1">À imprimer · {toPrint.length}</Legend>
+              <Legend size="section" className="mb-2 block pl-1">À imprimer · {toPrint.length}</Legend>
               <div className="grid grid-cols-2 gap-4 xl:grid-cols-3">
                 {toPrint.map((order) => (
                   <GiftCardQueueTile key={order.id} order={order} />
@@ -73,7 +73,7 @@ export function GiftCardQueue() {
           )}
           {toHandOver.length > 0 && (
             <section>
-              <Legend className="mb-2 block pl-1">Prêtes à remettre · {toHandOver.length}</Legend>
+              <Legend size="section" className="mb-2 block pl-1">Prêtes à remettre · {toHandOver.length}</Legend>
               <div className="grid grid-cols-2 gap-4 xl:grid-cols-3">
                 {toHandOver.map((order) => (
                   <GiftCardQueueTile key={order.id} order={order} />

@@ -127,7 +127,7 @@ export function RepertoireView() {
         <div className={recent.length > 0 && expectedToday.length > 0 ? "grid grid-cols-2 gap-6" : "space-y-3"}>
           {recent.length > 0 && (
             <div className="space-y-3">
-              <Legend>Vues récemment</Legend>
+              <Legend size="section">Vues récemment</Legend>
               <div className={`grid grid-cols-2 gap-3 ${expectedToday.length > 0 ? "" : "md:grid-cols-3"}`}>
                 {recent.map((c) => (
                   <ClientCard key={c.id} client={c} trailing={c.phone} />
@@ -137,7 +137,7 @@ export function RepertoireView() {
           )}
           {expectedToday.length > 0 && (
             <div className="space-y-3">
-              <Legend>Attendues aujourd&apos;hui</Legend>
+              <Legend size="section">Attendues aujourd&apos;hui</Legend>
               <div className={`grid grid-cols-2 gap-3 ${recent.length > 0 ? "" : "md:grid-cols-3"}`}>
                 {expectedToday.map(({ client, start }) => (
                   <ClientCard key={client.id} client={client} trailing={`Rendez-vous ${start}`} />
@@ -150,7 +150,7 @@ export function RepertoireView() {
 
       <div className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <Legend>{searching ? `Résultats · ${filtered.length}` : "Tout l'annuaire"}</Legend>
+          <Legend size="section">{searching ? `Résultats · ${filtered.length}` : "Tout l'annuaire"}</Legend>
           {!searching && <ChipFilter options={FILTERS} value={filter} onChange={setFilter} />}
         </div>
 
