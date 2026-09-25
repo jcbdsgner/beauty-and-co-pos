@@ -1,7 +1,6 @@
 "use client";
 
 import { Badge } from "@/components/ui/atoms/badge";
-import { BrandMark } from "@/components/ui/atoms/brand-mark";
 import { DiscountBreakdown } from "@/components/comptoir/discount-breakdown";
 import { DepositLine } from "@/components/comptoir/deposit-line";
 import { computeTotals } from "@/components/providers/app-data-provider";
@@ -44,7 +43,6 @@ export function TicketHead({
   const itemCount = sale.cart.reduce((n, l) => n + l.qty, 0);
   return (
     <div className="relative shrink-0 overflow-hidden border-b border-border px-5 pt-5 pb-4">
-      <BrandMark className="pointer-events-none absolute -top-8 -right-6 size-32 text-accent" />
       <div className="relative flex items-baseline gap-2">
         <p className="font-[family-name:var(--font-heading)] font-bold text-lg text-base-content">{title}</p>
         {itemCount > 0 && (

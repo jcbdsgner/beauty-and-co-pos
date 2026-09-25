@@ -10,7 +10,6 @@ import { SaleCartPanel } from "@/components/comptoir/sale-cart-panel";
 import { SettlementStep } from "@/components/comptoir/settlement-step";
 import { ReceiptStep, isReceiptLocked } from "@/components/comptoir/receipt-step";
 import { IdentifyDialog } from "@/components/comptoir/identify-dialog";
-import { BrandMark } from "@/components/ui/atoms/brand-mark";
 import { Logo } from "@/components/ui/atoms/logo";
 import { useAppData } from "@/components/providers/app-data-provider";
 
@@ -68,7 +67,6 @@ export function ComptoirPanel() {
       <div className="min-h-0 flex-1 overflow-hidden rounded-t-2xl bg-base-200">
         {!activeSale ? (
           <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
-            <BrandMark className="size-12 text-border" />
             <p className="font-[family-name:var(--font-heading)] font-semibold text-xl text-base-content">Aucune vente ouverte</p>
             <p className="text-sm text-base-content/55">Ouvrez une vente pour commencer.</p>
             <Button variant="brand" size="default" icon={<Plus className="size-4" />} onClick={() => openNewTab()} className="mt-1">

@@ -3,9 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
-import { Check, Home, Plus, Printer } from "lucide-react";
+import { Home, Plus, Printer } from "lucide-react";
 import { Button } from "@/components/ui/atoms/button";
-import { BrandMark } from "@/components/ui/atoms/brand-mark";
 import { computeTotals, useAppData } from "@/components/providers/app-data-provider";
 import { NoterClienteDialog } from "@/components/comptoir/noter-cliente-dialog";
 import { SendReceiptButtons } from "@/components/comptoir/send-receipt-buttons";
@@ -72,10 +71,6 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
         <div className="mx-auto flex w-full max-w-xl flex-1 flex-col justify-center gap-8 px-8 py-10">
           {/* What happened */}
           <div className="flex items-center gap-5">
-            <span className="relative flex size-20 shrink-0 items-center justify-center">
-              <BrandMark variant="fill" className="absolute inset-0 size-full" />
-              <Check aria-hidden className="relative size-9 text-primary-content" strokeWidth={2.5} />
-            </span>
             <div className="min-w-0">
               <p className="font-[family-name:var(--font-heading)] text-2xl font-bold text-base-content">Vente encaissée</p>
               <p className="font-[family-name:var(--font-heading)] text-[3rem] leading-tight font-semibold text-base-content tabular-nums">

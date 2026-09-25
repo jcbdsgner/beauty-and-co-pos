@@ -4,7 +4,6 @@ import { Lock, Minus, Plus, ScanLine, Search, Trash2 } from "lucide-react";
 import { Tooltip } from "@/components/ui/atoms/tooltip";
 import { Button } from "@/components/ui/atoms/button";
 import { IconButton } from "@/components/ui/atoms/icon-button";
-import { BrandMark } from "@/components/ui/atoms/brand-mark";
 import { ClientSearchField } from "@/components/shared/client-search-field";
 import { TicketClientCard, TicketFrame, TicketHead, TicketLineBody, TicketTotals } from "@/components/comptoir/ticket-parts";
 import { useAppData, computeTotals, saleNeedsClient } from "@/components/providers/app-data-provider";
@@ -83,7 +82,6 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
       <div className="min-h-0 flex-1 overflow-y-auto px-5">
         {isEmpty ? (
           <div className="flex h-full flex-col items-center justify-center gap-2 py-10 text-center">
-            <BrandMark className="size-10 text-border" />
             <p className="text-sm font-medium text-base-content/55">Aucune prestation</p>
             <p className="text-xs text-base-content/55">Touchez une prestation dans le menu.</p>
           </div>
