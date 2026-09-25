@@ -86,8 +86,8 @@ plus de bascule de vue, plus de liste de réservations (celle-ci ne vit plus que
 - Corps : `DayTimeline` (vue Jour) ou `WeekTimeline` (vue Semaine) — **une ligne par praticienne**,
   le temps défile **horizontalement** en vue Jour (axe renversé vs l'ancien `DayGrid`). Zone grisée
   = hors de l'horaire hebdomadaire (`Praticienne.weeklySchedule`) du jour affiché ; ligne entière
-  grisée (hachures) = jour de repos. Un bloc n'affiche que l'heure + la **prestation** (pas la
-  cliente) ; deux prestations qui se chevauchent pour une même praticienne s'empilent en
+  grisée (hachures) = jour de repos. Un bloc affiche, aligné en haut, l'heure + la **cliente** dans le
+  fauteuil (bénéficiaire, sinon payeuse), puis la prestation en gris si le bloc a la hauteur ; deux prestations qui se chevauchent pour une même praticienne s'empilent en
   sous-lignes (`pack`), jamais superposées. Taper un bloc ouvre `AppointmentDetailSheet`.
   Couleur par praticienne : `praticienneAccent`, 16 teintes (ADR 0024, 2ᵉ exception nommée à la
   règle du signal unique après ADR 0022).
