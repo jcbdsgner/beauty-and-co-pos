@@ -293,3 +293,10 @@ input:-webkit-autofill:active {
   -webkit-text-fill-color: #241f1d;
   transition: background-color 5000s ease-in-out 0s;
 }
+
+/* Mise en évidence — bord primary + halo rosé (recette du bouton « Scanner le code cadeau »,
+   25/09). À utiliser partout où l'on veut faire ressortir un élément, plutôt que le signal ambré. */
+@utility highlight-rose {
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 17.5px rgb(253 207 202 / 0.65);
+}
