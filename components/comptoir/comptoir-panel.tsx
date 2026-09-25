@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, Plus } from "lucide-react";
+import { CalendarPlus, ChevronDown, Plus } from "lucide-react";
 import { Button } from "@/components/ui/atoms/button";
 import { SaleTabsBar } from "@/components/comptoir/sale-tabs-bar";
 import { MenuPanel } from "@/components/comptoir/menu-panel";
@@ -10,6 +10,7 @@ import { SaleCartPanel } from "@/components/comptoir/sale-cart-panel";
 import { SettlementStep } from "@/components/comptoir/settlement-step";
 import { ReceiptStep, isReceiptLocked } from "@/components/comptoir/receipt-step";
 import { IdentifyDialog } from "@/components/comptoir/identify-dialog";
+import { PriseRdvModal } from "@/components/prise-rdv/prise-rdv-modal";
 import { Logo } from "@/components/ui/atoms/logo";
 import { useAppData } from "@/components/providers/app-data-provider";
 
@@ -23,6 +24,7 @@ import { useAppData } from "@/components/providers/app-data-provider";
 export function ComptoirPanel() {
   const { comptoirDeployed, collapseComptoir, sales, activeSaleId, openNewTab } = useAppData();
   const [scanOpen, setScanOpen] = useState(false);
+  const [creatingRdv, setCreatingRdv] = useState(false);
   const router = useRouter();
 
   if (!comptoirDeployed) return null;
@@ -51,16 +53,30 @@ export function ComptoirPanel() {
           </button>
           <SaleTabsBar locked={locked} />
         </div>
-        <button
-          type="button"
-          onClick={collapseComptoir}
-          disabled={locked}
-          title={locked ? "Complétez d'abord la fiche cliente" : undefined}
-          className="mb-2 disabled:pointer-events-none disabled:opacity-40 flex h-12 shrink-0 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-primary transition active:scale-[0.97] hover:bg-white/90"
-        >
-          <ChevronDown aria-hidden className="size-4" />
-          Replier
-        </button>
+        <div className="mb-2 flex shrink-0 items-center gap-2">
+          {/* Une cliente au comptoir veut revenir : le parcours de résa b&co s'ouvre par-dessus la
+              vente en cours (ADR 0032), sans la replier ni la perdre. */}
+          <button
+            type="button"
+            onClick={() => setCreatingRdv(true)}
+            disabled={locked}
+            title={locked ? "Complétez d'abord la fiche cliente" : undefined}
+            className="disabled:pointer-events-none disabled:opacity-40 flex h-12 shrink-0 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-primary transition active:scale-[0.97] hover:bg-white/90"
+          >
+            <CalendarPlus aria-hidden className="size-4" />
+            Créer un rendez-vous
+          </button>
+          <button
+            type="button"
+            onClick={collapseComptoir}
+            disabled={locked}
+            title={locked ? "Complétez d'abord la fiche cliente" : undefined}
+            className="disabled:pointer-events-none disabled:opacity-40 flex h-12 shrink-0 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-primary transition active:scale-[0.97] hover:bg-white/90"
+          >
+            <ChevronDown aria-hidden className="size-4" />
+            Replier
+          </button>
+        </div>
       </div>
 
       {/* Cream working sheet */}
@@ -92,6 +108,8 @@ export function ComptoirPanel() {
       {scanOpen && activeSale && (
         <IdentifyDialog open sale={activeSale} onClose={() => setScanOpen(false)} />
       )}
+
+      <PriseRdvModal open={creatingRdv} onClose={() => setCreatingRdv(false)} />
     </div>
   );
 }
