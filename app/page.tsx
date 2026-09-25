@@ -8,7 +8,6 @@ import { Avatar } from "@/components/ui/atoms/avatar";
 import { Button } from "@/components/ui/atoms/button";
 import { SegmentedToggle } from "@/components/ui/molecules/segmented-toggle";
 import { SearchInput } from "@/components/ui/atoms/search-input";
-import { Pills } from "@/components/ui/molecules/pills";
 import { DatePicker } from "@/components/ui/molecules/date-picker";
 import { BoardHeader, ChipFilter, Legend } from "@/components/ui/board";
 import { Separator } from "@/components/ui/atoms/separator";
@@ -26,18 +25,10 @@ import { useSession } from "@/lib/session";
 import type { Cliente, RendezVous } from "@/lib/data/types";
 
 type AccueilView = "liste" | "calendrier";
-type Period = "jour" | "semaine" | "mois" | "perso";
 
 /** Filtre de salon de l'Accueil (ADR 0028, étendu au-delà du Planning) — "tous" montre les deux
  *  salons sans distinction, le défaut, cohérent avec le comportement historique non filtré. */
 const TOUS_LES_SALONS = "tous";
-
-const PERIOD_OPTIONS = [
-  { value: "jour", label: "Aujourd'hui" },
-  { value: "semaine", label: "Cette semaine" },
-  { value: "mois", label: "Ce mois" },
-  { value: "perso", label: "Personnalisé" },
-];
 
 const MAX_CLIENT_MATCHES = 4;
 
@@ -46,32 +37,26 @@ function isoToDate(iso: string): Date {
   return new Date(y, m - 1, d);
 }
 
-/** Monday-first week containing `d`, as ["YYYY-MM-DD", "YYYY-MM-DD"] — same convention as the
- *  Planning's vue Semaine (`PlanningBoard`). */
-function weekRangeISO(d: Date): [string, string] {
-  const wd = (d.getDay() + 6) % 7;
-  const start = new Date(d);
-  start.setDate(d.getDate() - wd);
-  const end = new Date(start);
-  end.setDate(start.getDate() + 6);
-  return [dateISO(start), dateISO(end)];
+function formatShortDate(iso: string): string {
+  return new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "2-digit", year: "2-digit" }).format(isoToDate(iso));
 }
 
-function monthRangeISO(d: Date): [string, string] {
-  const start = new Date(d.getFullYear(), d.getMonth(), 1);
-  const end = new Date(d.getFullYear(), d.getMonth() + 1, 0);
-  return [dateISO(start), dateISO(end)];
+/** Numéro de rendez-vous tel qu'affiché (`res-22`) : « res-22 », « #22 » ou « 22 » le
+ *  retrouvent — correspondance exacte, pas d'inclusion (« 2 » ne doit pas sortir res-22). */
+function reservationNumberMatches(reservationId: string, q: string): boolean {
+  const wanted = q.replace(/^#/, "").replace(/^res-?/, "").trim();
+  return wanted !== "" && reservationId.toLowerCase().replace(/^res-/, "") === wanted;
 }
 
 /**
  * Accueil — l'écran d'atterrissage (Figma 242:1735). Deux sections seulement : « Cartes cadeaux »,
  * un aperçu de la file de préparation (docs/adr/0012), qui s'efface quand il n'y a rien ; puis
  * « Rendez-vous » (docs/adr/0014), plus figée sur le seul jour courant (docs/adr/0029) — une
- * recherche (cliente ou praticienne) et une période (Aujourd'hui/Semaine/Mois/Personnalisé,
- * défaut Aujourd'hui) filtrent la liste des réservations. Basculable entre **Liste** (grille de
- * cartes par réservation, groupée par jour puis par tranche de 2h, docs/adr/0018) et
- * **Calendrier** (rail heures, un bloc = une réservation, docs/adr/0019) — le Calendrier ne
- * couvrant qu'un seul jour, il n'est proposé que pour la période Aujourd'hui. Plus de bloc de
+ * recherche (cliente ou numéro de rendez-vous) et deux dates Du/Au (défaut aujourd'hui) filtrent
+ * la liste des réservations. Basculable entre **Liste** (grille de cartes par réservation, groupée
+ * par jour puis par tranche de 2h, docs/adr/0018) et **Calendrier** (rail heures, un bloc = une
+ * réservation, docs/adr/0019) — le Calendrier ne couvrant qu'un seul jour, il n'est proposé que
+ * quand Du = Au. Plus de bloc de
  * compteurs : la journée est là, la file a son lien.
  */
 export default function AccueilPage() {
@@ -97,9 +82,9 @@ function AccueilPageInner() {
   const [view, setView] = useState<AccueilView>("liste");
   const [creatingRdv, setCreatingRdv] = useState(false);
 
-  // Recherche (cliente ou praticienne) + période — remplace le filtre figé sur « aujourd'hui »
-  // pour retrouver un rendez-vous au-delà du jour courant. Le Calendrier (rail journalier) ne se
-  // prête qu'à un seul jour : il reste réservé à la période « Aujourd'hui », voir plus bas.
+  // Recherche (cliente ou numéro de rendez-vous) + dates Du/Au — remplace le filtre figé sur
+  // « aujourd'hui » pour retrouver un rendez-vous au-delà du jour courant. Le Calendrier (rail
+  // journalier) ne se prête qu'à un seul jour : il reste réservé à Du = Au, voir plus bas.
   // `query` vit dans l'URL (`?q=`), pas un simple useState : un clic sur un résultat "Clientes"
   // quitte l'Accueil vers la fiche, et sans ça la recherche se perdait au retour (passe impeccable
   // du 22/09). `ClientMatchCard` relaie `q` à la fiche pour reconstruire le lien "Retour à l'Accueil".
@@ -111,22 +96,18 @@ function AccueilPageInner() {
     const qs = params.toString();
     router.replace(qs ? `/?${qs}` : "/", { scroll: false });
   }
-  const [period, setPeriod] = useState<Period>("jour");
   const [salonFilter, setSalonFilter] = useState<string>(TOUS_LES_SALONS);
   const todayIso = todayISO();
   const [persoStart, setPersoStart] = useState(todayIso);
   const [persoEnd, setPersoEnd] = useState(todayIso);
 
-  const [rangeStart, rangeEnd] = useMemo(() => {
-    const today = new Date();
-    if (period === "jour") return [todayIso, todayIso] as const;
-    if (period === "semaine") return weekRangeISO(today);
-    if (period === "mois") return monthRangeISO(today);
-    return persoStart <= persoEnd ? ([persoStart, persoEnd] as const) : ([persoEnd, persoStart] as const);
-  }, [period, todayIso, persoStart, persoEnd]);
+  const [rangeStart, rangeEnd] = persoStart <= persoEnd ? [persoStart, persoEnd] : [persoEnd, persoStart];
 
   const reservationRows = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    // Un numéro de rendez-vous est unique : il se retrouve quelles que soient les dates choisies.
     const inRange = reservations.filter((r) => {
+      if (q && reservationNumberMatches(r.id, q)) return true;
       const d = reservationDate(r);
       return d >= rangeStart && d <= rangeEnd;
     });
@@ -137,9 +118,9 @@ function AccueilPageInner() {
         : grouped.filter((row) =>
             row.staffIds.some((id) => praticiennes.find((p) => p.id === id)?.salonId === salonFilter),
           );
-    const q = query.trim().toLowerCase();
     if (!q) return bySalon;
     return bySalon.filter((row) => {
+      if (reservationNumberMatches(row.reservation.id, q)) return true;
       const payer = clients.find((c) => c.id === row.reservation.payerClientId);
       const payerMatch = payer ? clientMatchesQuery(payer, q) : false;
       // Une réservation se retrouve aussi par la personne servie (« Salématou (7 ans) ») — pas
@@ -147,8 +128,7 @@ function AccueilPageInner() {
       const beneficiaryMatch = row.reservation.rendezVous.some((rdv) =>
         rdv.beneficiaryName?.toLowerCase().includes(q),
       );
-      const staffMatch = row.staffIds.some((id) => praticiennes.find((p) => p.id === id)?.name.toLowerCase().includes(q));
-      return payerMatch || beneficiaryMatch || staffMatch;
+      return payerMatch || beneficiaryMatch;
     });
   }, [reservations, clients, praticiennes, rangeStart, rangeEnd, query, salonFilter]);
 
@@ -160,12 +140,16 @@ function AccueilPageInner() {
   );
 
   // Le rail journalier de l'AccueilCalendar n'a de forme utile que sur un seul jour — le
-  // Calendrier reste donc réservé à la période « Aujourd'hui » ; toute autre période retombe sur
-  // la Liste (qui, elle, sait grouper par date).
-  const canShowCalendar = period === "jour";
+  // Calendrier reste donc réservé à Du = Au ; une plage de plusieurs jours retombe sur la Liste
+  // (qui, elle, sait grouper par date).
+  const canShowCalendar = rangeStart === rangeEnd;
   const effectiveView: AccueilView = canShowCalendar ? view : "liste";
   const periodLabel =
-    period === "jour" ? "aujourd'hui" : period === "semaine" ? "cette semaine" : period === "mois" ? "ce mois" : "sur cette période";
+    rangeStart === rangeEnd
+      ? rangeStart === todayIso
+        ? "aujourd'hui"
+        : `le ${formatShortDate(rangeStart)}`
+      : "sur cette période";
 
   const greeting = [currentUser.name, salon?.name].filter(Boolean).join(", ");
 
@@ -210,19 +194,16 @@ function AccueilPageInner() {
 
         <div className="mb-4 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center">
           <SearchInput
-            placeholder="Cliente (nom, téléphone, e-mail) ou praticienne…"
+            placeholder="Cliente ou n° de rendez-vous"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="flex-1 sm:max-w-sm"
           />
-          <Pills options={PERIOD_OPTIONS} value={period} onChange={(v) => setPeriod(v as Period)} wrap={false} />
-          {period === "perso" && (
-            <div className="flex items-center gap-2">
-              <DatePicker value={isoToDate(persoStart)} onChange={(d) => setPersoStart(dateISO(d))} placeholder="Du" className="sm:w-44" />
-              <span className="text-sm text-base-content/45">au</span>
-              <DatePicker value={isoToDate(persoEnd)} onChange={(d) => setPersoEnd(dateISO(d))} placeholder="Au" className="sm:w-44" />
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            <DatePicker value={isoToDate(persoStart)} onChange={(d) => setPersoStart(dateISO(d))} placeholder="Du" className="sm:w-44" />
+            <span className="text-sm text-base-content/45">au</span>
+            <DatePicker value={isoToDate(persoEnd)} onChange={(d) => setPersoEnd(dateISO(d))} placeholder="Au" className="sm:w-44" />
+          </div>
         </div>
 
         {clientMatches.length > 0 && (
