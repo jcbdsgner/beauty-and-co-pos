@@ -200,7 +200,8 @@ function AccueilPageInner() {
           )}
         </div>
 
-        <div className="mb-4 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center">
+        {/* Recherche à gauche, dates Du/Au calées à droite (Figma 362:470). */}
+        <div className="mb-4 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           <SearchInput
             placeholder="Cliente ou n° de rendez-vous"
             value={query}
