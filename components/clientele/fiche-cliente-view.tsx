@@ -521,16 +521,9 @@ function CoordonneesBoard({
 }) {
   const router = useRouter();
   return (
-    <Board legend="Coordonnées">
+    <Board legend="Coordonnées" legendRight={<EditButton label="Modifier les coordonnées" onClick={onEdit} />}>
       <div className="flex flex-col gap-4 p-4">
-        {/* « Modifier » vit dans la carte, pas dans la légende : les légendes de la fiche restent
-            à hauteur de texte et les cartes s'alignent d'une colonne à l'autre. */}
-        <div className="flex items-start gap-3">
-          <div className="min-w-0 flex-1">
-            <Row icon={<Phone className="size-5" />} label="Téléphone" value={client.phone} />
-          </div>
-          <EditButton label="Modifier les coordonnées" onClick={onEdit} />
-        </div>
+        <Row icon={<Phone className="size-5" />} label="Téléphone" value={client.phone} />
         <Row icon={<MessageCircle className="size-5" />} label="WhatsApp" value={client.whatsapp} />
         <Row icon={<Mail className="size-5" />} label="E-mail" value={client.email} />
         <Row icon={<Briefcase className="size-5" />} label="Profession" value={client.profession} />
