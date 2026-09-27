@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
-import { Check, LayoutGrid, type LucideIcon, Users } from "lucide-react";
+import { Check, LayoutGrid, type LucideIcon } from "lucide-react";
 import { SegmentedToggle } from "@/components/ui/molecules/segmented-toggle";
 import { SearchInput } from "@/components/ui/atoms/search-input";
 import { PhotoPlaceholder } from "@/components/ui/atoms/photo-placeholder";
@@ -144,6 +144,18 @@ export function MenuPanel({ saleId }: { saleId: string }) {
     const sub = "subcategory" in item ? item.subcategory : undefined;
     return activeFilter.match(item.categoryId, sub);
   });
+
+  // Libellé gris de la tuile : la grande catégorie tant qu'aucune n'est choisie ; une fois une
+  // catégorie choisie, la sous-catégorie (qui seule distingue alors les articles).
+  const categoryNames = useMemo(
+    () => Object.fromEntries([...SERVICE_CATEGORIES, ...PRODUCT_CATEGORIES].map((c) => [c.id, c.name])),
+    [],
+  );
+  const tileLabel = (item: Service | Produit | Boisson): string | undefined => {
+    if (!("categoryId" in item)) return undefined;
+    const sub = "subcategory" in item ? item.subcategory : undefined;
+    return filterKey !== "all" && sub ? sub : categoryNames[item.categoryId];
+  };
 
   const searchPlaceholder =
     mode === "services"
@@ -309,13 +321,8 @@ export function MenuPanel({ saleId }: { saleId: string }) {
                             <span className="text-[17px] font-bold text-primary tabular-nums">
                               {formatFcfa(item.price)}
                             </span>
-                            <span className="flex items-center gap-1.5 text-xs font-medium text-base-content/55 tabular-nums">
-                              {"twoPractitionersEligible" in item && item.twoPractitionersEligible && (
-                                <span title="Réalisable à deux praticiennes" className="flex items-center gap-0.5">
-                                  <Users aria-hidden className="size-3" />2
-                                </span>
-                              )}
-                              {"durationMinutes" in item && <span>{item.durationMinutes} min</span>}
+                            <span className="truncate text-xs font-medium text-base-content/55">
+                              {tileLabel(item)}
                             </span>
                           </span>
                           {remaining !== null && (
