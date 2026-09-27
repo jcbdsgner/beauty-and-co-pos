@@ -33,7 +33,6 @@ import { DemoQrBlock } from "@/components/clientele/loyalty-card";
 import { ChannelGlyph } from "@/components/messages/channel-glyph";
 import { AbonnementsPacksBoard } from "@/components/clientele/abonnements-packs-board";
 import { EditCoordonneesDialog } from "@/components/clientele/edit-coordonnees-dialog";
-import { EditPreferencesDialog } from "@/components/clientele/edit-preferences-dialog";
 import { NotationPhoto } from "@/components/clientele/notation-photo";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { ETHNICITY_LABEL, clientFullName, clientInitial, clientNumberLabel, formatBirthday } from "@/lib/data/clientele";
@@ -53,15 +52,6 @@ import {
   type Praticienne,
   type PreferenceDomain,
 } from "@/lib/data/types";
-
-/** Where "Ajouter" files the text: the internal log, or one of the five préférence domains. */
-const NOTE_TARGETS: { value: string; label: string }[] = [
-  { value: "interne", label: "Journal interne" },
-  ...PREFERENCE_DOMAINS.map((d) => ({
-    value: d,
-    label: `Préférence · ${PREFERENCE_DOMAIN_LABEL[d]}`,
-  })),
-];
 
 const NOTE_DATE = new Intl.DateTimeFormat("fr-FR", {
   day: "numeric",
@@ -104,7 +94,6 @@ function FicheClienteViewInner({ clientId }: { clientId: string }) {
   }, [clientId, clientExists, noteClientViewed]);
 
   const [editCoordOpen, setEditCoordOpen] = useState(false);
-  const [editPrefOpen, setEditPrefOpen] = useState(false);
 
   if (!client) {
     return (
@@ -192,7 +181,7 @@ function FicheClienteViewInner({ clientId }: { clientId: string }) {
         {/* Ce qui sert au passage : prépayé, goûts, ce que l'équipe a noté. */}
         <div className="flex flex-col gap-7">
           <AbonnementsPacksBoard clientId={client.id} />
-          <PreferencesBoard client={client} onEdit={() => setEditPrefOpen(true)} />
+          <PreferencesBoard client={client} />
           <NotesBoard client={client} praticiennes={praticiennes} />
         </div>
 
@@ -224,7 +213,6 @@ function FicheClienteViewInner({ clientId }: { clientId: string }) {
       </div>
 
       <EditCoordonneesDialog open={editCoordOpen} client={client} onClose={() => setEditCoordOpen(false)} />
-      <EditPreferencesDialog open={editPrefOpen} client={client} onClose={() => setEditPrefOpen(false)} />
     </div>
   );
 }
@@ -321,9 +309,9 @@ function EditButton({ label, onClick }: { label: string; onClick: () => void }) 
   );
 }
 
-/** Préférences : chaque domaine sur sa ligne, les réponses de « Noter la cliente » en photos — les
- *  mêmes que sur le questionnaire — puis le texte libre et les photos de référence. */
-function PreferencesBoard({ client, onEdit }: { client: Cliente; onEdit: () => void }) {
+/** Préférences, en lecture seule : chaque domaine sur sa ligne, les réponses de « Noter la cliente »
+ *  en photos — les mêmes que sur le questionnaire — puis le texte libre et les photos de référence. */
+function PreferencesBoard({ client }: { client: Cliente }) {
   const preferenceNotes = client.preferenceNotes ?? {};
   const preferencePhotos = client.preferencePhotos ?? {};
   const domains = PREFERENCE_DOMAINS.filter(
@@ -332,9 +320,9 @@ function PreferencesBoard({ client, onEdit }: { client: Cliente; onEdit: () => v
   const hasBasics = Boolean(client.hairType || client.colorReference);
 
   return (
-    <Board legend="Préférences" legendRight={<EditButton label="Modifier les préférences" onClick={onEdit} />}>
+    <Board legend="Préférences">
       {!hasBasics && domains.length === 0 ? (
-        <BoardEmpty title="Aucune préférence notée" hint="Elles se remplissent à chaque encaissement, ou via « Modifier »." />
+        <BoardEmpty title="Aucune préférence notée" hint="Elles se remplissent à chaque encaissement." />
       ) : (
         <div className="flex flex-col divide-y divide-base-300">
           {hasBasics && (
@@ -406,28 +394,15 @@ function Pref({ label, value }: { label: string; value?: string }) {
 
 /** Journal interne : une saisie en tête, puis chaque note signée et datée, la plus récente d'abord. */
 function NotesBoard({ client, praticiennes }: { client: Cliente; praticiennes: Praticienne[] }) {
-  const { updateClient, addClientNote } = useAppData();
+  const { addClientNote } = useAppData();
   const [draft, setDraft] = useState("");
-  const [target, setTarget] = useState("interne");
   const [authorId, setAuthorId] = useState(UTILISATEUR.praticienneId);
   const notes = client.notes ?? [];
-  const toInterne = target === "interne";
 
   function add() {
     const text = draft.trim();
     if (!text) return;
-    if (toInterne) {
-      addClientNote(client.id, { authorId, text, origin: "fiche" });
-    } else {
-      const domain = target as PreferenceDomain;
-      const current = client.preferenceNotes?.[domain];
-      updateClient(client.id, {
-        preferenceNotes: {
-          ...client.preferenceNotes,
-          [domain]: current ? `${current}\n${text}` : text,
-        },
-      });
-    }
+    addClientNote(client.id, { authorId, text, origin: "fiche" });
     setDraft("");
   }
 
@@ -446,33 +421,25 @@ function NotesBoard({ client, praticiennes }: { client: Cliente; praticiennes: P
         <Textarea
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          placeholder="Une observation, une préférence exprimée en salon…"
+          placeholder="Une observation faite en salon…"
           rows={2}
           aria-label="Nouvelle note"
         />
         <div className="flex flex-wrap items-center gap-2">
-          <Select value={target} onChange={setTarget} options={NOTE_TARGETS} size="compact" className="w-auto min-w-[14rem]" />
-          {toInterne && (
-            <Select
-              value={authorId}
-              onChange={setAuthorId}
-              options={praticiennes.map((p) => ({
-                value: p.id,
-                label: `Par ${p.name}`,
-              }))}
-              size="compact"
-              className="w-auto min-w-[11rem]"
-            />
-          )}
+          <Select
+            value={authorId}
+            onChange={setAuthorId}
+            options={praticiennes.map((p) => ({
+              value: p.id,
+              label: `Par ${p.name}`,
+            }))}
+            size="compact"
+            className="w-auto min-w-[11rem]"
+          />
           <Button variant="brand" size="sm" className="ml-auto min-w-28" onClick={add} disabled={!draft.trim()}>
             Ajouter
           </Button>
         </div>
-        {!toInterne && (
-          <p className="text-xs text-base-content/55">
-            Ajoutée à la préférence « {PREFERENCE_DOMAIN_LABEL[target as PreferenceDomain]} », pas au journal.
-          </p>
-        )}
       </div>
       {notes.length === 0 ? (
         <BoardEmpty title="Aucune note" hint="Les notes prises ici ou après un encaissement s'affichent ici, signées." />

@@ -25,7 +25,8 @@ des icônes mieux dimensionnées ; et, à côté des préférences, les mêmes p
   structurée dans `Cliente.notationChoices` (id de question → ids d'option, cumulés, les plus récents
   d'abord). Elles ne sont plus écrites en texte dans la préférence onglerie. Chaque question porte son
   `domain` ; la fiche affiche les réponses en tuiles photo (`NotationPhoto`, partagée avec le
-  questionnaire) sur la ligne du domaine, et « Modifier » permet de les cocher ou décocher.
+  questionnaire) sur la ligne du domaine. **Rév. 2026-09-27 : la fiche ne les modifie plus** — plus
+  de « Modifier » sur les préférences, elles sont en lecture seule ici.
   `notationSummary()` en donne la lecture texte pour les vues sans photo.
 - **Mise en page** : le bandeau collant porte le numéro et une ligne « d'un coup d'œil »
   (abonnement + statut, pack + prestations restantes, points, visites, total dépensé). La colonne
@@ -37,4 +38,5 @@ des icônes mieux dimensionnées ; et, à côté des préférences, les mêmes p
 
 - Les photos réelles des réponses restent à fournir (`public/notation/` + champ `photo` dans
   `lib/data/notation.ts`). D'ici là, une silhouette d'ongle les remplace.
-- Une note rangée dans un domaine de préférence n'entre pas dans le journal et n'est pas signée.
+- Rév. 2026-09-27 : la saisie de la fiche n'écrit plus que dans le journal interne (le choix
+  « Préférence · domaine » est retiré) ; toute note de la fiche est donc signée.

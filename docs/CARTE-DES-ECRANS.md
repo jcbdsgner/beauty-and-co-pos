@@ -218,7 +218,7 @@ Tokens de marque : [`app/globals.css`](../app/globals.css) — `--core-brand-col
 | Créer / modifier un rendez-vous — parcours b&co recopié (ADR 0032) | `components/prise-rdv/` : `prise-rdv-modal.tsx` (cadre mis à l'échelle + orchestration), `steps/clientes-step.tsx` (seule étape propre au PDV), autres fichiers recopiés du site ; `lib/prise-rdv/planifier.ts` (horaires libres, praticienne d'office) ; action store `saveParcoursReservation` |
 | Roster / horaire hebdomadaire équipe | `RosterFilter`, [`lib/data/praticiennes.ts`](../lib/data/praticiennes.ts) (`weeklySchedule`) |
 | Rechercher / créer une cliente | [`components/clientele/repertoire-view.tsx`](../components/clientele/repertoire-view.tsx), `new-client-dialog.tsx`, `shared/client-search-field.tsx` |
-| Fiche cliente, notes, préférences, coordonnées | [`components/clientele/fiche-cliente-view.tsx`](../components/clientele/fiche-cliente-view.tsx) + `edit-*-dialog.tsx` |
+| Fiche cliente, notes, préférences, coordonnées | [`components/clientele/fiche-cliente-view.tsx`](../components/clientele/fiche-cliente-view.tsx) + `edit-coordonnees-dialog.tsx` |
 | Carte / points de fidélité | `fidelite-view.tsx`, `loyalty-card.tsx` ; calcul dans `app-store.ts` (`confirmPayment`) |
 | Messages / échanges / relances / anniversaires | [`components/messages/`](../components/messages/) ; store `conversations` + actions ; données [`lib/data/conversations.ts`](../lib/data/conversations.ts) |
 | Cartes cadeaux (file, impression) | [`components/journee/gift-card-queue.tsx`](../components/journee/gift-card-queue.tsx) + [`components/shared/barcode.tsx`](../components/shared/barcode.tsx) ; ledger [`lib/data/cartes-cadeaux.ts`](../lib/data/cartes-cadeaux.ts) |
