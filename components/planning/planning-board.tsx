@@ -18,6 +18,14 @@ import type { RendezVous, Role } from "@/lib/data/types";
 /** Filtre de salon du Planning (ADR 0028) — "tous" affiche l'équipe complète, sans distinction. */
 const TOUS_LES_SALONS = "tous";
 
+/** Filtre de métier du Planning — "tous" garde toute l'équipe planifiable (ménage compris). */
+type MetierFilter = "tous" | "coiffeuse" | "estheticienne";
+const METIER_OPTIONS: { value: MetierFilter; label: string }[] = [
+  { value: "tous", label: "Tous" },
+  { value: "coiffeuse", label: "Coiffeurs" },
+  { value: "estheticienne", label: "Esthéticiens" },
+];
+
 /**
  * Planning — reconstruit à la lettre du Figma (node 270:2466, ADR 0025) : un seul écran, le
  * programme de chaque praticienne, une seule surface (pas de sidebar de filtre séparée — le
