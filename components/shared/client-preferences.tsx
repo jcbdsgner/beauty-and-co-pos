@@ -2,23 +2,29 @@
 
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
-import { notationSummary } from "@/lib/data/notation";
+import { notationForDomain } from "@/lib/data/notation";
 import { PREFERENCE_DOMAINS, PREFERENCE_DOMAIN_LABEL } from "@/lib/data/types";
 import type { Cliente } from "@/lib/data/types";
 import { cn } from "@/lib/utils";
 
-export type PreferenceLine = { label: string; note: string };
+export type PreferenceLine = { label: string; notes: string[] };
 
-/** A cliente's preferences as label/note pairs: hair and colour reference, then each domain's
- *  « Noter la cliente » summary joined to its free-text note. Empty when the fiche holds none. */
+/** A cliente's preferences as label/notes pairs: hair and colour reference, then each domain's
+ *  « Noter la cliente » answers (one note per question) followed by its free-text note. Empty when
+ *  the fiche holds none. */
 export function clientPreferenceLines(client: Cliente | null | undefined): PreferenceLine[] {
   if (!client) return [];
   const lines: PreferenceLine[] = [];
-  if (client.hairType) lines.push({ label: "Type de cheveux", note: client.hairType });
-  if (client.colorReference) lines.push({ label: "Réf. couleur", note: client.colorReference });
+  if (client.hairType) lines.push({ label: "Type de cheveux", notes: [client.hairType] });
+  if (client.colorReference) lines.push({ label: "Réf. couleur", notes: [client.colorReference] });
   for (const domain of PREFERENCE_DOMAINS) {
-    const note = [notationSummary(client, domain), client.preferenceNotes?.[domain]].filter(Boolean).join(" · ");
-    if (note) lines.push({ label: PREFERENCE_DOMAIN_LABEL[domain], note });
+    const notes = [
+      ...notationForDomain(client, domain).map(
+        ({ question, options }) => `${question.noteLabel} : ${options.map((o) => o.label).join(", ")}`,
+      ),
+      client.preferenceNotes?.[domain],
+    ].filter((note): note is string => Boolean(note));
+    if (notes.length > 0) lines.push({ label: PREFERENCE_DOMAIN_LABEL[domain], notes });
   }
   return lines;
 }
@@ -65,11 +71,17 @@ export function ClientPreferences({
         <p>{title}</p>
       )}
       {collapsed ? null : lines.length > 0 ? (
-        <dl className={cn("flex flex-col gap-1", !collapsible && "mt-1")}>
+        // Two aligned columns: muted labels on the left, the notes — what she actually reads — on
+        // the right, each answer on its own line so wraps stay inside the value column.
+        <dl className={cn("grid grid-cols-[max-content_1fr] items-baseline gap-x-3 gap-y-2", !collapsible && "mt-1")}>
           {lines.map((pref) => (
-            <div key={pref.label} className="flex gap-1.5 text-xs leading-snug">
-              <dt className="shrink-0 font-semibold text-base-content/80">{pref.label} ·</dt>
-              <dd className="text-base-content/70">{pref.note}</dd>
+            <div key={pref.label} className="contents">
+              <dt className="text-xs text-base-content/55">{pref.label}</dt>
+              <dd className="flex flex-col gap-0.5 text-sm leading-snug text-base-content">
+                {pref.notes.map((note) => (
+                  <span key={note}>{note}</span>
+                ))}
+              </dd>
             </div>
           ))}
         </dl>
