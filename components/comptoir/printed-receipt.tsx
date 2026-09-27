@@ -132,7 +132,6 @@ export function PrintedReceipt({ sale, client }: { sale: Sale; client?: Cliente 
       <Rule />
 
       <QrCode seed={sale.id} className="mx-auto block" />
-      <p className="mt-1 text-center font-mono text-[10px] tracking-[0.12em] break-all">{sale.id.toUpperCase()}</p>
     </div>
   );
 }
