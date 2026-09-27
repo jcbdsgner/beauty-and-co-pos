@@ -25,7 +25,7 @@ import { TIER_LABEL } from "@/lib/data/tiers";
 import { Button } from "@/components/ui/atoms/button";
 import { Textarea } from "@/components/ui/atoms/textarea";
 import { Select } from "@/components/ui/atoms/select";
-import { PhotoPlaceholder } from "@/components/ui/atoms/photo-placeholder";
+import { demoPhotoFor } from "@/lib/data/demo-photos";
 import { Board, Lane, BoardEmpty } from "@/components/ui/board";
 import { DemoQrBlock } from "@/components/clientele/loyalty-card";
 import { ChannelGlyph } from "@/components/messages/channel-glyph";
@@ -383,7 +383,8 @@ function PreferenceDomainRow({ client, domain }: { client: Cliente; domain: Pref
         {photos.length > 0 && (
           <div className="flex flex-wrap gap-3">
             {photos.map((ref) => (
-              <PhotoPlaceholder key={ref} className="size-24 rounded-2xl" label="" />
+              // eslint-disable-next-line @next/next/no-img-element -- demo fixture photos
+              <img key={ref} src={demoPhotoFor(ref)} alt="" className="size-24 rounded-2xl object-cover" />
             ))}
           </div>
         )}

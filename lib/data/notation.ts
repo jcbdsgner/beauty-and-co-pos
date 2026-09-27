@@ -5,8 +5,8 @@
  * Answers are kept on the fiche as `Cliente.notationChoices` (cumulated, most recent first) and shown
  * there as the same photo tiles, next to the préférence of the question's `domain`.
  *
- * Photos: drop the files in `public/notation/` and fill `photo` (e.g. "/notation/gel-x.jpg").
- * Until then each tile shows a placeholder.
+ * Photos: files in `public/notation/`, set on each option's `photo`. Polygel and the four lengths
+ * borrow one of the five real photos for the demo (see `lib/data/demo-photos.ts`) until theirs arrive.
  */
 
 import type { Cliente, PreferenceDomain } from "@/lib/data/types";
@@ -35,7 +35,7 @@ export const NOTATION_QUESTIONS: NotationQuestion[] = [
       { id: "vernis-permanent", label: "Vernis permanent", photo: "/notation/vernis-permanent.jpg" },
       { id: "capsules", label: "Capsules", photo: "/notation/capsules.jpg" },
       { id: "gel-x", label: "Gel X", photo: "/notation/gel-x.jpg" },
-      { id: "polygel", label: "Polygel" },
+      { id: "polygel", label: "Polygel", photo: "/notation/decoration.jpg" },
       { id: "french", label: "French", photo: "/notation/french.jpg" },
       { id: "decoration", label: "Décoration", hint: "Chrome, cat eye, baby boomer", photo: "/notation/decoration.jpg" },
     ],
@@ -47,10 +47,10 @@ export const NOTATION_QUESTIONS: NotationQuestion[] = [
     subtitle: "Plusieurs réponses possibles.",
     noteLabel: "Longueur",
     options: [
-      { id: "courts", label: "Courts" },
-      { id: "moyens", label: "Moyens" },
-      { id: "longs", label: "Longs" },
-      { id: "tres-longs", label: "Très longs" },
+      { id: "courts", label: "Courts", photo: "/notation/vernis-permanent.jpg" },
+      { id: "moyens", label: "Moyens", photo: "/notation/french.jpg" },
+      { id: "longs", label: "Longs", photo: "/notation/gel-x.jpg" },
+      { id: "tres-longs", label: "Très longs", photo: "/notation/capsules.jpg" },
     ],
   },
 ];

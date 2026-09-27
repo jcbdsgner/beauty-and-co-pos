@@ -8,7 +8,7 @@ import { Field } from "@/components/ui/molecules/field";
 import { TextInput } from "@/components/ui/atoms/text-input";
 import { Textarea } from "@/components/ui/atoms/textarea";
 import { Button } from "@/components/ui/atoms/button";
-import { PhotoPlaceholder } from "@/components/ui/atoms/photo-placeholder";
+import { demoPhotoFor } from "@/lib/data/demo-photos";
 import { NotationPhoto } from "@/components/clientele/notation-photo";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { NOTATION_QUESTIONS } from "@/lib/data/notation";
@@ -142,7 +142,8 @@ function EditPreferencesForm({ client, onClose }: { client: Cliente; onClose: ()
             <div className="mt-2 flex flex-wrap items-center gap-2">
               {(photos[domain] ?? []).map((ref) => (
                 <span key={ref} className="relative">
-                  <PhotoPlaceholder className="size-16" label="" />
+                  {/* eslint-disable-next-line @next/next/no-img-element -- demo fixture photos */}
+                  <img src={demoPhotoFor(ref)} alt="" className="size-16 rounded-box object-cover" />
                   <button
                     type="button"
                     onClick={() => removePhoto(domain, ref)}
