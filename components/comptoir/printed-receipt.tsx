@@ -122,7 +122,8 @@ export function PrintedReceipt({ sale, client }: { sale: Sale; client?: Cliente 
 
       {client && (sale.loyaltyPointsEarned ?? 0) > 0 && (
         <p className="mt-2 text-center text-[11px]">
-          <span className="bg-black px-1 py-px font-bold text-white [print-color-adjust:exact]">+{sale.loyaltyPointsEarned} points fidélité</span> · solde {client.points} pts
+          <span className="bg-black px-1 py-px font-bold text-white [print-color-adjust:exact]">+{sale.loyaltyPointsEarned} points fidélité</span> ·{" "}
+          <span className="bg-black px-1 py-px font-bold text-white [print-color-adjust:exact]">solde {client.points} pts</span>
         </p>
       )}
       {t.giftCardDiscount > 0 && t.giftCardRemaining > 0 && (
