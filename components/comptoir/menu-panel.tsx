@@ -318,10 +318,10 @@ export function MenuPanel({ saleId }: { saleId: string }) {
                         </span>
                         <span className="flex flex-col gap-1">
                           <span className="flex items-baseline justify-between gap-1.5">
-                            <span className="text-[17px] font-bold text-primary tabular-nums">
+                            <span className="shrink-0 text-[17px] font-bold whitespace-nowrap text-primary tabular-nums">
                               {formatFcfa(item.price)}
                             </span>
-                            <span className="truncate text-xs font-medium text-base-content/55">
+                            <span className="min-w-0 truncate text-xs font-medium text-base-content/55">
                               {tileLabel(item)}
                             </span>
                           </span>
