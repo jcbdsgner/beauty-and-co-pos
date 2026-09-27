@@ -27,7 +27,7 @@ Deux instruments doivent par ailleurs être « liés au système » sans que la 
 
 ### 1. Identification conditionnelle
 
-- Une vente **produits uniquement** s'encaisse **sans cliente** — l'identification est **facultative** (à ajouter seulement pour la fidélité ou une carte cadeau). Le pied de ticket le dit en sourdine (« Cliente facultative — à ajouter pour la fidélité ou une carte cadeau »).
+- Une vente **produits uniquement** s'encaisse **sans cliente** — l'identification est **facultative** (à ajouter seulement pour la fidélité ou une carte cadeau). Le ticket ne l'affiche pas (aucun texte d'aide).
 - Dès qu'une **ligne de prestation** entre au panier, la cliente devient **obligatoire** pour encaisser. Le verrou est **dynamique** : il apparaît si on ajoute un service, disparaît si on le retire. Signal ambre (« Cliente requise : le panier contient une prestation »), cohérent avec la règle One-Signal ([ADR 0005](0005-langage-visuel-le-tableau.md)).
 - Helper pur `saleNeedsClient(sale)` = `sale.cart.some(l => l.kind === "service")`, exporté du store. `canCheckout = !panierVide && !(besoinCliente && pasDeCliente)`.
 - Le parcours **« Encaisser » depuis une réservation** est inchangé : payeuse + prestations pré-remplies, cliente déjà là.

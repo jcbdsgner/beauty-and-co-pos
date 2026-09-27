@@ -28,7 +28,6 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
   // products-only walk-in checks out anonymously; the cliente stays optional (fidélité / carte
   // cadeau). Amber = "needs a decision" (DESIGN.md One-Signal rule) — only when it truly blocks.
   const needsClient = !isEmpty && sale.clientId === null && saleNeedsClient(sale);
-  const clientOptional = !isEmpty && sale.clientId === null && !saleNeedsClient(sale);
   const canCheckout = !isEmpty && !needsClient;
 
   return (
@@ -70,11 +69,6 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
               {needsClient && (
                 <p className="text-xs font-medium text-warning">
                   Cliente requise : le panier contient une prestation.
-                </p>
-              )}
-              {clientOptional && (
-                <p className="text-xs text-base-content/55">
-                  Cliente facultative — à ajouter pour la fidélité ou une carte cadeau.
                 </p>
               )}
             </div>
