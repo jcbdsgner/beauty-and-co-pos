@@ -7,14 +7,7 @@ import { useAppData } from "@/components/providers/app-data-provider";
 import { clientFullName, clientInitial } from "@/lib/data/clientele";
 import { salonById } from "@/lib/data/entreprises";
 import { serviceById } from "@/lib/data/menu";
-import {
-  dateISO,
-  groupDayByReservation,
-  isUnseenReservation,
-  reservationComposition,
-  reservationDate,
-  todayISO,
-} from "@/lib/data/planning";
+import { dateISO, groupDayByReservation, isUnseenReservation, reservationComposition, reservationDate, todayISO, reservationSalonIds } from "@/lib/data/planning";
 import type { RendezVous } from "@/lib/data/types";
 
 /** Au-delà, la bande pousserait « Rendez-vous » hors de l'écran — le reste se déplie à la demande. */
@@ -113,7 +106,11 @@ export function AccueilUnseenReservations({ onOpenReservation }: { onOpenReserva
           const staff = row.staffIds
             .map((id) => praticiennes.find((p) => p.id === id))
             .filter((p) => p !== undefined);
-          const salon = staff[0] ? salonById(staff[0].salonId)?.name : undefined;
+          // Le salon est porté par les rendez-vous (ADR 0036), jamais déduit de la praticienne.
+          const salon = reservationSalonIds(reservation)
+            .map((id) => salonById(id)?.name)
+            .filter(Boolean)
+            .join(" · ");
           const day = dayLabel(reservationDate(reservation), todayIso);
           const received = receivedLabel(reservation.createdAt, now);
           const target = rendezVous[0] ?? reservation.rendezVous[0];

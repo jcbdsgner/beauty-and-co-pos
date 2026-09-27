@@ -7,13 +7,14 @@ export type Role = "coiffeuse" | "estheticienne" | "menage" | "accueil";
 
 export type DayOfWeek = "lun" | "mar" | "mer" | "jeu" | "ven" | "sam" | "dim";
 
-/** Une plage de présence, "HH:mm" -> "HH:mm". */
-export type DayHours = { start: string; end: string };
+/** Une plage de présence dans un salon, "HH:mm" -> "HH:mm" (ADR 0036). */
+export type Shift = { start: string; end: string; salonId: string };
 
 /** L'horaire hebdomadaire récurrent d'une praticienne (ADR 0020) — un jour absent de l'objet est
- *  un jour de repos. Remplace l'ancien `shiftStart`/`shiftEnd`/`workingToday`, qui ne décrivait
- *  qu'« aujourd'hui » et ne suivait pas la navigation du Planning dans le temps. */
-export type WeeklySchedule = Partial<Record<DayOfWeek, DayHours>>;
+ *  un jour de repos. Chaque jour tient une ou deux plages, dans l'ordre, chacune dans un salon
+ *  (ADR 0036) : deux plages dans deux salons = elle commence dans l'un et finit dans l'autre, le
+ *  battement entre les deux est son trajet. D'un jour à l'autre, le salon peut changer. */
+export type WeeklySchedule = Partial<Record<DayOfWeek, Shift[]>>;
 
 export type Praticienne = {
   id: string;
@@ -22,10 +23,8 @@ export type Praticienne = {
   initial: string;
   /** Photo d'avatar (public/images/equipe) — absente ⇒ l'initiale s'affiche. */
   photoUrl?: string;
+  /** Porte aussi le salon de chaque plage — une praticienne n'a plus de salon fixe (ADR 0036). */
   weeklySchedule: WeeklySchedule;
-  /** Le salon où elle travaille (`Salon.id`, voir `lib/data/entreprises.ts`) — fixe, jamais les
-   *  deux à la fois (ADR 0028). Une paire « réalisable à 2 » est toujours au même salon. */
-  salonId: string;
   /** Absence ponctuelle du jour (dernière minute) — vient par-dessus l'horaire hebdomadaire. */
   unavailableToday?: boolean;
 };
@@ -237,6 +236,9 @@ export type RendezVous = {
   reservationId: string;
   serviceId: string;
   staffId: string;
+  /** Le salon où il se tient (`Salon.id`) — porté par le rendez-vous, jamais déduit de la
+   *  praticienne, qui peut changer de salon d'un jour ou d'une heure à l'autre (ADR 0036). */
+  salonId: string;
   /** A second praticienne working the same prestation in parallel — only for `twoPractitionersEligible`
    *  services. When set, `durationMin` is already the halved on-chair time. */
   secondStaffId?: string;

@@ -20,8 +20,9 @@ import { AccueilUnseenReservations } from "@/components/journee/accueil-unseen-r
 import { useEncaissement } from "@/components/journee/use-encaissement";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { dateISO, groupDayByReservation, reservationDate, todayISO } from "@/lib/data/planning";
+import { isSalonClosed } from "@/lib/data/praticiennes";
 import { clientFullName, clientInitial, clientMatchesQuery, searchClients } from "@/lib/data/clientele";
-import { SALONS } from "@/lib/data/entreprises";
+import { SALONS, salonById } from "@/lib/data/entreprises";
 import { POSTE_SALON_ID, useSession } from "@/lib/session";
 import type { Cliente, RendezVous } from "@/lib/data/types";
 
@@ -121,9 +122,8 @@ function AccueilPageInner() {
     const bySalon =
       salonFilter === TOUS_LES_SALONS
         ? grouped
-        : grouped.filter((row) =>
-            row.staffIds.some((id) => praticiennes.find((p) => p.id === id)?.salonId === salonFilter),
-          );
+        : // Le salon est porté par chaque rendez-vous (ADR 0036) — une praticienne peut changer de salon.
+          grouped.filter((row) => row.rendezVous.some((rv) => rv.salonId === salonFilter));
     if (!q) return bySalon;
     return bySalon.filter((row) => {
       if (reservationNumberMatches(row.reservation.id, q)) return true;
@@ -136,7 +136,7 @@ function AccueilPageInner() {
       );
       return payerMatch || beneficiaryMatch;
     });
-  }, [reservations, clients, praticiennes, rangeStart, rangeEnd, query, salonFilter]);
+  }, [reservations, clients, rangeStart, rangeEnd, query, salonFilter]);
 
   // La même recherche retrouve aussi la fiche cliente directement — utile quand elle n'a aucun
   // rendez-vous dans la période affichée (ou pas de rendez-vous du tout).
@@ -158,6 +158,12 @@ function AccueilPageInner() {
       : "sur cette période";
 
   const greeting = [currentUser.name, salon?.name].filter(Boolean).join(", ");
+  // Un seul jour affiché, dans un salon fermé ce jour-là (Almadies le lundi) : on le dit.
+  const closedSalon =
+    salonFilter !== TOUS_LES_SALONS && rangeStart === rangeEnd && isSalonClosed(salonFilter, isoToDate(rangeStart))
+      ? salonById(salonFilter)
+      : undefined;
+  const closedWeekday = new Intl.DateTimeFormat("fr-FR", { weekday: "long" }).format(isoToDate(rangeStart));
 
   return (
     <div className="flex flex-col gap-6">
@@ -230,12 +236,14 @@ function AccueilPageInner() {
         {reservationRows.length === 0 ? (
           <div className="rounded-field border border-dashed border-base-300 px-4 py-12 text-center">
             <p className="font-[family-name:var(--font-heading)] text-[15px] font-semibold text-base-content/60">
-              {query ? "Aucun résultat" : "Journée libre"}
+              {query ? "Aucun résultat" : closedSalon ? `${closedSalon.name} est fermé le ${closedWeekday}` : "Journée libre"}
             </p>
             <p className="mt-1 text-sm text-base-content/45">
               {query
                 ? `Aucun rendez-vous pour « ${query} » ${periodLabel}.`
-                : `Aucun rendez-vous ${periodLabel}.`}
+                : closedSalon
+                  ? "Aucun rendez-vous ne s'y tient ce jour-là."
+                  : `Aucun rendez-vous ${periodLabel}.`}
             </p>
           </div>
         ) : effectiveView === "liste" ? (

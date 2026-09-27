@@ -1,18 +1,28 @@
 "use client";
 
 import { useMemo, useState, useSyncExternalStore } from "react";
-import { Eye, GripVertical, MoreHorizontal, Undo2, UserX, Users } from "lucide-react";
+import { ArrowLeftRight, Eye, GripVertical, MoreHorizontal, Undo2, UserX, Users } from "lucide-react";
 import { Avatar } from "@/components/ui/atoms/avatar";
 import { IconButton } from "@/components/ui/atoms/icon-button";
 import { DropdownMenu } from "@/components/ui/molecules/dropdown-menu";
 import { clientFullName } from "@/lib/data/clientele";
 import { serviceById } from "@/lib/data/menu";
-import { LAST_BOOKING, SALON_OPENING, appointmentEndTime, formatHour, minutesToTime, timeToMinutes, type RendezVousRow } from "@/lib/data/planning";
+import { salonById } from "@/lib/data/entreprises";
+import {
+  GRID_END,
+  SALON_CLOSING,
+  SALON_OPENING,
+  appointmentEndTime,
+  formatHour,
+  minutesToTime,
+  timeToMinutes,
+  type RendezVousRow,
+} from "@/lib/data/planning";
 import { praticienneAccent } from "@/lib/data/praticienne-colors";
-import { scheduleFor } from "@/lib/data/praticiennes";
+import { atSalonLabel, shiftsFor } from "@/lib/data/praticiennes";
 import { useAppStore } from "@/lib/store/app-store";
 import { cn } from "@/lib/utils";
-import type { Cliente, DayHours, Praticienne, RendezVous } from "@/lib/data/types";
+import type { Cliente, Praticienne, RendezVous, Shift } from "@/lib/data/types";
 
 /**
  * « Planning · Jour » — reconstruit à la lettre du Figma (node 270:2466, ADR 0025), puis basculé
@@ -26,6 +36,11 @@ import type { Cliente, DayHours, Praticienne, RendezVous } from "@/lib/data/type
  * et l'absence vivent directement sur l'en-tête de colonne, comme avant sur l'étiquette de ligne.
  * Le trait "maintenant" est dans la couleur de marque (`bg-primary`), pas ambre : il repère l'heure
  * courante, ce n'est pas un signal « à traiter » (doctrine du seul signal ambre).
+ *
+ * ADR 0036 : la grille court de 10h à 22h, la tranche 20h–22h grisée « Fermé » (le mot écrit une
+ * fois, dans le rail). Une praticienne peut changer de salon dans la journée : sa plage dans
+ * l'autre salon est hachurée et nommée (« Aux Almadies »), le battement entre deux salons est son
+ * « Trajet ». En « Tous les salons », l'en-tête dit où elle est.
  */
 const SLOT_MIN = 30;
 const SLOT_H = 56; // px per 30 min
@@ -37,6 +52,8 @@ const LANE_W = 192; // wide enough that a header keeps most praticienne names un
 
 type Props = {
   date: Date;
+  /** Salon regardé — `null` = « Tous les salons ». */
+  salonId: string | null;
   isToday: boolean;
   staff: Praticienne[];
   /** Index stable de chaque praticienne dans l'équipe planifiable — pilote la couleur d'accent. */
@@ -98,19 +115,72 @@ function useMounted() {
   return useSyncExternalStore(subscribeNever, () => true, () => false);
 }
 
-/** L'horaire hebdomadaire nominal, ou — si absent (repos) mais que des rendez-vous existent quand
+/** Les plages nominales du jour, ou — si aucune (repos) mais que des rendez-vous existent quand
  *  même ce jour-là (donnée de démonstration désalignée avec l'horaire type) — une plage dérivée de
  *  ces rendez-vous, pour ne jamais griser une colonne qui a pourtant un rendez-vous dedans. */
-function effectiveHours(nominal: DayHours | undefined, col: RendezVousRow[]): DayHours | undefined {
-  if (nominal) return nominal;
-  if (col.length === 0) return undefined;
+function effectiveShifts(nominal: Shift[], col: RendezVousRow[]): Shift[] {
+  if (nominal.length > 0) return nominal;
+  if (col.length === 0) return [];
   const starts = col.map((r) => timeToMinutes(r.rv.start));
   const ends = col.map((r) => timeToMinutes(appointmentEndTime(r.rv)));
-  return { start: minutesToTime(Math.min(...starts)), end: minutesToTime(Math.max(...ends)) };
+  return [{ start: minutesToTime(Math.min(...starts)), end: minutesToTime(Math.max(...ends)), salonId: col[0].rv.salonId }];
+}
+
+/** Une zone grisée d'une colonne : hors horaire, dans l'autre salon (hachurée), ou trajet. */
+type Zone = { from: number; to: number; kind: "off" | "elsewhere" | "transit"; label?: string; sub?: string };
+
+/** Découpe la journée [ouverture, fermeture] d'une colonne en zones grisées autour de ses plages
+ *  « ici » (le salon regardé, ou toutes en « Tous les salons »). */
+function zonesFor(shifts: Shift[], salonId: string | null, from: number, to: number): Zone[] {
+  const zones: Zone[] = [];
+  let cursor = from;
+  shifts.forEach((s, i) => {
+    const start = timeToMinutes(s.start);
+    const end = timeToMinutes(s.end);
+    const prev = shifts[i - 1];
+    if (start > cursor) {
+      const transit = prev && prev.salonId !== s.salonId;
+      zones.push(
+        transit
+          ? { from: cursor, to: start, kind: "transit", label: "Trajet", sub: salonId ? undefined : `vers ${salonById(s.salonId)?.name ?? "l'autre salon"}` }
+          : { from: cursor, to: start, kind: "off" },
+      );
+    }
+    if (salonId && s.salonId !== salonId) zones.push({ from: start, to: end, kind: "elsewhere", label: atSalonLabel(s.salonId) });
+    cursor = Math.max(cursor, end);
+  });
+  if (cursor < to) zones.push({ from: cursor, to, kind: "off" });
+  return zones;
+}
+
+/** Hachures discrètes de la zone « dans l'autre salon » — posées sur le même gris que le hors horaire. */
+const HATCH = "repeating-linear-gradient(135deg, transparent 0 7px, color-mix(in oklab, var(--color-base-content) 7%, transparent) 7px 8px)";
+
+/** Sous-titre d'en-tête de colonne : ses heures ici, et — en « Tous les salons » — où elle est
+ *  (« Sea Plaza », ou « ⇆ Almadies » — celui où elle finit — quand elle change de salon). */
+function shiftCaption(shifts: Shift[], salonId: string | null): { hours: string; salons?: string; moves: boolean; title: string } {
+  const name = (id: string) => salonById(id)?.name ?? "Autre salon";
+  const hours = (s: Shift) => `${formatHour(s.start)}–${formatHour(s.end)}`;
+  const title = shifts.map((s) => `${name(s.salonId)} ${hours(s)}`).join(", ");
+  const salons = [...new Set(shifts.map((s) => s.salonId))];
+  // Salon regardé : ses heures ici seulement — la colonne dit déjà, en zone hachurée, où elle est
+  // le reste du temps.
+  // Tous les salons, journée coupée entre deux salons : l'amplitude — la zone « Trajet » montre le battement.
+  const here = salonId ? shifts.filter((s) => s.salonId === salonId) : shifts;
+  const span = !salonId && salons.length > 1;
+  return {
+    hours: span ? `${formatHour(shifts[0].start)}–${formatHour(shifts[shifts.length - 1].end)}` : here.map(hours).join(" · "),
+    // Journée coupée : le salon où elle finit, précédé de ⇆ — « Sea Plaza → Almadies » ne tient pas
+    // dans la colonne ; l'heure du changement se lit au bas de la zone « Trajet ».
+    salons: salonId ? undefined : span ? name(shifts[shifts.length - 1].salonId) : name(salons[0]),
+    moves: salons.length > 1,
+    title,
+  };
 }
 
 export function DayTimeline({
   date,
+  salonId,
   isToday,
   staff,
   accentIndex,
@@ -126,22 +196,18 @@ export function DayTimeline({
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
 
+  // Toujours 10h → 22h (ADR 0036) ; ne s'élargit que si une donnée tombe en dehors.
   const { gridStart, gridEnd } = useMemo(() => {
-    const marks: number[] = [];
-    for (const p of staff) {
-      const h = scheduleFor(p, date);
-      if (h) marks.push(timeToMinutes(h.start), timeToMinutes(h.end));
-    }
-    for (const r of rows) marks.push(timeToMinutes(r.rv.start), timeToMinutes(appointmentEndTime(r.rv)));
-    // La journée s'ouvre à 10h et court au moins jusqu'au dernier départ (20h) ; au-delà, jusqu'à la
-    // fin du dernier rendez-vous ou horaire (22h au plus tard).
+    const marks = rows.flatMap((r) => [timeToMinutes(r.rv.start), timeToMinutes(appointmentEndTime(r.rv))]);
     const lo = Math.min(timeToMinutes(SALON_OPENING), ...marks);
-    const hi = Math.max(timeToMinutes(LAST_BOOKING), ...marks);
+    const hi = Math.max(timeToMinutes(GRID_END), ...marks);
     return { gridStart: Math.floor(lo / 60) * 60, gridEnd: Math.ceil(hi / 60) * 60 };
-  }, [staff, rows, date]);
+  }, [rows]);
 
   const y = (min: number) => ((min - gridStart) / SLOT_MIN) * SLOT_H;
   const bodyH = y(gridEnd);
+  const closing = timeToMinutes(SALON_CLOSING);
+  const closedTop = y(closing);
   const hourMarks: number[] = [];
   for (let m = gridStart; m <= gridEnd; m += 60) hourMarks.push(m);
 
@@ -155,18 +221,17 @@ export function DayTimeline({
     () =>
       staff.map((p) => {
         const col = rows.filter((r) => r.rv.staffId === p.id || r.rv.secondStaffId === p.id);
-        const nominal = scheduleFor(p, date);
-        const hours = effectiveHours(nominal, col);
+        const shifts = effectiveShifts(shiftsFor(p, date), col);
         const { placed, lanes } = pack(col);
         const colW = Math.max(LANE_W, lanes * (LANE_W - 8) + 16);
         const absent = isToday && p.unavailableToday;
         const accent = praticienneAccent(accentIndex.get(p.id) ?? 0);
-        const beforeH = hours ? y(timeToMinutes(hours.start)) : bodyH;
-        const afterStart = hours ? y(timeToMinutes(hours.end)) : 0;
-        return { p, hours, placed, colW, absent, accent, beforeH, afterStart };
+        const zones = shifts.length ? zonesFor(shifts, salonId, gridStart, closing) : [];
+        const caption = shifts.length ? shiftCaption(shifts, salonId) : null;
+        return { p, shifts, placed, colW, absent, accent, zones, caption };
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [staff, rows, date, isToday, accentIndex, gridStart, gridEnd],
+    [staff, rows, date, salonId, isToday, accentIndex, gridStart, gridEnd],
   );
 
   if (staff.length === 0) {
@@ -183,20 +248,28 @@ export function DayTimeline({
           <div className="sticky left-0 z-20 shrink-0" style={{ width: TIME_COL_W }}>
             <div className="sticky top-0 z-30 border-b border-r border-base-300 bg-base-200/40" style={{ height: HEADER_H }} />
             <div className="relative border-r border-base-300 bg-base-200/40" style={{ height: bodyH }}>
-              {hourMarks.map((m) => (
-                <span
-                  key={m}
-                  className="absolute right-1.5 -translate-y-1/2 text-[0.68rem] font-semibold tabular-nums text-base-content/45"
-                  style={{ top: y(m) }}
-                >
-                  {formatHour(`${Math.floor(m / 60)}:00`)}
+              {/* 20h → 22h : le salon est fermé — le mot une seule fois, ici. */}
+              <div aria-hidden className="absolute inset-x-0 bottom-0 border-t border-base-content/15 bg-base-300/80" style={{ top: closedTop }}>
+                <span className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-[0.62rem] font-semibold uppercase tracking-[0.1em] text-base-content/45">
+                  Fermé
                 </span>
-              ))}
+              </div>
+              {hourMarks
+                .filter((m) => m <= closing)
+                .map((m) => (
+                  <span
+                    key={m}
+                    className="absolute right-1.5 -translate-y-1/2 text-[0.68rem] font-semibold tabular-nums text-base-content/45"
+                    style={{ top: y(m) }}
+                  >
+                    {formatHour(`${Math.floor(m / 60)}:00`)}
+                  </span>
+                ))}
             </div>
           </div>
 
           {/* ── columns ── */}
-          {columns.map(({ p, hours, placed, colW, absent, accent, beforeH, afterStart }) => (
+          {columns.map(({ p, shifts, placed, colW, absent, accent, zones, caption }) => (
             <div key={p.id} className="flex shrink-0 flex-col border-r border-base-300 last:border-r-0" style={{ width: colW }}>
               {/* column header */}
               <div
@@ -245,9 +318,24 @@ export function DayTimeline({
                     <span aria-hidden className="size-1.5 shrink-0 rounded-full" style={{ backgroundColor: absent ? undefined : accent.dot }} />
                     {p.name}
                   </p>
-                  <p className={cn("truncate text-[0.7rem] tabular-nums", absent ? "font-semibold text-warning" : "text-base-content/45")}>
-                    {absent ? "Absente" : hours ? `${formatHour(hours.start)}–${formatHour(hours.end)}` : "Repos"}
+                  <p
+                    title={!absent && caption ? caption.title : undefined}
+                    className={cn(
+                      "flex items-center gap-1 truncate text-[0.7rem] tabular-nums",
+                      absent ? "font-semibold text-warning" : "text-base-content/45",
+                    )}
+                  >
+                    {!absent && caption?.moves && !caption.salons && (
+                      <ArrowLeftRight aria-hidden className="size-3 shrink-0 text-base-content/55" />
+                    )}
+                    <span className="truncate">{absent ? "Absente" : caption ? caption.hours : "Repos"}</span>
                   </p>
+                  {!absent && caption?.salons && (
+                    <p className="flex items-center gap-1 truncate text-[0.66rem] text-base-content/50">
+                      {caption.moves && <ArrowLeftRight aria-hidden className="size-3 shrink-0" />}
+                      <span className="truncate">{caption.salons}</span>
+                    </p>
+                  )}
                 </div>
                 <DropdownMenu
                   align="end"
@@ -281,17 +369,35 @@ export function DayTimeline({
 
               {/* column body */}
               <div className="relative" style={{ height: bodyH }}>
-                {!hours && (
-                  <div aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center bg-base-300/60">
+                {shifts.length === 0 && (
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-center bg-base-300/60"
+                    style={{ height: closedTop }}
+                  >
                     <span className="text-[0.68rem] font-semibold uppercase tracking-[0.1em] text-base-content/40">Repos</span>
                   </div>
                 )}
-                {hours && beforeH > 0 && (
-                  <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 bg-base-300/60" style={{ height: beforeH }} />
-                )}
-                {hours && afterStart < bodyH && (
-                  <div aria-hidden className="pointer-events-none absolute inset-x-0 bg-base-300/60" style={{ top: afterStart, bottom: 0 }} />
-                )}
+                {zones.map((z) => {
+                  const h = y(z.to) - y(z.from);
+                  return (
+                    <div
+                      key={`${z.kind}-${z.from}`}
+                      aria-hidden
+                      className="pointer-events-none absolute inset-x-0 flex flex-col items-center justify-center gap-0.5 bg-base-300/60 px-2 text-center"
+                      style={{ top: y(z.from), height: h, backgroundImage: z.kind === "elsewhere" ? HATCH : undefined }}
+                    >
+                      {z.label && h >= 36 && (
+                        <span className="rounded-full bg-base-100/85 px-2 py-0.5 text-[0.66rem] font-semibold text-base-content/55">
+                          {z.label}
+                        </span>
+                      )}
+                      {z.sub && h >= 56 && <span className="text-[0.64rem] text-base-content/45">{z.sub}</span>}
+                    </div>
+                  );
+                })}
+                {/* 20h → 22h : fermé, un cran plus soutenu que le hors horaire. */}
+                <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 border-t border-base-content/15 bg-base-300/80" style={{ top: closedTop }} />
                 {hourMarks.map((m) =>
                   m === gridStart ? null : (
                     <div key={m} aria-hidden className="pointer-events-none absolute inset-x-0 border-t border-base-300/60" style={{ top: y(m) }} />

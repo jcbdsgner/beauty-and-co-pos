@@ -1,5 +1,7 @@
 # Planning : filtre de salon (Almadies / Sea Plaza / Tous les salons)
 
+> **Révisé par ADR 0036** : la règle « une praticienne, un salon » (`Praticienne.salonId`) est remplacée par des plages horaires qui nomment chacune leur salon, et le salon est désormais porté par le rendez-vous. Le filtre de lecture décrit ici est conservé.
+
 Le Planning affichait l'équipe entière sans distinguer où chacune travaille, alors que `SALONS` (Almadies, Sea Plaza — `lib/data/entreprises.ts`) existe déjà comme donnée mais n'était utilisé nulle part depuis qu'ADR 0001 a retiré toute configuration d'entreprises/salons de l'app. Une praticienne n'est jamais aux deux salons en même temps ; regarder les deux programmes mélangés n'aide personne au comptoir.
 
 ## Décision

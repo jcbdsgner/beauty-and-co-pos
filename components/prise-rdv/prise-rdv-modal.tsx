@@ -79,7 +79,8 @@ import {
   packPurchasesForClient,
   packRemainingPrestations,
 } from "@/lib/data/pack-purchases";
-import { dateISO, reservationById, reservationDate } from "@/lib/data/planning";
+import { dateISO, reservationById, reservationDate, reservationSalonIds } from "@/lib/data/planning";
+import { isSalonClosed } from "@/lib/data/praticiennes";
 import type {
   Cliente,
   Ethnicity,
@@ -250,10 +251,7 @@ type Prefill = {
 };
 
 /** Relit une réservation existante dans les termes du parcours : personnes, sélections, créneau. */
-function prefillFrom(
-  reservation: Reservation,
-  praticienneSalon: (id: string) => string | undefined,
-): Prefill {
+function prefillFrom(reservation: Reservation): Prefill {
   const active = reservation.rendezVous.filter((rv) => rv.status !== "annule");
   const payerRvs = active.filter(
     (rv) => !rv.beneficiaryClientId && !rv.beneficiaryName,
@@ -317,8 +315,8 @@ function prefillFrom(
       ].filter(Boolean) as string[];
   }
 
-  const firstStaff = active[0]?.staffId;
-  const salonId = firstStaff ? praticienneSalon(firstStaff) : undefined;
+  // Le salon est porté par les rendez-vous, pas déduit de la praticienne (ADR 0036).
+  const salonId = reservationSalonIds(reservation)[0];
   const earliest = active.map((rv) => rv.start).sort()[0] ?? null;
   const productQuantities: Record<string, number> = {};
   for (const extra of reservation.extras ?? []) {
@@ -368,12 +366,7 @@ function PriseRdvFlow({
     ? reservationById(reservations, reservationId)
     : undefined;
   const [prefill] = useState<Prefill | null>(() =>
-    editing
-      ? prefillFrom(
-          editing,
-          (id) => praticiennes.find((p) => p.id === id)?.salonId,
-        )
-      : null,
+    editing ? prefillFrom(editing) : null,
   );
   const excludeRvIds = useMemo(
     () => new Set(editing?.rendezVous.map((rv) => rv.id) ?? []),
@@ -540,6 +533,12 @@ function PriseRdvFlow({
   // Une prestation réservée aux Almadies invalide un Sea Plaza déjà choisi : il faut rechoisir.
   const locationId =
     almadiesOnly && selectedLocationId !== "almadies" ? null : selectedLocationId;
+  // Almadies ferme le lundi : le lieu reste visible, mais n'est pas choisissable ce jour-là.
+  const closedLocationIds = selectedDate
+    ? bookingLocations
+        .filter((location) => isSalonClosed(SALON_ID_BY_LOCATION[location.id], selectedDate))
+        .map((location) => location.id)
+    : [];
 
   const totalMinutes = people.reduce((max, person) => {
     const personMinutes = cartItems
@@ -767,7 +766,7 @@ function PriseRdvFlow({
     extras: ConfirmationExtras,
     deposit?: { amount: number; mode: DepositMode },
   ) => {
-    if (!plan || !selectedDate || !payer) {
+    if (!plan || !planContext || !selectedDate || !payer) {
       setSaveError("Choisissez un créneau disponible avant de confirmer.");
       return null;
     }
@@ -775,6 +774,7 @@ function PriseRdvFlow({
       reservationId: editing?.id,
       payerClientId: payer.id,
       date: dateISO(selectedDate),
+      salonId: planContext.salonId,
       lines: plan.map((line) => {
         const person = slots.find((slot) => slot.id === line.personId);
         const assignment = assignments[line.personId];
@@ -944,6 +944,7 @@ function PriseRdvFlow({
                 setSelectedTime(null);
               }}
               locations={availableLocations}
+              closedLocationIds={closedLocationIds}
               selectedLocationId={locationId}
               onSelectLocation={(id) => {
                 setSelectedLocationId(id);

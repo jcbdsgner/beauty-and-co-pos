@@ -1,16 +1,13 @@
 import { serviceById } from "@/lib/data/menu";
-import { PRATICIENNES, scheduleFor } from "@/lib/data/praticiennes";
+import { PRATICIENNES, coversInterval, isSalonClosed } from "@/lib/data/praticiennes";
+import { SALON_CLOSING, SALON_OPENING, minutesToTime, timeToMinutes } from "@/lib/data/time";
 import type { BeneficiaryKind, RendezVous, Reservation } from "@/lib/data/types";
 
 /** Périodes affichables au Planning (ADR 0020). Mois (rouvert par ADR 0024) retiré par ADR 0025 :
  *  absent du Figma de référence, qui ne montre que Jour/Semaine. */
 export type PlanningPeriod = "jour" | "semaine";
 
-/** Heures des deux salons (CONTEXT.md, Praticienne) : la journée s'ouvre à 10h ; aucun rendez-vous
- *  ne commence après 20h, mais le dernier peut déborder jusqu'à 22h. */
-export const SALON_OPENING = "10:00";
-export const LAST_BOOKING = "20:00";
-export const SALON_CLOSING = "22:00";
+export { GRID_END, SALON_CLOSING, SALON_OPENING, minutesToTime, timeToMinutes } from "@/lib/data/time";
 
 /** A calendar day as "YYYY-MM-DD" (local). */
 export function dateISO(d: Date): string {
@@ -54,7 +51,7 @@ function seedReservationId(n: number): string {
 
 /** Un dimanche chargé : une réservation d'une prestation par ligne [payeuse, prestation, praticienne, heure].
  *  Leurs ids (`seedReservationId(101…)`) évitent toute collision avec le seed écrit à la main (1…99). */
-function sundayRush(): Reservation[] {
+function sundayRush(): SeedReservation[] {
   const lines: [string, string, string, string][] = [
     ["cl-1", "coiffure-silk-press", "bineta", "10:00"],
     ["cl-2", "manucure-pedicure-manucure-spa-express", "gnagna", "10:00"],
@@ -96,8 +93,16 @@ function sundayRush(): Reservation[] {
 }
 
 /** A réservation's calendar day. Absent `date` ⇒ today (walk-ins, legacy). Always read it here. */
-export function reservationDate(r: Reservation): string {
+export function reservationDate(r: Pick<Reservation, "date">): string {
   return r.date ?? todayISO();
+}
+
+/** Les salons où se tient une réservation — ceux de ses rendez-vous (ADR 0036), le salon n'est
+ *  jamais déduit de la praticienne. Presque toujours un seul. Les annulés ne comptent que s'il
+ *  n'y a plus rien d'actif. */
+export function reservationSalonIds(r: Reservation): string[] {
+  const active = r.rendezVous.filter((rv) => rv.status !== "annule");
+  return [...new Set((active.length ? active : r.rendezVous).map((rv) => rv.salonId))];
 }
 
 /** Réservation en ligne pas encore remarquée (« Non vue », ADR 0030) — jamais une réservation
@@ -114,7 +119,22 @@ export function isUnseenReservation(r: Reservation): boolean {
  * friend or a child (`beneficiaryName`), possibly worked by two praticiennes at once
  * (`secondStaffId`, with `durationMin` already halved). `date` absent ⇒ today.
  */
-const SEED_RESERVATIONS: Reservation[] = [
+/** Le seed est écrit sans salon : chaque rendez-vous reçoit celui de sa praticienne (`SEED_SALON`),
+ *  fixé avant tout recalage — ensuite, c'est le rendez-vous qui porte le salon (ADR 0036). */
+type SeedReservation = Omit<Reservation, "rendezVous"> & { rendezVous: Omit<RendezVous, "salonId">[] };
+
+/** Le salon où chaque praticienne tenait ses rendez-vous quand le seed a été écrit. */
+const SEED_SALON: Record<string, string> = {
+  bineta: "sea-plaza-bco",
+  fatou: "sea-plaza-bco",
+  "marie-dominique": "sea-plaza-bco",
+  gnagna: "almadies",
+  henry: "almadies",
+  adja: "almadies",
+  michelle: "almadies",
+};
+
+const SEED_RESERVATIONS: SeedReservation[] = [
   {
     id: "RV-1787667600000-0qtafz9td",
     payerClientId: "cl-7",
@@ -661,58 +681,58 @@ const SEED_RESERVATIONS: Reservation[] = [
  * durée. Un rendez-vous impossible à caser ce jour-là (ex. Almadies le lundi, salon fermé) sort
  * du seed.
  */
-function fitSeedToSchedules(seed: Reservation[]): Reservation[] {
+function fitSeedToSchedules(input: SeedReservation[]): Reservation[] {
   const placed: { staffId: string; date: string; start: number; end: number }[] = [];
-  const fits = (staffId: string, date: string, start: number, duration: number) => {
+  const day = (date: string) => new Date(`${date}T00:00:00`);
+  /** Une plage dans le salon de la réservation couvre tout l'intervalle, et la praticienne n'est
+   *  prise nulle part ailleurs — dans aucun des deux salons. */
+  const fits = (staffId: string, date: string, salonId: string, start: number, duration: number) => {
     const p = PRATICIENNES.find((x) => x.id === staffId);
-    const hours = p && scheduleFor(p, new Date(`${date}T00:00:00`));
-    if (!hours || start < timeToMinutes(hours.start) || start + duration > timeToMinutes(hours.end)) return false;
+    if (!p || !coversInterval(p, day(date), salonId, start, start + duration)) return false;
     return !placed.some((b) => b.staffId === staffId && b.date === date && start < b.end && b.start < start + duration);
   };
-  /** La praticienne elle-même, puis ses collègues du même rôle et du même salon — un rendez-vous
-   *  ne change jamais de salon ; `salonId` impose celui de la première praticienne. */
-  const colleagues = (staffId: string, salonId?: string) => {
+  /** La praticienne elle-même, puis ses collègues du même rôle rattachées à ce salon dans le seed —
+   *  un rendez-vous ne change jamais de salon, et une praticienne de passage (ADR 0036) n'hérite
+   *  pas des rendez-vous d'une autre. */
+  const colleagues = (staffId: string, salonId: string) => {
     const p = PRATICIENNES.find((x) => x.id === staffId);
     if (!p) return [staffId];
-    const inSalon = PRATICIENNES.filter((x) => x.role === p.role && x.id !== p.id && x.salonId === (salonId ?? p.salonId));
+    const inSalon = PRATICIENNES.filter((x) => x.role === p.role && x.id !== p.id && SEED_SALON[x.id] === salonId);
     return [p.id, ...inSalon.map((x) => x.id)];
   };
 
   // Salon fermé ce jour-là (Almadies le lundi) : rien n'y figure, pas même un rendez-vous annulé.
-  const salonOpen = (staffId: string, date: string) => {
-    const salonId = PRATICIENNES.find((x) => x.id === staffId)?.salonId;
-    return PRATICIENNES.some((p) => p.salonId === salonId && scheduleFor(p, new Date(`${date}T00:00:00`)));
-  };
-  seed = seed.map((r) => ({
+  const seed: Reservation[] = input.map((r) => ({
     ...r,
-    rendezVous: r.rendezVous.filter((rv) => salonOpen(rv.staffId, reservationDate(r))),
+    rendezVous: r.rendezVous
+      .map((rv) => ({ ...rv, salonId: SEED_SALON[rv.staffId] ?? "sea-plaza-bco" }))
+      .filter((rv) => !isSalonClosed(rv.salonId, day(reservationDate(r)))),
   }));
 
   const order = seed
-    .flatMap((r) => r.rendezVous.map((rv) => ({ date: reservationDate(r), rv })))
+    .flatMap((r) => r.rendezVous.map((rv) => ({ date: reservationDate(r), salonId: rv.salonId, rv })))
     .filter(({ rv }) => rv.status !== "annule")
     .sort((a, b) => a.date.localeCompare(b.date) || a.rv.start.localeCompare(b.rv.start) || a.rv.id.localeCompare(b.rv.id));
 
   const fixed = new Map<string, Pick<RendezVous, "staffId" | "secondStaffId" | "start" | "durationMin">>();
   const dropped = new Set<string>();
-  for (const { date, rv } of order) {
-    const primaries = colleagues(rv.staffId);
+  for (const { date, salonId, rv } of order) {
+    const primaries = colleagues(rv.staffId, salonId);
     const wanted = timeToMinutes(rv.start);
     const first = timeToMinutes(SALON_OPENING);
-    const slots = (timeToMinutes(LAST_BOOKING) - first) / 15 + 1;
+    const slots = (timeToMinutes(SALON_CLOSING) - first) / 15;
     const times = [wanted, ...Array.from({ length: slots }, (_, i) => first + i * 15).filter((t) => t !== wanted)];
 
     let pick: { staffId: string; secondStaffId?: string; start: number; durationMin: number } | undefined;
     for (const start of times) {
       for (const staffId of primaries) {
-        if (!fits(staffId, date, start, rv.durationMin)) continue;
+        if (!fits(staffId, date, salonId, start, rv.durationMin)) continue;
         if (!rv.secondStaffId) {
           pick = { staffId, start, durationMin: rv.durationMin };
           break;
         }
-        const salonId = PRATICIENNES.find((x) => x.id === staffId)?.salonId;
         const second = colleagues(rv.secondStaffId, salonId).find(
-          (id) => id !== staffId && fits(id, date, start, rv.durationMin),
+          (id) => id !== staffId && fits(id, date, salonId, start, rv.durationMin),
         );
         if (second) {
           pick = { staffId, secondStaffId: second, start, durationMin: rv.durationMin };
@@ -722,7 +742,7 @@ function fitSeedToSchedules(seed: Reservation[]): Reservation[] {
       if (pick) break;
       if (rv.secondStaffId && start === wanted) {
         const full = serviceById(rv.serviceId)?.durationMinutes ?? rv.durationMin * 2;
-        const solo = primaries.find((id) => fits(id, date, start, full));
+        const solo = primaries.find((id) => fits(id, date, salonId, start, full));
         if (solo) {
           pick = { staffId: solo, start, durationMin: full };
           break;
@@ -855,19 +875,6 @@ export function reservationById(reservations: Reservation[], id: string) {
 
 export function reservationForRendezVous(reservations: Reservation[], rvId: string) {
   return reservations.find((r) => r.rendezVous.some((rv) => rv.id === rvId));
-}
-
-/** "HH:mm" -> minutes since midnight. */
-export function timeToMinutes(time: string) {
-  const [h, m] = time.split(":").map(Number);
-  return h * 60 + m;
-}
-
-/** minutes since midnight -> "HH:mm". */
-export function minutesToTime(minutes: number) {
-  const h = Math.floor(minutes / 60) % 24;
-  const m = minutes % 60;
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
 /** A rendez-vous's end time, "HH:mm" — start + durationMin. */

@@ -5,7 +5,7 @@ import { Avatar } from "@/components/ui/atoms/avatar";
 import { Tooltip } from "@/components/ui/atoms/tooltip";
 import { clientFullName } from "@/lib/data/clientele";
 import { serviceById } from "@/lib/data/menu";
-import { LAST_BOOKING, SALON_OPENING, reservationComposition, timeToMinutes, type ReservationDayRow } from "@/lib/data/planning";
+import { GRID_END, SALON_CLOSING, SALON_OPENING, reservationComposition, timeToMinutes, type ReservationDayRow } from "@/lib/data/planning";
 import { cn } from "@/lib/utils";
 import type { Cliente, Praticienne, RendezVous } from "@/lib/data/types";
 
@@ -51,6 +51,20 @@ function currentMinute(): number {
 function hm(t: string) {
   const [h, m] = t.split(":");
   return m === "00" ? `${Number(h)}h` : `${Number(h)}h${m}`;
+}
+
+/** 20h → fin de grille : le salon est fermé (ADR 0036). Grisé sur toute la largeur, « Fermé »
+ *  écrit une seule fois, dans le rail. */
+function ClosedBand({ top, label = false }: { top: number; label?: boolean }) {
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 border-t border-base-content/15 bg-base-300/60" style={{ top }}>
+      {label && (
+        <span className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-[0.68rem] font-semibold uppercase tracking-[0.1em] text-base-content/40">
+          Fermé
+        </span>
+      )}
+    </div>
+  );
 }
 
 /** Minute du jour → ordonnée en px dans la colonne. */
@@ -118,9 +132,9 @@ export function AccueilCalendar({ rows, clients, praticiennes, onOpenReservation
 
   const { gridStart, gridEnd } = useMemo(() => {
     const marks = rows.flatMap((r) => [timeToMinutes(r.start), timeToMinutes(r.end)]);
-    // Même cadre que le Planning : ouverture 10h, au moins jusqu'au dernier départ (20h), 22h au plus.
+    // Même cadre que le Planning (ADR 0036) : 10h → 22h, la tranche 20h–22h grisée « fermé ».
     const lo = Math.min(timeToMinutes(SALON_OPENING), ...marks);
-    const hi = Math.max(timeToMinutes(LAST_BOOKING), ...marks);
+    const hi = Math.max(timeToMinutes(GRID_END), ...marks);
     return { gridStart: Math.floor(lo / 60) * 60, gridEnd: Math.ceil(hi / 60) * 60 };
   }, [rows]);
 
@@ -130,28 +144,34 @@ export function AccueilCalendar({ rows, clients, praticiennes, onOpenReservation
   const hourMarks: number[] = [];
   for (let m = gridStart; y(m) <= bodyH; m += 60) hourMarks.push(m);
   const showNow = now > gridStart && now < gridEnd;
+  const closedTop = y(timeToMinutes(SALON_CLOSING));
 
   const staffOf = (id: string) => praticiennes.find((p) => p.id === id);
 
   return (
     <div className="overflow-x-auto rounded-box border border-base-300 bg-base-100 p-4 [scrollbar-width:thin]">
       <div className="relative flex" style={{ height: bodyH + 12, paddingTop: 12, minWidth: RAIL_W + lanes * LANE_MIN_W }}>
-        <div className="shrink-0 border-r border-base-300" style={{ width: RAIL_W }}>
+        <div className="relative shrink-0 border-r border-base-300" style={{ width: RAIL_W }}>
+          <ClosedBand top={closedTop} label />
           {hourMarks.map((m, i) => (
             <div key={m} className="relative" style={{ height: i === hourMarks.length - 1 ? 0 : SLOT_H * 2 }}>
-              <span
-                className={cn(
-                  "absolute right-3 text-xs font-semibold tabular-nums text-base-content/40",
-                  i === 0 ? "top-0" : "-top-2",
-                )}
-              >
-                {hm(`${m / 60}:00`)}
-              </span>
+              {/* Après la fermeture, « Fermé » remplace les heures du rail. */}
+              {y(m) <= closedTop && (
+                <span
+                  className={cn(
+                    "absolute right-3 text-xs font-semibold tabular-nums text-base-content/40",
+                    i === 0 ? "top-0" : "-top-2",
+                  )}
+                >
+                  {hm(`${m / 60}:00`)}
+                </span>
+              )}
             </div>
           ))}
         </div>
 
         <div className="relative flex-1">
+          <ClosedBand top={closedTop} />
           {hourMarks.map((m, i) =>
             i === 0 ? null : (
               <div key={m} aria-hidden className="absolute inset-x-0 border-t border-base-300/70" style={{ top: i * SLOT_H * 2 }} />

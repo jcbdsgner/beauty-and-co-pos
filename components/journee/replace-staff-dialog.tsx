@@ -10,7 +10,7 @@ import { useAppData } from "@/components/providers/app-data-provider";
 import { clientFullName } from "@/lib/data/clientele";
 import { serviceById } from "@/lib/data/menu";
 import { reservationDate, timeToMinutes, todayISO } from "@/lib/data/planning";
-import { isWorkingOn } from "@/lib/data/praticiennes";
+import { coversInterval } from "@/lib/data/praticiennes";
 import type { RendezVous, Reservation } from "@/lib/data/types";
 
 type ReplaceStaffDialogProps = {
@@ -73,7 +73,8 @@ export function ReplaceStaffDialog({ open, reservation, onCancel, onConfirm }: R
           const service = serviceById(rv.serviceId);
           const candidates = praticiennes.filter(
             (p) =>
-              isWorkingOn(p, new Date()) &&
+              // Dans le salon du rendez-vous sur tout son créneau (ADR 0036).
+              coversInterval(p, new Date(), rv.salonId, timeToMinutes(rv.start), timeToMinutes(rv.start) + rv.durationMin) &&
               !p.unavailableToday &&
               p.id !== rv.staffId &&
               p.id !== rv.secondStaffId &&

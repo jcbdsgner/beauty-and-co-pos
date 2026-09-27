@@ -1,7 +1,7 @@
 import type { Praticienne, Reservation, Role } from "@/lib/data/types";
 import { SALONS } from "@/lib/data/entreprises";
-import { dayOfWeek, scheduleFor } from "@/lib/data/praticiennes";
-import { LAST_BOOKING, SALON_CLOSING, SALON_OPENING, minutesToTime, reservationDate, timeToMinutes, todayISO } from "@/lib/data/planning";
+import { coversInterval, dayOfWeek } from "@/lib/data/praticiennes";
+import { SALON_CLOSING, SALON_OPENING, minutesToTime, reservationDate, timeToMinutes, todayISO } from "@/lib/data/planning";
 
 /**
  * Le pont entre le parcours b&co recopié (ADR 0032) et l'agenda réel de l'équipe : quels horaires
@@ -13,9 +13,8 @@ import { LAST_BOOKING, SALON_CLOSING, SALON_OPENING, minutesToTime, reservationD
 export const SALON_ID_BY_LOCATION: Record<string, string> = { "sea-plaza": "sea-plaza-bco", almadies: "almadies" };
 export const LOCATION_ID_BY_SALON: Record<string, string> = { "sea-plaza-bco": "sea-plaza", almadies: "almadies" };
 
-/** Heures d'ouverture des deux salons (CONTEXT.md, Praticienne) : dernier départ 20h, fin 22h. */
+/** Heures d'ouverture des deux salons (CONTEXT.md, Praticienne) : tout se tient entre 10h et 20h. */
 const OPENING = timeToMinutes(SALON_OPENING);
-const LAST_START = timeToMinutes(LAST_BOOKING);
 const CLOSING = timeToMinutes(SALON_CLOSING);
 const SLOT_STEP = 30;
 
@@ -82,10 +81,12 @@ function freeStaff(ctx: PlanContext, busy: Map<string, Interval[]>, categoryId: 
   const role = roleFor(categoryId);
   const day = new Date(`${ctx.date}T00:00:00`);
   return ctx.praticiennes.filter((p) => {
-    if (p.salonId !== ctx.salonId || p.role !== role) return false;
+    if (p.role !== role) return false;
     if (p.unavailableToday && ctx.date === todayISO()) return false;
-    const hours = scheduleFor(p, day);
-    if (!hours || iv.start < timeToMinutes(hours.start) || iv.end > timeToMinutes(hours.end)) return false;
+    // Dans ce salon sur tout l'intervalle (ADR 0036) — une praticienne de passage compte ici le
+    // temps de sa plage, jamais pendant son trajet ni sa plage dans l'autre salon. `busy` couvre
+    // les deux salons : elle n'est jamais à deux endroits à la fois.
+    if (!coversInterval(p, day, ctx.salonId, iv.start, iv.end)) return false;
     return !(busy.get(p.id) ?? []).some((b) => iv.start < b.end && b.start < iv.end);
   });
 }
@@ -118,7 +119,7 @@ export function planAt(
     for (const item of personItems) {
       const durationMin = lineDuration(item, twoPractitioners);
       const iv = { start: cursor, end: cursor + durationMin };
-      if (iv.start > LAST_START || iv.end > CLOSING) return null;
+      if (iv.end > CLOSING) return null;
       const need = twoPractitioners && item.twoPractitionersEligible ? 2 : 1;
       const free = freeStaff(ctx, busy, item.categoryId, iv);
       const wanted = overrides[item.key];
@@ -150,7 +151,7 @@ export function availableTimes(ctx: PlanContext, items: PlanItem[], twoPractitio
   const isToday = ctx.date === todayISO();
   const nowMin = now.getHours() * 60 + now.getMinutes();
   const times: string[] = [];
-  for (let t = OPENING; t <= LAST_START; t += SLOT_STEP) {
+  for (let t = OPENING; t < CLOSING; t += SLOT_STEP) {
     if (isToday && t <= nowMin) continue;
     if (planAt(ctx, items, minutesToTime(t), twoPractitioners)) times.push(minutesToTime(t));
   }

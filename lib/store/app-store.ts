@@ -9,6 +9,7 @@ import {
   newReservationId,
   reservationForRendezVous,
   timeToMinutes,
+  reservationSalonIds,
 } from "@/lib/data/planning";
 import { PRODUITS, serviceById } from "@/lib/data/menu";
 import { boissonById } from "@/lib/data/boissons";
@@ -18,6 +19,7 @@ import { CARTES_CADEAUX, GIFT_CARD_ORDERS, giftCardForClient } from "@/lib/data/
 import { ABONNEMENTS } from "@/lib/data/abonnements";
 import { PACK_PURCHASES } from "@/lib/data/pack-purchases";
 import { detectCoverage } from "@/lib/data/coverage";
+import { POSTE_SALON_ID } from "@/lib/session";
 import { formatFcfa } from "@/lib/utils";
 import type {
   CarteCadeau,
@@ -381,6 +383,8 @@ export type AppState = {
     reservationId?: string;
     payerClientId: string;
     date: string;
+    /** Le salon choisi à l'étape Créneau — porté par chaque rendez-vous (ADR 0036). */
+    salonId: string;
     lines: Array<
       Pick<RendezVous, "serviceId" | "staffId" | "start" | "durationMin"> &
         Partial<Pick<RendezVous, "secondStaffId" | "beneficiaryClientId" | "beneficiaryName" | "beneficiaryKind">>
@@ -550,6 +554,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         reservationId,
         serviceId: line.serviceId,
         staffId: line.staffId,
+        salonId: input.salonId,
         start: line.start,
         durationMin: line.durationMin,
         status: "actif",
@@ -677,6 +682,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       reservationId,
       serviceId: data.serviceId,
       staffId: data.staffId,
+      // Même salon que le reste de la réservation (ADR 0036).
+      salonId: reservationSalonIds(reservation)[0] ?? POSTE_SALON_ID,
       start: data.start,
       durationMin,
       status: "actif",

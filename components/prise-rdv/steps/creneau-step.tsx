@@ -22,6 +22,8 @@ type CreneauStepProps = {
   selectedDate: Date | null;
   onSelectDate: (date: Date) => void;
   locations: BookingLocation[];
+  /** Lieux fermés le jour choisi (Almadies le lundi) — affichés, non choisissables. */
+  closedLocationIds: string[];
   selectedLocationId: string | null;
   onSelectLocation: (id: string) => void;
   selectedTime: string | null;
@@ -43,6 +45,7 @@ export function CreneauStep({
   selectedDate,
   onSelectDate,
   locations,
+  closedLocationIds,
   selectedLocationId,
   onSelectLocation,
   selectedTime,
@@ -59,6 +62,9 @@ export function CreneauStep({
   onBack,
 }: CreneauStepProps) {
   const effectiveMinutes = twoPractitioners ? twoPractitionersMinutes : totalMinutes;
+  const weekday = selectedDate ? new Intl.DateTimeFormat("fr-FR", { weekday: "long" }).format(selectedDate) : "";
+  const selectedLocation = locations.find((location) => location.id === selectedLocationId);
+  const selectedClosed = Boolean(selectedLocationId && closedLocationIds.includes(selectedLocationId));
   return (
     <div>
       <h2 className="text-[21px] font-bold text-[var(--color-gray-800)]">Choisir un créneau</h2>
@@ -81,21 +87,28 @@ export function CreneauStep({
                 <h3 className="text-[19px] font-bold text-[var(--color-gray-800)]">Choisissez un lieu</h3>
               </div>
               <div className="mt-4 flex gap-2">
-                {locations.map((location) => (
-                  <button
-                    key={location.id}
-                    type="button"
-                    onClick={() => onSelectLocation(location.id)}
-                    className={cn(
-                      "rounded-lg px-4 py-2 text-[17px] font-bold transition",
-                      selectedLocationId === location.id
-                        ? "bg-[var(--core-brand-color)] text-[var(--brand-taupe-muted)] shadow-[0px_1px_1px_0px_rgba(0,0,0,0.05)]"
-                        : "border border-[var(--color-gray-200)] bg-white text-[var(--color-gray-600)]",
-                    )}
-                  >
-                    {location.label}
-                  </button>
-                ))}
+                {locations.map((location) => {
+                  const closed = closedLocationIds.includes(location.id);
+                  return (
+                    <button
+                      key={location.id}
+                      type="button"
+                      disabled={closed}
+                      onClick={() => onSelectLocation(location.id)}
+                      className={cn(
+                        "flex flex-col items-start rounded-lg px-4 py-2 text-[17px] font-bold transition",
+                        closed
+                          ? "cursor-not-allowed border border-dashed border-[var(--color-gray-200)] bg-[var(--color-gray-50)] text-[var(--color-gray-400)]"
+                          : selectedLocationId === location.id
+                            ? "bg-[var(--core-brand-color)] text-[var(--brand-taupe-muted)] shadow-[0px_1px_1px_0px_rgba(0,0,0,0.05)]"
+                            : "border border-[var(--color-gray-200)] bg-white text-[var(--color-gray-600)]",
+                      )}
+                    >
+                      {location.label}
+                      {closed && <span className="text-[14px] font-medium">Fermé le {weekday}</span>}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -110,7 +123,9 @@ export function CreneauStep({
 
                 {timeSlots.length === 0 && (
                   <p className="mt-4 text-[17px] text-[var(--color-gray-500)]">
-                    Aucun créneau disponible ce jour-là dans ce salon. Choisissez un autre jour ou un autre lieu.
+                    {selectedClosed
+                      ? `${selectedLocation?.label ?? "Ce salon"} est fermé le ${weekday}. Choisissez un autre jour ou un autre lieu.`
+                      : "Aucun créneau disponible ce jour-là dans ce salon. Choisissez un autre jour ou un autre lieu."}
                   </p>
                 )}
                 <div className="mt-4 grid grid-cols-3 gap-2">
