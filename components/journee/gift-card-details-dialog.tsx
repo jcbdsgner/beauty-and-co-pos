@@ -43,20 +43,19 @@ export function GiftCardDetailsDialog({
       <CloseButton onClick={onClose} className="top-4 right-4" />
 
       <div className="min-h-0 flex-1 overflow-y-auto px-8 pt-7 pb-8">
-        <div className="flex items-center gap-3 pr-12">
+        <div className="flex items-center pr-12">
           <Badge
             variant="neutral"
             icon={isLivraison ? <Truck aria-hidden className="size-3.5" /> : <Store aria-hidden className="size-3.5" />}
           >
             {isLivraison ? "Livraison" : "Retrait"}
           </Badge>
-          <span className="truncate font-mono text-xs tracking-wide text-base-content/55">{order.code}</span>
         </div>
         <h2
           id={titleId}
-          className="mt-3 font-[family-name:var(--font-heading)] text-[26px] font-bold leading-tight text-base-content"
+          className="mt-3 break-all font-[family-name:var(--font-heading)] text-[26px] font-bold leading-tight tracking-wide text-base-content"
         >
-          Carte cadeau
+          {order.code}
         </h2>
         {content.kind === "montant" ? (
           <p className="mt-1 text-[17px] font-semibold tabular-nums text-primary">{formatFcfa(content.amount)}</p>
