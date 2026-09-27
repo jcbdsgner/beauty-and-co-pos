@@ -131,9 +131,9 @@ function FicheClienteViewInner({ clientId }: { clientId: string }) {
             <Link
               href={backHref}
               aria-label={`Retour à ${backLabel}`}
-              className="flex size-12 shrink-0 items-center justify-center rounded-field border border-base-300 bg-accent text-secondary transition active:scale-[0.97] hover:bg-base-300/60"
+              className="-mr-2 -ml-7 flex size-10 shrink-0 items-center justify-center text-secondary transition hover:text-primary active:scale-90"
             >
-              <ChevronLeft aria-hidden className="size-5" />
+              <ChevronLeft aria-hidden className="size-6" />
             </Link>
             <Avatar initial={clientInitial(client)} size={60} className="bg-accent text-xl font-semibold text-secondary" />
             <div className="min-w-0">
