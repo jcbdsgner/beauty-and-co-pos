@@ -178,10 +178,10 @@ function FicheClienteViewInner({ clientId }: { clientId: string }) {
       </div>
 
       <div className="grid items-start gap-7 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
-        {/* Ce qui sert au passage : prépayé, goûts, ce que l'équipe a noté. */}
+        {/* Ce qui sert au passage : goûts, prépayé, ce que l'équipe a noté. */}
         <div className="flex flex-col gap-7">
-          <AbonnementsPacksBoard clientId={client.id} />
           <PreferencesBoard client={client} />
+          <AbonnementsPacksBoard clientId={client.id} />
           <NotesBoard client={client} praticiennes={praticiennes} />
         </div>
 

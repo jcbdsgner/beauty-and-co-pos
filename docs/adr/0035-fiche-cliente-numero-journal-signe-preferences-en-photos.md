@@ -30,7 +30,7 @@ des icônes mieux dimensionnées ; et, à côté des préférences, les mêmes p
   `notationSummary()` en donne la lecture texte pour les vues sans photo.
 - **Mise en page** : le bandeau collant porte le numéro et une ligne « d'un coup d'œil »
   (abonnement + statut, pack + prestations restantes, points, visites, total dépensé). La colonne
-  gauche contient Abonnements & Packs, Préférences et Notes internes ; la colonne droite
+  gauche contient Préférences (en tête depuis le 2026-09-27), Abonnements & Packs et Notes internes ; la colonne droite
   Coordonnées, Carte de fidélité, puis Échanges en dernier. Icônes à 20 px dans des pastilles de
   44 px ; l'édition se fait par des boutons « Modifier » (45 px) plutôt que par des crayons de 16 px.
 
