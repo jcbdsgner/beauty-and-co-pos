@@ -8,18 +8,21 @@ import { Logo } from "@/components/ui/atoms/logo";
 import { Button } from "@/components/ui/atoms/button";
 import { FieldLabel } from "@/components/ui/atoms/field-label";
 import { TextInput } from "@/components/ui/atoms/text-input";
+import { SegmentedToggle } from "@/components/ui/molecules/segmented-toggle";
 import { Toast } from "@/components/ui/molecules/toast";
-import { useSession } from "@/lib/session";
+import { useSession, VILLES, type Ville } from "@/lib/session";
 import { CashDrawerDialog } from "@/components/shell/cash-drawer-dialog";
 
 /**
  * Écran de verrouillage — plein écran, bloque l'app jusqu'à réauthentification (ADR 0026),
- * puis fond de caisse à saisir avant d'entrer.
+ * puis fond de caisse à saisir avant d'entrer. La ville (Dakar ou Abidjan) fait partie des
+ * infos de connexion ; la dernière choisie est reprise au verrouillage suivant.
  * Démo : n'importe quelle adresse e-mail et mot de passe suffisent, aucune vérification réelle.
  */
 export function LockScreen() {
-  const { login } = useSession();
+  const { login, ville: lastVille } = useSession();
   const router = useRouter();
+  const [ville, setVille] = useState<Ville>(lastVille);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [revealed, setRevealed] = useState(false);
@@ -58,6 +61,17 @@ export function LockScreen() {
             submit();
           }}
         >
+          <div role="group" aria-labelledby="lock-ville-label">
+            <FieldLabel variant="plain" id="lock-ville-label" className="mb-2">
+              Ville
+            </FieldLabel>
+            <SegmentedToggle
+              options={[...VILLES]}
+              value={ville}
+              onChange={(v) => setVille(v as Ville)}
+            />
+          </div>
+
           <div>
             <FieldLabel variant="plain" htmlFor="lock-email" className="mb-2">
               Adresse e-mail
@@ -124,7 +138,7 @@ export function LockScreen() {
       <CashDrawerDialog open={cashOpen} mode="open" onConfirm={() => {
           // On entre toujours sur l'Accueil, quelle que soit la page où l'on s'était déconnecté.
           router.replace("/");
-          login();
+          login(ville);
         }} onCancel={() => setCashOpen(false)} />
       <Toast message={toast} onDismiss={() => setToast(null)} />
     </div>
