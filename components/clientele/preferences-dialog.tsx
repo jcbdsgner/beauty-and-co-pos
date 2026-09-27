@@ -7,7 +7,6 @@ import { EmptyState } from "@/components/ui/molecules/empty-state";
 import { SegmentedToggle } from "@/components/ui/molecules/segmented-toggle";
 import { NotationTile } from "@/components/clientele/notation-tile";
 import { clientFullName, clientNumberLabel } from "@/lib/data/clientele";
-import { demoPhotoFor } from "@/lib/data/demo-photos";
 import { lastNotationAt, notationTally } from "@/lib/data/notation";
 import { PREFERENCE_DOMAINS, PREFERENCE_DOMAIN_LABEL, type Cliente, type PreferenceDomain } from "@/lib/data/types";
 
@@ -17,7 +16,6 @@ function hasContent(client: Cliente, domain: PreferenceDomain) {
   return (
     notationTally(client, domain).length > 0 ||
     Boolean(client.preferenceNotes?.[domain]) ||
-    (client.preferencePhotos?.[domain]?.length ?? 0) > 0 ||
     (domain === "coiffure" && Boolean(client.hairType || client.colorReference))
   );
 }
@@ -33,8 +31,8 @@ export function defaultPreferenceDomain(client: Cliente): PreferenceDomain {
 /**
  * « Voir les préférences » — a large read-only dialog over the fiche: everything the salon noted
  * about a cliente, one domain at a time. Each « Noter la cliente » answer as the questionnaire's own
- * photo tile, with how many times she took it and which one she took last time; then the domain's
- * free note and reference photos. The domain is controlled by the fiche, so a domain row can open
+ * photo tile, with how many times she took it and which one she took last time; then the team's
+ * free note for the domain — text only. The domain is controlled by the fiche, so a domain row can open
  * straight onto its own tab.
  */
 export function PreferencesDialog({
@@ -54,7 +52,6 @@ export function PreferencesDialog({
   const lastAt = lastNotationAt(client, domain);
   const passages = (client.notationRounds ?? []).filter((r) => tallies.some((t) => (r.choices[t.question.id]?.length ?? 0) > 0)).length;
   const note = client.preferenceNotes?.[domain];
-  const photos = client.preferencePhotos?.[domain] ?? [];
   const basics =
     domain === "coiffure"
       ? [
@@ -131,20 +128,12 @@ export function PreferencesDialog({
               );
             })}
 
-            {(note || photos.length > 0) && (
+            {note && (
               <section className="mt-8" aria-labelledby="pref-notes">
                 <h3 id="pref-notes" className="text-xl font-semibold text-base-content">
                   Noté par l&apos;équipe
                 </h3>
-                {note && <p className="mt-3 max-w-[70ch] whitespace-pre-line text-[17px] leading-relaxed text-base-content/90">{note}</p>}
-                {photos.length > 0 && (
-                  <div className="mt-4 flex flex-wrap gap-4">
-                    {photos.map((ref) => (
-                      // eslint-disable-next-line @next/next/no-img-element -- demo fixture photos
-                      <img key={ref} src={demoPhotoFor(ref)} alt="" className="size-40 rounded-box object-cover" />
-                    ))}
-                  </div>
-                )}
+                <p className="mt-3 max-w-[70ch] whitespace-pre-line text-[17px] leading-relaxed text-base-content/90">{note}</p>
               </section>
             )}
           </>

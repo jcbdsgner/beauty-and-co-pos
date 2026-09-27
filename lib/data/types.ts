@@ -86,8 +86,6 @@ export type Cliente = {
   colorReference?: string;
   /** Texte libre par domaine de préférence ; une note rangée dans un domaine vient s'y ajouter. */
   preferenceNotes?: Partial<Record<PreferenceDomain, string>>;
-  /** Photos de référence par domaine (mock : identifiants de placeholder, pas de vrai upload). */
-  preferencePhotos?: Partial<Record<PreferenceDomain, string[]>>;
   /** Chaque passage de « Noter la cliente », le plus récent d'abord (lib/data/notation.ts). La fiche
    *  en tire combien de fois chaque réponse revient et laquelle a été choisie la dernière fois. */
   notationRounds?: NotationRound[];

@@ -28,7 +28,6 @@ import { TIER_LABEL } from "@/lib/data/tiers";
 import { Button } from "@/components/ui/atoms/button";
 import { Textarea } from "@/components/ui/atoms/textarea";
 import { Select } from "@/components/ui/atoms/select";
-import { demoPhotoFor } from "@/lib/data/demo-photos";
 import { Board, Lane, BoardEmpty } from "@/components/ui/board";
 import { DemoQrBlock } from "@/components/clientele/loyalty-card";
 import { ChannelGlyph } from "@/components/messages/channel-glyph";
@@ -332,9 +331,8 @@ function EditButton({ label, onClick }: { label: string; onClick: () => void }) 
  *  dialogue, domaine par domaine. */
 function PreferencesBoard({ client, onOpen }: { client: Cliente; onOpen: (domain: PreferenceDomain | null) => void }) {
   const preferenceNotes = client.preferenceNotes ?? {};
-  const preferencePhotos = client.preferencePhotos ?? {};
   const domains = PREFERENCE_DOMAINS.filter(
-    (d) => preferenceNotes[d] || preferencePhotos[d]?.length || notationTally(client, d).length > 0,
+    (d) => preferenceNotes[d] || notationTally(client, d).length > 0,
   );
   const hasBasics = Boolean(client.hairType || client.colorReference);
 
@@ -368,7 +366,6 @@ function PreferencesBoard({ client, onOpen }: { client: Cliente; onOpen: (domain
 
 function PreferenceDomainRow({ client, domain, onOpen }: { client: Cliente; domain: PreferenceDomain; onOpen: () => void }) {
   const note = client.preferenceNotes?.[domain];
-  const photos = client.preferencePhotos?.[domain] ?? [];
   const tallies = notationTally(client, domain);
   const passages = (client.notationRounds ?? []).filter((r) => tallies.some((t) => (r.choices[t.question.id]?.length ?? 0) > 0)).length;
   return (
@@ -416,14 +413,6 @@ function PreferenceDomainRow({ client, domain, onOpen }: { client: Cliente; doma
           </div>
         ))}
         {note && <p className="whitespace-pre-line text-[15px] leading-relaxed text-base-content/90">{note}</p>}
-        {photos.length > 0 && (
-          <div className="flex flex-wrap gap-3">
-            {photos.map((ref) => (
-              // eslint-disable-next-line @next/next/no-img-element -- demo fixture photos
-              <img key={ref} src={demoPhotoFor(ref)} alt="" className="size-24 rounded-field object-cover" />
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );

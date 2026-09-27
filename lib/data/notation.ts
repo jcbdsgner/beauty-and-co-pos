@@ -7,7 +7,7 @@
  * the fiche tallies how often each answer came back and which one was picked last time.
  *
  * Photos: files in `public/notation/`, set on each option's `photo`. Polygel and the four lengths
- * borrow one of the five real photos for the demo (see `lib/data/demo-photos.ts`) until theirs arrive;
+ * borrow one of the five real photos for the demo until theirs arrive;
  * the other domains have none yet and show their domain pictogram instead.
  */
 

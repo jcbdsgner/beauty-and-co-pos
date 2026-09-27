@@ -33,7 +33,7 @@ des icônes mieux dimensionnées ; et, à côté des préférences, les mêmes p
   tête. **« Voir les préférences »** ouvre un grand dialogue en lecture seule (`PreferencesDialog`) : un sélecteur de domaine,
   puis chaque question en tuiles photo identiques au questionnaire (`NotationTile`, partagée),
   compteur sur la photo, « Dernière fois » mis en avant, réponses jamais choisies grisées ; puis la
-  note libre et les photos de référence du domaine. Démo : les domaines coiffure, spa, épilation et
+  note libre du domaine — du texte seulement : les photos de référence par domaine (`preferencePhotos`) sont retirées le 2026-09-27. Démo : les domaines coiffure, spa, épilation et
   boisson ont leurs questions (`NOTATION_QUESTIONS`, sans photos — pictogramme du Menu à la place) ;
   le questionnaire du Comptoir ne pose toujours que l'onglerie (`NOTER_QUESTIONS`).
   `notationSummary()` en donne la lecture texte pour les vues sans photo.

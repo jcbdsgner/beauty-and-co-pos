@@ -111,7 +111,7 @@ En-tête collant : retour + avatar + nom + **N° cliente** + Contacter / Nouvell
 - `noteClientViewed(id)` appelé au montage (alimente « Vues récemment »).
 
 #### « Voir les préférences » — grand dialogue — [`components/clientele/preferences-dialog.tsx`](../components/clientele/preferences-dialog.tsx)
-Lecture seule, ouvert depuis la fiche (fermeture par ×). `SegmentedToggle` des 5 domaines (défaut = domaine du dernier passage, ou celui dont on a tapé le nom), puis par question une grille de `NotationTile` ([`notation-tile.tsx`](../components/clientele/notation-tile.tsx), partagée avec le questionnaire) : « ×N » sur la photo, « Dernière fois » bordé, jamais choisi grisé. Puis note libre + photos de référence du domaine.
+Lecture seule, ouvert depuis la fiche (fermeture par ×). `SegmentedToggle` des 5 domaines (défaut = domaine du dernier passage, ou celui dont on a tapé le nom), puis par question une grille de `NotationTile` ([`notation-tile.tsx`](../components/clientele/notation-tile.tsx), partagée avec le questionnaire) : « ×N » sur la photo, « Dernière fois » bordé, jamais choisi grisé. Puis la note libre du domaine (texte seul).
 
 ### Carte de fidélité — `/clientele/[id]/fidelite` — [`components/clientele/fidelite-view.tsx`](../components/clientele/fidelite-view.tsx)
 Plein écran. `LoyaltyCard` ([`components/clientele/loyalty-card.tsx`](../components/clientele/loyalty-card.tsx)) — plaque « carte de crédit » taupe→rose, QR démo dérivé de l'id. Télécharger (canvas), imprimer, envoyer (WhatsApp/e-mail simulés).
