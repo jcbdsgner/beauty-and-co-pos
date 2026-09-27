@@ -30,7 +30,7 @@ des icônes mieux dimensionnées ; et, à côté des préférences, les mêmes p
   questionnaire) sur la ligne du domaine. **Rév. 2026-09-27 : la fiche ne les modifie plus** — plus
   de « Modifier » sur les préférences, elles sont en lecture seule ici. Chaque réponse y porte son
   nombre de fois (« ×3 »), celle de la dernière fois ressort en rose (`highlight-rose`), triée en
-  tête. **« Voir les préférences »** ouvre `/clientele/[id]/preferences` : un sélecteur de domaine,
+  tête. **« Voir les préférences »** ouvre un grand dialogue en lecture seule (`PreferencesDialog`) : un sélecteur de domaine,
   puis chaque question en tuiles photo identiques au questionnaire (`NotationTile`, partagée),
   compteur sur la photo, « Dernière fois » mis en avant, réponses jamais choisies grisées ; puis la
   note libre et les photos de référence du domaine. Démo : les domaines coiffure, spa, épilation et

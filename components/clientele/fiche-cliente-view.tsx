@@ -34,6 +34,7 @@ import { DemoQrBlock } from "@/components/clientele/loyalty-card";
 import { ChannelGlyph } from "@/components/messages/channel-glyph";
 import { AbonnementsPacksBoard } from "@/components/clientele/abonnements-packs-board";
 import { EditCoordonneesDialog } from "@/components/clientele/edit-coordonnees-dialog";
+import { PreferencesDialog, defaultPreferenceDomain } from "@/components/clientele/preferences-dialog";
 import { NotationPhoto } from "@/components/clientele/notation-photo";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { ETHNICITY_LABEL, clientFullName, clientInitial, clientNumberLabel, formatBirthday } from "@/lib/data/clientele";
@@ -95,6 +96,8 @@ function FicheClienteViewInner({ clientId }: { clientId: string }) {
   }, [clientId, clientExists, noteClientViewed]);
 
   const [editCoordOpen, setEditCoordOpen] = useState(false);
+  const [prefsOpen, setPrefsOpen] = useState(false);
+  const [prefsDomain, setPrefsDomain] = useState<PreferenceDomain | null>(null);
 
   if (!client) {
     return (
@@ -181,7 +184,13 @@ function FicheClienteViewInner({ clientId }: { clientId: string }) {
       <div className="grid items-start gap-7 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
         {/* Ce qui sert au passage : goûts, prépayé, ce que l'équipe a noté. */}
         <div className="flex flex-col gap-7">
-          <PreferencesBoard client={client} />
+          <PreferencesBoard
+            client={client}
+            onOpen={(domain) => {
+              setPrefsDomain(domain);
+              setPrefsOpen(true);
+            }}
+          />
           <AbonnementsPacksBoard clientId={client.id} />
           <NotesBoard client={client} praticiennes={praticiennes} />
         </div>
@@ -214,6 +223,13 @@ function FicheClienteViewInner({ clientId }: { clientId: string }) {
       </div>
 
       <EditCoordonneesDialog open={editCoordOpen} client={client} onClose={() => setEditCoordOpen(false)} />
+      <PreferencesDialog
+        open={prefsOpen}
+        client={client}
+        domain={prefsDomain ?? defaultPreferenceDomain(client)}
+        onDomainChange={setPrefsDomain}
+        onClose={() => setPrefsOpen(false)}
+      />
     </div>
   );
 }
@@ -312,8 +328,9 @@ function EditButton({ label, onClick }: { label: string; onClick: () => void }) 
 
 /** Préférences, en lecture seule — toujours visibles, chaque domaine sur sa ligne. Chaque réponse de
  *  « Noter la cliente » dit combien de fois elle revient ; celle de la dernière fois ressort en
- *  rose. « Voir les préférences » ouvre le détail en photos, domaine par domaine. */
-function PreferencesBoard({ client }: { client: Cliente }) {
+ *  rose. « Voir les préférences » (ou le nom d'un domaine) ouvre le détail en photos dans un grand
+ *  dialogue, domaine par domaine. */
+function PreferencesBoard({ client, onOpen }: { client: Cliente; onOpen: (domain: PreferenceDomain | null) => void }) {
   const preferenceNotes = client.preferenceNotes ?? {};
   const preferencePhotos = client.preferencePhotos ?? {};
   const domains = PREFERENCE_DOMAINS.filter(
@@ -325,7 +342,7 @@ function PreferencesBoard({ client }: { client: Cliente }) {
     <Board
       legend="Préférences"
       legendRight={
-        <Button variant="outline" size="sm" icon={<Images className="size-4" />} href={`/clientele/${client.id}/preferences`}>
+        <Button variant="outline" size="sm" icon={<Images className="size-4" />} onClick={() => onOpen(null)}>
           Voir les préférences
         </Button>
       }
@@ -341,7 +358,7 @@ function PreferencesBoard({ client }: { client: Cliente }) {
             </div>
           )}
           {domains.map((domain) => (
-            <PreferenceDomainRow key={domain} client={client} domain={domain} />
+            <PreferenceDomainRow key={domain} client={client} domain={domain} onOpen={() => onOpen(domain)} />
           ))}
         </div>
       )}
@@ -349,7 +366,7 @@ function PreferencesBoard({ client }: { client: Cliente }) {
   );
 }
 
-function PreferenceDomainRow({ client, domain }: { client: Cliente; domain: PreferenceDomain }) {
+function PreferenceDomainRow({ client, domain, onOpen }: { client: Cliente; domain: PreferenceDomain; onOpen: () => void }) {
   const note = client.preferenceNotes?.[domain];
   const photos = client.preferencePhotos?.[domain] ?? [];
   const tallies = notationTally(client, domain);
@@ -357,12 +374,13 @@ function PreferenceDomainRow({ client, domain }: { client: Cliente; domain: Pref
   return (
     <div className="grid grid-cols-[9.5rem_minmax(0,1fr)] gap-5 px-5 py-4">
       <div className="pt-0.5">
-        <Link
-          href={`/clientele/${client.id}/preferences?domaine=${domain}`}
-          className="text-sm font-semibold text-base-content underline-offset-4 hover:underline"
+        <button
+          type="button"
+          onClick={onOpen}
+          className="-my-2 py-2 text-left text-sm font-semibold text-base-content underline-offset-4 hover:underline"
         >
           {PREFERENCE_DOMAIN_LABEL[domain]}
-        </Link>
+        </button>
         {passages > 0 && (
           <p className="mt-0.5 text-xs tabular-nums text-base-content/55">
             Notée {passages} fois
