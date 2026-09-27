@@ -7,8 +7,8 @@ import { CloseButton } from "@/components/ui/atoms/icon-button";
 import { Textarea } from "@/components/ui/atoms/textarea";
 import { Dialog } from "@/components/ui/molecules/dialog";
 import { computeTotals, useAppData } from "@/components/providers/app-data-provider";
-import { NOTATION_QUESTIONS, mergeNotationChoices, type NotationOption, type NotationQuestion } from "@/lib/data/notation";
-import { NotationPhoto } from "@/components/clientele/notation-photo";
+import { NOTER_QUESTIONS, type NotationQuestion } from "@/lib/data/notation";
+import { NotationTile } from "@/components/clientele/notation-tile";
 import { UTILISATEUR } from "@/lib/data/utilisateurs";
 import { cn, formatFcfa } from "@/lib/utils";
 import type { Cliente, Sale } from "@/lib/data/types";
@@ -17,8 +17,8 @@ import type { Cliente, Sale } from "@/lib/data/types";
  * « Noter la cliente » — run from the receipt (« Continuer ») once the sale is cashed in. When a
  * remise was granted, its motif comes first (`needsReason`) — internal, never on the receipt, it
  * lands in `Sale.remiseReason` for Récap des ventes. Then one question per screen,
- * answered by tapping photo tiles (several answers allowed), then a free internal note. Answers
- * fold into her `notationChoices` (shown as photos beside her préférences on the fiche), the note
+ * answered by tapping photo tiles (several answers allowed), then a free internal note. The answers
+ * are kept as one more round in her `notationRounds` (the fiche counts how often each comes back), the note
  * into her internal log, signed by the poste's account; finishing stamps
  * `Sale.clientRatedAt`, which releases the Comptoir. Closing with « × » keeps the answers and
  * leaves the lock in place.
@@ -46,8 +46,8 @@ export function NoterClienteDialog({
   const [withReason] = useState(needsReason);
   const offset = withReason ? 1 : 0;
   const onReasonStep = withReason && stepIndex === 0;
-  const totalSteps = offset + NOTATION_QUESTIONS.length + 1;
-  const question: NotationQuestion | undefined = onReasonStep ? undefined : NOTATION_QUESTIONS[stepIndex - offset];
+  const totalSteps = offset + NOTER_QUESTIONS.length + 1;
+  const question: NotationQuestion | undefined = onReasonStep ? undefined : NOTER_QUESTIONS[stepIndex - offset];
   const reasonOk = reason.trim().length >= 3;
   const selected = question ? (answers[question.id] ?? []) : [];
 
@@ -69,7 +69,8 @@ export function NoterClienteDialog({
 
   function finish() {
     const trimmedNote = note.trim();
-    updateClient(client.id, { notationChoices: mergeNotationChoices(client.notationChoices, answers) });
+    const choices = Object.fromEntries(Object.entries(answers).filter(([, ids]) => ids.length > 0));
+    updateClient(client.id, { notationRounds: [{ at: new Date().toISOString(), choices }, ...(client.notationRounds ?? [])] });
     if (trimmedNote) addClientNote(client.id, { authorId: UTILISATEUR.praticienneId, text: trimmedNote, origin: "encaissement" });
     if (withReason) setDiscountReason(sale.id, reason);
     updateSale(sale.id, { clientRatedAt: new Date().toISOString() });
@@ -135,7 +136,7 @@ export function NoterClienteDialog({
               aria-labelledby="noter-cliente-title"
             >
               {question.options.map((option) => (
-                <PhotoTile
+                <NotationTile
                   key={option.id}
                   question={question}
                   option={option}
@@ -155,7 +156,7 @@ export function NoterClienteDialog({
               Interne uniquement — elle apparaîtra dans le journal de sa fiche. Facultatif.
             </p>
             <dl className="mt-6 flex flex-wrap gap-x-8 gap-y-2 rounded-box bg-base-200 px-5 py-4 text-[15px]">
-              {NOTATION_QUESTIONS.map((q) => (
+              {NOTER_QUESTIONS.map((q) => (
                 <div key={q.id} className="flex gap-2">
                   <dt className="text-base-content/55">{q.noteLabel}</dt>
                   <dd className="font-semibold text-base-content/90">{answerSummary(q)}</dd>
@@ -208,48 +209,3 @@ export function NoterClienteDialog({
   );
 }
 
-function PhotoTile({
-  question,
-  option,
-  selected,
-  onToggle,
-  tall,
-}: {
-  question: NotationQuestion;
-  option: NotationOption;
-  selected: boolean;
-  onToggle: () => void;
-  tall: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      aria-pressed={selected}
-      onClick={onToggle}
-      className={cn(
-        "group relative flex flex-col overflow-hidden rounded-box border-2 bg-base-100 text-left transition duration-200 ease-out active:scale-[0.98]",
-        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
-        selected ? "border-primary shadow-[0_10px_24px_-12px_rgba(136,102,102,0.55)]" : "border-base-300 hover:border-primary/40",
-      )}
-    >
-      <div className={cn("relative w-full overflow-hidden bg-accent", tall ? "aspect-[3/4]" : "aspect-[4/3]")}>
-        <NotationPhoto question={question} option={option} />
-        <span
-          aria-hidden
-          className={cn(
-            "absolute top-3 right-3 flex size-8 items-center justify-center rounded-full border-2 transition duration-200",
-            selected ? "scale-100 border-primary bg-primary text-primary-content" : "scale-90 border-primary/30 bg-white/80 text-transparent",
-          )}
-        >
-          <Check className="size-4" strokeWidth={3} />
-        </span>
-      </div>
-      <div className="flex min-h-16 flex-col justify-center px-4 py-3">
-        <span className={cn("text-[17px] leading-tight", selected ? "font-semibold text-base-content" : "font-medium text-base-content/80")}>
-          {option.label}
-        </span>
-        {option.hint && <span className="mt-0.5 text-[13px] text-base-content/55">{option.hint}</span>}
-      </div>
-    </button>
-  );
-}

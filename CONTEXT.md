@@ -89,7 +89,7 @@ L'historique des notes internes d'une fiche, la plus récente d'abord. Chaque no
 _Avoid_: Commentaires, Mémo
 
 **Préférence**:
-Ce que le salon retient des goûts d'une cliente, sur sa fiche : le **type de cheveux**, la **référence couleur**, puis un texte libre par domaine — **mani-pédi-onglerie**, **coiffure**, **spa**, **épilation** — et les **préférences de boisson**. Des photos de référence peuvent être attachées par domaine. Les réponses de **Noter la cliente** (type d'ongles, longueur…) s'y cumulent et s'affichent en **photos** sur la ligne de leur domaine, les mêmes que sur le questionnaire (ADR 0035). Sur la fiche, les préférences sont **en lecture seule** : elles se remplissent à l'encaissement (Noter la cliente) ; la fiche n'y ajoute rien — une note prise sur la fiche entre toujours au **journal interne**.
+Ce que le salon retient des goûts d'une cliente, sur sa fiche : le **type de cheveux**, la **référence couleur**, puis un texte libre par domaine — **mani-pédi-onglerie**, **coiffure**, **spa**, **épilation** — et les **préférences de boisson**. Des photos de référence peuvent être attachées par domaine. Les réponses de **Noter la cliente** (type d'ongles, longueur…) sont gardées **passage par passage** : la fiche dit combien de fois chacune revient et laquelle a été choisie **la dernière fois** ; « Voir les préférences » les montre en **photos**, domaine par domaine, les mêmes que sur le questionnaire (ADR 0035). Sur la fiche, les préférences sont **en lecture seule** : elles se remplissent à l'encaissement (Noter la cliente) ; la fiche n'y ajoute rien — une note prise sur la fiche entre toujours au **journal interne**.
 _Avoid_: Profil beauté (le libellé d'une carte, pas le concept), Goûts
 
 **Messages**:

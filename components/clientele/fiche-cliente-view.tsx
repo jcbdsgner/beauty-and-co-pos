@@ -20,6 +20,7 @@ import {
   CalendarClock,
   PackageCheck,
   Receipt,
+  Images,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/atoms/avatar";
 import { Badge } from "@/components/ui/atoms/badge";
@@ -41,7 +42,7 @@ import { abonnementsForClient, abonnementStatus, ABONNEMENT_STATUS_LABEL, type A
 import { forfaitById } from "@/lib/data/forfaits";
 import { packPurchasesForClient, packRemainingPrestations } from "@/lib/data/pack-purchases";
 import { packById } from "@/lib/data/packs";
-import { notationForDomain } from "@/lib/data/notation";
+import { notationTally, takenOptions } from "@/lib/data/notation";
 import { UTILISATEUR } from "@/lib/data/utilisateurs";
 import { formatFcfa, cn } from "@/lib/utils";
 import {
@@ -309,18 +310,26 @@ function EditButton({ label, onClick }: { label: string; onClick: () => void }) 
   );
 }
 
-/** Préférences, en lecture seule : chaque domaine sur sa ligne, les réponses de « Noter la cliente »
- *  en photos — les mêmes que sur le questionnaire — puis le texte libre et les photos de référence. */
+/** Préférences, en lecture seule — toujours visibles, chaque domaine sur sa ligne. Chaque réponse de
+ *  « Noter la cliente » dit combien de fois elle revient ; celle de la dernière fois ressort en
+ *  rose. « Voir les préférences » ouvre le détail en photos, domaine par domaine. */
 function PreferencesBoard({ client }: { client: Cliente }) {
   const preferenceNotes = client.preferenceNotes ?? {};
   const preferencePhotos = client.preferencePhotos ?? {};
   const domains = PREFERENCE_DOMAINS.filter(
-    (d) => preferenceNotes[d] || preferencePhotos[d]?.length || notationForDomain(client, d).length > 0,
+    (d) => preferenceNotes[d] || preferencePhotos[d]?.length || notationTally(client, d).length > 0,
   );
   const hasBasics = Boolean(client.hairType || client.colorReference);
 
   return (
-    <Board legend="Préférences">
+    <Board
+      legend="Préférences"
+      legendRight={
+        <Button variant="outline" size="sm" icon={<Images className="size-4" />} href={`/clientele/${client.id}/preferences`}>
+          Voir les préférences
+        </Button>
+      }
+    >
       {!hasBasics && domains.length === 0 ? (
         <BoardEmpty title="Aucune préférence notée" hint="Elles se remplissent à chaque encaissement." />
       ) : (
@@ -343,32 +352,51 @@ function PreferencesBoard({ client }: { client: Cliente }) {
 function PreferenceDomainRow({ client, domain }: { client: Cliente; domain: PreferenceDomain }) {
   const note = client.preferenceNotes?.[domain];
   const photos = client.preferencePhotos?.[domain] ?? [];
-  const notation = notationForDomain(client, domain);
+  const tallies = notationTally(client, domain);
+  const passages = (client.notationRounds ?? []).filter((r) => tallies.some((t) => (r.choices[t.question.id]?.length ?? 0) > 0)).length;
   return (
     <div className="grid grid-cols-[9.5rem_minmax(0,1fr)] gap-5 px-5 py-4">
-      <p className="pt-0.5 text-sm font-semibold text-base-content">{PREFERENCE_DOMAIN_LABEL[domain]}</p>
-      <div className="flex min-w-0 flex-col gap-3">
-        {notation.length > 0 && (
-          <div className="flex flex-wrap gap-x-8 gap-y-3">
-            {notation.map(({ question, options }) => (
-              <div key={question.id}>
-                <p className="mb-2 text-xs font-medium text-base-content/55">{question.noteLabel}</p>
-                <ul className="flex flex-wrap gap-3">
-                  {options.map((option) => (
-                    <li key={option.id} className="w-24">
-                      <div className="relative aspect-square overflow-hidden rounded-box bg-accent">
-                        <NotationPhoto question={question} option={option} />
-                      </div>
-                      <p className="mt-1.5 text-center text-[13px] font-medium leading-tight text-base-content/85">
-                        {option.label}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
+      <div className="pt-0.5">
+        <Link
+          href={`/clientele/${client.id}/preferences?domaine=${domain}`}
+          className="text-sm font-semibold text-base-content underline-offset-4 hover:underline"
+        >
+          {PREFERENCE_DOMAIN_LABEL[domain]}
+        </Link>
+        {passages > 0 && (
+          <p className="mt-0.5 text-xs tabular-nums text-base-content/55">
+            Notée {passages} fois
+          </p>
         )}
+      </div>
+      <div className="flex min-w-0 flex-col gap-3">
+        {tallies.map((tally) => (
+          <div key={tally.question.id} className="flex items-start gap-3">
+            <p className="w-[4.5rem] shrink-0 pt-3.5 text-xs font-medium text-base-content/55">{tally.question.noteLabel}</p>
+            <ul className="flex min-w-0 flex-wrap gap-2">
+              {takenOptions(tally).map(({ option, count, latest }) => (
+                <li
+                  key={option.id}
+                  className={cn(
+                    "flex h-12 items-center gap-2.5 rounded-field border bg-base-100 pr-3 pl-1",
+                    latest ? "highlight-rose" : "border-base-300",
+                  )}
+                >
+                  <span className="relative size-10 shrink-0 overflow-hidden rounded-[calc(var(--radius-field)-4px)] bg-accent">
+                    <NotationPhoto question={tally.question} option={option} />
+                  </span>
+                  <span className="flex flex-col leading-tight">
+                    <span className="text-[15px] font-medium text-base-content">{option.label}</span>
+                    {latest && <span className="text-[11px] font-semibold text-secondary">Dernière fois</span>}
+                  </span>
+                  <span className="text-[15px] font-semibold tabular-nums text-base-content/50" aria-label={`${count} fois`}>
+                    ×{count}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
         {note && <p className="whitespace-pre-line text-[15px] leading-relaxed text-base-content/90">{note}</p>}
         {photos.length > 0 && (
           <div className="flex flex-wrap gap-3">
@@ -493,9 +521,16 @@ function CoordonneesBoard({
 }) {
   const router = useRouter();
   return (
-    <Board legend="Coordonnées" legendRight={<EditButton label="Modifier les coordonnées" onClick={onEdit} />}>
+    <Board legend="Coordonnées">
       <div className="flex flex-col gap-4 p-4">
-        <Row icon={<Phone className="size-5" />} label="Téléphone" value={client.phone} />
+        {/* « Modifier » vit dans la carte, pas dans la légende : les légendes de la fiche restent
+            à hauteur de texte et les cartes s'alignent d'une colonne à l'autre. */}
+        <div className="flex items-start gap-3">
+          <div className="min-w-0 flex-1">
+            <Row icon={<Phone className="size-5" />} label="Téléphone" value={client.phone} />
+          </div>
+          <EditButton label="Modifier les coordonnées" onClick={onEdit} />
+        </div>
         <Row icon={<MessageCircle className="size-5" />} label="WhatsApp" value={client.whatsapp} />
         <Row icon={<Mail className="size-5" />} label="E-mail" value={client.email} />
         <Row icon={<Briefcase className="size-5" />} label="Profession" value={client.profession} />

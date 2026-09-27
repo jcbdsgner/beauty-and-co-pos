@@ -35,6 +35,9 @@ export type ClientTier = "vip" | "platinum" | "gold" | "silver" | null;
 /** Les cinq domaines de préférence tenus sur une fiche cliente — chacun un texte libre + des photos. */
 export type PreferenceDomain = "onglerie" | "coiffure" | "spa" | "epilation" | "boisson";
 
+/** Un passage de « Noter la cliente » : quand, et ce qui a été répondu (id de question → ids d'options). */
+export type NotationRound = { at: string; choices: Record<string, string[]> };
+
 export const PREFERENCE_DOMAINS: PreferenceDomain[] = ["onglerie", "coiffure", "spa", "epilation", "boisson"];
 
 export const PREFERENCE_DOMAIN_LABEL: Record<PreferenceDomain, string> = {
@@ -86,9 +89,9 @@ export type Cliente = {
   preferenceNotes?: Partial<Record<PreferenceDomain, string>>;
   /** Photos de référence par domaine (mock : identifiants de placeholder, pas de vrai upload). */
   preferencePhotos?: Partial<Record<PreferenceDomain, string[]>>;
-  /** Réponses cumulées de « Noter la cliente » : id de question → ids d'options (lib/data/notation.ts),
-   *  les plus récentes d'abord. Affichées en photos à côté des préférences de la fiche. */
-  notationChoices?: Record<string, string[]>;
+  /** Chaque passage de « Noter la cliente », le plus récent d'abord (lib/data/notation.ts). La fiche
+   *  en tire combien de fois chaque réponse revient et laquelle a été choisie la dernière fois. */
+  notationRounds?: NotationRound[];
   /** Journal interne, le plus récent d'abord. */
   notes?: ClientNote[];
   lastVisit?: string;

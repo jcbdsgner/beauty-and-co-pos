@@ -20,6 +20,7 @@
 | `/equipe` | [`app/equipe/page.tsx`](../app/equipe/page.tsx) | *(redirige vers `/planning`, ADR 0020 — n'a jamais été un écran distinct, ADR 0005)* | — |
 | `/clientele` | [`app/clientele/page.tsx`](../app/clientele/page.tsx) | **Clientèle** — recherche d'abord | [`components/clientele/repertoire-view.tsx`](../components/clientele/repertoire-view.tsx) |
 | `/clientele/[id]` | [`app/clientele/[id]/page.tsx`](../app/clientele/[id]/page.tsx) | **Fiche cliente** | [`components/clientele/fiche-cliente-view.tsx`](../components/clientele/fiche-cliente-view.tsx) |
+| `/clientele/[id]/preferences` | [`app/clientele/[id]/preferences/page.tsx`](../app/clientele/[id]/preferences/page.tsx) | **Préférences** par domaine, en photos (lecture seule) | [`components/clientele/preferences-view.tsx`](../components/clientele/preferences-view.tsx) |
 | `/clientele/[id]/fidelite` | [`app/clientele/[id]/fidelite/page.tsx`](../app/clientele/[id]/fidelite/page.tsx) | **Carte de fidélité** (plein écran, imprimable) | [`components/clientele/fidelite-view.tsx`](../components/clientele/fidelite-view.tsx) |
 | `/messages` | [`app/messages/page.tsx`](../app/messages/page.tsx) | **Messages** — messagerie maître-détail (ex-Relances, ADR 0011) | [`components/messages/messages-view.tsx`](../components/messages/messages-view.tsx) |
 | `/cartes-cadeaux` | [`app/cartes-cadeaux/page.tsx`](../app/cartes-cadeaux/page.tsx) | **Cartes cadeaux** — file de commandes à préparer (drill-in Accueil, ADR 0012) | [`components/journee/gift-card-queue.tsx`](../components/journee/gift-card-queue.tsx) |
@@ -105,10 +106,13 @@ Recherche d'abord (mécanisme partagé = `ClientSearchField` / `searchClients`).
 
 ### Fiche cliente — `/clientele/[id]` — [`components/clientele/fiche-cliente-view.tsx`](../components/clientele/fiche-cliente-view.tsx)
 En-tête collant : retour + avatar + nom + **N° cliente** + Contacter / Nouvelle vente, puis ligne « d'un coup d'œil » (`AtAGlance` : abonnement + statut, pack + restantes, points, visites, total dépensé). 2 colonnes de `Board` (ADR 0035) :
-- Gauche : **Abonnements & Packs** ([`abonnements-packs-board.tsx`](../components/clientele/abonnements-packs-board.tsx)), **Préférences** (une ligne par domaine ; réponses de Noter la cliente en photos via [`notation-photo.tsx`](../components/clientele/notation-photo.tsx)), **Notes internes** (saisie + « Par … », journal signé `Cliente.notes`).
+- Gauche : **Préférences** (lecture seule, une ligne par domaine ; chaque réponse de Noter la cliente avec son « ×N », la dernière en rose ; « Voir les préférences » → `/clientele/[id]/preferences`), **Abonnements & Packs** ([`abonnements-packs-board.tsx`](../components/clientele/abonnements-packs-board.tsx)), **Notes internes** (saisie + « Par … », journal signé `Cliente.notes`).
 - Droite : **Coordonnées** (+ praticienne préférée), **Carte de fidélité** (→ `/clientele/[id]/fidelite`), **Échanges** en dernier (2 derniers messages + « Voir tout » → `/messages?client=<id>`).
-- Dialogs : `EditCoordonneesDialog`, `EditPreferencesDialog` (coche aussi les réponses photo) ([`components/clientele/`](../components/clientele/)).
+- Dialog : `EditCoordonneesDialog` ([`components/clientele/`](../components/clientele/)).
 - `noteClientViewed(id)` appelé au montage (alimente « Vues récemment »).
+
+### Préférences — `/clientele/[id]/preferences` — [`components/clientele/preferences-view.tsx`](../components/clientele/preferences-view.tsx)
+Lecture seule. `SegmentedToggle` des 5 domaines (`?domaine=` pour en ouvrir un ; défaut = domaine du dernier passage), puis par question une grille de `NotationTile` ([`notation-tile.tsx`](../components/clientele/notation-tile.tsx), partagée avec le questionnaire) : « ×N » sur la photo, « Dernière fois » bordé, jamais choisi grisé. Puis note libre + photos de référence du domaine.
 
 ### Carte de fidélité — `/clientele/[id]/fidelite` — [`components/clientele/fidelite-view.tsx`](../components/clientele/fidelite-view.tsx)
 Plein écran. `LoyaltyCard` ([`components/clientele/loyalty-card.tsx`](../components/clientele/loyalty-card.tsx)) — plaque « carte de crédit » taupe→rose, QR démo dérivé de l'id. Télécharger (canvas), imprimer, envoyer (WhatsApp/e-mail simulés).

@@ -3,6 +3,13 @@ import type { Cliente, Ethnicity } from "@/lib/data/types";
 export const CLIENTS: Cliente[] = [
   {
     id: "cl-1",
+    notationRounds: [
+      { at: "2026-09-19T16:40:00.000Z", choices: { "ongles-type": ["gel-x"], "ongles-longueur": ["moyens"], "coiffure-style": ["tresses-collees"], "coiffure-soin": ["masque"], "boisson-choix": ["the-menthe"], "boisson-sucre": ["sans-sucre"] } },
+      { at: "2026-08-30T10:20:00.000Z", choices: { "ongles-type": ["gel-x", "french"], "ongles-longueur": ["longs"], "boisson-choix": ["the-menthe"], "boisson-sucre": ["sans-sucre"] } },
+      { at: "2026-08-02T11:15:00.000Z", choices: { "ongles-type": ["capsules", "french"], "ongles-longueur": ["longs"], "coiffure-style": ["tresses-collees"], "coiffure-soin": ["bain-huile"], "boisson-choix": ["bissap"], "boisson-sucre": ["peu-sucre"] } },
+      { at: "2026-06-21T15:00:00.000Z", choices: { "ongles-type": ["vernis-permanent"], "ongles-longueur": ["courts"], "coiffure-style": ["box-braids"], "coiffure-soin": ["masque"], "boisson-choix": ["the-menthe"], "boisson-sucre": ["sans-sucre"] } },
+      { at: "2026-05-09T12:30:00.000Z", choices: { "ongles-type": ["gel-x", "decoration"], "ongles-longueur": ["longs"], "coiffure-style": ["tresses-collees"], "coiffure-soin": ["masque"], "boisson-choix": ["the-menthe"] } },
+    ],
     number: 1006,
     loyaltyCode: "BACO-FID-1042",
     firstName: "Awa",
@@ -26,7 +33,6 @@ export const CLIENTS: Cliente[] = [
     lastVisit: "Il y a 6 j",
     totalSpent: 245000,
     totalVisits: 9,
-    notationChoices: { "ongles-type": ["gel-x", "french"], "ongles-longueur": ["moyens"] },
     notes: [
       { id: "note-cl1-2", at: "2026-09-19T16:40:00.000Z", authorId: "ndiole", origin: "encaissement", text: "A demandé à être prévenue dès qu'un créneau se libère le samedi matin." },
       { id: "note-cl1-1", at: "2026-08-02T11:15:00.000Z", authorId: "bineta", origin: "fiche", text: "Cuir chevelu sensible — éviter les produits mentholés au shampooing." },
@@ -36,6 +42,11 @@ export const CLIENTS: Cliente[] = [
   },
   {
     id: "cl-2",
+    notationRounds: [
+      { at: "2026-09-10T15:05:00.000Z", choices: { "ongles-type": ["vernis-permanent", "decoration"], "ongles-longueur": ["courts"], "boisson-choix": ["cafe"] } },
+      { at: "2026-07-18T11:40:00.000Z", choices: { "ongles-type": ["vernis-permanent"], "ongles-longueur": ["courts"], "spa-massage": ["relaxant"], "spa-pression": ["legere"] } },
+      { at: "2026-06-02T17:10:00.000Z", choices: { "ongles-type": ["french"], "ongles-longueur": ["moyens"], "boisson-choix": ["cafe", "eau"] } },
+    ],
     number: 1009,
     loyaltyCode: "BACO-FID-2170",
     firstName: "Fatou",
@@ -51,7 +62,6 @@ export const CLIENTS: Cliente[] = [
     lastVisit: "1 sem.",
     totalSpent: 98000,
     totalVisits: 4,
-    notationChoices: { "ongles-type": ["vernis-permanent", "decoration"], "ongles-longueur": ["courts"] },
     notes: [
       { id: "note-cl2-1", at: "2026-09-10T15:05:00.000Z", authorId: "aissatou", origin: "encaissement", text: "Vient souvent avec sa fille, prévoir un fauteuil en plus." },
     ],
@@ -116,6 +126,11 @@ export const CLIENTS: Cliente[] = [
   },
   {
     id: "cl-6",
+    notationRounds: [
+      { at: "2026-09-14T10:00:00.000Z", choices: { "spa-massage": ["pierres-chaudes"], "spa-pression": ["forte"], "ongles-type": ["french"], "ongles-longueur": ["moyens"] } },
+      { at: "2026-08-10T10:00:00.000Z", choices: { "spa-massage": ["deep-tissue"], "spa-pression": ["forte"] } },
+      { at: "2026-07-06T10:00:00.000Z", choices: { "spa-massage": ["deep-tissue", "relaxant"], "spa-pression": ["moyenne"], "ongles-type": ["french"], "ongles-longueur": ["courts"] } },
+    ],
     number: 1002,
     loyaltyCode: "BACO-FID-6607",
     firstName: "Awa",
@@ -184,6 +199,11 @@ export const CLIENTS: Cliente[] = [
   },
   {
     id: "cl-9",
+    notationRounds: [
+      { at: "2026-09-20T09:30:00.000Z", choices: { "epilation-methode": ["cire-chaude"], "epilation-zone": ["sourcils", "aisselles"], "boisson-choix": ["gingembre"], "boisson-sucre": ["peu-sucre"] } },
+      { at: "2026-08-22T09:30:00.000Z", choices: { "epilation-methode": ["fil"], "epilation-zone": ["sourcils"], "boisson-choix": ["gingembre"] } },
+      { at: "2026-07-25T09:30:00.000Z", choices: { "epilation-methode": ["cire-chaude"], "epilation-zone": ["sourcils", "jambes"], "boisson-choix": ["bouye"], "boisson-sucre": ["sucre"] } },
+    ],
     number: 1001,
     loyaltyCode: "BACO-FID-9276",
     firstName: "Yacine",
@@ -211,6 +231,10 @@ export const CLIENTS: Cliente[] = [
   },
   {
     id: "cl-10",
+    notationRounds: [
+      { at: "2026-09-05T14:00:00.000Z", choices: { "boisson-choix": ["cafe"], "boisson-sucre": ["sucre"], "coiffure-style": ["brushing"], "coiffure-soin": ["keratine"] } },
+      { at: "2026-08-08T14:00:00.000Z", choices: { "boisson-choix": ["cafe"], "boisson-sucre": ["sucre"], "coiffure-style": ["coupe", "brushing"], "coiffure-soin": ["shampoing"] } },
+    ],
     number: 1008,
     loyaltyCode: "BACO-FID-1038",
     firstName: "Aminata",
