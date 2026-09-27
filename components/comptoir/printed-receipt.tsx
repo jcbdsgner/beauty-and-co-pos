@@ -1,5 +1,5 @@
 import { Logo } from "@/components/ui/atoms/logo";
-import { Barcode } from "@/components/shared/barcode";
+import { QrCode } from "@/components/shared/qr-code";
 import { computeTotals } from "@/components/providers/app-data-provider";
 import { PAYMENT_MODE_LABEL } from "@/components/comptoir/payment-modes";
 import { clientFullName } from "@/lib/data/clientele";
@@ -27,8 +27,8 @@ function Rule({ double = false }: { double?: boolean }) {
 function Row({ label, value, strong = false }: { label: React.ReactNode; value: string; strong?: boolean }) {
   return (
     <div className={strong ? "flex justify-between gap-3 text-[14px] font-bold" : "flex justify-between gap-3"}>
-      <span className="min-w-0">{label}</span>
-      <span className="shrink-0 tabular-nums">{value}</span>
+      <span className="min-w-0 [overflow-wrap:anywhere]">{label}</span>
+      <span className="shrink-0 whitespace-nowrap tabular-nums">{value}</span>
     </div>
   );
 }
@@ -36,7 +36,7 @@ function Row({ label, value, strong = false }: { label: React.ReactNode; value: 
 /**
  * Le reçu tel qu'il sort de l'imprimante thermique 80 mm — et tel que la station Reçu l'affiche
  * en aperçu, à l'identique. 72 mm imprimables dont 5 mm de marge de chaque côté. Noir sur blanc,
- * filets pointillés, logo Beauty & Co en tête, MERCI et code-barres en pied. Même ventilation que `DiscountBreakdown`, sans le motif de remise
+ * filets pointillés, logo Beauty & Co en tête, MERCI et QR code en pied. Même ventilation que `DiscountBreakdown`, sans le motif de remise
  * (interne, ADR 0003).
  */
 export function PrintedReceipt({ sale, client }: { sale: Sale; client?: Cliente }) {
@@ -46,7 +46,7 @@ export function PrintedReceipt({ sale, client }: { sale: Sale; client?: Cliente 
 
   return (
     <div className="w-[72mm] bg-white px-[5mm] py-[5mm] font-[family-name:var(--font-sans)] text-[12px] leading-snug text-black">
-      <Logo size="footer" className="mx-auto h-[17mm] w-[38mm]" />
+      <Logo size="footer" className="mx-auto h-[11mm] w-[25mm]" />
 
       <Rule double />
       <p className="text-center font-[family-name:var(--font-heading)] text-[20px] font-bold tracking-[0.08em]">REÇU</p>
@@ -131,8 +131,8 @@ export function PrintedReceipt({ sale, client }: { sale: Sale; client?: Cliente 
       <p className="text-center font-[family-name:var(--font-heading)] text-[20px] font-bold tracking-[0.08em]">MERCI</p>
       <Rule />
 
-      <Barcode seed={sale.id} />
-      <p className="mt-1 text-center font-mono text-[11px] tracking-[0.2em]">{sale.id.toUpperCase()}</p>
+      <QrCode seed={sale.id} className="mx-auto block" />
+      <p className="mt-1 text-center font-mono text-[10px] tracking-[0.12em] break-all">{sale.id.toUpperCase()}</p>
     </div>
   );
 }

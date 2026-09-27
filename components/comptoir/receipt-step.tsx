@@ -126,14 +126,9 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
           {/* Next */}
           <div className="flex flex-col gap-3">
             {client && (mustRate || needsReason) ? (
-              <div className="flex flex-col gap-1.5">
-                <Button variant="brand" size="xl" className="w-full" onClick={() => setNoterOpen(true)}>
-                  Continuer
-                </Button>
-                <p className="text-center text-xs text-base-content/55">
-                  {needsReason ? "Le motif de la remise, puis ce qu’elle a fait et aimé" : "Ce qu’elle a fait et aimé, puis une note interne"} — avant de passer à la suite.
-                </p>
-              </div>
+              <Button variant="brand" size="xl" className="w-full" onClick={() => setNoterOpen(true)}>
+                Continuer
+              </Button>
             ) : (
               <Button variant="brand" size="xl" className="w-full" icon={<Plus className="size-5" />} onClick={() => openNewTab()}>
                 Nouvelle vente
