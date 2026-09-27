@@ -315,9 +315,13 @@ export type GiftCardOrder = {
   /** ISO date — purchased on the platform (display only, no deadline). */
   orderedAt: string;
   status: GiftCardOrderStatus;
-  /** Set only when `fulfillment === "livraison"`. */
+  /** The person the card is for, when it isn't the buyer — either mode (a retrait card can be
+   *  collected by the buyer and offered on). Absent → the buyer bought it for herself. */
   recipientName?: string;
   recipientPhone?: string;
+  recipientEmail?: string;
+  /** Set only when `fulfillment === "livraison"` — the recipient's address (the buyer's own when
+   *  she bought it for herself). */
   deliveryAddress?: string;
   /** ISO date — set when the order leaves the queue (`remise` / `livree`); shown in the search history. */
   handedOverAt?: string;

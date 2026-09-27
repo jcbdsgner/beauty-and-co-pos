@@ -1,5 +1,5 @@
 import { serviceById } from "@/lib/data/menu";
-import type { CarteCadeau, GiftCardOrder } from "@/lib/data/types";
+import type { CarteCadeau, Cliente, GiftCardOrder } from "@/lib/data/types";
 
 /* ────────────────────────────────────────────────────────────────────────────
    Mock gift-card ledger. A carte cadeau is a PREPAID instrument, not a discount:
@@ -72,6 +72,7 @@ export const GIFT_CARD_ORDERS: GiftCardOrder[] = [
     status: "a_imprimer",
     recipientName: "Aïda Ndiaye",
     recipientPhone: "+221 77 412 08 55",
+    recipientEmail: "aida.ndiaye@example.com",
     deliveryAddress: "Cité Aliou Sow, Almadies, Dakar",
   },
   {
@@ -84,6 +85,7 @@ export const GIFT_CARD_ORDERS: GiftCardOrder[] = [
     status: "a_imprimer",
     recipientName: "Mame Diarra Fall",
     recipientPhone: "+221 78 630 22 14",
+    recipientEmail: "mamediarra.fall@example.com",
     deliveryAddress: "Rue de Ngor, en face de la mosquée, Ngor, Dakar",
   },
   {
@@ -108,6 +110,7 @@ export const GIFT_CARD_ORDERS: GiftCardOrder[] = [
     status: "a_imprimer",
     recipientName: "Ndeye Fatou Sy",
     recipientPhone: "+221771234567",
+    recipientEmail: "ndeyefatou.sy@example.com",
     deliveryAddress: "Résidence Les Filaos, appartement 3B, Point E, Dakar",
   },
   // Déjà sorties de la file — n'apparaissent que dans les résultats de recherche.
@@ -122,6 +125,7 @@ export const GIFT_CARD_ORDERS: GiftCardOrder[] = [
     handedOverAt: "2026-08-21",
     recipientName: "Khady Diop",
     recipientPhone: "+221 77 845 19 02",
+    recipientEmail: "khady.diop@example.com",
     deliveryAddress: "Cité Keur Gorgui, immeuble 12, Dakar",
   },
   {
@@ -133,6 +137,9 @@ export const GIFT_CARD_ORDERS: GiftCardOrder[] = [
     orderedAt: "2026-08-10",
     status: "remise",
     handedOverAt: "2026-08-12",
+    recipientName: "Seynabou Diallo",
+    recipientPhone: "+221 77 560 33 81",
+    recipientEmail: "seynabou.diallo@example.com",
   },
 ];
 
@@ -159,6 +166,17 @@ export function giftCardContent(order: GiftCardOrder): GiftCardContent {
     };
   }
   return { kind: "montant", amount: order.amount };
+}
+
+/** Who an order's card is for. No `recipientName` → the buyer bought it for herself, and her own
+ *  fiche carries the contact details (`self: true`). */
+export type GiftCardRecipient = { self: boolean; name: string; phone?: string; email?: string };
+
+export function giftCardRecipient(order: GiftCardOrder, buyer: Cliente | undefined, buyerName: string): GiftCardRecipient {
+  if (order.recipientName) {
+    return { self: false, name: order.recipientName, phone: order.recipientPhone, email: order.recipientEmail };
+  }
+  return { self: true, name: buyerName, phone: buyer?.phone, email: buyer?.email };
 }
 
 /**

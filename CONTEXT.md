@@ -172,7 +172,7 @@ Un instrument **prépayé** — pas une remise. **Achetée et payée sur une pla
 _Avoid_: Bon cadeau, chèque cadeau, avoir
 
 **Commande de carte cadeau**:
-Une carte cadeau achetée en version imprimée (retrait ou livraison) que le salon doit **préparer** : l'imprimer, puis la remettre à la personne ou la confier à la livraison. Aucun encaissement — c'est déjà payé. Portée : acheteur (toujours une fiche cliente), montant, code du ledger, mode de remise, et — pour une livraison — nom / téléphone / adresse du bénéficiaire. Statuts : à imprimer → imprimée → remise (retrait) / livrée (livraison, = confiée au coursier ; la livraison réelle est hors app). La file des commandes non résolues vit sur la route `/cartes-cadeaux`, atteinte par la cellule « Cartes à préparer » de l'Accueil (ADR 0012).
+Une carte cadeau achetée en version imprimée (retrait ou livraison) que le salon doit **préparer** : l'imprimer, puis la remettre à la personne ou la confier à la livraison. Aucun encaissement — c'est déjà payé. Portée : acheteur (toujours une fiche cliente), montant, code du ledger, mode de remise, le **destinataire** quand ce n'est pas l'acheteur (nom / téléphone / e-mail — retrait comme livraison ; absent = achetée pour elle-même) et, pour une livraison, l'adresse. Statuts : à imprimer → imprimée → remise (retrait) / livrée (livraison, = confiée au coursier ; la livraison réelle est hors app). La file des commandes non résolues vit sur la route `/cartes-cadeaux`, atteinte par la cellule « Cartes à préparer » de l'Accueil (ADR 0012).
 _Avoid_: Bon de commande, ticket carte cadeau, à imprimer (un statut, pas l'objet)
 
 **Forfait**:

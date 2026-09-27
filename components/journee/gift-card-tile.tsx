@@ -2,14 +2,15 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
-import { Check, Printer, Store, Truck } from "lucide-react";
+import { Check, ChevronRight, Printer, Store, Truck } from "lucide-react";
 import { Badge } from "@/components/ui/atoms/badge";
 import { Button } from "@/components/ui/atoms/button";
 import { Barcode } from "@/components/shared/barcode";
 import { Toast } from "@/components/ui/molecules/toast";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { clientFullName } from "@/lib/data/clientele";
-import { giftCardContent } from "@/lib/data/cartes-cadeaux";
+import { giftCardContent, giftCardRecipient } from "@/lib/data/cartes-cadeaux";
+import { GiftCardDetailsDialog } from "@/components/journee/gift-card-details-dialog";
 import { cn, formatFcfa, formatPhone } from "@/lib/utils";
 import type { GiftCardOrder } from "@/lib/data/types";
 
@@ -38,8 +39,10 @@ export const GIFT_CARD_GRID = "grid grid-cols-2 gap-4 xl:grid-cols-3";
 
 /**
  * Une commande de carte cadeau (ADR 0012) — LA tuile, identique sur l'Accueil et dans la file
- * `/cartes-cadeaux`. Haut : mode de remise + code ; qui l'a achetée ; ce que la carte offre
- * (montant, ou prestations — jamais de prix pour une carte prestations) ; où elle va. Pied : les
+ * `/cartes-cadeaux`. Haut : mode de remise + code ; à qui elle est destinée (le titre — l'acheteur
+ * s'il l'a achetée pour lui-même) ; ce que la carte offre (montant, ou prestations — jamais de prix
+ * pour une carte prestations) ; où elle va ; « Détails » ouvre acheteur + destinataire et leurs
+ * coordonnées (`GiftCardDetailsDialog`). Pied : les
  * gestes (Imprimer → Réimprimer + Marquer comme remise/expédiée), ou, une fois sortie de la file,
  * la date de remise en lecture seule. `highlighted` = trouvée par la recherche / le scan : ombre
  * rosée (`highlight-rose`) ; `focusAction` (après un scan) y place le focus.
@@ -58,6 +61,7 @@ export function GiftCardTile({
   const buyer = clients.find((c) => c.id === order.buyerClientId);
   const buyerName = buyer ? clientFullName(buyer) : "Cliente inconnue";
   const [toast, setToast] = useState<string | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   const tileRef = useRef<HTMLElement>(null);
   const actionRef = useRef<HTMLDivElement>(null);
@@ -75,6 +79,7 @@ export function GiftCardTile({
   }, [highlighted, focusAction]);
 
   const content = giftCardContent(order);
+  const recipient = giftCardRecipient(order, buyer, buyerName);
   const isLivraison = order.fulfillment === "livraison";
   const done = order.status === "remise" || order.status === "livree";
   const printed = order.status === "imprimee";
@@ -112,9 +117,12 @@ export function GiftCardTile({
         </div>
 
         <div className="flex min-w-0 flex-col gap-1">
-          <span className="truncate font-[family-name:var(--font-heading)] text-base font-semibold text-base-content">
-            {buyerName}
-          </span>
+          <div className="flex min-w-0 flex-col">
+            <span className="text-xs font-medium text-base-content/55">Destinataire</span>
+            <span className="truncate font-[family-name:var(--font-heading)] text-base font-bold text-base-content">
+              {recipient.name}
+            </span>
+          </div>
           {content.kind === "montant" ? (
             <span className="text-[15px] font-semibold tabular-nums text-primary">{formatFcfa(content.amount)}</span>
           ) : (
@@ -127,9 +135,9 @@ export function GiftCardTile({
         <div className="flex min-w-0 flex-col gap-0.5 text-[13px] leading-snug text-base-content/60">
           {isLivraison ? (
             <>
-              <span className="text-base-content/80">Livrer à {order.recipientName ?? "la destinataire"}</span>
-              {order.recipientPhone && (
-                <span className="whitespace-nowrap tabular-nums">{formatPhone(order.recipientPhone)}</span>
+              <span className="text-base-content/80">Adresse de livraison</span>
+              {recipient.phone && (
+                <span className="whitespace-nowrap tabular-nums">{formatPhone(recipient.phone)}</span>
               )}
               {order.deliveryAddress && <span>{order.deliveryAddress}</span>}
             </>
@@ -143,7 +151,18 @@ export function GiftCardTile({
           )}
         </div>
 
-        <span className="mt-auto text-xs text-base-content/45">{orderedLabel(daysWaiting(order.orderedAt))}</span>
+        <div className="mt-auto -mb-2 flex items-center justify-between gap-2">
+          <span className="text-xs text-base-content/45">{orderedLabel(daysWaiting(order.orderedAt))}</span>
+          <button
+            type="button"
+            onClick={() => setDetailsOpen(true)}
+            aria-haspopup="dialog"
+            className="-mr-2 inline-flex min-h-12 shrink-0 items-center gap-0.5 rounded-field px-2 text-sm font-semibold text-primary transition hover:bg-base-200 active:scale-[0.97] active:bg-base-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            Plus de détails
+            <ChevronRight aria-hidden className="size-4" />
+          </button>
+        </div>
       </div>
 
       <div ref={actionRef} className="flex items-center gap-2 border-t border-base-300 p-3">
@@ -193,6 +212,15 @@ export function GiftCardTile({
           </Button>
         )}
       </div>
+      <GiftCardDetailsDialog
+        open={detailsOpen}
+        onClose={() => setDetailsOpen(false)}
+        order={order}
+        content={content}
+        buyer={buyer}
+        buyerName={buyerName}
+        recipient={recipient}
+      />
       <Toast message={toast} onDismiss={() => setToast(null)} />
     </article>
   );
