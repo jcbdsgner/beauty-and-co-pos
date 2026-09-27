@@ -67,7 +67,7 @@ export function ClientSearchField({ selectedClientId, onSelect, placeholder = "C
           <button
             type="button"
             className={cn(
-              "flex h-14 w-full items-center gap-2 rounded-xl border px-4 text-left text-[15px] transition outline-none focus-visible:ring-4 focus-visible:ring-ring/15",
+              "flex h-14 w-full items-center gap-2 rounded-field border px-4 text-left text-[15px] transition outline-none focus-visible:ring-4 focus-visible:ring-ring/15",
               selected
                 ? "border-border bg-white text-base-content"
                 : "border-dashed border-secondary/40 bg-white text-base-content/45",
@@ -85,7 +85,7 @@ export function ClientSearchField({ selectedClientId, onSelect, placeholder = "C
           align="start"
           sideOffset={8}
           onOpenAutoFocus={(e) => e.preventDefault()}
-          className="z-50 w-[26rem] rounded-2xl border border-border bg-white p-0 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.1)] focus:outline-none"
+          className="z-50 w-[26rem] rounded-box border border-border bg-white p-0 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.1)] focus:outline-none"
         >
           <Command shouldFilter={false} className="border-0">
             <CommandInput value={query} onValueChange={setQuery} placeholder="Nom ou téléphone…" autoFocus />

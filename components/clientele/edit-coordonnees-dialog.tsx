@@ -23,7 +23,7 @@ type EditCoordonneesDialogProps = {
  *  plus anniversaire (jour + mois) and ethnicité. E-mail, anniversaire and ethnicité are required. */
 export function EditCoordonneesDialog({ open, client, onClose }: EditCoordonneesDialogProps) {
   return (
-    <Dialog open={open} labelledBy="edit-coordonnees-title" className="relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl p-6">
+    <Dialog open={open} labelledBy="edit-coordonnees-title" className="relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-box p-6">
       {/* Mounting only while open — and remounting whenever the target client changes — is what
           resets the form fields; no effect needed to sync state back to the latest props. */}
       {open && <EditCoordonneesForm key={client.id} client={client} onClose={onClose} />}

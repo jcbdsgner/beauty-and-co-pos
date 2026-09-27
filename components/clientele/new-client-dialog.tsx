@@ -117,7 +117,7 @@ export function NewClientDialog({ open, onClose, onCreated, initialValues }: New
     <Dialog
       open={open}
       labelledBy="new-client-title"
-      className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl p-6"
+      className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-box p-6"
     >
       <CloseButton onClick={handleClose} />
       <h2 id="new-client-title" className="font-[family-name:var(--font-heading)] font-semibold text-2xl text-base-content">

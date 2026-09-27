@@ -104,14 +104,14 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
 
                 <div className="mt-2 flex items-center gap-2">
                   {/* single-pill quantity stepper — the most-used control on the ticket, so 56px */}
-                  <div className="flex items-center rounded-full border border-border">
+                  <div className="flex items-center rounded-field border border-border">
                     <Tooltip content="Retirer une unité">
                       <button
                         type="button"
                         onClick={() => updateCartQty(sale.id, line.id, Math.max(1, line.qty - 1))}
                         disabled={line.qty <= 1}
                         aria-label={`Moins — ${line.name}`}
-                        className="flex size-14 items-center justify-center rounded-full text-base-content/70 transition active:scale-90 disabled:opacity-30"
+                        className="flex size-14 items-center justify-center rounded-field text-base-content/70 transition active:scale-90 disabled:opacity-30"
                       >
                         <Minus aria-hidden className="size-5" />
                       </button>
@@ -123,7 +123,7 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
                         onClick={() => updateCartQty(sale.id, line.id, Math.min(maxQty, line.qty + 1))}
                         disabled={line.qty >= maxQty}
                         aria-label={`Plus — ${line.name}`}
-                        className="flex size-14 items-center justify-center rounded-full text-base-content/70 transition active:scale-90 disabled:opacity-30"
+                        className="flex size-14 items-center justify-center rounded-field text-base-content/70 transition active:scale-90 disabled:opacity-30"
                       >
                         <Plus aria-hidden className="size-5" />
                       </button>

@@ -12,6 +12,8 @@ type SegmentedToggleProps = {
   options: SegmentOption[];
   value: string;
   onChange: (value: string) => void;
+  /** `sm` — compact (44px) for a page header, beside `Button size="sm"`. */
+  size?: "default" | "sm";
   className?: string;
 };
 
@@ -22,7 +24,7 @@ type SegmentedToggleProps = {
  * so it needed to feel like a physical toggle you flip, not a filter chip you tap — which is
  * exactly what made it look identical to Pills before. Touch target: py-3 (44px).
  */
-export function SegmentedToggle({ options, value, onChange, className }: SegmentedToggleProps) {
+export function SegmentedToggle({ options, value, onChange, size = "default", className }: SegmentedToggleProps) {
   const index = Math.max(0, options.findIndex((o) => o.value === value));
   const count = options.length;
 
@@ -50,7 +52,8 @@ export function SegmentedToggle({ options, value, onChange, className }: Segment
             onClick={() => onChange(option.value)}
             aria-pressed={active}
             className={cn(
-              "relative z-10 flex h-12 items-center justify-center gap-1.5 rounded-selector px-5 text-[15px] font-semibold transition active:scale-[0.97] outline-none",
+              "relative z-10 flex items-center justify-center gap-1.5 rounded-selector font-semibold whitespace-nowrap transition active:scale-[0.97] outline-none",
+              size === "sm" ? "h-9 px-4 text-sm" : "h-12 px-5 text-[15px]",
               active ? "text-base-content" : "text-base-content/55 hover:text-base-content/80",
             )}
           >

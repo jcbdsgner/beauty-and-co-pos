@@ -25,7 +25,7 @@ export function Accordion({ items, type = "single", className }: AccordionProps)
         <AccordionPrimitive.Item
           key={item.value}
           value={item.value}
-          className="overflow-hidden rounded-2xl border border-base-300 bg-white"
+          className="overflow-hidden rounded-box border border-base-300 bg-white"
         >
           <AccordionPrimitive.Header>
             <AccordionPrimitive.Trigger className="group flex min-h-14 w-full items-center justify-between gap-3 p-4 text-left font-semibold text-base-content transition active:bg-base-200">

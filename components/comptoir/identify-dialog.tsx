@@ -54,7 +54,7 @@ export function IdentifyDialog({ open, sale, onClose }: { open: boolean; sale: S
   }
 
   return (
-    <Dialog open={open} labelledBy="identify-title" className="max-w-sm rounded-3xl p-6">
+    <Dialog open={open} labelledBy="identify-title" className="max-w-sm rounded-box p-6">
       <h2
         id="identify-title"
         className="font-[family-name:var(--font-heading)] font-semibold text-xl text-base-content"

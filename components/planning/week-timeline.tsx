@@ -137,7 +137,7 @@ export function WeekTimeline({ weekDays, today, staff, accentIndex, allRows, iso
                       </span>
                       {items.length > 0 && (
                         <span
-                          className="rounded-full px-1.5 py-px text-xs font-bold tabular-nums"
+                          className="rounded-sm px-1.5 py-px text-xs font-bold tabular-nums"
                           style={{ backgroundColor: accent.bg, color: accent.text }}
                         >
                           {items.length} rdv

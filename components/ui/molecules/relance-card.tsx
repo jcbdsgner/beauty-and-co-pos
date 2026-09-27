@@ -29,7 +29,7 @@ type RelanceCardProps = {
  */
 export function RelanceCard({ initial, name, context, message, statusLabel, statusVariant = "warning", tierBadge, actions, className }: RelanceCardProps) {
   return (
-    <div className={cn("flex flex-col gap-4 rounded-2xl border border-border bg-white p-5", className)}>
+    <div className={cn("flex flex-col gap-4 rounded-box border border-border bg-white p-5", className)}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <Avatar initial={initial} size={44} className="bg-accent font-semibold text-secondary" />
@@ -44,7 +44,7 @@ export function RelanceCard({ initial, name, context, message, statusLabel, stat
         {statusLabel && <Badge variant={statusVariant}>{statusLabel}</Badge>}
       </div>
 
-      <blockquote className="rounded-2xl border-l-2 border-secondary/40 bg-base-200 px-4 py-3 text-sm text-base-content/80">
+      <blockquote className="rounded-field border-l-2 border-secondary/40 bg-base-200 px-4 py-3 text-sm text-base-content/80">
         {message}
       </blockquote>
 

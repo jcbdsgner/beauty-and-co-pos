@@ -2,7 +2,8 @@
 
 import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { BoardHeader, ChipFilter } from "@/components/ui/board";
+import { BoardHeader } from "@/components/ui/board";
+import { SegmentedToggle } from "@/components/ui/molecules/segmented-toggle";
 import { PeriodNav } from "@/components/planning/period-nav";
 import { DayTimeline } from "@/components/planning/day-timeline";
 import { WeekTimeline } from "@/components/planning/week-timeline";
@@ -130,7 +131,8 @@ function PlanningBoardInner() {
       <BoardHeader
         section="Planning"
         action={
-          <ChipFilter
+          <SegmentedToggle
+            size="sm"
             value={salonFilter}
             onChange={changeSalonFilter}
             options={[

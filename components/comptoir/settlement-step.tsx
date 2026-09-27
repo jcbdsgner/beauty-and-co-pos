@@ -143,7 +143,7 @@ export function SettlementStep({ sale }: { sale: Sale }) {
     <div className="grid h-full grid-cols-[minmax(0,1fr)_440px] gap-5 p-5">
       <section
         aria-labelledby="reglement-title"
-        className="flex min-h-0 flex-col overflow-hidden rounded-[14px] border border-border bg-white"
+        className="flex min-h-0 flex-col overflow-hidden rounded-box border border-border bg-white"
       >
         {/* Head — back to the panier, what is owed */}
         <div className="flex shrink-0 items-start justify-between gap-6 border-b border-border px-6 pt-5 pb-5">
@@ -172,7 +172,7 @@ export function SettlementStep({ sale }: { sale: Sale }) {
             )}
           </div>
           {split && (
-            <p className="mt-1 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-secondary">
+            <p className="mt-1 rounded-field bg-accent px-4 py-2 text-sm font-semibold text-secondary">
               En {parts.length} fois
             </p>
           )}
@@ -211,7 +211,7 @@ export function SettlementStep({ sale }: { sale: Sale }) {
                       disabled={cashTaken}
                       onClick={() => pickMode(m.value)}
                       className={cn(
-                        "group relative flex h-40 flex-col items-center justify-center gap-3 rounded-2xl border-2 transition active:scale-[0.97]",
+                        "group relative flex h-40 flex-col items-center justify-center gap-3 rounded-box border-2 transition active:scale-[0.97]",
                         m.logo ? "p-3" : "p-4",
                         "outline-none focus-visible:ring-4 focus-visible:ring-ring/20",
                         selected
@@ -256,7 +256,7 @@ export function SettlementStep({ sale }: { sale: Sale }) {
                     <div
                       key={p.id}
                       className={cn(
-                        "rounded-2xl border-2 transition",
+                        "rounded-box border-2 transition",
                         isActive ? "border-primary bg-accent/60" : "border-border bg-white",
                       )}
                     >
@@ -347,7 +347,7 @@ export function SettlementStep({ sale }: { sale: Sale }) {
                   <button
                     type="button"
                     onClick={addPart}
-                    className="flex min-h-14 items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-base-300 text-[15px] font-semibold text-secondary transition active:scale-[0.99] hover:border-primary/40 hover:bg-accent/40"
+                    className="flex min-h-14 items-center justify-center gap-2 rounded-field border-2 border-dashed border-base-300 text-[15px] font-semibold text-secondary transition active:scale-[0.99] hover:border-primary/40 hover:bg-accent/40"
                   >
                     <Plus aria-hidden className="size-4" />
                     {split ? "Ajouter une 3ᵉ part" : "Payer en plusieurs fois"}
@@ -366,7 +366,7 @@ export function SettlementStep({ sale }: { sale: Sale }) {
                     <NumericKeypad value={keypadValue()} onChange={keypadChange} />
                   </div>
                 ) : activeMeta ? (
-                  <div className="flex h-full flex-col items-center justify-center gap-3 rounded-2xl bg-base-200 p-6 text-center">
+                  <div className="flex h-full flex-col items-center justify-center gap-3 rounded-box bg-base-200 p-6 text-center">
                     <PaymentModeGlyph
                       mode={activeMeta.value}
                       className={activeMeta.logo ? "max-h-12 max-w-[8rem]" : "size-12 text-secondary"}
@@ -374,7 +374,7 @@ export function SettlementStep({ sale }: { sale: Sale }) {
                     <p className="text-[15px] font-medium text-base-content/80">{activeMeta.hint}</p>
                   </div>
                 ) : (
-                  <div className="flex h-full items-center justify-center rounded-2xl border-2 border-dashed border-base-300 p-6 text-center text-sm text-base-content/55">
+                  <div className="flex h-full items-center justify-center rounded-box border-2 border-dashed border-base-300 p-6 text-center text-sm text-base-content/55">
                     Touchez le moyen choisi par la cliente.
                   </div>
                 )}

@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 export function Command({ className, ...props }: React.ComponentProps<typeof CommandPrimitive>) {
   return (
     <CommandPrimitive
-      className={cn("flex w-full flex-col overflow-hidden rounded-2xl border border-border bg-white", className)}
+      className={cn("flex w-full flex-col overflow-hidden rounded-box border border-border bg-white", className)}
       {...props}
     />
   );
@@ -68,7 +68,7 @@ export function CommandItem({ className, ...props }: React.ComponentProps<typeof
   return (
     <CommandPrimitive.Item
       className={cn(
-        "flex min-h-14 cursor-pointer items-center gap-3 rounded-xl px-3 text-[15px] text-base-content/90 outline-none",
+        "flex min-h-14 cursor-pointer items-center gap-3 rounded-field px-3 text-[15px] text-base-content/90 outline-none",
         "data-[selected=true]:bg-accent data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-40",
         className,
       )}

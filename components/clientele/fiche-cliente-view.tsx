@@ -142,7 +142,7 @@ function FicheClienteViewInner({ clientId }: { clientId: string }) {
             <Link
               href={backHref}
               aria-label={`Retour à ${backLabel}`}
-              className="flex h-12 shrink-0 items-center gap-1.5 rounded-full border border-base-300 bg-accent pr-4 pl-3 text-sm font-medium text-secondary transition active:scale-[0.97] hover:bg-base-300/60"
+              className="flex h-12 shrink-0 items-center gap-1.5 rounded-field border border-base-300 bg-accent pr-4 pl-3 text-sm font-medium text-secondary transition active:scale-[0.97] hover:bg-base-300/60"
             >
               <ChevronLeft aria-hidden className="size-5" />
               {backLabel}
@@ -369,7 +369,7 @@ function PreferenceDomainRow({ client, domain }: { client: Cliente; domain: Pref
                 <ul className="flex flex-wrap gap-3">
                   {options.map((option) => (
                     <li key={option.id} className="w-24">
-                      <div className="relative aspect-square overflow-hidden rounded-2xl bg-accent">
+                      <div className="relative aspect-square overflow-hidden rounded-box bg-accent">
                         <NotationPhoto question={question} option={option} />
                       </div>
                       <p className="mt-1.5 text-center text-[13px] font-medium leading-tight text-base-content/85">
@@ -387,7 +387,7 @@ function PreferenceDomainRow({ client, domain }: { client: Cliente; domain: Pref
           <div className="flex flex-wrap gap-3">
             {photos.map((ref) => (
               // eslint-disable-next-line @next/next/no-img-element -- demo fixture photos
-              <img key={ref} src={demoPhotoFor(ref)} alt="" className="size-24 rounded-2xl object-cover" />
+              <img key={ref} src={demoPhotoFor(ref)} alt="" className="size-24 rounded-field object-cover" />
             ))}
           </div>
         )}
@@ -541,7 +541,7 @@ function CoordonneesBoard({
           <button
             type="button"
             onClick={() => router.push(`/planning?staff=${preferredStaff.id}`)}
-            className="flex items-center gap-3 rounded-xl text-left transition active:scale-[0.99]"
+            className="flex items-center gap-3 rounded-field text-left transition active:scale-[0.99]"
           >
             <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-accent text-secondary">
               <Sparkles className="size-5" />

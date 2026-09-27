@@ -47,7 +47,7 @@ export function ComptoirPanel() {
             disabled={locked}
             aria-label="Retour à l'accueil"
             title={locked ? "Complétez d'abord la fiche cliente" : "Retour à l'accueil"}
-            className="mb-2 flex h-12 shrink-0 items-center rounded-full bg-white px-4 transition active:scale-[0.97] hover:bg-white/90 disabled:pointer-events-none disabled:opacity-40"
+            className="mb-2 flex h-12 shrink-0 items-center rounded-field bg-white px-4 transition active:scale-[0.97] hover:bg-white/90 disabled:pointer-events-none disabled:opacity-40"
           >
             <Logo size="footer" className="relative h-5 w-[43px] shrink-0" />
           </button>
@@ -61,7 +61,7 @@ export function ComptoirPanel() {
             onClick={() => setCreatingRdv(true)}
             disabled={locked}
             title={locked ? "Complétez d'abord la fiche cliente" : undefined}
-            className="disabled:pointer-events-none disabled:opacity-40 flex h-12 shrink-0 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-primary transition active:scale-[0.97] hover:bg-white/90"
+            className="disabled:pointer-events-none disabled:opacity-40 flex h-12 shrink-0 items-center gap-2 rounded-field bg-white px-4 text-sm font-semibold text-primary transition active:scale-[0.97] hover:bg-white/90"
           >
             <CalendarPlus aria-hidden className="size-4" />
             Créer un rendez-vous
@@ -71,7 +71,7 @@ export function ComptoirPanel() {
             onClick={collapseComptoir}
             disabled={locked}
             title={locked ? "Complétez d'abord la fiche cliente" : undefined}
-            className="disabled:pointer-events-none disabled:opacity-40 flex h-12 shrink-0 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-primary transition active:scale-[0.97] hover:bg-white/90"
+            className="disabled:pointer-events-none disabled:opacity-40 flex h-12 shrink-0 items-center gap-2 rounded-field bg-white px-4 text-sm font-semibold text-primary transition active:scale-[0.97] hover:bg-white/90"
           >
             <ChevronDown aria-hidden className="size-4" />
             Replier
@@ -80,7 +80,7 @@ export function ComptoirPanel() {
       </div>
 
       {/* Cream working sheet */}
-      <div className="min-h-0 flex-1 overflow-hidden rounded-t-2xl bg-base-200">
+      <div className="min-h-0 flex-1 overflow-hidden rounded-t-[var(--radius-box)] bg-base-200">
         {!activeSale ? (
           <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
             <p className="font-[family-name:var(--font-heading)] font-semibold text-xl text-base-content">Aucune vente ouverte</p>

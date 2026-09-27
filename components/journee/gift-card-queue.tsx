@@ -215,7 +215,7 @@ function ScanGiftCardDialog({
   }
 
   return (
-    <Dialog open={open} labelledBy="scan-gift-card-title" className="relative max-w-sm rounded-3xl p-6">
+    <Dialog open={open} labelledBy="scan-gift-card-title" className="relative max-w-sm rounded-box p-6">
       <CloseButton onClick={close} />
       <h2 id="scan-gift-card-title" className="font-[family-name:var(--font-heading)] text-xl font-semibold text-base-content">
         Scanner une carte cadeau

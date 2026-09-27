@@ -23,7 +23,7 @@ export function CatalogueSwitch<T extends string>({
   options: { value: T; label: string }[];
 }) {
   return (
-    <div className="inline-flex shrink-0 gap-1 rounded-full border border-base-300 bg-white p-1 shadow-sm">
+    <div className="inline-flex shrink-0 gap-1 rounded-field border border-base-300 bg-white p-1 shadow-sm">
       {options.map((o) => {
         const active = o.value === value;
         return (
@@ -33,7 +33,7 @@ export function CatalogueSwitch<T extends string>({
             onClick={() => onChange(o.value)}
             aria-pressed={active}
             className={cn(
-              "rounded-full px-5 py-2 text-sm font-semibold transition",
+              "rounded-[calc(var(--radius-field)-0.25rem)] px-5 py-2 text-sm font-semibold transition",
               active ? "bg-primary text-primary-content shadow-sm" : "text-base-content/55 hover:text-base-content",
             )}
           >
@@ -67,7 +67,7 @@ export function CategoryRail({
             onClick={() => onChange(o.value)}
             aria-pressed={active}
             className={cn(
-              "flex shrink-0 items-center justify-between gap-3 rounded-2xl px-4 py-3 text-left text-sm font-semibold transition",
+              "flex shrink-0 items-center justify-between gap-3 rounded-field px-4 py-3 text-left text-sm font-semibold transition",
               active ? "bg-primary text-primary-content shadow-sm" : "text-base-content/65 hover:bg-white hover:shadow-sm",
             )}
           >
@@ -104,7 +104,7 @@ export function SubFilter({
             onClick={() => onChange(o.value)}
             aria-pressed={active}
             className={cn(
-              "shrink-0 rounded-full border px-3.5 py-1.5 text-[0.8rem] font-semibold transition",
+              "shrink-0 rounded-field border px-3.5 py-1.5 text-[0.8rem] font-semibold transition",
               active
                 ? "border-primary bg-primary/10 text-primary"
                 : "border-base-300 bg-white text-base-content/55 hover:border-base-content/20",
@@ -200,7 +200,7 @@ export function StatPill({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold tabular-nums transition",
+        "inline-flex items-center rounded-sm px-3 py-1 text-xs font-semibold tabular-nums transition",
         tone === "error"
           ? active
             ? "bg-error text-error-content"
@@ -219,7 +219,7 @@ export function StatPill({
 
 export function CatalogueEmpty({ title, hint }: { title: string; hint?: string }) {
   return (
-    <div className="flex flex-col items-center gap-1.5 rounded-3xl border border-dashed border-base-300 px-6 py-16 text-center">
+    <div className="flex flex-col items-center gap-1.5 rounded-box border border-dashed border-base-300 px-6 py-16 text-center">
       <p className="font-[family-name:var(--font-heading)] text-sm font-bold uppercase tracking-[0.1em] text-base-content/45">
         {title}
       </p>

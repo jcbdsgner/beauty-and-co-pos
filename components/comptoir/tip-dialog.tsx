@@ -114,7 +114,7 @@ function TipTile({ selected, onClick, children }: { selected: boolean; onClick: 
       aria-pressed={selected}
       onClick={onClick}
       className={cn(
-        "relative flex h-16 items-center justify-center rounded-2xl border-2 font-[family-name:var(--font-heading)] text-2xl font-semibold text-base-content tabular-nums transition active:scale-[0.97]",
+        "relative flex h-16 items-center justify-center rounded-field border-2 font-[family-name:var(--font-heading)] text-2xl font-semibold text-base-content tabular-nums transition active:scale-[0.97]",
         "outline-none focus-visible:ring-4 focus-visible:ring-ring/20",
         selected ? "border-primary bg-accent" : "border-border bg-white hover:border-primary/40",
       )}

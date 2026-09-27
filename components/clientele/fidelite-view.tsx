@@ -127,7 +127,7 @@ export function FideliteView({ clientId }: FideliteViewProps) {
       </div>
 
       <div className="mx-auto flex w-full max-w-lg flex-col gap-4">
-        <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-white p-4 print:hidden">
+        <div className="flex items-center justify-between gap-3 rounded-box border border-border bg-white p-4 print:hidden">
           <div>
             <p className="text-sm font-semibold text-base-content">{clientFullName(client)}</p>
             <p className="text-xs text-base-content/60">

@@ -61,7 +61,7 @@ export function AbonnementsPacksBoard({ clientId }: { clientId: string }) {
                 </Legend>
                 <span
                   className={cn(
-                    "rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-wide",
+                    "rounded-sm px-2 py-0.5 text-xs font-semibold uppercase tracking-wide",
                     STATUS_CLASS[status],
                   )}
                 >
@@ -107,7 +107,7 @@ export function AbonnementsPacksBoard({ clientId }: { clientId: string }) {
                 </Legend>
                 <span
                   className={cn(
-                    "rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-wide",
+                    "rounded-sm px-2 py-0.5 text-xs font-semibold uppercase tracking-wide",
                     remaining.length === 0 ? "bg-base-200 text-base-content/45" : "bg-success/12 text-success",
                   )}
                 >

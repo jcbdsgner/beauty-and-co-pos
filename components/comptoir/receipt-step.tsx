@@ -58,7 +58,7 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
 
   return (
     <div className="grid h-full grid-cols-[minmax(0,1fr)_440px] gap-5 p-5">
-      <section className="flex min-h-0 flex-col overflow-y-auto rounded-[14px] border border-border bg-white">
+      <section className="flex min-h-0 flex-col overflow-y-auto rounded-box border border-border bg-white">
         <div className="mx-auto flex w-full max-w-xl flex-1 flex-col justify-center gap-8 px-8 py-10">
           {/* What happened */}
           <div className="flex items-center gap-5">
@@ -76,10 +76,10 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
 
           {/* How it was paid */}
           {(modes.length > 0 || sale.tip) && (
-            <ul className="flex flex-col divide-y divide-border rounded-2xl border border-border">
+            <ul className="flex flex-col divide-y divide-border rounded-box border border-border">
               {modes.map((m, i) => (
                 <li key={i} className="flex items-center gap-3 px-4 py-3">
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-base-200">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-field bg-base-200">
                     <PaymentModeGlyph
                       mode={m.mode}
                       className={m.mode === "carte" || m.mode === "especes" ? "size-6 text-secondary" : "max-h-6 max-w-8"}
@@ -98,7 +98,7 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
               ))}
               {sale.tip && (
                 <li className="flex items-center gap-3 px-4 py-3">
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-field bg-accent">
                     <PaymentModeGlyph
                       mode={sale.tip.mode}
                       className={sale.tip.mode === "carte" || sale.tip.mode === "especes" ? "size-6 text-secondary" : "max-h-6 max-w-8"}
@@ -170,7 +170,7 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
 
       {/* Le reçu imprimé lui-même, en aperçu sur son fond — c'est aussi la cible d'impression
           (react-to-print lit ce DOM). */}
-      <div className="flex h-full min-h-0 justify-center overflow-y-auto rounded-[14px] border border-border bg-base-200 p-6">
+      <div className="flex h-full min-h-0 justify-center overflow-y-auto rounded-box border border-border bg-base-200 p-6">
         <div ref={receiptRef} className="h-fit shadow-[0_2px_12px_rgb(0_0_0/0.08)]">
           <PrintedReceipt sale={sale} client={client} />
         </div>

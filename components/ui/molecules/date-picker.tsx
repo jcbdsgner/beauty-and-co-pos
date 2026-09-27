@@ -85,7 +85,7 @@ export function DatePicker({ value, onChange, placeholder = "Choisir une date", 
           sideOffset={8}
           // Widened from w-72: the day grid below needed 44px cells (touch minimum), which a
           // 288px-wide popover couldn't fit 7 of without shrinking them back under the minimum.
-          className="z-50 w-[23rem] rounded-2xl border border-base-300 bg-white p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.1)] focus:outline-none"
+          className="z-50 w-[23rem] rounded-box border border-base-300 bg-white p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.1)] focus:outline-none"
         >
           <div className="mb-3 flex items-center justify-between">
             <button

@@ -88,7 +88,7 @@ export function AccueilUnseenReservations({ onOpenReservation }: { onOpenReserva
             className="flex items-center gap-2.5 font-[family-name:var(--font-heading)] text-xl font-semibold text-[#3d2a2a]"
           >
             Réservations reçues
-            <span className="rounded-full bg-base-100 px-2.5 py-0.5 text-sm font-semibold tabular-nums text-secondary">
+            <span className="rounded-sm bg-base-100 px-2.5 py-0.5 text-sm font-semibold tabular-nums text-secondary">
               {rows.length}
             </span>
           </h2>
@@ -97,7 +97,7 @@ export function AccueilUnseenReservations({ onOpenReservation }: { onOpenReserva
         <button
           type="button"
           onClick={() => unseen.forEach((r) => markReservationSeen(r.id))}
-          className="flex h-12 shrink-0 items-center gap-2 rounded-full bg-base-100/55 px-5 text-[15px] font-semibold text-secondary transition hover:bg-base-100 active:scale-[0.98]"
+          className="flex h-12 shrink-0 items-center gap-2 rounded-field bg-base-100/55 px-5 text-[15px] font-semibold text-secondary transition hover:bg-base-100 active:scale-[0.98]"
         >
           <Check aria-hidden className="size-4" />
           Tout marquer comme vu

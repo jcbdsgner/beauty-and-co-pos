@@ -45,7 +45,7 @@ export function FileUpload({ files, onAdd, onRemove, accept = "image/*", multipl
           if (e.dataTransfer.files.length) onAdd(e.dataTransfer.files);
         }}
         className={cn(
-          "flex min-h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-6 text-center transition active:scale-[0.99]",
+          "flex min-h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-box border-2 border-dashed p-6 text-center transition active:scale-[0.99]",
           dragOver ? "border-primary bg-accent" : "border-base-content/30 bg-base-200",
         )}
       >
@@ -65,7 +65,7 @@ export function FileUpload({ files, onAdd, onRemove, accept = "image/*", multipl
       {files.length > 0 && (
         <ul className="grid grid-cols-3 gap-3 sm:grid-cols-4">
           {files.map((file) => (
-            <li key={file.name} className="relative aspect-square overflow-hidden rounded-2xl border border-base-300 bg-white">
+            <li key={file.name} className="relative aspect-square overflow-hidden rounded-box border border-base-300 bg-white">
               {file.previewUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element -- local blob/object URL, not a Next Image asset
                 <img src={file.previewUrl} alt={file.name} className="size-full object-cover" />

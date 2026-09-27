@@ -206,7 +206,7 @@ export function AccueilCalendar({ rows, clients, praticiennes, onOpenReservation
                     width: `calc(${100 / lanes}% - 10px)`,
                   }}
                   className={cn(
-                    "absolute flex flex-col gap-1 overflow-hidden rounded-2xl bg-[var(--cal-card)] px-4 py-3 text-left [&>*]:shrink-0 transition hover:z-10 hover:brightness-[0.97] active:opacity-80",
+                    "absolute flex flex-col gap-1 overflow-hidden rounded-box bg-[var(--cal-card)] px-4 py-3 text-left [&>*]:shrink-0 transition hover:z-10 hover:brightness-[0.97] active:opacity-80",
                     phase === "past" && !awaitingCheckout && "opacity-60",
                   )}
                 >

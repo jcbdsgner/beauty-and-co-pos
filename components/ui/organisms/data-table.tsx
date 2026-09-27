@@ -57,7 +57,7 @@ export function DataTable<T extends Record<string, unknown>>({ columns, rows, ro
   });
 
   return (
-    <div className={cn("overflow-hidden rounded-2xl border border-border bg-white", className)}>
+    <div className={cn("overflow-hidden rounded-box border border-border bg-white", className)}>
       <div
         className="grid gap-2 border-b border-border px-4 py-3"
         style={{ gridTemplateColumns: template }}

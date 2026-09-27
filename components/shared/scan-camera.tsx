@@ -69,7 +69,7 @@ export function ScanCamera({
 
   return (
     <>
-      <div className="relative mt-4 flex aspect-square items-center justify-center overflow-hidden rounded-2xl bg-base-content">
+      <div className="relative mt-4 flex aspect-square items-center justify-center overflow-hidden rounded-box bg-base-content">
         <video ref={videoRef} autoPlay muted playsInline className="absolute inset-0 size-full object-cover opacity-80" />
         <svg viewBox="0 0 200 200" className="relative size-3/4 text-primary">
           <path

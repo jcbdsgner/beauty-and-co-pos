@@ -2,7 +2,7 @@
 
 import { CalendarDays, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/atoms/button";
-import { ChipFilter } from "@/components/ui/board";
+import { SegmentedToggle } from "@/components/ui/molecules/segmented-toggle";
 import { DatePicker } from "@/components/ui/molecules/date-picker";
 import type { PlanningPeriod } from "@/lib/data/planning";
 
@@ -76,7 +76,7 @@ export function PeriodNav({ period, onPeriodChange, date, onDateChange, today }:
             <button
               type="button"
               aria-label="Choisir une date"
-              className="flex h-12 items-center gap-2.5 rounded-full border border-base-300 bg-base-100 pl-4 pr-3.5 text-base-content transition active:scale-[0.98] hover:bg-base-200 data-[state=open]:border-primary"
+              className="flex h-12 items-center gap-2.5 rounded-field border border-base-300 bg-base-100 pl-4 pr-3.5 text-base-content transition active:scale-[0.98] hover:bg-base-200 data-[state=open]:border-primary"
             >
               <CalendarDays aria-hidden className="size-4 shrink-0 text-base-content/55" />
               <span className="font-[family-name:var(--font-heading)] text-[15px] font-semibold">{label(period, date)}</span>
@@ -90,7 +90,8 @@ export function PeriodNav({ period, onPeriodChange, date, onDateChange, today }:
           </Button>
         )}
       </div>
-      <ChipFilter
+      <SegmentedToggle
+        size="sm"
         value={period}
         onChange={(v) => onPeriodChange(v as PlanningPeriod)}
         options={[

@@ -22,7 +22,7 @@ export function CoverageSection({ sale }: { sale: Sale }) {
   if (sale.coverage.length === 0) return null;
 
   return (
-    <div className="overflow-hidden rounded-[10px] border border-success/40 bg-success/[0.06]">
+    <div className="overflow-hidden rounded-field border border-success/40 bg-success/[0.06]">
       <div className="flex items-center justify-between gap-2 px-4 py-3 text-[15px] font-medium text-success">
         <span className="flex items-center gap-2">
           <CheckCircle2 aria-hidden className="size-4" />
@@ -89,7 +89,7 @@ function CoverageGroup({
         <button
           type="button"
           onClick={() => onSet(allChecked ? [] : inCart)}
-          className="-mr-1 inline-flex min-h-11 shrink-0 items-center rounded-full bg-success/15 px-3 text-xs font-semibold text-success transition active:scale-95 hover:bg-success/25"
+          className="-mr-1 inline-flex min-h-11 shrink-0 items-center rounded-field bg-success/15 px-3 text-xs font-semibold text-success transition active:scale-95 hover:bg-success/25"
         >
           {allChecked ? "Tout décocher" : "Tout cocher"}
         </button>

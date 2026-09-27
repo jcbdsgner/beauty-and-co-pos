@@ -64,7 +64,7 @@ export function ComptoirBar() {
       <span className="font-[family-name:var(--font-heading)] text-xl font-bold tabular-nums">
         {activeTotal > 0 ? formatFcfa(activeTotal) : "—"}
       </span>
-      <span className="flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-white/10 px-4 text-sm font-semibold">
+      <span className="flex h-11 shrink-0 items-center gap-1.5 rounded-field bg-white/10 px-4 text-sm font-semibold">
         <ChevronUp aria-hidden className="size-4" />
         Ouvrir le comptoir
       </span>

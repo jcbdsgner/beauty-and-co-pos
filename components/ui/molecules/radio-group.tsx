@@ -27,7 +27,7 @@ export function RadioGroup({ options, value, onChange, className }: RadioGroupPr
           <label
             key={option.value}
             className={cn(
-              "flex min-h-14 cursor-pointer items-center gap-3 rounded-2xl border p-4 transition active:scale-[0.99]",
+              "flex min-h-14 cursor-pointer items-center gap-3 rounded-field border p-4 transition active:scale-[0.99]",
               active
                 ? "border-secondary bg-accent"
                 : "border-border bg-white",

@@ -54,7 +54,7 @@ export function ReplaceStaffDialog({ open, reservation, onCancel, onConfirm }: R
   const allChosen = affected.every((rv) => picks[rv.id]);
 
   return (
-    <Dialog open={open} labelledBy="replace-staff-title" className="max-w-md rounded-3xl p-6">
+    <Dialog open={open} labelledBy="replace-staff-title" className="max-w-md rounded-box p-6">
       <div className="flex flex-col items-center gap-3 text-center">
         <span className="flex size-12 items-center justify-center rounded-full bg-warning/10 text-warning">
           <UserX aria-hidden className="size-6" />
@@ -86,7 +86,7 @@ export function ReplaceStaffDialog({ open, reservation, onCancel, onConfirm }: R
                 {service?.name ?? "Prestation"} · {original?.name ?? "praticienne"} absente
               </FieldLabel>
               {candidates.length === 0 ? (
-                <p className="rounded-xl bg-base-200 px-4 py-3 text-sm text-base-content/55">
+                <p className="rounded-field bg-base-200 px-4 py-3 text-sm text-base-content/55">
                   Aucune autre {original?.role === "coiffeuse" ? "coiffeuse" : "praticienne"} disponible aujourd&apos;hui.
                 </p>
               ) : (

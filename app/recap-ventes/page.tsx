@@ -120,7 +120,7 @@ export default function RecapVentesPage() {
           />
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="rounded-2xl border border-border bg-white p-5">
+            <div className="rounded-box border border-border bg-white p-5">
               <p className="mb-3 text-xs font-semibold tracking-wide text-base-content/55 uppercase">Par mode de paiement</p>
               <ul className="flex flex-col gap-2">
                 {MODE_ORDER.filter((m) => byMode.has(m)).map((m) => (
@@ -131,7 +131,7 @@ export default function RecapVentesPage() {
                 ))}
               </ul>
             </div>
-            <div className="rounded-2xl border border-border bg-white p-5">
+            <div className="rounded-box border border-border bg-white p-5">
               <p className="mb-3 text-xs font-semibold tracking-wide text-base-content/55 uppercase">Par praticienne</p>
               {byStaff.size === 0 ? (
                 <p className="text-sm text-base-content/45">Aucune vente sur la période.</p>
@@ -164,7 +164,7 @@ export default function RecapVentesPage() {
       )}
 
       {selectedSale && (
-        <Dialog open labelledBy="receipt-dialog-title" className="relative max-w-md rounded-3xl p-6">
+        <Dialog open labelledBy="receipt-dialog-title" className="relative max-w-md rounded-box p-6">
           <CloseButton onClick={() => setSelectedSale(null)} />
           <h2 id="receipt-dialog-title" className="sr-only">
             Reçu de la vente

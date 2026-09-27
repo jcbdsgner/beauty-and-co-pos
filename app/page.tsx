@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/atoms/button";
 import { SegmentedToggle } from "@/components/ui/molecules/segmented-toggle";
 import { SearchInput } from "@/components/ui/atoms/search-input";
 import { DatePicker } from "@/components/ui/molecules/date-picker";
-import { BoardHeader, ChipFilter, Legend } from "@/components/ui/board";
+import { BoardHeader, Legend } from "@/components/ui/board";
 import { Separator } from "@/components/ui/atoms/separator";
 import { AppointmentDetailSheet } from "@/components/planning/appointment-detail-sheet";
 import { PriseRdvModal } from "@/components/prise-rdv/prise-rdv-modal";
@@ -165,7 +165,8 @@ function AccueilPageInner() {
         section={greeting}
         action={
           <div className="flex items-center gap-2">
-            <ChipFilter
+            <SegmentedToggle
+              size="sm"
               value={salonFilter}
               onChange={setSalonFilter}
               options={[

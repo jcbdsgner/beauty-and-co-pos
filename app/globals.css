@@ -47,10 +47,12 @@
   --color-error: #b42318;
   --color-error-content: #ffffff;
 
-  /* Shape — friendly but restrained, not pill-round */
-  --radius-selector: 0.75rem;
+  /* Shape — one light radius family, never pill-round (2026-09-27) : controls (buttons,
+     fields, toggles, chips) share the button's 8px; surfaces (cards, dialogs, popovers)
+     12px; small badges 6px (rounded-sm). rounded-full is for true circles only. */
+  --radius-selector: 0.5rem;
   --radius-field: 0.5rem;
-  --radius-box: 0.875rem;
+  --radius-box: 0.75rem;
 
   /* Touch-first counter: every field/button is a large tap target.
      btn/input height = --size-field × 10 → 0.35rem × 10 = 56px. */
@@ -191,7 +193,7 @@
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
-  --radius-card: 0.875rem;
+  --radius-card: 0.75rem;
 
   /* Touch-first counter station: primary controls are XL tap targets. */
   --spacing-tap: 3.5rem;   /* 56px */

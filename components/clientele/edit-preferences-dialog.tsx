@@ -26,7 +26,7 @@ type EditPreferencesDialogProps = {
  *  des photos de référence (mock : pas de vrai upload). */
 export function EditPreferencesDialog({ open, client, onClose }: EditPreferencesDialogProps) {
   return (
-    <Dialog open={open} labelledBy="edit-preferences-title" className="relative flex max-h-[90vh] w-full max-w-xl flex-col rounded-3xl p-0">
+    <Dialog open={open} labelledBy="edit-preferences-title" className="relative flex max-h-[90vh] w-full max-w-xl flex-col rounded-box p-0">
       {open && <EditPreferencesForm key={client.id} client={client} onClose={onClose} />}
     </Dialog>
   );
@@ -112,7 +112,7 @@ function EditPreferencesForm({ client, onClose }: { client: Cliente; onClose: ()
                         aria-pressed={on}
                         onClick={() => toggleChoice(question.id, option.id)}
                         className={cn(
-                          "w-[4.5rem] overflow-hidden rounded-xl border-2 text-center transition active:scale-[0.97]",
+                          "w-[4.5rem] overflow-hidden rounded-field border-2 text-center transition active:scale-[0.97]",
                           on ? "border-primary" : "border-base-300 hover:border-primary/40",
                         )}
                       >
@@ -157,7 +157,7 @@ function EditPreferencesForm({ client, onClose }: { client: Cliente; onClose: ()
               <button
                 type="button"
                 onClick={() => addPhoto(domain)}
-                className="flex size-16 flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-base-content/30 text-base-content/45 transition hover:bg-accent"
+                className="flex size-16 flex-col items-center justify-center gap-1 rounded-field border border-dashed border-base-content/30 text-base-content/45 transition hover:bg-accent"
               >
                 <ImagePlus className="size-5" />
               </button>

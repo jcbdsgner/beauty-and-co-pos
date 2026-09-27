@@ -143,7 +143,7 @@ function AvantageChip({
   badge?: { label: string; tone: "warning" | "neutral" };
 }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-gray-50)] py-1 pr-2.5 pl-2 text-xs font-semibold text-[var(--color-gray-700)] ring-1 ring-inset ring-[var(--board-groove)]">
+    <span className="inline-flex items-center gap-1.5 rounded-sm bg-[var(--color-gray-50)] py-1 pr-2.5 pl-2 text-xs font-semibold text-[var(--color-gray-700)] ring-1 ring-inset ring-[var(--board-groove)]">
       <span className="text-[var(--brand-taupe-muted)]">{icon}</span>
       <span className="tabular-nums">{children}</span>
       {badge && <Badge variant={badge.tone}>{badge.label}</Badge>}
@@ -337,7 +337,7 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
                         <span className="text-sm font-semibold text-[var(--color-gray-900)]">{group.label}</span>
                       )}
                       {group.kind !== "femme" && (
-                        <span className="rounded-full bg-[var(--brand-rose-soft)] px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-[var(--brand-taupe-muted)]">
+                        <span className="rounded-sm bg-[var(--brand-rose-soft)] px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-[var(--brand-taupe-muted)]">
                           {group.kind === "homme" ? "Homme" : "Enfant"}
                         </span>
                       )}
@@ -374,7 +374,7 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
                                 {rv.secondStaffId ? <Users className="size-3" /> : <User className="size-3" />} {staffLabel(rv)}
                               </span>
                               {covered && (
-                                <span className="rounded-full bg-[var(--color-gray-100)] px-2 py-0.5 font-semibold text-[var(--color-gray-600)]">
+                                <span className="rounded-sm bg-[var(--color-gray-100)] px-2 py-0.5 font-semibold text-[var(--color-gray-600)]">
                                   Couverte · {covered.planLabel}
                                 </span>
                               )}

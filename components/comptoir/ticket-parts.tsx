@@ -25,7 +25,7 @@ const TIER_BADGE = {
 
 export function TicketFrame({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("flex h-full min-h-0 flex-col overflow-hidden rounded-[14px] border border-border bg-white", className)}>
+    <div className={cn("flex h-full min-h-0 flex-col overflow-hidden rounded-box border border-border bg-white", className)}>
       {children}
     </div>
   );
@@ -61,7 +61,7 @@ export function TicketHead({
 export function TicketClientCard({ client, onRemove }: { client: Cliente; onRemove?: () => void }) {
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-3 rounded-2xl bg-accent px-3 py-2.5">
+      <div className="flex items-center gap-3 rounded-field bg-accent px-3 py-2.5">
         <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white font-semibold text-secondary">
           {clientInitial(client)}
         </span>
@@ -78,7 +78,7 @@ export function TicketClientCard({ client, onRemove }: { client: Cliente; onRemo
           <button
             type="button"
             onClick={onRemove}
-            className="-mr-1 inline-flex min-h-11 shrink-0 items-center rounded-full bg-white/70 px-3 text-xs font-semibold text-secondary transition active:scale-95 hover:bg-white"
+            className="-mr-1 inline-flex min-h-11 shrink-0 items-center rounded-field bg-white/70 px-3 text-xs font-semibold text-secondary transition active:scale-95 hover:bg-white"
           >
             Retirer
           </button>

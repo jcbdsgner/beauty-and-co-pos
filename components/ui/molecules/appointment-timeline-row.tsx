@@ -42,7 +42,7 @@ export function AppointmentTimelineRow({ start, end, clientName, clientInitial, 
   );
 
   const rowClass = cn(
-    "flex items-start gap-3 rounded-2xl px-3 py-3 transition",
+    "flex items-start gap-3 rounded-field px-3 py-3 transition",
     cancelled && "opacity-55",
     className,
   );
@@ -51,7 +51,7 @@ export function AppointmentTimelineRow({ start, end, clientName, clientInitial, 
     return (
       <div className={rowClass}>
         {onClick ? (
-          <button type="button" onClick={onClick} className="flex min-w-0 flex-1 items-start gap-3 rounded-xl text-left transition active:scale-[0.99] hover:bg-accent/40">
+          <button type="button" onClick={onClick} className="flex min-w-0 flex-1 items-start gap-3 rounded-field text-left transition active:scale-[0.99] hover:bg-accent/40">
             {body}
           </button>
         ) : (

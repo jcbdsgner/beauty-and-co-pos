@@ -62,7 +62,7 @@ export function MessageInbox({ selectedClientId, onSelect, filterClientId, onFil
     });
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[14px] border border-base-300 bg-white">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-box border border-base-300 bg-white">
       <div className="flex shrink-0 flex-col gap-2 border-b border-border p-3">
         <ClientSearchField
           selectedClientId={filterClientId}
@@ -196,7 +196,7 @@ function InboxRow({
       type="button"
       onClick={onSelect}
       className={cn(
-        "flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-left transition active:scale-[0.99]",
+        "flex w-full items-center gap-3 rounded-field px-3 py-2.5 text-left transition active:scale-[0.99]",
         birthday && "highlight-rose border bg-white",
         selected ? "bg-accent" : "hover:bg-base-200",
       )}

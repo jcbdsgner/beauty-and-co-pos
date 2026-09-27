@@ -23,7 +23,7 @@ export function ReceiptView({ sale }: { sale: Sale }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col items-center gap-2 rounded-3xl bg-accent p-6 text-center">
+      <div className="flex flex-col items-center gap-2 rounded-box bg-accent p-6 text-center">
         <CheckCircle2 aria-hidden className="size-10 text-success" />
         <p className="font-semibold text-base-content">Vente encaissée</p>
         {client && <p className="text-sm text-base-content/70">{clientFullName(client)}</p>}
@@ -31,7 +31,7 @@ export function ReceiptView({ sale }: { sale: Sale }) {
 
       <HeroNumber label="Total payé" value={formatFcfa(totals.amountDue)} align="center" size="lg" />
 
-      <div className="flex flex-col gap-1 rounded-2xl border border-base-300 p-4 text-sm">
+      <div className="flex flex-col gap-1 rounded-box border border-base-300 p-4 text-sm">
         {sale.cart.map((line) => (
           <div key={line.id} className="flex items-center justify-between text-base-content/80">
             <span>

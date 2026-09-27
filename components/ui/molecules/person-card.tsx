@@ -25,7 +25,7 @@ export function PersonCard({ initial, name, meta, badge, trailing, online, onCli
       type={onClick ? "button" : undefined}
       onClick={onClick}
       className={cn(
-        "flex w-full items-center gap-4 rounded-2xl border border-border bg-white p-4 text-left transition",
+        "flex w-full items-center gap-4 rounded-box border border-border bg-white p-4 text-left transition",
         onClick && "active:scale-[0.98] hover:border-secondary hover:bg-accent/30 outline-none focus-visible:border-secondary",
         className,
       )}

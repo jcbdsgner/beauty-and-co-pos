@@ -193,7 +193,7 @@ export function MenuPanel({ saleId }: { saleId: string }) {
                   onClick={() => setFilterKey(f.key)}
                   aria-pressed={active}
                   className={cn(
-                    "flex aspect-square shrink-0 flex-col items-center justify-center gap-2 rounded-2xl border p-2.5 text-center text-[15px] leading-[1.15] font-medium transition active:scale-[0.98]",
+                    "flex aspect-square shrink-0 flex-col items-center justify-center gap-2 rounded-box border p-2.5 text-center text-[15px] leading-[1.15] font-medium transition active:scale-[0.98]",
                     active
                       ? "border-transparent bg-primary text-primary-content"
                       : "border-border bg-white text-base-content/80 hover:bg-base-200",
@@ -224,7 +224,7 @@ export function MenuPanel({ saleId }: { saleId: string }) {
                     onClick={() => setFilterKey(f.key)}
                     aria-pressed={active}
                     className={cn(
-                      "inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-[13.5px] font-medium transition active:scale-[0.97]",
+                      "inline-flex h-10 items-center gap-1.5 rounded-field px-4 text-[13.5px] font-medium transition active:scale-[0.97]",
                       active
                         ? "bg-primary text-white"
                         : "border border-border bg-white text-base-content/70 hover:bg-base-200",
@@ -273,7 +273,7 @@ export function MenuPanel({ saleId }: { saleId: string }) {
                       }
                       title={item.name}
                       className={cn(
-                        "relative flex min-h-[120px] flex-col rounded-[14px] border-2 text-left transition active:scale-[0.96]",
+                        "relative flex min-h-[120px] flex-col rounded-box border-2 text-left transition active:scale-[0.96]",
                         soldOut
                           ? "cursor-not-allowed border-border bg-base-200"
                           : inCart > 0
@@ -289,7 +289,7 @@ export function MenuPanel({ saleId }: { saleId: string }) {
                       {showsImage && (
                         <div
                           className={cn(
-                            "relative aspect-[5/3] w-full overflow-hidden rounded-t-[12px] bg-white",
+                            "relative aspect-[5/3] w-full overflow-hidden rounded-t-[var(--radius-box)] bg-white",
                             soldOut && "opacity-60 grayscale",
                           )}
                         >

@@ -38,7 +38,7 @@ export function AdvantagesSection({ sale }: { sale: Sale }) {
       {sale.giftCardApplied && <GiftCardRow sale={sale} />}
 
       {hasPoints && client && (
-        <div className="flex items-center gap-3 rounded-[10px] border border-border py-2 pr-2 pl-4">
+        <div className="flex items-center gap-3 rounded-field border border-border py-2 pr-2 pl-4">
           <Star aria-hidden className="size-4 shrink-0 text-secondary" />
           <span className="min-w-0 flex-1">
             <span className="block text-[15px] font-medium text-base-content">Points fidélité</span>
@@ -85,7 +85,7 @@ function GiftCardRow({ sale }: { sale: Sale }) {
   const covered = gc.coveredServiceIds ?? gc.serviceIds ?? [];
 
   return (
-    <div className="overflow-hidden rounded-[10px] border border-success/40 bg-success/[0.06]">
+    <div className="overflow-hidden rounded-field border border-success/40 bg-success/[0.06]">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
@@ -148,7 +148,7 @@ function GiftCardRow({ sale }: { sale: Sale }) {
           <button
             type="button"
             onClick={() => updateSale(sale.id, { giftCardApplied: null })}
-            className="inline-flex min-h-11 items-center self-start rounded-full bg-success/15 px-3 text-xs font-semibold text-success transition active:scale-95 hover:bg-success/25"
+            className="inline-flex min-h-11 items-center self-start rounded-field bg-success/15 px-3 text-xs font-semibold text-success transition active:scale-95 hover:bg-success/25"
           >
             Ne pas utiliser la carte
           </button>

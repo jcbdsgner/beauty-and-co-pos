@@ -154,7 +154,7 @@ export function NoterClienteDialog({
             <p className="mt-1 text-[15px] text-base-content/55">
               Interne uniquement — elle apparaîtra dans le journal de sa fiche. Facultatif.
             </p>
-            <dl className="mt-6 flex flex-wrap gap-x-8 gap-y-2 rounded-[18px] bg-base-200 px-5 py-4 text-[15px]">
+            <dl className="mt-6 flex flex-wrap gap-x-8 gap-y-2 rounded-box bg-base-200 px-5 py-4 text-[15px]">
               {NOTATION_QUESTIONS.map((q) => (
                 <div key={q.id} className="flex gap-2">
                   <dt className="text-base-content/55">{q.noteLabel}</dt>
@@ -227,7 +227,7 @@ function PhotoTile({
       aria-pressed={selected}
       onClick={onToggle}
       className={cn(
-        "group relative flex flex-col overflow-hidden rounded-[20px] border-2 bg-base-100 text-left transition duration-200 ease-out active:scale-[0.98]",
+        "group relative flex flex-col overflow-hidden rounded-box border-2 bg-base-100 text-left transition duration-200 ease-out active:scale-[0.98]",
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
         selected ? "border-primary shadow-[0_10px_24px_-12px_rgba(136,102,102,0.55)]" : "border-base-300 hover:border-primary/40",
       )}

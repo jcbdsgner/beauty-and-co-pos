@@ -47,13 +47,13 @@ export function ClientPreferences({
     </span>
   );
   return (
-    <div className={cn("rounded-2xl bg-base-200 px-3 py-2", collapsible && "pt-0", collapsed && "pb-0", className)}>
+    <div className={cn("rounded-box bg-base-200 px-3 py-2", collapsible && "pt-0", collapsed && "pb-0", className)}>
       {collapsible ? (
         <button
           type="button"
           aria-expanded={!collapsed}
           onClick={() => setCollapsedFor(collapsed ? null : client.id)}
-          className="-mx-3 flex min-h-11 w-[calc(100%+1.5rem)] items-center justify-between gap-2 rounded-2xl px-3 text-left"
+          className="-mx-3 flex min-h-11 w-[calc(100%+1.5rem)] items-center justify-between gap-2 rounded-field px-3 text-left"
         >
           {title}
           <span className="inline-flex items-center gap-1 text-xs font-semibold text-secondary">

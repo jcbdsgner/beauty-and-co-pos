@@ -25,7 +25,7 @@ export function LoyaltyCard({ name, tier, points, clientId, className }: Loyalty
   return (
     <div
       className={cn(
-        "relative aspect-[1.6/1] w-full overflow-hidden rounded-3xl bg-primary p-6 text-white shadow-[0px_4px_16px_0px_rgba(0,0,0,0.12)]",
+        "relative aspect-[1.6/1] w-full overflow-hidden rounded-box bg-primary p-6 text-white shadow-[0px_4px_16px_0px_rgba(0,0,0,0.12)]",
         className,
       )}
     >
@@ -40,7 +40,7 @@ export function LoyaltyCard({ name, tier, points, clientId, className }: Loyalty
             <p className="mt-0.5 text-xs text-white/50">Carte de fidélité</p>
           </div>
           {tier && (
-            <span className={cn("inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold", TIER_TONE[tier])}>
+            <span className={cn("inline-flex items-center gap-1 rounded-sm px-3 py-1 text-xs font-semibold", TIER_TONE[tier])}>
               <Sparkles aria-hidden className="size-3.5" />
               {TIER_LABEL[tier]}
             </span>

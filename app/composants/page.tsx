@@ -68,8 +68,8 @@ const COMPONENT_COUNT = 50;
 function Swatch({ name, varName, fg = "#171717" }: { name: string; varName: string; fg?: string }) {
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex h-16 items-end rounded-2xl border border-base-300 p-2" style={{ background: `var(${varName})` }}>
-        <span className="rounded-full bg-white/70 px-2 py-0.5 text-xs font-medium" style={{ color: fg }}>
+      <div className="flex h-16 items-end rounded-box border border-base-300 p-2" style={{ background: `var(${varName})` }}>
+        <span className="rounded-sm bg-white/70 px-2 py-0.5 text-xs font-medium" style={{ color: fg }}>
           {varName}
         </span>
       </div>
@@ -140,7 +140,7 @@ export default function DesignSystemPage() {
               <a
                 key={s.id}
                 href={`#${s.id}`}
-                className="rounded-full px-4 py-2 text-sm font-medium text-base-content/70 transition hover:bg-base-200"
+                className="rounded-field px-4 py-2 text-sm font-medium text-base-content/70 transition hover:bg-base-200"
               >
                 {s.label}
               </a>
@@ -202,7 +202,7 @@ export default function DesignSystemPage() {
                 <FieldLabel>Avatar</FieldLabel>
               </div>
               <div className="flex flex-col items-center gap-2">
-                <PhotoPlaceholder className="size-14 rounded-2xl" />
+                <PhotoPlaceholder className="size-14 rounded-field" />
                 <FieldLabel>PhotoPlaceholder</FieldLabel>
               </div>
             </Card>
@@ -228,7 +228,7 @@ export default function DesignSystemPage() {
                 </IconButton>
                 <RoundStepButton direction="decrement" onClick={() => {}} ariaLabel="Diminuer" />
                 <RoundStepButton direction="increment" onClick={() => {}} ariaLabel="Augmenter" />
-                <div className="relative h-10 w-40 rounded-2xl border border-base-300">
+                <div className="relative h-10 w-40 rounded-field border border-base-300">
                   <CloseButton className="static translate-0" />
                 </div>
                 <Tooltip content="Action rapide">
@@ -592,7 +592,7 @@ export default function DesignSystemPage() {
 
             <Card className="p-6">
               <FieldLabel className="mb-3">BoardHeader (avec retour + action)</FieldLabel>
-              <div className="rounded-2xl border border-dashed border-base-300 p-4">
+              <div className="rounded-box border border-dashed border-base-300 p-4">
                 <BoardHeader
                   section="Gestion Produits"
                   backHref="#"
@@ -608,7 +608,7 @@ export default function DesignSystemPage() {
           </section>
       </div>
 
-      <Dialog open={dialogOpen} labelledBy="showcase-dialog-title" className="max-w-md rounded-3xl p-6">
+      <Dialog open={dialogOpen} labelledBy="showcase-dialog-title" className="max-w-md rounded-box p-6">
         <h2 id="showcase-dialog-title" className="font-[family-name:var(--font-heading)] font-semibold text-xl text-base-content">
           Dialog
         </h2>

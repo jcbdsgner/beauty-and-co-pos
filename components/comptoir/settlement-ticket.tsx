@@ -70,7 +70,7 @@ export function SettlementTicket({
         {client ? (
           <TicketClientCard client={client} />
         ) : (
-          <p className="rounded-2xl bg-base-200 px-3 py-3 text-sm text-base-content/55">Vente sans cliente identifiée</p>
+          <p className="rounded-field bg-base-200 px-3 py-3 text-sm text-base-content/55">Vente sans cliente identifiée</p>
         )}
       </TicketHead>
 
@@ -81,7 +81,7 @@ export function SettlementTicket({
             type="button"
             disabled={eligibleIds.length === 0}
             onClick={startNew}
-            className="flex min-h-14 w-full items-center gap-3 rounded-[10px] border border-border px-4 text-left transition active:scale-[0.99] hover:bg-base-200 disabled:pointer-events-none disabled:opacity-50 outline-none focus-visible:ring-4 focus-visible:ring-ring/15"
+            className="flex min-h-14 w-full items-center gap-3 rounded-field border border-border px-4 text-left transition active:scale-[0.99] hover:bg-base-200 disabled:pointer-events-none disabled:opacity-50 outline-none focus-visible:ring-4 focus-visible:ring-ring/15"
           >
             <Percent aria-hidden className="size-4 shrink-0 text-secondary" />
             <span className="flex-1 whitespace-nowrap text-[15px] font-semibold text-secondary">Accorder une remise</span>
@@ -97,7 +97,7 @@ export function SettlementTicket({
             <button
               type="button"
               onClick={() => setDraft({ ...draft, selected: allSelected ? [] : eligibleIds })}
-              className="inline-flex min-h-11 items-center rounded-full bg-accent px-4 text-sm font-semibold text-secondary transition active:scale-95"
+              className="inline-flex min-h-11 items-center rounded-field bg-accent px-4 text-sm font-semibold text-secondary transition active:scale-95"
             >
               {allSelected ? "Tout désélectionner" : "Tout le ticket"}
             </button>
@@ -121,7 +121,7 @@ export function SettlementTicket({
                 <button
                   type="button"
                   onClick={() => startEdit(r)}
-                  className="mt-1.5 inline-flex min-h-9 items-center gap-1 rounded-full bg-accent px-3 text-xs font-semibold text-secondary transition active:scale-95 hover:bg-base-300"
+                  className="mt-1.5 inline-flex min-h-9 items-center gap-1 rounded-field bg-accent px-3 text-xs font-semibold text-secondary transition active:scale-95 hover:bg-base-300"
                 >
                   Remise {r.mode === "pourcentage" ? `−${r.value} %` : `−${formatFcfa(discount)}`}
                   {breakdown && breakdown.lineIds.length > 1 && (
@@ -144,7 +144,7 @@ export function SettlementTicket({
                     aria-checked={picked}
                     onClick={() => toggle(line.id)}
                     className={cn(
-                      "-mx-3 my-1 flex w-[calc(100%+1.5rem)] items-start gap-3 rounded-xl px-3 py-3 text-left transition active:scale-[0.99]",
+                      "-mx-3 my-1 flex w-[calc(100%+1.5rem)] items-start gap-3 rounded-field px-3 py-3 text-left transition active:scale-[0.99]",
                       picked ? "bg-accent" : "hover:bg-base-200",
                     )}
                   >
@@ -282,7 +282,7 @@ function RemiseComposer({
                 setMsg(null);
               }}
               className={cn(
-                "flex h-14 flex-col items-center justify-center rounded-xl border text-base font-bold tabular-nums transition active:scale-[0.97]",
+                "flex h-14 flex-col items-center justify-center rounded-field border text-base font-bold tabular-nums transition active:scale-[0.97]",
                 pct === p ? "border-primary bg-primary text-primary-content" : "border-border bg-white text-base-content",
               )}
             >
@@ -309,7 +309,7 @@ function RemiseComposer({
       )}
 
       {needsManager && !overCeiling && (
-        <div className="flex items-center gap-3 rounded-xl bg-accent p-2.5 pl-3">
+        <div className="flex items-center gap-3 rounded-field bg-accent p-2.5 pl-3">
           <ShieldCheck aria-hidden className="size-4 shrink-0 text-secondary" />
           <span className="flex-1 text-xs font-medium text-secondary">
             Au-delà de {RECEPTIONIST_MAX_PCT} % — code manager

@@ -71,7 +71,7 @@ export function BoardHeader({ section, action, reset, backHref, backLabel = "Ret
       {backHref && (
         <Link
           href={backHref}
-          className="flex h-10 shrink-0 items-center gap-1.5 rounded-full border border-[var(--board-groove)] bg-white px-3.5 text-sm font-medium text-[var(--color-gray-500)] transition active:scale-[0.97] hover:bg-[var(--color-gray-50)]"
+          className="flex h-10 shrink-0 items-center gap-1.5 rounded-field border border-[var(--board-groove)] bg-white px-3.5 text-sm font-medium text-[var(--color-gray-500)] transition active:scale-[0.97] hover:bg-[var(--color-gray-50)]"
         >
           <ChevronLeft aria-hidden className="size-4" />
           {backLabel}
@@ -122,7 +122,7 @@ export function Board({ legend, legendRight, rail, railWidth = 88, tone = "plain
       )}
       <div
         className={cn(
-          "overflow-hidden rounded-[14px] border border-[var(--board-groove)] shadow-[0_0_0_1px_var(--board-groove)]",
+          "overflow-hidden rounded-box border border-[var(--board-groove)] shadow-[0_0_0_1px_var(--board-groove)]",
           BOARD_TONE[tone],
         )}
       >
@@ -243,7 +243,7 @@ export function FlipChip({ value, tone = "neutral", className }: { value: string
   return (
     <span
       className={cn(
-        "inline-flex min-w-[4.5rem] items-center justify-center rounded-[6px] px-2 py-1 text-center font-[family-name:var(--font-heading)] text-xs font-bold uppercase tracking-[0.1em] tabular-nums",
+        "inline-flex min-w-[4.5rem] items-center justify-center rounded-sm px-2 py-1 text-center font-[family-name:var(--font-heading)] text-xs font-bold uppercase tracking-[0.1em] tabular-nums",
         CHIP_TONE[tone],
         flip && "animate-chip-flip",
         className,
@@ -318,7 +318,7 @@ export function WeekStrip({ selected, onSelect, className }: { selected: Date; o
               type="button"
               onClick={() => onSelect(d)}
               className={cn(
-                "flex min-h-[60px] flex-col items-center justify-center gap-0.5 rounded-[10px] border py-2 transition active:scale-[0.97]",
+                "flex min-h-[60px] flex-col items-center justify-center gap-0.5 rounded-field border py-2 transition active:scale-[0.97]",
                 active
                   ? "border-transparent bg-[var(--core-brand-color)] text-black"
                   : "border-[var(--board-groove)] bg-white text-[var(--color-gray-500)] hover:bg-[var(--color-gray-50)]",
@@ -368,7 +368,7 @@ export function ChipFilter({
             onClick={() => onChange(o.value)}
             aria-pressed={active}
             className={cn(
-              "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[0.8rem] font-semibold transition active:scale-[0.97]",
+              "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-field px-3.5 text-[0.8rem] font-semibold transition active:scale-[0.97]",
               active
                 ? "bg-[var(--brand-taupe-muted)] text-white"
                 : "border border-[var(--board-groove)] bg-white text-[var(--color-gray-500)] hover:bg-[var(--color-gray-50)]",

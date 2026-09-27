@@ -63,7 +63,7 @@ export function ConversationPanel({ conversationId }: { conversationId: string }
 
   if (!conv || !client) {
     return (
-      <div className="flex h-full items-center justify-center rounded-[14px] border border-base-300 bg-white">
+      <div className="flex h-full items-center justify-center rounded-box border border-base-300 bg-white">
         <p className="text-sm text-base-content/55">Conversation introuvable.</p>
       </div>
     );
@@ -79,7 +79,7 @@ export function ConversationPanel({ conversationId }: { conversationId: string }
   }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-[14px] border border-base-300 bg-white">
+    <div className="flex h-full flex-col overflow-hidden rounded-box border border-base-300 bg-white">
       {/* Header */}
       <div className="flex shrink-0 items-center gap-3 border-b border-border px-5 py-3.5">
         <Avatar initial={clientInitial(client)} size={40} className="bg-accent font-semibold text-secondary" />
@@ -223,7 +223,7 @@ function Composer({
 function RelanceCard({ message }: { message: Message }) {
   const style = message.styleId ? styleById(message.styleId) : undefined;
   return (
-    <div className="rounded-[10px] border border-base-300 bg-base-200 px-4 py-3">
+    <div className="rounded-field border border-base-300 bg-base-200 px-4 py-3">
       <Legend>
         Relance {message.relanceType ? RELANCE_TYPE_LABEL[message.relanceType].toLowerCase() : ""} · envoyée{" "}
         {FULL_DATE_FMT.format(new Date(message.at))}
@@ -248,7 +248,7 @@ function PendingRelance({ message, paused }: { message: Message; paused: boolean
   return (
     <div
       className={cn(
-        "rounded-[10px] border border-dashed border-base-300 bg-base-200 px-4 py-3 text-sm text-base-content/55 opacity-70",
+        "rounded-field border border-dashed border-base-300 bg-base-200 px-4 py-3 text-sm text-base-content/55 opacity-70",
       )}
     >
       {paused ? (

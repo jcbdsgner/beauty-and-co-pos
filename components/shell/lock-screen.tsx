@@ -44,9 +44,9 @@ export function LockScreen() {
         className="object-cover"
       />
 
-      <Logo className="absolute left-10 top-10 h-16 w-16 shrink-0 overflow-hidden rounded-2xl shadow-lg" />
+      <Logo className="absolute left-10 top-10 h-16 w-16 shrink-0 overflow-hidden rounded-box shadow-lg" />
 
-      <div className="relative z-10 mr-[clamp(2.5rem,17%,20rem)] flex w-full max-w-[540px] flex-col gap-8 rounded-[2.5rem] bg-base-100 px-10 py-11 shadow-2xl">
+      <div className="relative z-10 mr-[clamp(2.5rem,17%,20rem)] flex w-full max-w-[540px] flex-col gap-8 rounded-box bg-base-100 px-10 py-11 shadow-2xl">
         <div>
           <p className="text-base text-base-content/70">
             Bienvenue chez <span className="font-semibold text-primary">Beauty and Co</span>
