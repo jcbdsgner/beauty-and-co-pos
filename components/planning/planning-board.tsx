@@ -50,6 +50,7 @@ function PlanningBoardInner() {
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [period, setPeriod] = useState<PlanningPeriod>("jour");
   const [salonFilter, setSalonFilter] = useState<string>(POSTE_SALON_ID);
+  const [metierFilter, setMetierFilter] = useState<MetierFilter>("tous");
   const [visibleIds, setVisibleIds] = useState<Set<string> | null>(null);
   const [detail, setDetail] = useState<RendezVous | null>(null);
 
@@ -73,10 +74,15 @@ function PlanningBoardInner() {
   const accentIndex = useMemo(() => new Map(schedulable.map((p, i) => [p.id, i] as const)), [schedulable]);
 
   // Une praticienne n'est jamais aux deux salons à la fois (ADR 0028) : le filtre de salon réduit
-  // l'équipe planifiable en amont de l'isolement d'une ligne.
+  // l'équipe planifiable en amont de l'isolement d'une ligne, tout comme le filtre de métier.
   const bySalon = useMemo(
-    () => (salonFilter === TOUS_LES_SALONS ? schedulable : schedulable.filter((p) => p.salonId === salonFilter)),
-    [schedulable, salonFilter],
+    () =>
+      schedulable.filter(
+        (p) =>
+          (salonFilter === TOUS_LES_SALONS || p.salonId === salonFilter) &&
+          (metierFilter === "tous" || p.role === metierFilter),
+      ),
+    [schedulable, salonFilter, metierFilter],
   );
 
   const allIds = useMemo(() => new Set(bySalon.map((p) => p.id)), [bySalon]);
@@ -94,6 +100,10 @@ function PlanningBoardInner() {
   function changeSalonFilter(id: string) {
     setSalonFilter(id);
     setVisibleIds(null); // une ligne isolée d'un salon peut ne plus exister dans l'autre
+  }
+  function changeMetierFilter(value: string) {
+    setMetierFilter(value as MetierFilter);
+    setVisibleIds(null);
   }
 
   const weekDays = useMemo(() => {
@@ -131,15 +141,18 @@ function PlanningBoardInner() {
       <BoardHeader
         section="Planning"
         action={
-          <SegmentedToggle
-            size="sm"
-            value={salonFilter}
-            onChange={changeSalonFilter}
-            options={[
-              { value: TOUS_LES_SALONS, label: "Tous les salons" },
-              ...SALONS.map((s) => ({ value: s.id, label: s.name })),
-            ]}
-          />
+          <div className="flex items-center gap-3">
+            <SegmentedToggle size="sm" value={metierFilter} onChange={changeMetierFilter} options={METIER_OPTIONS} />
+            <SegmentedToggle
+              size="sm"
+              value={salonFilter}
+              onChange={changeSalonFilter}
+              options={[
+                { value: TOUS_LES_SALONS, label: "Tous les salons" },
+                ...SALONS.map((s) => ({ value: s.id, label: s.name })),
+              ]}
+            />
+          </div>
         }
       />
 
