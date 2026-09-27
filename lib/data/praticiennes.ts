@@ -23,7 +23,8 @@ export function isWorkingOn(p: Praticienne, d: Date): boolean {
 }
 
 /** Sea Plaza ouvre 7j/7, Almadies du mardi au dimanche (fermé le lundi, cf. `Salon.closedDays`),
- *  de 10h à 22h (aucun rendez-vous ne commence après 20h) ; le dimanche est le jour le plus chargé — toute l'équipe y travaille. */
+ *  de 10h à 22h (aucun rendez-vous ne commence après 20h) ; chaque jour d'ouverture, une coiffeuse et une
+ *  esthéticienne par salon ferment à 22h (sauf l'esthéticienne de Sea Plaza le samedi — personne ce jour-là — et d'Almadies le dimanche) ; le dimanche est le jour le plus chargé — toute l'équipe y travaille. */
 export const PRATICIENNES: Praticienne[] = [
   {
     id: "bineta",
@@ -34,7 +35,7 @@ export const PRATICIENNES: Praticienne[] = [
     salonId: "sea-plaza-bco",
     weeklySchedule: {
       mar: { start: "10:00", end: "18:00" },
-      mer: { start: "10:00", end: "18:00" },
+      mer: { start: "10:00", end: "22:00" },
       jeu: { start: "10:00", end: "18:00" },
       ven: { start: "10:00", end: "18:00" },
       sam: { start: "10:00", end: "18:00" },
@@ -49,12 +50,12 @@ export const PRATICIENNES: Praticienne[] = [
     photoUrl: "/images/equipe/fatou.jpg",
     salonId: "sea-plaza-bco",
     weeklySchedule: {
-      lun: { start: "10:00", end: "19:00" },
-      mar: { start: "10:00", end: "19:00" },
-      jeu: { start: "10:00", end: "19:00" },
-      ven: { start: "10:00", end: "19:00" },
-      sam: { start: "10:00", end: "19:00" },
-      dim: { start: "10:00", end: "19:00" },
+      lun: { start: "10:00", end: "22:00" },
+      mar: { start: "10:00", end: "22:00" },
+      jeu: { start: "10:00", end: "22:00" },
+      ven: { start: "10:00", end: "22:00" },
+      sam: { start: "10:00", end: "22:00" },
+      dim: { start: "10:00", end: "22:00" },
     },
   },
   {
@@ -80,11 +81,11 @@ export const PRATICIENNES: Praticienne[] = [
     photoUrl: "/images/equipe/henry.jpg",
     salonId: "almadies",
     weeklySchedule: {
-      mer: { start: "10:00", end: "17:00" },
-      jeu: { start: "10:00", end: "17:00" },
-      ven: { start: "10:00", end: "17:00" },
-      sam: { start: "10:00", end: "17:00" },
-      dim: { start: "10:00", end: "17:00" },
+      mer: { start: "10:00", end: "22:00" },
+      jeu: { start: "10:00", end: "22:00" },
+      ven: { start: "10:00", end: "22:00" },
+      sam: { start: "10:00", end: "22:00" },
+      dim: { start: "10:00", end: "22:00" },
     },
   },
   {
@@ -95,12 +96,12 @@ export const PRATICIENNES: Praticienne[] = [
     photoUrl: "/images/equipe/marie-dominique.jpg",
     salonId: "sea-plaza-bco",
     weeklySchedule: {
-      lun: { start: "11:00", end: "19:00" },
-      mar: { start: "11:00", end: "19:00" },
-      mer: { start: "11:00", end: "19:00" },
-      jeu: { start: "11:00", end: "19:00" },
-      ven: { start: "11:00", end: "19:00" },
-      dim: { start: "11:00", end: "19:00" },
+      lun: { start: "11:00", end: "22:00" },
+      mar: { start: "11:00", end: "22:00" },
+      mer: { start: "11:00", end: "22:00" },
+      jeu: { start: "11:00", end: "22:00" },
+      ven: { start: "11:00", end: "22:00" },
+      dim: { start: "11:00", end: "22:00" },
     },
   },
   {
@@ -111,11 +112,11 @@ export const PRATICIENNES: Praticienne[] = [
     photoUrl: "/images/equipe/adja.jpg",
     salonId: "almadies",
     weeklySchedule: {
-      mar: { start: "10:00", end: "18:30" },
-      mer: { start: "10:00", end: "18:30" },
-      jeu: { start: "10:00", end: "18:30" },
-      ven: { start: "10:00", end: "18:30" },
-      sam: { start: "10:00", end: "18:30" },
+      mar: { start: "10:00", end: "22:00" },
+      mer: { start: "10:00", end: "22:00" },
+      jeu: { start: "10:00", end: "22:00" },
+      ven: { start: "10:00", end: "22:00" },
+      sam: { start: "10:00", end: "22:00" },
       dim: { start: "10:00", end: "18:30" },
     },
   },
@@ -127,7 +128,7 @@ export const PRATICIENNES: Praticienne[] = [
     photoUrl: "/images/equipe/michelle.jpg",
     salonId: "almadies",
     weeklySchedule: {
-      mar: { start: "10:00", end: "16:30" },
+      mar: { start: "10:00", end: "22:00" },
       mer: { start: "10:00", end: "16:30" },
       jeu: { start: "10:00", end: "16:30" },
       ven: { start: "10:00", end: "16:30" },
