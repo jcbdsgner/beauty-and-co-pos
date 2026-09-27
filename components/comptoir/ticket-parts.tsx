@@ -81,7 +81,7 @@ export function TicketClientCard({ client, onRemove }: { client: Cliente; onRemo
           href={`/clientele/${client.id}`}
           className="inline-flex min-h-11 shrink-0 items-center rounded-field bg-white/70 px-3 text-xs font-semibold text-secondary transition active:scale-95 hover:bg-white"
         >
-          Fiche
+          Voir plus
         </Link>
         {onRemove && (
           <Tooltip content="Retirer la cliente">
