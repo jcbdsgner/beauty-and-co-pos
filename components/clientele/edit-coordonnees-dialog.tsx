@@ -9,7 +9,9 @@ import { Select } from "@/components/ui/atoms/select";
 import { Button } from "@/components/ui/atoms/button";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { PAYS_DEFAUT, PAYS_OPTIONS } from "@/lib/data/pays";
-import type { Cliente } from "@/lib/data/types";
+import { ETHNICITY_OPTIONS } from "@/lib/data/clientele";
+import { BirthdaySelect, birthdayFromParts, birthdayParts } from "@/components/shared/birthday-select";
+import type { Cliente, Ethnicity } from "@/lib/data/types";
 
 type EditCoordonneesDialogProps = {
   open: boolean;
@@ -17,10 +19,11 @@ type EditCoordonneesDialogProps = {
   onClose: () => void;
 };
 
-/** Edit dialog for the Fiche cliente's "Coordonnées" card — phone/WhatsApp/email/address/profession. */
+/** Edit dialog for the Fiche cliente's "Coordonnées" card — phone/WhatsApp/email/address/profession,
+ *  plus anniversaire (jour + mois) and ethnicité. E-mail, anniversaire and ethnicité are required. */
 export function EditCoordonneesDialog({ open, client, onClose }: EditCoordonneesDialogProps) {
   return (
-    <Dialog open={open} labelledBy="edit-coordonnees-title" className="relative w-full max-w-md rounded-3xl p-6">
+    <Dialog open={open} labelledBy="edit-coordonnees-title" className="relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl p-6">
       {/* Mounting only while open — and remounting whenever the target client changes — is what
           resets the form fields; no effect needed to sync state back to the latest props. */}
       {open && <EditCoordonneesForm key={client.id} client={client} onClose={onClose} />}
@@ -32,21 +35,27 @@ function EditCoordonneesForm({ client, onClose }: { client: Cliente; onClose: ()
   const { updateClient } = useAppData();
   const [phone, setPhone] = useState(client.phone);
   const [whatsapp, setWhatsapp] = useState(client.whatsapp ?? "");
-  const [email, setEmail] = useState(client.email ?? "");
+  const [email, setEmail] = useState(client.email);
   const [address, setAddress] = useState(client.address ?? "");
   const [residenceCountry, setResidenceCountry] = useState(client.residenceCountry || PAYS_DEFAUT);
   const [profession, setProfession] = useState(client.profession ?? "");
+  const [ethnicity, setEthnicity] = useState<string>(client.ethnicity);
+  const [birthday, setBirthday] = useState(() => birthdayParts(client.birthday));
+  const birthdayValue = birthdayFromParts(birthday);
+  const canSave = Boolean(phone.trim() && email.trim() && residenceCountry.trim() && ethnicity && birthdayValue);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!phone.trim() || !residenceCountry.trim()) return;
+    if (!canSave) return;
     updateClient(client.id, {
       phone: phone.trim(),
       whatsapp: whatsapp.trim() || undefined,
-      email: email.trim() || undefined,
+      email: email.trim(),
       address: address.trim() || undefined,
       residenceCountry,
       profession: profession.trim() || undefined,
+      ethnicity: ethnicity as Ethnicity,
+      birthday: birthdayValue!,
     });
     onClose();
   }
@@ -64,7 +73,7 @@ function EditCoordonneesForm({ client, onClose }: { client: Cliente; onClose: ()
         <Field label="WhatsApp">
           <TextInput value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} />
         </Field>
-        <Field label="Email">
+        <Field label="Email" required>
           <TextInput type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         </Field>
         <Field label="Adresse">
@@ -76,11 +85,17 @@ function EditCoordonneesForm({ client, onClose }: { client: Cliente; onClose: ()
         <Field label="Profession">
           <TextInput value={profession} onChange={(e) => setProfession(e.target.value)} />
         </Field>
+        <Field label="Anniversaire" required>
+          <BirthdaySelect value={birthday} onChange={setBirthday} />
+        </Field>
+        <Field label="Ethnicité" required>
+          <Select value={ethnicity} onChange={setEthnicity} options={ETHNICITY_OPTIONS} placeholder="Choisir…" tone="cream" />
+        </Field>
         <div className="mt-2 flex gap-3">
           <Button type="button" variant="outline" onClick={onClose} className="flex-1">
             Annuler
           </Button>
-          <Button type="submit" variant="brand" className="flex-1">
+          <Button type="submit" variant="brand" className="flex-1" disabled={!canSave}>
             Enregistrer
           </Button>
         </div>

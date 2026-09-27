@@ -1,11 +1,19 @@
 "use client";
 
+import { Cake } from "lucide-react";
 import { Button } from "@/components/ui/atoms/button";
 import { Avatar } from "@/components/ui/atoms/avatar";
 import { FlipChip, Legend } from "@/components/ui/board";
 import { ClientSearchField } from "@/components/shared/client-search-field";
 import { ChannelGlyph } from "@/components/messages/channel-glyph";
-import { RELANCE_TYPE_LABEL, STATE_LABEL, lastRealMessage, nearestPending, shortStamp } from "@/components/messages/lib";
+import {
+  RELANCE_TYPE_LABEL,
+  STATE_LABEL,
+  lastRealMessage,
+  nearestPending,
+  shortStamp,
+  unseenBirthdayWish,
+} from "@/components/messages/lib";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { clientFullName, clientInitial } from "@/lib/data/clientele";
 import { cn } from "@/lib/utils";
@@ -26,8 +34,14 @@ export function MessageInbox({ selectedClientId, onSelect, filterClientId, onFil
 
   const visible = filterClientId ? conversations.filter((c) => c.clientId === filterClientId) : conversations;
 
+  // Anniversaire souhaité par le Bot, pas encore vu : en tête, ombre rosée, jusqu'à l'ouverture du fil.
+  const birthdays = visible
+    .filter((c) => unseenBirthdayWish(c.messages))
+    .sort((a, b) => unseenBirthdayWish(b.messages)!.at.localeCompare(unseenBirthdayWish(a.messages)!.at));
+  const birthdayIds = new Set(birthdays.map((c) => c.id));
+
   const scheduled = visible
-    .filter((c) => c.messages.some((m) => m.pending))
+    .filter((c) => !birthdayIds.has(c.id) && c.messages.some((m) => m.pending))
     .sort((a, b) => {
       const pa = nearestPending(a.messages)!;
       const pb = nearestPending(b.messages)!;
@@ -39,7 +53,7 @@ export function MessageInbox({ selectedClientId, onSelect, filterClientId, onFil
 
   const scheduledIds = new Set(scheduled.map((c) => c.id));
   const rest = visible
-    .filter((c) => !scheduledIds.has(c.id))
+    .filter((c) => !birthdayIds.has(c.id) && !scheduledIds.has(c.id))
     .sort((a, b) => {
       if (a.unread !== b.unread) return a.unread ? -1 : 1;
       const la = lastRealMessage(a.messages)?.at ?? "";
@@ -71,9 +85,37 @@ export function MessageInbox({ selectedClientId, onSelect, filterClientId, onFil
           </div>
         ) : (
           <>
-            {scheduled.length > 0 && (
+            {birthdays.length > 0 && (
               <>
                 <p className="px-3 pt-2 pb-1">
+                  <Legend>Anniversaires souhaités · {birthdays.length}</Legend>
+                </p>
+                <div className="flex flex-col gap-1.5 px-0.5 pb-1">
+                  {birthdays.map((conv) => {
+                    const client = clientFor(conv.clientId);
+                    if (!client) return null;
+                    const wish = unseenBirthdayWish(conv.messages)!;
+                    return (
+                      <InboxRow
+                        key={conv.id}
+                        conv={conv}
+                        name={clientFullName(client)}
+                        initial={clientInitial(client)}
+                        subtitle="Joyeux anniversaire envoyé"
+                        stamp={shortStamp(wish.at)}
+                        selected={selectedClientId === conv.clientId}
+                        onSelect={() => onSelect(conv.clientId)}
+                        birthday
+                      />
+                    );
+                  })}
+                </div>
+              </>
+            )}
+
+            {scheduled.length > 0 && (
+              <>
+                <p className={cn("px-3 pb-1", birthdays.length > 0 ? "pt-3" : "pt-2")}>
                   <Legend>Programmées · {scheduled.length}</Legend>
                 </p>
                 {scheduled.map((conv) => {
@@ -98,7 +140,7 @@ export function MessageInbox({ selectedClientId, onSelect, filterClientId, onFil
 
             {rest.length > 0 && (
               <>
-                {scheduled.length > 0 && (
+                {(scheduled.length > 0 || birthdays.length > 0) && (
                   <p className="px-3 pt-3 pb-1">
                     <Legend>Conversations</Legend>
                   </p>
@@ -137,6 +179,7 @@ function InboxRow({
   stamp,
   selected,
   onSelect,
+  birthday = false,
 }: {
   conv: Conversation;
   name: string;
@@ -145,6 +188,8 @@ function InboxRow({
   stamp: string;
   selected: boolean;
   onSelect: () => void;
+  /** An unseen birthday wish — ombre rosée + gâteau on the avatar, until the thread is opened. */
+  birthday?: boolean;
 }) {
   return (
     <button
@@ -152,16 +197,25 @@ function InboxRow({
       onClick={onSelect}
       className={cn(
         "flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-left transition active:scale-[0.99]",
+        birthday && "highlight-rose border bg-white",
         selected ? "bg-accent" : "hover:bg-base-200",
       )}
     >
-      <Avatar initial={initial} size={40} className="bg-accent font-semibold text-secondary" />
+      <span className="relative shrink-0">
+        <Avatar initial={initial} size={40} className="bg-accent font-semibold text-secondary" />
+        {birthday && (
+          <span className="absolute -right-1 -bottom-1 flex size-5 items-center justify-center rounded-full bg-primary text-primary-content ring-2 ring-white">
+            <Cake aria-hidden className="size-3" />
+          </span>
+        )}
+      </span>
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-1.5">
           <span className="truncate font-[family-name:var(--font-heading)] text-[15px] font-semibold text-base-content">
             {name}
           </span>
           {conv.unread && <span aria-label="Non lu" className="size-2 shrink-0 rounded-full bg-warning" />}
+          {birthday && <span className="sr-only">Anniversaire souhaité, pas encore vu</span>}
         </span>
         <span className="line-clamp-1 text-[13px] text-base-content/55">{subtitle}</span>
       </span>

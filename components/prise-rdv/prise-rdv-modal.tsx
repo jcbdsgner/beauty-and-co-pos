@@ -82,6 +82,7 @@ import {
 import { dateISO, reservationById, reservationDate } from "@/lib/data/planning";
 import type {
   Cliente,
+  Ethnicity,
   DepositMode,
   Reservation,
   ReservationExtra,
@@ -716,14 +717,10 @@ function PriseRdvFlow({
     lastName: string;
     phone: string;
     email: string;
+    birthday: string;
+    ethnicity: Ethnicity;
   }): Cliente =>
-    addClient({
-      firstName: data.firstName,
-      lastName: data.lastName,
-      phone: data.phone,
-      ...(data.email ? { email: data.email } : {}),
-      residenceCountry: "Sénégal",
-    });
+    addClient({ ...data, residenceCountry: "Sénégal" });
 
   const leaveClientes = () => {
     setStep("services");

@@ -466,6 +466,8 @@ export type AppState = {
   sendClientMessage: (convId: string, body: string) => void;
   /** A client reply has been seen — clears the amber signal. */
   markConversationRead: (convId: string) => void;
+  /** The receptionist opened a thread carrying a birthday wish the bot sent — it stops standing out. */
+  markBirthdayWishesSeen: (convId: string) => void;
 
   // Cartes cadeaux à préparer (ADR 0012)
   /** `a_imprimer → imprimee`. No-op past that. The actual print fires in the component. */
@@ -1071,6 +1073,20 @@ export const useAppStore = create<AppState>((set, get) => ({
   markConversationRead: (convId) =>
     set((s) => ({
       conversations: s.conversations.map((c) => (c.id === convId && c.unread ? { ...c, unread: false } : c)),
+    })),
+
+  markBirthdayWishesSeen: (convId) =>
+    set((s) => ({
+      conversations: s.conversations.map((c) =>
+        c.id === convId
+          ? {
+              ...c,
+              messages: c.messages.map((m) =>
+                m.relanceType === "anniversaire" && !m.pending && !m.seen ? { ...m, seen: true } : m,
+              ),
+            }
+          : c,
+      ),
     })),
 
   sendClientMessage: (convId, body) => {

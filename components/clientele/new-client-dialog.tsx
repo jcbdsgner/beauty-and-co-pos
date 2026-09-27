@@ -9,14 +9,14 @@ import { Card } from "@/components/ui/atoms/card";
 import { Field } from "@/components/ui/molecules/field";
 import { TextInput } from "@/components/ui/atoms/text-input";
 import { Select } from "@/components/ui/atoms/select";
-import { DatePicker } from "@/components/ui/molecules/date-picker";
 import { Alert } from "@/components/ui/molecules/alert";
 import { Button } from "@/components/ui/atoms/button";
 import { FieldLabel } from "@/components/ui/atoms/field-label";
 import { useAppData } from "@/components/providers/app-data-provider";
-import { clientFullName } from "@/lib/data/clientele";
+import { ETHNICITY_OPTIONS, clientFullName } from "@/lib/data/clientele";
+import { BirthdaySelect, birthdayFromParts, type BirthdayParts } from "@/components/shared/birthday-select";
 import { PAYS_DEFAUT, PAYS_OPTIONS } from "@/lib/data/pays";
-import type { Cliente } from "@/lib/data/types";
+import type { Cliente, Ethnicity } from "@/lib/data/types";
 
 type NewClientDialogProps = {
   open: boolean;
@@ -35,6 +35,7 @@ const emptyForm = {
   email: "",
   address: "",
   residenceCountry: PAYS_DEFAUT,
+  ethnicity: "",
   profession: "",
   hairType: "",
   colorReference: "",
@@ -50,7 +51,7 @@ export function NewClientDialog({ open, onClose, onCreated, initialValues }: New
   const { addClient, findDuplicatePhone } = useAppData();
 
   const [form, setForm] = useState<typeof emptyForm>(() => ({ ...emptyForm, ...initialValues }));
-  const [birthday, setBirthday] = useState<Date | null>(null);
+  const [birthday, setBirthday] = useState<BirthdayParts>({ day: "", month: "" });
   const [duplicate, setDuplicate] = useState<Cliente | undefined>(() =>
     initialValues?.phone?.trim() ? findDuplicatePhone(initialValues.phone) : undefined,
   );
@@ -62,7 +63,7 @@ export function NewClientDialog({ open, onClose, onCreated, initialValues }: New
 
   function reset() {
     setForm(emptyForm);
-    setBirthday(null);
+    setBirthday({ day: "", month: "" });
     setDuplicate(undefined);
     setAttempted(false);
   }
@@ -76,7 +77,10 @@ export function NewClientDialog({ open, onClose, onCreated, initialValues }: New
     form.firstName.trim() !== "" &&
     form.lastName.trim() !== "" &&
     form.phone.trim() !== "" &&
-    form.residenceCountry.trim() !== "";
+    form.email.trim() !== "" &&
+    form.residenceCountry.trim() !== "" &&
+    form.ethnicity !== "" &&
+    birthdayFromParts(birthday) !== null;
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -88,11 +92,12 @@ export function NewClientDialog({ open, onClose, onCreated, initialValues }: New
       lastName: form.lastName.trim(),
       phone: form.phone.trim(),
       whatsapp: form.whatsapp.trim() || undefined,
-      email: form.email.trim() || undefined,
+      email: form.email.trim(),
       address: form.address.trim() || undefined,
       residenceCountry: form.residenceCountry,
       profession: form.profession.trim() || undefined,
-      birthday: birthday ? birthday.toISOString().slice(0, 10) : undefined,
+      birthday: birthdayFromParts(birthday)!,
+      ethnicity: form.ethnicity as Ethnicity,
       hairType: form.hairType.trim() || undefined,
       colorReference: form.colorReference.trim() || undefined,
     });
@@ -140,7 +145,7 @@ export function NewClientDialog({ open, onClose, onCreated, initialValues }: New
             <Field label="WhatsApp">
               <TextInput value={form.whatsapp} onChange={(e) => set("whatsapp", e.target.value)} placeholder="+221 77 000 00 00" />
             </Field>
-            <Field label="Email">
+            <Field label="Email" required>
               <TextInput type="email" value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="awa@example.com" />
             </Field>
             <Field label="Profession">
@@ -157,8 +162,17 @@ export function NewClientDialog({ open, onClose, onCreated, initialValues }: New
                 tone="cream"
               />
             </Field>
-            <Field label="Anniversaire" className="col-span-2">
-              <DatePicker value={birthday} onChange={setBirthday} />
+            <Field label="Ethnicité" required>
+              <Select
+                value={form.ethnicity}
+                onChange={(v) => set("ethnicity", v)}
+                options={ETHNICITY_OPTIONS}
+                placeholder="Choisir…"
+                tone="cream"
+              />
+            </Field>
+            <Field label="Anniversaire" required>
+              <BirthdaySelect value={birthday} onChange={setBirthday} />
             </Field>
           </div>
 
@@ -195,7 +209,7 @@ export function NewClientDialog({ open, onClose, onCreated, initialValues }: New
         </Card>
 
         {attempted && !canSubmit && (
-          <Alert tone="error" title="Complétez les champs obligatoires" description="Prénom, nom, téléphone et pays de résidence sont nécessaires pour créer la fiche." />
+          <Alert tone="error" title="Complétez les champs obligatoires" description="Prénom, nom, téléphone, e-mail, pays de résidence, ethnicité et anniversaire (jour et mois) sont nécessaires pour créer la fiche." />
         )}
 
         <div className="flex gap-3">

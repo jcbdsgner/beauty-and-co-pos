@@ -12,6 +12,7 @@ import { HomeIcon, CalendarIcon, PeopleIcon, GearIcon, LogoutIcon } from "@/comp
 import { MessageCircle, Sparkles } from "lucide-react";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { isUnseenReservation } from "@/lib/data/planning";
+import { unseenBirthdayWish } from "@/components/messages/lib";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -31,6 +32,7 @@ export function Sidebar() {
   const { currentUser, photoUrl, logout } = useSession();
   const { conversations, reservations } = useAppData();
   const unreadCount = conversations.filter((c) => c.unread).length;
+  const hasUnseenBirthday = conversations.some((c) => unseenBirthdayWish(c.messages));
   // Quel que soit le jour réservé — comme la bande « Réservations reçues » de l'Accueil qui le résout.
   const hasUnseenReservation = reservations.some(isUnseenReservation);
   const [confirmLogout, setConfirmLogout] = useState(false);
@@ -49,10 +51,12 @@ export function Sidebar() {
           // en taupe (« Non vue », ADR 0030) : une réservation en ligne vient d'arriver — la bande rose
           // en tête de l'Accueil la montre —, à noter
           // mais pas à encaisser — l'ambre reste réservé à « à encaisser » sur cette même page.
+          // Messages prend ce même point taupe pour un anniversaire souhaité pas encore vu (l'ambre
+          // du « Non lu » passe devant).
           const badge =
             item.href === "/messages" && unreadCount > 0
               ? "warning"
-              : item.href === "/" && hasUnseenReservation
+              : (item.href === "/messages" && hasUnseenBirthday) || (item.href === "/" && hasUnseenReservation)
                 ? "primary"
                 : null;
           return (

@@ -100,6 +100,10 @@ _Avoid_: Relances (ancien nom de la section), Suivi, Fidélisation, Marketing, C
 L'échange avec une cliente précise dans la section Messages : une timeline unique de **Messages** (relances automatiques envoyées, relances à venir, réponses de la cliente, réponses du Bot ou de la réceptionniste), plus un **état** et le **canal** (WhatsApp / SMS / email). Un fil par cliente. États : `bot` (le **Bot** tient le fil — défaut ; `auto` tant qu'aucun humain n'y a touché), `receptionniste` (un humain tient le fil ; les relances programmées de cette cliente sont **en pause**), `manager` (**terminal** — transféré hors de l'app, le fil reste visible figé). « Bot » et « manager » sont le vocabulaire interne (états, jetons) — côté cliente, la conversation reste signée « votre conseillère beauté » (voir **Conseillère**).
 _Avoid_: Ticket, Discussion, Échange (le libellé d'un bouton, pas l'objet)
 
+**Anniversaire souhaité**:
+Une relance `anniversaire` que le Bot a **envoyée** (pas une relance programmée). Elle ressort en tête de Messages, section « Anniversaires souhaités », avec l'ombre rosée (`highlight-rose`) et un gâteau sur l'avatar, et Messages porte le point taupe dans la barre latérale, **tant que la réceptionniste ne l'a pas vue**. Ouvrir le fil la marque **vue** (`Message.seen`) : elle rejoint alors les conversations ordinaires. L'anniversaire de la cliente est un jour + un mois (`Cliente.birthday`, « MM-JJ »), jamais une année.
+_Avoid_: Notification d'anniversaire, rappel
+
 **Message**:
 Une entrée d'un **Fil** : un émetteur (**cliente**, **réceptionniste** ou **Bot**), un canal, une date, un corps. Une **relance** est un Message porté par le Bot avec un type (anniversaire / soins / fidélité / reconquête / recommandation) ; tant qu'elle n'est pas partie, elle apparaît dans le fil comme un message **à venir**.
 _Avoid_: Bulle (la forme à l'écran, pas l'objet), Notification

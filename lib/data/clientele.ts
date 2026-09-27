@@ -1,4 +1,4 @@
-import type { Cliente } from "@/lib/data/types";
+import type { Cliente, Ethnicity } from "@/lib/data/types";
 
 export const CLIENTS: Cliente[] = [
   {
@@ -11,6 +11,8 @@ export const CLIENTS: Cliente[] = [
     whatsapp: "+221784455661",
     email: "awa.sarr@example.com",
     residenceCountry: "Sénégal",
+    birthday: "03-14",
+    ethnicity: "africain",
     address: "Sacré-Cœur 3, Villa 412, Dakar",
     tier: null,
     points: 320,
@@ -39,7 +41,10 @@ export const CLIENTS: Cliente[] = [
     firstName: "Fatou",
     lastName: "Camara",
     phone: "+221771122334",
+    email: "fatou.camara@example.com",
     residenceCountry: "Sénégal",
+    birthday: "10-12",
+    ethnicity: "africain",
     address: "Cité Keur Gorgui, Rue 12, Dakar",
     tier: null,
     points: 140,
@@ -59,7 +64,10 @@ export const CLIENTS: Cliente[] = [
     firstName: "Coumba",
     lastName: "Thiam",
     phone: "+221765544332",
+    email: "coumba.thiam@example.com",
     residenceCountry: "Sénégal",
+    birthday: "09-26",
+    ethnicity: "africain",
     address: "Parcelles Assainies U15, Dakar",
     tier: null,
     points: 60,
@@ -75,7 +83,10 @@ export const CLIENTS: Cliente[] = [
     firstName: "Bineta",
     lastName: "Diagne",
     phone: "+221709988776",
+    email: "bineta.diagne@example.com",
     residenceCountry: "Sénégal",
+    birthday: "07-02",
+    ethnicity: "africain",
     address: "Mermoz, Rue MZ-24, Dakar",
     tier: null,
     points: 210,
@@ -91,7 +102,10 @@ export const CLIENTS: Cliente[] = [
     firstName: "Mariam",
     lastName: "Kane",
     phone: "+221781234567",
+    email: "mariam.kane@example.com",
     residenceCountry: "Côte d'Ivoire",
+    birthday: "12-05",
+    ethnicity: "africain",
     address: "Cocody Angré, Rue des Jardins, Abidjan",
     tier: null,
     points: 90,
@@ -107,7 +121,10 @@ export const CLIENTS: Cliente[] = [
     firstName: "Awa",
     lastName: "Niang",
     phone: "+221776543210",
+    email: "awa.niang@example.com",
     residenceCountry: "Sénégal",
+    birthday: "01-23",
+    ethnicity: "africain",
     address: "Almadies, Route des Almadies, Dakar",
     tier: "vip",
     points: 1420,
@@ -134,7 +151,10 @@ export const CLIENTS: Cliente[] = [
     firstName: "Sokhna",
     lastName: "Ndiaye",
     phone: "+221703216549",
+    email: "sokhna.ndiaye@example.com",
     residenceCountry: "Sénégal",
+    birthday: "05-18",
+    ethnicity: "africain",
     address: "Point E, Rue 4 x E, Dakar",
     tier: "gold",
     points: 680,
@@ -150,7 +170,10 @@ export const CLIENTS: Cliente[] = [
     firstName: "Ndèye",
     lastName: "Diop",
     phone: "+221781239900",
+    email: "ndeye.diop@example.com",
     residenceCountry: "France",
+    birthday: "11-30",
+    ethnicity: "africain",
     address: "12 Rue de Belleville, 75020 Paris",
     tier: "silver",
     points: 300,
@@ -169,9 +192,10 @@ export const CLIENTS: Cliente[] = [
     whatsapp: "+221775551234",
     email: "yacine.wade@example.com",
     residenceCountry: "Sénégal",
+    birthday: "10-03",
+    ethnicity: "africain",
     address: "Ouakam, Cité Assemblée, Dakar",
     tier: "platinum",
-    birthday: "1990-06-27",
     points: 950,
     hairType: "Locks",
     colorReference: "Noir naturel #1",
@@ -195,6 +219,8 @@ export const CLIENTS: Cliente[] = [
     whatsapp: "+221776623145",
     email: "aminata.fall@example.com",
     residenceCountry: "Sénégal",
+    birthday: "09-27",
+    ethnicity: "africain",
     address: "Liberté 6, Rue LB-19, Dakar",
     tier: null,
     points: 140,
@@ -256,4 +282,33 @@ export function clientMatchesQuery(c: Cliente, query: string) {
 export function searchClients(clients: Cliente[], query: string) {
   if (!query.trim()) return clients;
   return clients.filter((c) => clientMatchesQuery(c, query));
+}
+
+export const ETHNICITY_LABEL: Record<Ethnicity, string> = {
+  asiatique: "Asiatique",
+  africain: "Africain",
+  americain: "Américain",
+  europeen: "Européen",
+};
+
+export const ETHNICITY_OPTIONS = (Object.keys(ETHNICITY_LABEL) as Ethnicity[]).map((value) => ({
+  value,
+  label: ETHNICITY_LABEL[value],
+}));
+
+export const MONTH_NAMES = [
+  "janvier", "février", "mars", "avril", "mai", "juin",
+  "juillet", "août", "septembre", "octobre", "novembre", "décembre",
+];
+
+/** « MM-JJ » → « 27 septembre ». */
+export function formatBirthday(birthday: string): string {
+  const [m, d] = birthday.split("-").map(Number);
+  if (!m || !d) return birthday;
+  return `${d === 1 ? "1er" : d} ${MONTH_NAMES[m - 1]}`;
+}
+
+/** Jour + mois → « MM-JJ ». */
+export function toBirthday(day: number, month: number): string {
+  return `${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }

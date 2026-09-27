@@ -65,10 +65,13 @@ export type Cliente = {
   lastName: string;
   phone: string;
   whatsapp?: string;
-  email?: string;
+  /** Toujours renseigné — obligatoire à la création. */
+  email: string;
   address?: string;
   profession?: string;
-  birthday?: string; // ISO date
+  /** Jour et mois seulement, « MM-JJ » (ex. « 09-27 ») — jamais l'année. Obligatoire. */
+  birthday: string;
+  ethnicity: Ethnicity;
   /** Pays de résidence — obligatoire à la création (défaut « Sénégal »). */
   residenceCountry: string;
   /** Code carried by her loyalty card — the counter's identification token: scanning its QR or
@@ -94,6 +97,8 @@ export type Cliente = {
   createdAt: string;
   preferredStaffId?: string;
 };
+
+export type Ethnicity = "asiatique" | "africain" | "americain" | "europeen";
 
 export type ServiceCategory = {
   id: string;
@@ -499,6 +504,9 @@ export type Message = {
   lateDays?: number;
   styleId?: string;
   discountLabel?: string;
+  /** Anniversaire souhaité (relance `anniversaire` envoyée) : mis en évidence dans Messages tant
+   *  que la réceptionniste ne l'a pas vu ; passe à true quand elle ouvre la conversation. */
+  seen?: boolean;
 };
 
 export type Conversation = {

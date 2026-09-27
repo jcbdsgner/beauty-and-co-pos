@@ -15,6 +15,8 @@ import {
   ChevronRight,
   Sparkles,
   Globe,
+  Cake,
+  Users,
   CalendarClock,
   PackageCheck,
   Receipt,
@@ -34,7 +36,8 @@ import { EditCoordonneesDialog } from "@/components/clientele/edit-coordonnees-d
 import { EditPreferencesDialog } from "@/components/clientele/edit-preferences-dialog";
 import { NotationPhoto } from "@/components/clientele/notation-photo";
 import { useAppData } from "@/components/providers/app-data-provider";
-import { clientFullName, clientInitial, clientNumberLabel } from "@/lib/data/clientele";
+import { ETHNICITY_LABEL, clientFullName, clientInitial, clientNumberLabel, formatBirthday } from "@/lib/data/clientele";
+import { ContactRow as Row } from "@/components/shared/contact-row";
 import { abonnementsForClient, abonnementStatus, ABONNEMENT_STATUS_LABEL, type AbonnementStatus } from "@/lib/data/abonnements";
 import { forfaitById } from "@/lib/data/forfaits";
 import { packPurchasesForClient, packRemainingPrestations } from "@/lib/data/pack-purchases";
@@ -532,6 +535,8 @@ function CoordonneesBoard({
         <Row icon={<Briefcase className="size-5" />} label="Profession" value={client.profession} />
         <Row icon={<MapPin className="size-5" />} label="Adresse" value={client.address} />
         <Row icon={<Globe className="size-5" />} label="Pays de résidence" value={client.residenceCountry} />
+        <Row icon={<Cake className="size-5" />} label="Anniversaire" value={formatBirthday(client.birthday)} />
+        <Row icon={<Users className="size-5" />} label="Ethnicité" value={ETHNICITY_LABEL[client.ethnicity]} />
         {preferredStaff && (
           <button
             type="button"
@@ -552,20 +557,6 @@ function CoordonneesBoard({
         )}
       </div>
     </Board>
-  );
-}
-
-function Row({ icon, label, value }: { icon: React.ReactNode; label: string; value?: string }) {
-  return (
-    <div className="flex items-center gap-3">
-      <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-accent text-secondary">{icon}</span>
-      <div className="min-w-0">
-        <p className="text-xs font-medium text-base-content/55">{label}</p>
-        <p className={cn("truncate text-[15px]", value ? "text-base-content" : "text-base-content/45")}>
-          {value ?? "Non renseigné"}
-        </p>
-      </div>
-    </div>
   );
 }
 

@@ -36,3 +36,9 @@ Garder Relances en lecture seule et ajouter juste un bouton « Répondre » qui 
 ## Note sur la valse ADR 0004 → 0010 → 0011
 
 Trois révisions de cette zone en une semaine. 0004 promeut Relances en section à volets ; 0010 (même jour que 0011) la réduit à un moniteur ; 0011 en fait une messagerie. Le fil conducteur assumé : **la réceptionniste ne configure rien** (constant depuis 0010) ; ce qui bouge, c'est ce qu'elle peut **faire** face à une cliente qui répond — rien (0010), puis échanger (0011). L'ajout d'un canal de réponse est une capacité nouvelle, pas un retour à la tournée-du-matin-à-vider de 0004.
+
+## Révision 2026-09-27 — anniversaires souhaités mis en évidence
+
+- Une relance `anniversaire` **envoyée** par le Bot et pas encore vue ressort en tête de l'inbox (« Anniversaires souhaités · N », ombre rosée `highlight-rose`, gâteau sur l'avatar) ; la barre latérale met le point taupe sur Messages (l'ambre du « Non lu » reste prioritaire).
+- Ouvrir le fil la marque vue : nouveau champ `Message.seen`, posé par `markBirthdayWishesSeen` (même patron que `markConversationRead`). Le fil retombe dans « Conversations ».
+- Fiche cliente : `email`, `birthday` (jour + mois seulement, « MM-JJ ») et `ethnicity` (asiatique / africain / américain / européen) deviennent **obligatoires** — nouvelle fiche, modification des coordonnées et création rapide du parcours RDV les demandent ; la fiche les affiche dans « Coordonnées ».

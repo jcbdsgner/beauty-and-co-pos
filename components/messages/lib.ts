@@ -57,6 +57,12 @@ export function lastRealMessage(messages: Message[]): Message | undefined {
   return real[real.length - 1];
 }
 
+/** A birthday wish the bot has sent that the receptionist hasn't seen yet — it stands out in the
+ *  inbox (ombre rosée) until she opens the thread. */
+export function unseenBirthdayWish(messages: Message[]): Message | undefined {
+  return messages.find((m) => m.relanceType === "anniversaire" && !m.pending && !m.seen);
+}
+
 export function nearestPending(messages: Message[]): Message | undefined {
   return messages
     .filter((m) => m.pending)

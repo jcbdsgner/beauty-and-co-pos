@@ -5,8 +5,8 @@ import { PhoneInput } from "@/components/prise-rdv/phone-input";
 import { StepFooter } from "@/components/prise-rdv/steps/step-footer";
 import { findCountry } from "@/lib/prise-rdv/data/countries";
 import type { PersonTab } from "@/lib/prise-rdv/types";
-import { clientFullName } from "@/lib/data/clientele";
-import type { Cliente } from "@/lib/data/types";
+import { ETHNICITY_OPTIONS, MONTH_NAMES, clientFullName, toBirthday } from "@/lib/data/clientele";
+import type { Cliente, Ethnicity } from "@/lib/data/types";
 import { cn } from "@/lib/prise-rdv/utils";
 
 /**
@@ -26,7 +26,14 @@ type ClientesStepProps = {
   assignments: Record<string, PersonAssignment>;
   clients: Cliente[];
   onAssign: (slotId: string, assignment: PersonAssignment) => void;
-  onCreateClient: (data: { firstName: string; lastName: string; phone: string; email: string }) => Cliente;
+  onCreateClient: (data: {
+    firstName: string;
+    lastName: string;
+    phone: string;
+    email: string;
+    birthday: string;
+    ethnicity: Ethnicity;
+  }) => Cliente;
   canContinue: boolean;
   onContinue: () => void;
   onBack: () => void;
@@ -94,7 +101,17 @@ function CreateClientForm({
   const [phoneCountry, setPhoneCountry] = useState("SN");
   const [phone, setPhone] = useState(looksLikePhone ? initialQuery.replace(/\D/g, "") : "");
   const [email, setEmail] = useState(initialQuery.includes("@") ? initialQuery.trim() : "");
-  const valid = firstName.trim() && lastName.trim() && phone.replace(/\D/g, "").length >= 6;
+  const [birthDay, setBirthDay] = useState("");
+  const [birthMonth, setBirthMonth] = useState("");
+  const [ethnicity, setEthnicity] = useState("");
+  const valid =
+    firstName.trim() &&
+    lastName.trim() &&
+    phone.replace(/\D/g, "").length >= 6 &&
+    email.trim() &&
+    birthDay &&
+    birthMonth &&
+    ethnicity;
   const id = (name: string) => `${name}-${slotId}`;
 
   return (
@@ -121,9 +138,56 @@ function CreateClientForm({
         </div>
         <div>
           <label htmlFor={id("new-email")} className={labelClassName}>
-            Adresse email
+            Adresse email *
           </label>
           <input id={id("new-email")} type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={cn("mt-2", inputClassName)} />
+        </div>
+        <div>
+          <label htmlFor={id("new-birth-day")} className={labelClassName}>
+            Anniversaire *
+          </label>
+          <div className="mt-2 grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-3">
+            <select
+              id={id("new-birth-day")}
+              aria-label="Jour"
+              value={birthDay}
+              onChange={(e) => setBirthDay(e.target.value)}
+              className={inputClassName}
+            >
+              <option value="">Jour</option>
+              {Array.from({ length: 31 }, (_, i) => (
+                <option key={i + 1} value={i + 1}>
+                  {i + 1}
+                </option>
+              ))}
+            </select>
+            <select aria-label="Mois" value={birthMonth} onChange={(e) => setBirthMonth(e.target.value)} className={inputClassName}>
+              <option value="">Mois</option>
+              {MONTH_NAMES.map((name, i) => (
+                <option key={name} value={i + 1}>
+                  {name[0].toUpperCase() + name.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div>
+          <label htmlFor={id("new-ethnicity")} className={labelClassName}>
+            Ethnicité *
+          </label>
+          <select
+            id={id("new-ethnicity")}
+            value={ethnicity}
+            onChange={(e) => setEthnicity(e.target.value)}
+            className={cn("mt-2", inputClassName)}
+          >
+            <option value="">Choisir…</option>
+            {ETHNICITY_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
       <div className="mt-5 flex items-center justify-end gap-3">
@@ -139,6 +203,8 @@ function CreateClientForm({
               lastName: lastName.trim(),
               phone: `+${findCountry(phoneCountry)?.dialCode ?? "221"}${phone.replace(/\D/g, "")}`,
               email: email.trim(),
+              birthday: toBirthday(Number(birthDay), Number(birthMonth)),
+              ethnicity: ethnicity as Ethnicity,
             })
           }
           className="shrink-0 rounded-full bg-[var(--core-brand-color)] px-5 py-3 text-[17px] font-[450] text-black shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] transition hover:opacity-90 disabled:opacity-50"

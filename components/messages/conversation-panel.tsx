@@ -10,7 +10,7 @@ import { FlipChip, Legend } from "@/components/ui/board";
 import { ConfirmDialog } from "@/components/ui/molecules/confirm-dialog";
 import { ChannelGlyph } from "@/components/messages/channel-glyph";
 import { MessageBubble } from "@/components/messages/message-bubble";
-import { FULL_DATE_FMT, RELANCE_TYPE_LABEL, STATE_LABEL, orderedMessages } from "@/components/messages/lib";
+import { FULL_DATE_FMT, RELANCE_TYPE_LABEL, STATE_LABEL, orderedMessages, unseenBirthdayWish } from "@/components/messages/lib";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { clientFullName, clientInitial } from "@/lib/data/clientele";
 import { styleById } from "@/lib/data/styles";
@@ -31,6 +31,7 @@ export function ConversationPanel({ conversationId }: { conversationId: string }
     conversations,
     clients,
     markConversationRead,
+    markBirthdayWishesSeen,
     takeOverConversation,
     handBackToBot,
     transferToManager,
@@ -49,6 +50,12 @@ export function ConversationPanel({ conversationId }: { conversationId: string }
     // Opening a thread marks it read — same "adjust store in an effect" pattern as noteClientViewed.
     if (unread) markConversationRead(conversationId);
   }, [conversationId, unread, markConversationRead]);
+
+  const birthdayUnseen = conv ? Boolean(unseenBirthdayWish(conv.messages)) : false;
+  useEffect(() => {
+    // Seen once the thread is open — the birthday highlight drops from the inbox.
+    if (birthdayUnseen) markBirthdayWishesSeen(conversationId);
+  }, [conversationId, birthdayUnseen, markBirthdayWishesSeen]);
 
   useEffect(() => {
     timelineRef.current?.scrollTo({ top: timelineRef.current.scrollHeight });
