@@ -10,9 +10,9 @@ import { cn, formatFcfa } from "@/lib/utils";
 
 const TIP_PRESETS = [2000, 4000, 5000, 10000, 12000, 15000, 20000, 25000, 30000] as const;
 
-/** Preset label as the counter says it: « 2k », « 12k ». */
+/** Preset label written out in full: « 2 000 », « 12 000 ». */
 function presetLabel(amount: number) {
-  return `${amount / 1000}k`;
+  return amount.toLocaleString("fr-FR");
 }
 
 /**
@@ -54,11 +54,8 @@ export function TipDialog({
         <h2 id="tip-title" className="font-[family-name:var(--font-heading)] text-[28px] font-bold leading-tight text-base-content">
           Un pourboire ?
         </h2>
-        <p className="mt-1 text-[15px] text-base-content/55">
-          Facultatif — en plus des {formatFcfa(amountDue)} de la vente.
-        </p>
 
-        <div className="mt-6 grid grid-cols-5 gap-3">
+        <div className="mt-6 grid grid-cols-4 gap-3">
           {TIP_PRESETS.map((value) => (
             <TipTile key={value} selected={preset === value} onClick={() => pick(value)}>
               {presetLabel(value)}
