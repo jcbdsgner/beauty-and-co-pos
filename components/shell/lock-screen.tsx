@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { Logo } from "@/components/ui/atoms/logo";
 import { Button } from "@/components/ui/atoms/button";
@@ -18,6 +19,7 @@ import { CashDrawerDialog } from "@/components/shell/cash-drawer-dialog";
  */
 export function LockScreen() {
   const { login } = useSession();
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [revealed, setRevealed] = useState(false);
@@ -119,7 +121,11 @@ export function LockScreen() {
         </form>
       </div>
 
-      <CashDrawerDialog open={cashOpen} mode="open" onConfirm={login} onCancel={() => setCashOpen(false)} />
+      <CashDrawerDialog open={cashOpen} mode="open" onConfirm={() => {
+          // On entre toujours sur l'Accueil, quelle que soit la page où l'on s'était déconnecté.
+          router.replace("/");
+          login();
+        }} onCancel={() => setCashOpen(false)} />
       <Toast message={toast} onDismiss={() => setToast(null)} />
     </div>
   );

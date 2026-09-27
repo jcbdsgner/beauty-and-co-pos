@@ -18,16 +18,48 @@ type CashDrawerDialogProps = {
   onCancel: () => void;
 };
 
-/** Comptage de caisse — à la connexion et à la déconnexion. Démo : le montant n'est pas conservé. */
+/**
+ * Comptage de caisse — à la connexion et à la déconnexion. Démo : le montant n'est pas conservé.
+ * À la déconnexion, le minimum n'est jamais annoncé pendant la saisie : c'est seulement au clic sur
+ * « Se déconnecter » que, s'il manque de l'argent, un second écran indique le montant à rajouter,
+ * avec un bouton OK qui mène à l'écran de déconnexion.
+ */
 export function CashDrawerDialog({ open, mode, onConfirm, onCancel }: CashDrawerDialogProps) {
   const [value, setValue] = useState("");
+  const [shortfall, setShortfall] = useState<number | null>(null);
   const amount = Number(value);
-  const missing = mode === "close" && value !== "" ? Math.max(0, CASH_FLOAT_MIN - amount) : 0;
-  const valid = value !== "" && missing === 0;
+  const valid = value !== "";
 
   function close(fn: () => void) {
     setValue("");
+    setShortfall(null);
     fn();
+  }
+
+  function submit() {
+    if (!valid) return;
+    const missing = mode === "close" ? Math.max(0, CASH_FLOAT_MIN - amount) : 0;
+    if (missing > 0) setShortfall(missing);
+    else close(() => onConfirm(amount));
+  }
+
+  if (shortfall !== null) {
+    return (
+      <Dialog open={open} labelledBy="cash-drawer-title" className="max-w-sm p-6">
+        <h2 id="cash-drawer-title" className="font-heading text-lg font-semibold text-base-content">
+          Montant à rajouter en caisse
+        </h2>
+        <p className="mt-4 font-heading text-3xl font-semibold tabular-nums text-base-content">
+          {formatFcfa(shortfall)}
+        </p>
+        <p className="mt-2 text-sm text-base-content/70">
+          Rajoutez ce montant dans la caisse avant de quitter le poste.
+        </p>
+        <Button type="button" variant="brand" autoFocus onClick={() => close(() => onConfirm(amount))} className="mt-6 w-full">
+          OK
+        </Button>
+      </Dialog>
+    );
   }
 
   return (
@@ -35,7 +67,7 @@ export function CashDrawerDialog({ open, mode, onConfirm, onCancel }: CashDrawer
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          if (valid) close(() => onConfirm(amount));
+          submit();
         }}
       >
         <h2 id="cash-drawer-title" className="font-heading text-lg font-semibold text-base-content">
@@ -57,9 +89,6 @@ export function CashDrawerDialog({ open, mode, onConfirm, onCancel }: CashDrawer
           />
           <span className="text-base-content/55">F</span>
         </div>
-        {missing > 0 && (
-          <p className="mt-2 text-sm font-medium text-destructive">Il manque {formatFcfa(missing)}</p>
-        )}
 
         <div className="mt-6 flex gap-3">
           <Button type="button" variant="outline" onClick={() => close(onCancel)} className="flex-1">

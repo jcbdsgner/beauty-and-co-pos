@@ -86,8 +86,8 @@ function writePhotoUrl(photoUrl: string | null) {
 }
 
 /** Salon où se trouve le poste. Le salon appartient au poste, pas à la personne : l'équipe
- *  tourne d'un salon à l'autre. Simulé, fixe. */
-const POSTE_SALON_ID = "almadies";
+ *  tourne d'un salon à l'autre. Simulé, fixe. Salon sélectionné par défaut sur toutes les pages. */
+export const POSTE_SALON_ID = "almadies";
 
 export type Session = {
   currentUser: Utilisateur;

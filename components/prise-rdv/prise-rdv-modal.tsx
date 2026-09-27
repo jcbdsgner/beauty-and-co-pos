@@ -86,6 +86,7 @@ import type {
   Reservation,
   ReservationExtra,
 } from "@/lib/data/types";
+import { POSTE_SALON_ID } from "@/lib/session";
 import "@/components/prise-rdv/prise-rdv.css";
 
 /**
@@ -128,7 +129,8 @@ type PriseRdvModalProps = {
   open: boolean;
   /** Absent ⇒ création ; présent ⇒ modification de cette réservation, parcours pré-rempli. */
   reservationId?: string | null;
-  /** Salon pré-choisi à l'étape Créneau (le salon filtré à l'Accueil), modifiable. */
+  /** Salon pré-choisi à l'étape Créneau (le salon filtré à l'Accueil), modifiable. Absent ⇒ salon
+   *  du poste ; `null` ⇒ aucun (« Tous les salons »). */
   defaultSalonId?: string | null;
   onClose: () => void;
 };
@@ -136,7 +138,7 @@ type PriseRdvModalProps = {
 export function PriseRdvModal({
   open,
   reservationId,
-  defaultSalonId,
+  defaultSalonId = POSTE_SALON_ID,
   onClose,
 }: PriseRdvModalProps) {
   if (!open) return null;

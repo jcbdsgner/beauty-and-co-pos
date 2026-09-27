@@ -22,7 +22,7 @@ import { useAppData } from "@/components/providers/app-data-provider";
 import { dateISO, groupDayByReservation, reservationDate, todayISO } from "@/lib/data/planning";
 import { clientFullName, clientInitial, clientMatchesQuery, searchClients } from "@/lib/data/clientele";
 import { SALONS } from "@/lib/data/entreprises";
-import { useSession } from "@/lib/session";
+import { POSTE_SALON_ID, useSession } from "@/lib/session";
 import type { Cliente, RendezVous } from "@/lib/data/types";
 
 type AccueilView = "liste" | "calendrier";
@@ -102,7 +102,7 @@ function AccueilPageInner() {
     const qs = params.toString();
     router.replace(qs ? `/?${qs}` : "/", { scroll: false });
   }
-  const [salonFilter, setSalonFilter] = useState<string>(TOUS_LES_SALONS);
+  const [salonFilter, setSalonFilter] = useState<string>(POSTE_SALON_ID);
   const todayIso = todayISO();
   const [persoStart, setPersoStart] = useState(todayIso);
   const [persoEnd, setPersoEnd] = useState(todayIso);

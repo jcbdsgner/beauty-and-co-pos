@@ -10,6 +10,7 @@ import { AppointmentDetailSheet } from "@/components/planning/appointment-detail
 import { useEncaissement } from "@/components/journee/use-encaissement";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { SALONS } from "@/lib/data/entreprises";
+import { POSTE_SALON_ID } from "@/lib/session";
 import { dateISO, flattenRendezVous, reservationDate, type PlanningPeriod } from "@/lib/data/planning";
 import type { RendezVous, Role } from "@/lib/data/types";
 
@@ -47,7 +48,7 @@ function PlanningBoardInner() {
   const today = useMemo(() => new Date(), []);
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [period, setPeriod] = useState<PlanningPeriod>("jour");
-  const [salonFilter, setSalonFilter] = useState<string>(TOUS_LES_SALONS);
+  const [salonFilter, setSalonFilter] = useState<string>(POSTE_SALON_ID);
   const [visibleIds, setVisibleIds] = useState<Set<string> | null>(null);
   const [detail, setDetail] = useState<RendezVous | null>(null);
 
