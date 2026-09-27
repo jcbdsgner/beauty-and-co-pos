@@ -115,7 +115,7 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
                 <li className="flex items-center justify-between px-4 py-3 text-sm">
                   <span className="text-base-content/55">Points fidélité</span>
                   <span className="tabular-nums">
-                    <span className="font-semibold text-success">+{sale.loyaltyPointsEarned ?? 0}</span>
+                    <span className="rounded bg-black px-1.5 py-0.5 font-semibold text-white">+{sale.loyaltyPointsEarned ?? 0}</span>
                     <span className="text-base-content/55"> · solde {client.points} pts</span>
                   </span>
                 </li>
