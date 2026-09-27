@@ -85,7 +85,8 @@ export function Sidebar() {
                   />
                 )}
               </span>
-              <span className="text-xs leading-tight font-semibold tracking-wide uppercase">{item.label}</span>
+              {/* Casse de phrase, sans espacement : en capitales, « CATALOGUE » remplissait la tuile de bord à bord. */}
+              <span className="text-xs leading-tight font-semibold">{item.label}</span>
             </Link>
           );
         })}
