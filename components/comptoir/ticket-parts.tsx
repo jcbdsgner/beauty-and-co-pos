@@ -1,6 +1,9 @@
 "use client";
 
+import Link from "next/link";
+import { X } from "lucide-react";
 import { Badge } from "@/components/ui/atoms/badge";
+import { Tooltip } from "@/components/ui/atoms/tooltip";
 import { DiscountBreakdown } from "@/components/comptoir/discount-breakdown";
 import { DepositLine } from "@/components/comptoir/deposit-line";
 import { ClientPreferences } from "@/components/shared/client-preferences";
@@ -74,14 +77,23 @@ export function TicketClientCard({ client, onRemove }: { client: Cliente; onRemo
           </span>
           <span className="block truncate text-xs text-base-content/55">{client.phone}</span>
         </span>
+        <Link
+          href={`/clientele/${client.id}`}
+          className="inline-flex min-h-11 shrink-0 items-center rounded-field bg-white/70 px-3 text-xs font-semibold text-secondary transition active:scale-95 hover:bg-white"
+        >
+          Fiche
+        </Link>
         {onRemove && (
-          <button
-            type="button"
-            onClick={onRemove}
-            className="-mr-1 inline-flex min-h-11 shrink-0 items-center rounded-field bg-white/70 px-3 text-xs font-semibold text-secondary transition active:scale-95 hover:bg-white"
-          >
-            Retirer
-          </button>
+          <Tooltip content="Retirer la cliente">
+            <button
+              type="button"
+              onClick={onRemove}
+              aria-label={`Retirer ${clientFullName(client)} du ticket`}
+              className="-mr-1 inline-flex size-11 shrink-0 items-center justify-center rounded-full text-base-content/55 transition active:scale-90 hover:bg-white/70 hover:text-destructive"
+            >
+              <X aria-hidden className="size-5" />
+            </button>
+          </Tooltip>
         )}
       </div>
       <ClientPreferences client={client} collapsible />
