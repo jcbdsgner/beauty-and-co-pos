@@ -1,7 +1,7 @@
 import type { Praticienne, Reservation, Role } from "@/lib/data/types";
 import { SALONS } from "@/lib/data/entreprises";
 import { dayOfWeek, scheduleFor } from "@/lib/data/praticiennes";
-import { minutesToTime, reservationDate, timeToMinutes, todayISO } from "@/lib/data/planning";
+import { LAST_BOOKING, SALON_CLOSING, SALON_OPENING, minutesToTime, reservationDate, timeToMinutes, todayISO } from "@/lib/data/planning";
 
 /**
  * Le pont entre le parcours b&co recopié (ADR 0032) et l'agenda réel de l'équipe : quels horaires
@@ -13,9 +13,10 @@ import { minutesToTime, reservationDate, timeToMinutes, todayISO } from "@/lib/d
 export const SALON_ID_BY_LOCATION: Record<string, string> = { "sea-plaza": "sea-plaza-bco", almadies: "almadies" };
 export const LOCATION_ID_BY_SALON: Record<string, string> = { "sea-plaza-bco": "sea-plaza", almadies: "almadies" };
 
-/** Heures d'ouverture des deux salons (CONTEXT.md, Praticienne). */
-const OPENING = timeToMinutes("10:00");
-const CLOSING = timeToMinutes("20:00");
+/** Heures d'ouverture des deux salons (CONTEXT.md, Praticienne) : dernier départ 20h, fin 22h. */
+const OPENING = timeToMinutes(SALON_OPENING);
+const LAST_START = timeToMinutes(LAST_BOOKING);
+const CLOSING = timeToMinutes(SALON_CLOSING);
 const SLOT_STEP = 30;
 
 function roleFor(categoryId: string): Role {
@@ -117,7 +118,7 @@ export function planAt(
     for (const item of personItems) {
       const durationMin = lineDuration(item, twoPractitioners);
       const iv = { start: cursor, end: cursor + durationMin };
-      if (iv.end > CLOSING) return null;
+      if (iv.start > LAST_START || iv.end > CLOSING) return null;
       const need = twoPractitioners && item.twoPractitionersEligible ? 2 : 1;
       const free = freeStaff(ctx, busy, item.categoryId, iv);
       const wanted = overrides[item.key];
@@ -149,7 +150,7 @@ export function availableTimes(ctx: PlanContext, items: PlanItem[], twoPractitio
   const isToday = ctx.date === todayISO();
   const nowMin = now.getHours() * 60 + now.getMinutes();
   const times: string[] = [];
-  for (let t = OPENING; t < CLOSING; t += SLOT_STEP) {
+  for (let t = OPENING; t <= LAST_START; t += SLOT_STEP) {
     if (isToday && t <= nowMin) continue;
     if (planAt(ctx, items, minutesToTime(t), twoPractitioners)) times.push(minutesToTime(t));
   }

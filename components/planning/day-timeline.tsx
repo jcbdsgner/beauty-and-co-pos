@@ -7,7 +7,7 @@ import { IconButton } from "@/components/ui/atoms/icon-button";
 import { DropdownMenu } from "@/components/ui/molecules/dropdown-menu";
 import { clientFullName } from "@/lib/data/clientele";
 import { serviceById } from "@/lib/data/menu";
-import { appointmentEndTime, formatHour, minutesToTime, timeToMinutes, type RendezVousRow } from "@/lib/data/planning";
+import { LAST_BOOKING, SALON_OPENING, appointmentEndTime, formatHour, minutesToTime, timeToMinutes, type RendezVousRow } from "@/lib/data/planning";
 import { praticienneAccent } from "@/lib/data/praticienne-colors";
 import { scheduleFor } from "@/lib/data/praticiennes";
 import { useAppStore } from "@/lib/store/app-store";
@@ -133,10 +133,11 @@ export function DayTimeline({
       if (h) marks.push(timeToMinutes(h.start), timeToMinutes(h.end));
     }
     for (const r of rows) marks.push(timeToMinutes(r.rv.start), timeToMinutes(appointmentEndTime(r.rv)));
-    const lo = marks.length ? Math.min(...marks) : 10 * 60;
-    const hi = marks.length ? Math.max(...marks) : 19 * 60;
-    const flooredLo = Math.floor(lo / 60) * 60;
-    return { gridStart: flooredLo, gridEnd: Math.max(Math.ceil(hi / 60) * 60, flooredLo + 4 * 60) };
+    // La journée s'ouvre à 10h et court au moins jusqu'au dernier départ (20h) ; au-delà, jusqu'à la
+    // fin du dernier rendez-vous ou horaire (22h au plus tard).
+    const lo = Math.min(timeToMinutes(SALON_OPENING), ...marks);
+    const hi = Math.max(timeToMinutes(LAST_BOOKING), ...marks);
+    return { gridStart: Math.floor(lo / 60) * 60, gridEnd: Math.ceil(hi / 60) * 60 };
   }, [staff, rows, date]);
 
   const y = (min: number) => ((min - gridStart) / SLOT_MIN) * SLOT_H;

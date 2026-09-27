@@ -23,7 +23,7 @@ export function isWorkingOn(p: Praticienne, d: Date): boolean {
 }
 
 /** Sea Plaza ouvre 7j/7, Almadies du mardi au dimanche (fermé le lundi, cf. `Salon.closedDays`),
- *  de 10h à 20h ; le dimanche est le jour le plus chargé — toute l'équipe y travaille. */
+ *  de 10h à 22h (aucun rendez-vous ne commence après 20h) ; le dimanche est le jour le plus chargé — toute l'équipe y travaille. */
 export const PRATICIENNES: Praticienne[] = [
   {
     id: "bineta",
@@ -142,12 +142,12 @@ export const PRATICIENNES: Praticienne[] = [
     photoUrl: "/images/equipe/aissatou.jpg",
     salonId: "almadies",
     weeklySchedule: {
-      mar: { start: "08:00", end: "13:00" },
-      mer: { start: "08:00", end: "13:00" },
-      jeu: { start: "08:00", end: "13:00" },
-      ven: { start: "08:00", end: "13:00" },
-      sam: { start: "08:00", end: "13:00" },
-      dim: { start: "08:00", end: "13:00" },
+      mar: { start: "10:00", end: "15:00" },
+      mer: { start: "10:00", end: "15:00" },
+      jeu: { start: "10:00", end: "15:00" },
+      ven: { start: "10:00", end: "15:00" },
+      sam: { start: "10:00", end: "15:00" },
+      dim: { start: "10:00", end: "15:00" },
     },
   },
   {
@@ -157,12 +157,12 @@ export const PRATICIENNES: Praticienne[] = [
     initial: "N",
     salonId: "sea-plaza-bco",
     weeklySchedule: {
-      lun: { start: "08:30", end: "17:30" },
-      mar: { start: "08:30", end: "17:30" },
-      jeu: { start: "08:30", end: "17:30" },
-      ven: { start: "08:30", end: "17:30" },
-      sam: { start: "08:30", end: "17:30" },
-      dim: { start: "08:30", end: "17:30" },
+      lun: { start: "10:00", end: "19:00" },
+      mar: { start: "10:00", end: "19:00" },
+      jeu: { start: "10:00", end: "19:00" },
+      ven: { start: "10:00", end: "19:00" },
+      sam: { start: "10:00", end: "19:00" },
+      dim: { start: "10:00", end: "19:00" },
     },
   },
 ];

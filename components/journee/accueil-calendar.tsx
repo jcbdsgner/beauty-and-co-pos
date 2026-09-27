@@ -5,7 +5,7 @@ import { Avatar } from "@/components/ui/atoms/avatar";
 import { Tooltip } from "@/components/ui/atoms/tooltip";
 import { clientFullName } from "@/lib/data/clientele";
 import { serviceById } from "@/lib/data/menu";
-import { reservationComposition, timeToMinutes, type ReservationDayRow } from "@/lib/data/planning";
+import { LAST_BOOKING, SALON_OPENING, reservationComposition, timeToMinutes, type ReservationDayRow } from "@/lib/data/planning";
 import { cn } from "@/lib/utils";
 import type { Cliente, Praticienne, RendezVous } from "@/lib/data/types";
 
@@ -118,10 +118,10 @@ export function AccueilCalendar({ rows, clients, praticiennes, onOpenReservation
 
   const { gridStart, gridEnd } = useMemo(() => {
     const marks = rows.flatMap((r) => [timeToMinutes(r.start), timeToMinutes(r.end)]);
-    const lo = marks.length ? Math.min(...marks) : 10 * 60;
-    const hi = marks.length ? Math.max(...marks) : 19 * 60;
-    const start = Math.floor(lo / 60) * 60;
-    return { gridStart: start, gridEnd: Math.max(Math.ceil(hi / 60) * 60, start + 4 * 60) };
+    // Même cadre que le Planning : ouverture 10h, au moins jusqu'au dernier départ (20h), 22h au plus.
+    const lo = Math.min(timeToMinutes(SALON_OPENING), ...marks);
+    const hi = Math.max(timeToMinutes(LAST_BOOKING), ...marks);
+    return { gridStart: Math.floor(lo / 60) * 60, gridEnd: Math.ceil(hi / 60) * 60 };
   }, [rows]);
 
   const y = (min: number) => yOf(min, gridStart);

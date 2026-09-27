@@ -6,6 +6,12 @@ import type { BeneficiaryKind, RendezVous, Reservation } from "@/lib/data/types"
  *  absent du Figma de référence, qui ne montre que Jour/Semaine. */
 export type PlanningPeriod = "jour" | "semaine";
 
+/** Heures des deux salons (CONTEXT.md, Praticienne) : la journée s'ouvre à 10h ; aucun rendez-vous
+ *  ne commence après 20h, mais le dernier peut déborder jusqu'à 22h. */
+export const SALON_OPENING = "10:00";
+export const LAST_BOOKING = "20:00";
+export const SALON_CLOSING = "22:00";
+
 /** A calendar day as "YYYY-MM-DD" (local). */
 export function dateISO(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -692,7 +698,9 @@ function fitSeedToSchedules(seed: Reservation[]): Reservation[] {
   for (const { date, rv } of order) {
     const primaries = colleagues(rv.staffId);
     const wanted = timeToMinutes(rv.start);
-    const times = [wanted, ...Array.from({ length: 48 }, (_, i) => 8 * 60 + i * 15).filter((t) => t !== wanted)];
+    const first = timeToMinutes(SALON_OPENING);
+    const slots = (timeToMinutes(LAST_BOOKING) - first) / 15 + 1;
+    const times = [wanted, ...Array.from({ length: slots }, (_, i) => first + i * 15).filter((t) => t !== wanted)];
 
     let pick: { staffId: string; secondStaffId?: string; start: number; durationMin: number } | undefined;
     for (const start of times) {
