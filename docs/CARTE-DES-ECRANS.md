@@ -77,9 +77,9 @@ ADR 0025 — absente du Figma de référence) : un seul écran, le programme de 
 plus de bascule de vue, plus de liste de réservations (celle-ci ne vit plus que sur l'Accueil).
 `/equipe` redirige ici.
 - `BoardHeader section="Planning"` (sans `reset` — la relève au « Aujourd'hui » se fait sur `PeriodNav`).
-- `PeriodNav` — barre compacte ◀ ▶ + libellé de période + bascule **Jour/Semaine** (Mois retiré,
-  ADR 0025), remplace `DateStrip` (bandeau mois + rangée de 7 jours cliquables, retiré). Pas de
-  sélecteur de jour indépendant : on atterrit sur un jour précis via la vue Semaine (clic sur une cellule).
+- `PeriodNav` — bouton-libellé de période (icône calendrier + « Dimanche 27 septembre 2026 » ▾) qui
+  ouvre un mini calendrier (`DatePicker` avec `trigger`) + « Aujourd'hui » + bascule **Jour/Semaine**
+  (Mois retiré, ADR 0025). Les flèches ◀ ▶ sont retirées (2026-09-27, cf. ADR 0024).
 - `Switch` « Afficher les annulés ».
 - `RosterFilter` — sidebar (avatar + case à cocher par praticienne, groupée Coiffeur/Esthéticien/Ménage,
   poignée de glisser-déposer par ligne — réordonne dans son groupe, session-only —, menu `…` :

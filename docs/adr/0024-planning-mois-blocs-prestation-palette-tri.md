@@ -38,6 +38,11 @@ Semaine et on clique une cellule (déjà le comportement de `WeekTimeline`/`Mont
 bouton « Aujourd'hui » apparaît dès que la période affichée (jour, semaine ou mois) ne contient
 plus la date du jour.
 
+> **Révisé 2026-09-27 :** les flèches ◀ ▶ sont retirées. Le libellé de période devient un bouton
+> qui ouvre un mini calendrier (le `DatePicker` partagé, via sa prop `trigger`) : on saute
+> directement à n'importe quel jour, sans cliquer jour après jour. En vue Semaine, le jour choisi
+> amène sa semaine. « Aujourd'hui » et la bascule Jour/Semaine sont inchangés.
+
 **Bloc = prestation seule.** Le bloc n'affiche plus que l'heure et le nom de la prestation ; le
 nom de la cliente disparaît du bloc (il reste immédiat au clic, dans `AppointmentDetailSheet`).
 Lecture pensée pour la praticienne qui balaie sa ligne : « quoi », pas « qui ».

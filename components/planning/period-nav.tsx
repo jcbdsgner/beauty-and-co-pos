@@ -1,8 +1,9 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDays, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/atoms/button";
 import { ChipFilter } from "@/components/ui/board";
+import { DatePicker } from "@/components/ui/molecules/date-picker";
 import type { PlanningPeriod } from "@/lib/data/planning";
 
 /**
@@ -10,10 +11,10 @@ import type { PlanningPeriod } from "@/lib/data/planning";
  * référence) — remplace l'ancien `DateStrip` (bandeau mois + flèches semaine, PUIS une rangée de
  * 7 jours cliquables). Une seule barre compacte façon référence utilisateur : ◀ ▶ navigue d'une
  * unité de la période affichée (jour / semaine), un libellé de période au centre, et la bascule
- * Jour/Semaine. Pas de sélecteur de jour indépendant : pour choisir un jour précis dans la
- * semaine, on passe par la vue Semaine et on clique une cellule (déjà porté par `WeekTimeline`).
+ * Jour/Semaine. Révision 2026-09-27 : les flèches ◀ ▶ sont retirées — le libellé de période est
+ * lui-même un bouton qui ouvre un mini calendrier (`DatePicker`) pour sauter à n'importe quel
+ * jour. En vue Semaine, le jour choisi amène sa semaine.
  */
-const WEEKDAY_STEP: Record<PlanningPeriod, number> = { jour: 1, semaine: 7 };
 
 function sameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
@@ -44,12 +45,6 @@ function periodContainsToday(period: PlanningPeriod, date: Date, today: Date) {
   return today >= start && today <= end;
 }
 
-function shift(date: Date, period: PlanningPeriod, dir: 1 | -1) {
-  const d = new Date(date);
-  d.setDate(d.getDate() + dir * WEEKDAY_STEP[period]);
-  return d;
-}
-
 function label(period: PlanningPeriod, date: Date) {
   if (period === "jour") {
     const s = new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(date);
@@ -74,25 +69,21 @@ export function PeriodNav({ period, onPeriodChange, date, onDateChange, today }:
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
       <div className="flex items-center gap-3">
-        <div className="flex gap-1">
-          <button
-            type="button"
-            aria-label="Période précédente"
-            onClick={() => onDateChange(shift(date, period, -1))}
-            className="flex size-9 items-center justify-center rounded-full border border-base-300 bg-base-100 text-base-content/55 transition active:scale-90 hover:bg-base-200"
-          >
-            <ChevronLeft aria-hidden className="size-4" />
-          </button>
-          <button
-            type="button"
-            aria-label="Période suivante"
-            onClick={() => onDateChange(shift(date, period, 1))}
-            className="flex size-9 items-center justify-center rounded-full border border-base-300 bg-base-100 text-base-content/55 transition active:scale-90 hover:bg-base-200"
-          >
-            <ChevronRight aria-hidden className="size-4" />
-          </button>
-        </div>
-        <p className="font-[family-name:var(--font-heading)] text-[15px] font-semibold text-base-content">{label(period, date)}</p>
+        <DatePicker
+          value={date}
+          onChange={onDateChange}
+          trigger={
+            <button
+              type="button"
+              aria-label="Choisir une date"
+              className="flex h-12 items-center gap-2.5 rounded-full border border-base-300 bg-base-100 pl-4 pr-3.5 text-base-content transition active:scale-[0.98] hover:bg-base-200 data-[state=open]:border-primary"
+            >
+              <CalendarDays aria-hidden className="size-4 shrink-0 text-base-content/55" />
+              <span className="font-[family-name:var(--font-heading)] text-[15px] font-semibold">{label(period, date)}</span>
+              <ChevronDown aria-hidden className="size-4 shrink-0 text-base-content/45" />
+            </button>
+          }
+        />
         {!isCurrent && (
           <Button variant="outline" size="sm" onClick={() => onDateChange(new Date())}>
             Aujourd&apos;hui

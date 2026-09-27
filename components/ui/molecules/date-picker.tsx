@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,10 @@ type DatePickerProps = {
   className?: string;
   /** Days strictly before this one are shown greyed out and unclickable (ex. réservation : pas de jour passé). */
   minDate?: Date;
+  /** Remplace le champ par défaut (ex. le libellé de période du Planning). Rendu en `asChild` :
+   *  doit être un unique élément bouton. */
+  trigger?: ReactNode;
+  align?: "start" | "center" | "end";
 };
 
 const WEEKDAYS = ["L", "M", "M", "J", "V", "S", "D"];
@@ -37,7 +41,7 @@ function isSameDay(a: Date, b: Date) {
  *  boundary. Kept dependency-free (plain Date math, fr-FR labels, Monday-first, 48px cells) rather
  *  than pulled onto react-day-picker: it already does everything a themed calendar lib would, at a
  *  fraction of the CSS surface, and stays fully inside the flat brand language. */
-export function DatePicker({ value, onChange, placeholder = "Choisir une date", className, minDate }: DatePickerProps) {
+export function DatePicker({ value, onChange, placeholder = "Choisir une date", className, minDate, trigger, align = "start" }: DatePickerProps) {
   const [open, setOpen] = useState(false);
   const [visibleMonth, setVisibleMonth] = useState(() => startOfMonth(value ?? new Date()));
 
@@ -51,8 +55,16 @@ export function DatePicker({ value, onChange, placeholder = "Choisir une date", 
   const today = new Date();
 
   return (
-    <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
+    <PopoverPrimitive.Root
+      open={open}
+      onOpenChange={(next) => {
+        // Rouvre toujours sur le mois de la date courante (elle a pu changer par ailleurs).
+        if (next && value) setVisibleMonth(startOfMonth(value));
+        setOpen(next);
+      }}
+    >
       <PopoverPrimitive.Trigger asChild>
+        {trigger ?? (
         <button
           type="button"
           className={cn(
@@ -65,10 +77,11 @@ export function DatePicker({ value, onChange, placeholder = "Choisir une date", 
           <CalendarIcon aria-hidden className="size-4 shrink-0 text-base-content/45" />
           {label}
         </button>
+        )}
       </PopoverPrimitive.Trigger>
       <PopoverPrimitive.Portal>
         <PopoverPrimitive.Content
-          align="start"
+          align={align}
           sideOffset={8}
           // Widened from w-72: the day grid below needed 44px cells (touch minimum), which a
           // 288px-wide popover couldn't fit 7 of without shrinking them back under the minimum.
