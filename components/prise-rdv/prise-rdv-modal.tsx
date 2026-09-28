@@ -134,6 +134,9 @@ type PriseRdvModalProps = {
   /** Salon pré-choisi à l'étape Créneau (le salon filtré à l'Accueil), modifiable. Absent ⇒ salon
    *  du poste ; `null` ⇒ aucun (« Tous les salons »). */
   defaultSalonId?: string | null;
+  /** Création seulement : cliente déjà posée comme payeuse à l'étape Clientes (ex. reprise de
+   *  rendez-vous depuis le reçu), modifiable. */
+  payerClientId?: string;
   onClose: () => void;
 };
 
@@ -141,6 +144,7 @@ export function PriseRdvModal({
   open,
   reservationId,
   defaultSalonId = POSTE_SALON_ID,
+  payerClientId,
   onClose,
 }: PriseRdvModalProps) {
   if (!open) return null;
@@ -151,6 +155,7 @@ export function PriseRdvModal({
           key={reservationId ?? "new"}
           reservationId={reservationId ?? null}
           defaultSalonId={defaultSalonId ?? null}
+          payerClientId={reservationId ? undefined : payerClientId}
           scroller={scroller}
           onClose={onClose}
         />
@@ -346,11 +351,13 @@ function prefillFrom(reservation: Reservation): Prefill {
 function PriseRdvFlow({
   reservationId,
   defaultSalonId,
+  payerClientId,
   scroller,
   onClose,
 }: {
   reservationId: string | null;
   defaultSalonId: string | null;
+  payerClientId?: string;
   scroller: React.RefObject<HTMLDivElement | null>;
   onClose: () => void;
 }) {
@@ -1011,7 +1018,16 @@ function PriseRdvFlow({
       <AttendeesDialog
         open={attendees === null}
         initial={attendees ?? prefill?.attendees}
-        onConfirm={setAttendees}
+        onConfirm={(next) => {
+          setAttendees(next);
+          // Payeuse connue d'avance : posée sur son créneau (1re adulte, sinon « Payeuse »).
+          if (payerClientId) {
+            const slotId = next.adults > 0 ? "adulte-1" : "payeuse";
+            setAssignments((prev) =>
+              prev[slotId] ? prev : { ...prev, [slotId]: { clientId: payerClientId } },
+            );
+          }
+        }}
         onCancel={onClose}
       />
       {hasRedeemableEntries ? (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Mail, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/atoms/button";
 import { Toast } from "@/components/ui/molecules/toast";
@@ -13,7 +13,16 @@ import type { Cliente } from "@/lib/data/types";
  * (juste après l'encaissement) et le reçu historique du Récap des ventes. Rien ne s'affiche quand
  * la vente n'a pas de cliente rattachée ; chaque bouton est désactivé si son canal manque.
  */
-export function SendReceiptButtons({ client, className }: { client?: Cliente; className?: string }) {
+export function SendReceiptButtons({
+  client,
+  leading,
+  className,
+}: {
+  client?: Cliente;
+  /** Bouton posé en tête de la même rangée (l'impression, à la station Reçu). */
+  leading?: ReactNode;
+  className?: string;
+}) {
   const [toast, setToast] = useState<string | null>(null);
 
   if (!client) return null;
@@ -24,6 +33,7 @@ export function SendReceiptButtons({ client, className }: { client?: Cliente; cl
     <>
       <div className={cn("flex flex-col gap-2", className)}>
         <div className="flex gap-2">
+          {leading}
           <Button
             variant="outline"
             size="default"
@@ -32,7 +42,7 @@ export function SendReceiptButtons({ client, className }: { client?: Cliente; cl
             disabled={!client.email}
             onClick={() => setToast(`Reçu envoyé par e-mail à ${client.email}.`)}
           >
-            Par e-mail
+            E-mail
           </Button>
           <Button
             variant="outline"
@@ -42,7 +52,7 @@ export function SendReceiptButtons({ client, className }: { client?: Cliente; cl
             disabled={!client.whatsapp}
             onClick={() => setToast(`Reçu envoyé par WhatsApp à ${who}.`)}
           >
-            Par WhatsApp
+            WhatsApp
           </Button>
         </div>
         {noChannel && (

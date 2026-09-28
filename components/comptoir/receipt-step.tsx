@@ -1,17 +1,18 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
-import { Home, Plus, Printer } from "lucide-react";
+import { CalendarPlus, Printer } from "lucide-react";
 import { Button } from "@/components/ui/atoms/button";
 import { computeTotals, useAppData } from "@/components/providers/app-data-provider";
 import { NoterClienteDialog } from "@/components/comptoir/noter-cliente-dialog";
 import { SendReceiptButtons } from "@/components/comptoir/send-receipt-buttons";
 import { PAYMENT_MODE_LABEL, PaymentModeGlyph } from "@/components/comptoir/payment-modes";
 import { PrintedReceipt } from "@/components/comptoir/printed-receipt";
+import { PriseRdvModal } from "@/components/prise-rdv/prise-rdv-modal";
 import { clientFullName } from "@/lib/data/clientele";
-import { cn, formatFcfa } from "@/lib/utils";
+import { formatFcfa } from "@/lib/utils";
 import type { Sale } from "@/lib/data/types";
 
 const PRINT_PAGE_STYLE = `
@@ -32,9 +33,9 @@ export function isReceiptLocked(sale: Sale | undefined): boolean {
  * `NoterClienteDialog`, once everything that touches the receipt is settled.
  */
 export function ReceiptStep({ sale }: { sale: Sale }) {
-  const router = useRouter();
-  const { closeTab, openNewTab, clients } = useAppData();
+  const { openNewTab, clients } = useAppData();
   const [noterOpen, setNoterOpen] = useState(false);
+  const [bookingOpen, setBookingOpen] = useState(false);
   const [printError, setPrintError] = useState(false);
   const receiptRef = useRef<HTMLDivElement>(null);
   const totals = computeTotals(sale);
@@ -56,6 +57,16 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
   // been noted (`isReceiptLocked`) — the tabs and « Replier » are locked in the panel too.
   const mustRate = !!client && !sale.clientRatedAt;
 
+  const printButton = printError ? (
+    <Button variant="danger-outline" size="default" className="flex-1" onClick={() => print()}>
+      Réessayer l&apos;impression
+    </Button>
+  ) : (
+    <Button variant="outline" size="default" className="flex-1" icon={<Printer className="size-4" />} onClick={() => print()}>
+      Imprimer
+    </Button>
+  );
+
   return (
     <div className="grid h-full grid-cols-[minmax(0,1fr)_440px] gap-5 p-5">
       <section className="flex min-h-0 flex-col overflow-y-auto rounded-box border border-border bg-white">
@@ -70,7 +81,14 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
               {sale.tip && (
                 <p className="text-[15px] font-medium text-base-content/70 tabular-nums">+ {formatFcfa(sale.tip.amount)} de pourboire</p>
               )}
-              {client && <p className="text-sm text-base-content/55">{clientFullName(client)}</p>}
+              {client && (
+                <Link
+                  href={`/clientele/${client.id}`}
+                  className="-mx-1 inline-flex min-h-11 items-center rounded-field px-1 text-sm text-base-content/55 underline-offset-4 hover:text-secondary hover:underline"
+                >
+                  {clientFullName(client)}
+                </Link>
+              )}
             </div>
           </div>
 
@@ -124,42 +142,36 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
             </ul>
           )}
 
-          {/* Next */}
-          <div className="flex flex-col gap-3">
-            {client && (mustRate || needsReason) ? (
-              <Button variant="brand" size="xl" className="w-full" onClick={() => setNoterOpen(true)}>
-                Continuer
-              </Button>
-            ) : (
-              <Button variant="brand" size="xl" className="w-full" icon={<Plus className="size-5" />} onClick={() => openNewTab()}>
-                Nouvelle vente
-              </Button>
-            )}
-            <div className={cn("grid gap-3", mustRate ? "grid-cols-1" : "grid-cols-2")}>
-              {printError ? (
-                <Button variant="danger-outline" size="default" onClick={() => print()}>
-                  Réessayer l&apos;impression
+          {/* Next — la suite du passage, puis le reçu à part. */}
+          <div className="flex flex-col gap-8">
+            <div className="flex flex-col gap-3">
+              {client && (mustRate || needsReason) ? (
+                <Button variant="brand" size="xl" className="w-full" onClick={() => setNoterOpen(true)}>
+                  {needsReason ? "Motif de remise" : `Noter ${clientFullName(client)}`}
                 </Button>
               ) : (
-                <Button variant="outline" size="default" icon={<Printer className="size-4" />} onClick={() => print()}>
-                  Imprimer le reçu
+                <Button variant="brand" size="xl" className="w-full" onClick={() => openNewTab()}>
+                  Continuer
                 </Button>
               )}
-              {!mustRate && (
-              <Button
-                variant="outline"
-                size="default"
-                icon={<Home className="size-4" />}
-                onClick={() => {
-                  router.push("/");
-                  closeTab(sale.id);
-                }}
-              >
-                Revenir à l&apos;Accueil
-              </Button>
+              {client && !mustRate && (
+                <Button
+                  variant="outline"
+                  size="default"
+                  className="w-full"
+                  icon={<CalendarPlus className="size-4" />}
+                  onClick={() => setBookingOpen(true)}
+                >
+                  Reprendre rendez-vous
+                </Button>
               )}
             </div>
-            <SendReceiptButtons client={client} />
+
+            <div className="flex flex-col gap-2">
+              <p className="text-xs font-semibold tracking-wide text-base-content/55 uppercase">Reçu</p>
+              <SendReceiptButtons client={client} leading={printButton} />
+              {!client && printButton}
+            </div>
           </div>
         </div>
       </section>
@@ -173,6 +185,9 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
       </div>
       {client && (
         <NoterClienteDialog open={noterOpen} sale={sale} client={client} needsReason={needsReason} onClose={() => setNoterOpen(false)} />
+      )}
+      {client && (
+        <PriseRdvModal open={bookingOpen} payerClientId={client.id} onClose={() => setBookingOpen(false)} />
       )}
     </div>
   );
