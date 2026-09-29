@@ -47,6 +47,19 @@ export const PREFERENCE_DOMAIN_LABEL: Record<PreferenceDomain, string> = {
   boisson: "Boisson",
 };
 
+/** Un fichier joint à une note interne — photo (avant/après, réaction cutanée…) ou document
+ *  (ordonnance, test d'allergie, décharge signée). Sans backend : un fichier ajouté en séance vit
+ *  le temps de la session (`URL.createObjectURL`) ; ceux du seed pointent vers `public/`. */
+export type NoteAttachment = {
+  id: string;
+  name: string;
+  /** « image » s'affiche en vignette agrandissable ; tout le reste en pastille qui s'ouvre à part. */
+  kind: "image" | "document";
+  /** Octets — affiché « 245 Ko ». */
+  size: number;
+  url: string;
+};
+
 /** Une entrée du journal interne d'une fiche cliente — jamais montrée à la cliente. `authorId` est
  *  une praticienne de l'équipe (le compte du poste par défaut, modifiable à la saisie). */
 export type ClientNote = {
@@ -56,6 +69,8 @@ export type ClientNote = {
   text: string;
   /** Où la note a été prise : sur la fiche, ou dans « Noter la cliente » après l'encaissement. */
   origin: "fiche" | "encaissement";
+  /** Fichiers joints, dans l'ordre d'ajout. Une note peut n'être que des fichiers (texte vide). */
+  attachments?: NoteAttachment[];
 };
 
 export type Cliente = {

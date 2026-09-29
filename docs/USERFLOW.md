@@ -113,6 +113,12 @@
 > - Modifier : même parcours pré-rempli ; une prestation retirée annule son rendez-vous ; un
 >   acompte déjà réglé n'est pas redemandé. L'ancien éditeur d'ajustement disparaît.
 
+> **Amendement 2026-09-29 (v2.11) — Fichiers joints aux notes internes (ADR 0039).** Fiche
+> cliente, Notes internes : « Joindre » (ou glisser-déposer) ajoute photos et PDF à la note en
+> cours, affichés sous le texte avec un × ; une note peut n'être que des fichiers. Dans le journal,
+> photos en vignettes (visionneuse plein écran) et PDF en pastilles qui s'ouvrent dans un onglet.
+> [ Fichier ni photo ni PDF, ou > 10 Mo → refusé et nommé sous la saisie ]
+
 > **Amendement 2026-09-29 (v2.10) — Remises et avantages au panier (ADR 0038, révise ADR 0031).**
 > Une ligne « Remises et avantages » au pied du ticket du panier ouvre un dialogue qui porte la
 > remise par ligne (même mécanisme) et les avantages de la cliente. Le Règlement ne fait plus que

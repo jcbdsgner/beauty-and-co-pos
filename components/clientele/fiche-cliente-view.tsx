@@ -35,6 +35,7 @@ import { AbonnementsPacksBoard } from "@/components/clientele/abonnements-packs-
 import { EditCoordonneesDialog } from "@/components/clientele/edit-coordonnees-dialog";
 import { PreferencesDialog, defaultPreferenceDomain } from "@/components/clientele/preferences-dialog";
 import { NotationPhoto } from "@/components/clientele/notation-photo";
+import { AttachButton, NoteAttachments, PendingAttachments, filesToAttachments } from "@/components/clientele/note-attachments";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { ETHNICITY_LABEL, clientFullName, clientInitial, clientNumberLabel, formatBirthday } from "@/lib/data/clientele";
 import { ContactRow as Row } from "@/components/shared/contact-row";
@@ -50,6 +51,7 @@ import {
   PREFERENCE_DOMAIN_LABEL,
   type Cliente,
   type ClientNote,
+  type NoteAttachment,
   type Praticienne,
   type PreferenceDomain,
 } from "@/lib/data/types";
@@ -427,18 +429,36 @@ function Pref({ label, value }: { label: string; value?: string }) {
   );
 }
 
-/** Journal interne : une saisie en tête, puis chaque note signée et datée, la plus récente d'abord. */
+/** Journal interne : une saisie en tête, puis chaque note signée et datée, la plus récente d'abord.
+ *  Une note peut porter des fichiers — « Joindre » ou un glisser-déposer sur la saisie. */
 function NotesBoard({ client, praticiennes }: { client: Cliente; praticiennes: Praticienne[] }) {
   const { addClientNote } = useAppData();
   const [draft, setDraft] = useState("");
   const [authorId, setAuthorId] = useState(UTILISATEUR.praticienneId);
+  const [files, setFiles] = useState<NoteAttachment[]>([]);
+  const [refused, setRefused] = useState<string[]>([]);
+  const [dragging, setDragging] = useState(false);
   const notes = client.notes ?? [];
+  const canAdd = draft.trim().length > 0 || files.length > 0;
 
+  function attach(list: FileList | File[]) {
+    const { accepted, refused } = filesToAttachments(list);
+    setFiles((f) => [...f, ...accepted]);
+    setRefused(refused);
+  }
+  function removeFile(id: string) {
+    setFiles((f) => {
+      const gone = f.find((a) => a.id === id);
+      if (gone) URL.revokeObjectURL(gone.url);
+      return f.filter((a) => a.id !== id);
+    });
+  }
   function add() {
-    const text = draft.trim();
-    if (!text) return;
-    addClientNote(client.id, { authorId, text, origin: "fiche" });
+    if (!canAdd) return;
+    addClientNote(client.id, { authorId, text: draft.trim(), origin: "fiche", ...(files.length ? { attachments: files } : {}) });
     setDraft("");
+    setFiles([]);
+    setRefused([]);
   }
 
   return (
@@ -452,14 +472,40 @@ function NotesBoard({ client, praticiennes }: { client: Cliente; praticiennes: P
         )
       }
     >
-      <div className="flex flex-col gap-3 border-b border-base-300 bg-black/[0.015] p-4">
+      <div
+        className={cn(
+          "flex flex-col gap-3 border-b border-base-300 bg-black/[0.015] p-4 transition-shadow",
+          dragging && "shadow-[inset_0_0_0_2px_var(--color-primary)]",
+        )}
+        onDragOver={(e) => {
+          if (!e.dataTransfer.types.includes("Files")) return;
+          e.preventDefault();
+          setDragging(true);
+        }}
+        onDragLeave={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragging(false);
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragging(false);
+          if (e.dataTransfer.files.length) attach(e.dataTransfer.files);
+        }}
+      >
         <Textarea
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          placeholder="Une observation faite en salon…"
+          placeholder={dragging ? "Déposez les fichiers ici…" : "Une observation faite en salon…"}
           rows={2}
           aria-label="Nouvelle note"
         />
+        <PendingAttachments items={files} onRemove={removeFile} />
+        {refused.length > 0 && (
+          <ul className="flex flex-col gap-0.5 text-xs font-medium text-error">
+            {refused.map((r) => (
+              <li key={r}>{r}</li>
+            ))}
+          </ul>
+        )}
         <div className="flex flex-wrap items-center gap-2">
           <Select
             value={authorId}
@@ -471,7 +517,8 @@ function NotesBoard({ client, praticiennes }: { client: Cliente; praticiennes: P
             size="compact"
             className="w-auto min-w-[11rem]"
           />
-          <Button variant="brand" size="sm" className="ml-auto min-w-28" onClick={add} disabled={!draft.trim()}>
+          <AttachButton onFiles={attach} />
+          <Button variant="brand" size="sm" className="ml-auto min-w-28" onClick={add} disabled={!canAdd}>
             Ajouter
           </Button>
         </div>
@@ -511,7 +558,8 @@ function NoteEntry({ note, author }: { note: ClientNote; author?: Praticienne })
             </span>
           )}
         </p>
-        <p className="mt-1 whitespace-pre-line text-[15px] leading-relaxed text-base-content/90">{note.text}</p>
+        {note.text && <p className="mt-1 whitespace-pre-line text-[15px] leading-relaxed text-base-content/90">{note.text}</p>}
+        <NoteAttachments attachments={note.attachments} />
       </div>
     </li>
   );

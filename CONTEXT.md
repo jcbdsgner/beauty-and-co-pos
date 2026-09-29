@@ -85,7 +85,7 @@ Le numéro séquentiel de chaque fiche, attribué à la création et jamais réa
 _Avoid_: ID cliente, matricule
 
 **Journal interne**:
-L'historique des notes internes d'une fiche, la plus récente d'abord. Chaque note est **signée** (une personne de l'équipe, par défaut le compte du poste, modifiable), **datée**, et marquée « Après encaissement » quand elle vient de Noter la cliente. Jamais montré à la cliente (ADR 0035).
+L'historique des notes internes d'une fiche, la plus récente d'abord. Chaque note est **signée** (une personne de l'équipe, par défaut le compte du poste, modifiable), **datée**, et marquée « Après encaissement » quand elle vient de Noter la cliente. Elle peut porter des **fichiers joints** — photos et PDF — voire n'être que ça (ADR 0039). Jamais montré à la cliente (ADR 0035).
 _Avoid_: Commentaires, Mémo
 
 **Préférence**:

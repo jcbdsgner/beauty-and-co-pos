@@ -33,8 +33,14 @@ export const CLIENTS: Cliente[] = [
     totalSpent: 245000,
     totalVisits: 9,
     notes: [
-      { id: "note-cl1-2", at: "2026-09-19T16:40:00.000Z", authorId: "ndiole", origin: "encaissement", text: "A demandé à être prévenue dès qu'un créneau se libère le samedi matin." },
-      { id: "note-cl1-1", at: "2026-08-02T11:15:00.000Z", authorId: "bineta", origin: "fiche", text: "Cuir chevelu sensible — éviter les produits mentholés au shampooing." },
+      { id: "note-cl1-2", at: "2026-09-19T16:40:00.000Z", authorId: "ndiole", origin: "encaissement", text: "A demandé à être prévenue dès qu'un créneau se libère le samedi matin. Très contente de sa French — photos du résultat pour la prochaine fois.", attachments: [
+        { id: "att-cl1-3", name: "french-resultat.jpg", kind: "image", size: 184_320, url: "/notation/french.jpg" },
+        { id: "att-cl1-4", name: "decoration-annulaire.jpg", kind: "image", size: 201_728, url: "/notation/decoration.jpg" },
+      ] },
+      { id: "note-cl1-1", at: "2026-08-02T11:15:00.000Z", authorId: "bineta", origin: "fiche", text: "Cuir chevelu sensible — éviter les produits mentholés au shampooing. Ordonnance de sa dermatologue jointe.", attachments: [
+        { id: "att-cl1-1", name: "ordonnance-dermatologue.pdf", kind: "document", size: 753, url: "/fichiers/ordonnance-dermatologue.pdf" },
+        { id: "att-cl1-2", name: "test-allergie-colorations.pdf", kind: "document", size: 689, url: "/fichiers/test-allergie-colorations.pdf" },
+      ] },
     ],
     createdAt: "2026-02-01",
     preferredStaffId: "bineta",
@@ -152,7 +158,9 @@ export const CLIENTS: Cliente[] = [
     totalSpent: 890000,
     totalVisits: 22,
     notes: [
-      { id: "note-cl6-1", at: "2026-07-22T10:30:00.000Z", authorId: "ndiole", origin: "fiche", text: "Préfère régler par Wave. Arrive en général 10 min en avance." },
+      { id: "note-cl6-1", at: "2026-07-22T10:30:00.000Z", authorId: "ndiole", origin: "fiche", text: "Préfère régler par Wave. Arrive en général 10 min en avance. Modèle de pose apporté par la cliente.", attachments: [
+        { id: "att-cl6-1", name: "modele-gel-x.jpg", kind: "image", size: 163_840, url: "/notation/gel-x.jpg" },
+      ] },
     ],
     createdAt: "2025-09-01",
     preferredStaffId: "fatou",
