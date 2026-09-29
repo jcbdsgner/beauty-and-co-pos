@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/atoms/button";
 import { IconButton } from "@/components/ui/atoms/icon-button";
 import { ClientSearchField } from "@/components/shared/client-search-field";
 import { TipDialog } from "@/components/comptoir/tip-dialog";
+import { RemisesDialog, RemisesTrigger } from "@/components/comptoir/remises-dialog";
+import { RemiseTag } from "@/components/comptoir/settlement-ticket";
 import { TicketClientCard, TicketFrame, TicketHead, TicketLineBody, TicketTotals } from "@/components/comptoir/ticket-parts";
 import { useAppData, computeTotals, saleNeedsClient } from "@/components/providers/app-data-provider";
 import { cn } from "@/lib/utils";
@@ -14,14 +16,15 @@ import type { Sale } from "@/lib/data/types";
 
 /**
  * The ticket. A sales slip, not a form: cliente at the head, a scannable list of lines, and the
- * total seated at the foot as the one oversized figure the eye keeps returning to. No remise here
- * (ADR 0031): every adjustment of what is owed — remise, points, carte cadeau, prestations déjà
- * payées — happens at the règlement, on this same ticket block.
+ * total seated at the foot as the one oversized figure the eye keeps returning to. Every
+ * adjustment of what is owed — remise, points, carte cadeau, prestations déjà payées — sits here
+ * behind one row, « Remises et avantages », which opens its dialog (ADR 0038, revises ADR 0031).
  */
 export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScanner: () => void }) {
   const { updateCartQty, removeCartLine, updateSale, clients, produits } = useAppData();
   const totals = computeTotals(sale);
   const [tipOpen, setTipOpen] = useState(false);
+  const [remisesOpen, setRemisesOpen] = useState(false);
   const isEmpty = sale.cart.length === 0;
   const client = sale.clientId ? clients.find((c) => c.id === sale.clientId) : undefined;
   // A prestation in the basket means someone was served — the note must name her (ADR 0013). A
@@ -94,7 +97,13 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
                 {line.kind === "produit" && line.qty >= maxQty && (
                   <p className="mb-1 text-xs font-medium text-warning">Stock atteint — {maxQty} en rayon.</p>
                 )}
-                <TicketLineBody line={line} covered={coveredHere} discount={totals.lineDiscount[line.id] ?? 0} hideQty />
+                <TicketLineBody
+                  line={line}
+                  covered={coveredHere}
+                  discount={totals.lineDiscount[line.id] ?? 0}
+                  tag={<RemiseTag remise={sale.remises.find((r) => r.lineIds.includes(line.id))} discount={totals.lineDiscount[line.id] ?? 0} />}
+                  hideQty
+                />
 
                 <div className="mt-2 flex items-center gap-2">
                   {/* single-pill quantity stepper — the most-used control on the ticket, so 56px */}
@@ -146,6 +155,11 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
 
       {/* Foot */}
       <div className="shrink-0 border-t border-border bg-white px-5 pt-3 pb-5">
+        {!isEmpty && (
+          <div className="mb-3">
+            <RemisesTrigger sale={sale} onOpen={() => setRemisesOpen(true)} />
+          </div>
+        )}
         <TicketTotals sale={sale} className="mb-3" />
 
         <Button
@@ -163,6 +177,7 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
           {canCheckout ? "Encaisser" : isEmpty ? "Panier vide" : "Choisir une cliente"}
         </Button>
       </div>
+      <RemisesDialog sale={sale} open={remisesOpen} onClose={() => setRemisesOpen(false)} />
       {/* « Un pourboire ? » first (ADR 0034) — the Règlement then collects it with the sale. */}
       {tipOpen && (
         <TipDialog

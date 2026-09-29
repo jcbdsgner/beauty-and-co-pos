@@ -113,6 +113,11 @@
 > - Modifier : même parcours pré-rempli ; une prestation retirée annule son rendez-vous ; un
 >   acompte déjà réglé n'est pas redemandé. L'ancien éditeur d'ajustement disparaît.
 
+> **Amendement 2026-09-29 (v2.10) — Remises et avantages au panier (ADR 0038, révise ADR 0031).**
+> Une ligne « Remises et avantages » au pied du ticket du panier ouvre un dialogue qui porte la
+> remise par ligne (même mécanisme) et les avantages de la cliente. Le Règlement ne fait plus que
+> le paiement ; son ticket est en lecture seule. Le corps ci-dessous est corrigé en place.
+
 > **Amendement 2026-09-29 (v2.9) — Créer un rendez-vous depuis le Planning ; plus d'âge des
 > enfants (ADR 0037).**
 > - Planning, vue Jour : survol d'une demi-heure libre → « + 17:30 » en pointillés ; clic → le
@@ -347,7 +352,7 @@ Comptoir (déployé)
   - ouverture via « Encaisser » depuis une réservation → panier auto-rempli avec toutes ses prestations (payeuse + « pour {bénéficiaire} » sur les lignes concernées), message explicite (« Prestations de la réservation ajoutées »)
   - **identification conditionnelle** (ADR 0013) : une vente **produits et/ou boissons uniquement** (le cas d'une « + Nouvelle vente » à froid — une prestation ne naît jamais au comptoir) s'encaisse **sans cliente**, l'identification est facultative ; dès qu'une **prestation** entre au panier, la cliente redevient **obligatoire** — verrou dynamique, signal ambre
 - trois onglets **Prestations · Produits · Boissons**, recherche, rail de catégories (Prestations : grandes catégories + familles ; Produits : marques — Kérastase et ses gammes, Saryna Keys, Nefertiti, Beccy Wave, Autres ; Boissons : sans rail), grille de tuiles → ajout au panier (incrémente si déjà présent) ; **le Menu s'ouvre sur Produits** (la vente à froid est une revente ; l'onglet Prestations reste accessible). Une boisson compte dans le total et les points gagnés, jamais dans l'assiette d'une remise (ADR 0016)
-- panier : stepper qty, retrait de ligne — **plus aucune remise ici** (ADR 0031). Le total du panier montre déjà l'effet de ce qui est automatique (prestations déjà payées, carte cadeau auto-liée, acompte), en lecture seule ; tout ce qui s'**ajuste** se fait au Règlement, sur le même bloc ticket.
+- panier : stepper qty, retrait de ligne, et au pied du ticket **une seule ligne « Remises et avantages »** (ADR 0038) — ce qui est déduit à droite (« −X F »), « À utiliser » + halo rose si la cliente détient un avantage pas encore dépensé, sinon « Aucune ». Elle ouvre le dialogue **Remises et avantages** : la **remise accordée par ligne** et les **avantages de la cliente**, décrits ci-dessous (anciennement au Règlement) ; pied = total en direct + « Terminé ».
 - **Acompte** (ADR 0015) — quand la vente vient d'une réservation qui en porte un : **pas une remise**, juste un paiement déjà réglé sur la plateforme externe. Affiché en lecture seule (rien à saisir) sous le Total, déduit pour obtenir le grand chiffre final relabellisé **« Reste à encaisser »**. Les points fidélité gagnés restent calculés sur le Total complet, acompte compris.
 - « Encaisser » (désactivé + texte d'aide tant que panier vide, **ou** panier avec prestation sans cliente identifiée — ADR 0013) → Règlement
 
@@ -363,8 +368,10 @@ Identifier la cliente (dialogue unique, caméra réelle — atteint du bouton «
 Règlement (dans le Comptoir déployé — ADR 0031)
 - **même feuille, même ticket** : le ticket reste dans la colonne de droite (même bloc qu'au panier, lignes figées) ; la colonne de gauche, qui portait le Menu, porte maintenant le paiement. « ← Panier » ramène à la composition sans rien perdre
 - en tête de gauche : **À encaisser** (ou **Reste à encaisser** si acompte), en très grand
-- **Remise accordée — par ligne**, dans le ticket, sans modale : « Accorder une remise » → les lignes de prestation remisables reçoivent une case (produits, boissons, lignes entièrement déjà payées : « pas remisable ») → la réceptionniste coche une, plusieurs ou « Tout le ticket » → le compositeur prend le pied du ticket : **%** (5 / 10 / 15 / 20) ou **Montant**, **code manager** (4–6 chiffres, mock) dès que la remise dépasse **10 % de l'assiette** (le net des lignes cochées), **20 %** plafond absolu → « Appliquer −X F ». Chaque ligne remisée montre son prix barré, son nouveau prix et l'étiquette « Remise −10 % · modifier » (rouvre la remise : modifier / retirer). Plusieurs remises peuvent coexister ; une ligne n'en porte qu'une. Un montant fixe se répartit au prorata. Motif : **pas ici** (voir Reçu)
-- **Avantages de la cliente**, sous les lignes du ticket (rien à saisir, tout est déjà appliqué — on ajuste) :
+- ticket **en lecture seule** : chaque ligne remisée montre son prix barré, son nouveau prix et « Remise −10 % » ; pour changer une remise ou un avantage, « ← Panier » (ADR 0038)
+- *Dialogue « Remises et avantages » (ouvert du panier, ADR 0038) :*
+- **Remise accordée — par ligne**, dans le dialogue : « Accorder une remise » → les lignes de prestation remisables reçoivent une case (produits, boissons, lignes entièrement déjà payées : « pas remisable ») → la réceptionniste coche une, plusieurs ou « Tout le ticket » → le compositeur prend le pied du ticket : **%** (5 / 10 / 15 / 20) ou **Montant**, **code manager** (4–6 chiffres, mock) dès que la remise dépasse **10 % de l'assiette** (le net des lignes cochées), **20 %** plafond absolu → « Appliquer −X F ». Chaque ligne remisée montre son prix barré, son nouveau prix et l'étiquette « Remise −10 % · modifier » (rouvre la remise : modifier / retirer). Plusieurs remises peuvent coexister ; une ligne n'en porte qu'une. Un montant fixe se répartit au prorata. Motif : **pas ici** (voir Reçu)
+- **Avantages de la cliente**, sous les lignes du dialogue (rien à saisir, tout est déjà appliqué — on ajuste) :
   1. **Prestations déjà payées** (Pack / Abonnement, ADR 0017) — cochées d'office, décocher pour garder pour plus tard
   2. **Carte cadeau** — auto-liée à la cliente identifiée (ADR 0013), une ligne « −X F » qui se déplie : montant consommé (reliquat gardé sur la carte) ou prestations couvertes ; « Ne pas utiliser la carte »
   3. **Points fidélité** — stepper ±100 pts (100 pts = 1 000 F), borné au solde

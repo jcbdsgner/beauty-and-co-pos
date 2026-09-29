@@ -12,8 +12,8 @@ import { cn, formatFcfa } from "@/lib/utils";
 import type { Sale } from "@/lib/data/types";
 
 /**
- * What the cliente already holds and can spend on this ticket (ADR 0031) — read at the règlement,
- * under the lines, never on the panier: prestations déjà payées (Pack / Abonnement, ADR 0017), her
+ * What the cliente already holds and can spend on this ticket (ADR 0031, 0038) — read in the
+ * panier's « Remises et avantages » dialog, under the lines: prestations déjà payées (Pack / Abonnement, ADR 0017), her
  * carte cadeau (auto-linked, ADR 0013) and her loyalty points. Nothing to type: everything the
  * cliente holds is already applied (points excepted — they're her call); the receptionist only
  * adjusts. Renders nothing for an anonymous sale or a cliente with nothing to spend.

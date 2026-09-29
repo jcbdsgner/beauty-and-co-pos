@@ -18,7 +18,7 @@ type KeypadTarget = { kind: "amount"; index: number } | { kind: "cash" } | null;
 
 /**
  * La station Règlement (ADR 0031). Same two-column sheet as the panier: the ticket keeps the right
- * column (now carrying remises, avantages and the confirm button), and the Menu on the left gives
+ * column (read-only now — remises and avantages moved to the panier, ADR 0038), and the Menu on the left gives
  * way to the payment itself.
  *
  * Payment is a list of 1 to 3 *parts*. One part = the whole amount, no typing. Split it and every
