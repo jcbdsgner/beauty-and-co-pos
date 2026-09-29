@@ -103,7 +103,7 @@ function dateGroupLabel(iso: string, todayIso: string): string {
  * « Rendez-vous » sur l'Accueil (Figma 242:1735) — une grille fixe de 3 colonnes, une carte par
  * réservation : payeuse · composition (« 1 femme + 1 enfant ») en en-tête, heure à droite, jusqu'à
  * 3 lignes de détail (prestations puis extras pré-commandés — boisson, produit à emporter — le
- * reste résumé en « + N »), Total, puis « Voir les détails » + « Encaisser ». Le détail complet
+ * reste résumé en « + N »), Total, puis « Voir plus » + « Encaisser ». Le détail complet
  * (au-delà des 3 lignes) vit dans la fiche réservation (`AppointmentDetailSheet`), jamais dans la
  * carte : elle garde toujours la même taille. Les créneaux de 2h se lisent sur un rail
  * horaire à gauche (`SlotRail`), le créneau en cours marqué. Plus simple que la `DayList` du Planning
@@ -279,7 +279,7 @@ export function AccueilDayList({ rows, clients, praticiennes, onOpenReservation,
 
                   <div className="mt-auto flex gap-2 pt-1">
                     <Button variant="outline" className="flex-1" onClick={() => target && onOpenReservation(target)}>
-                      Voir les détails
+                      Voir plus
                     </Button>
                     <Button
                       variant={hasSale ? "outline" : "dark"}

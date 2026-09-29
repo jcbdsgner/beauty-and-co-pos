@@ -17,6 +17,7 @@
 | `/` | [`app/page.tsx`](../app/page.tsx) | **Accueil** — centre de pilotage du jour | inline (cartes daisyUI — refonte Figma 156-72) |
 | `/recap-ventes` | [`app/recap-ventes/page.tsx`](../app/recap-ventes/page.tsx) | **Récap des ventes** | inline (`BoardHeader` + `DataTable`/`StatBand`) |
 | `/planning` | [`app/planning/page.tsx`](../app/planning/page.tsx) | **Planning** — calendrier par praticienne (ADR 0020) | [`components/planning/planning-board.tsx`](../components/planning/planning-board.tsx) |
+| `/reservations/[id]` | [`app/reservations/[id]/page.tsx`](../app/reservations/[id]/page.tsx) | **Détail de la réservation** (pleine page, depuis « Voir les détails » de la fiche réservation) | [`components/planning/reservation-detail-view.tsx`](../components/planning/reservation-detail-view.tsx) |
 | `/equipe` | [`app/equipe/page.tsx`](../app/equipe/page.tsx) | *(redirige vers `/planning`, ADR 0020 — n'a jamais été un écran distinct, ADR 0005)* | — |
 | `/clientele` | [`app/clientele/page.tsx`](../app/clientele/page.tsx) | **Clientèle** — recherche d'abord | [`components/clientele/repertoire-view.tsx`](../components/clientele/repertoire-view.tsx) |
 | `/clientele/[id]` | [`app/clientele/[id]/page.tsx`](../app/clientele/[id]/page.tsx) | **Fiche cliente** | [`components/clientele/fiche-cliente-view.tsx`](../components/clientele/fiche-cliente-view.tsx) |
@@ -93,7 +94,7 @@ plus de bascule de vue, plus de liste de réservations (celle-ci ne vit plus que
   Couleur par praticienne : `praticienneAccent`, 16 teintes (ADR 0024, 2ᵉ exception nommée à la
   règle du signal unique après ADR 0022).
 - **Clic sur une demi-heure libre** (vue Jour, `DayTimeline` `onPickSlot`) → `PriseRdvModal` avec `pickedSlot` (jour, heure, praticienne) + `defaultSalonId` de la plage (ADR 0037) ; survol = bloc « + HH:MM » en pointillés. Sous-composants (inchangés) :
-  - `AppointmentDetailSheet` — [`components/planning/appointment-detail-sheet.tsx`](../components/planning/appointment-detail-sheet.tsx) — fiche réservation : payeuse, prestations, praticiennes ; Encaisser / Ajuster / Annuler (motif facultatif).
+  - `AppointmentDetailSheet` — [`components/planning/appointment-detail-sheet.tsx`](../components/planning/appointment-detail-sheet.tsx) — fiche réservation (panneau latéral 640px, ouvert par « Voir plus » sur l'Accueil) : payeuse, prestations (horaires, praticiennes) ; Encaisser / Modifier / **Voir les détails** (→ `/reservations/[id]`) / Annuler (motif facultatif). Pièces partagées avec la page détaillée : [`reservation-parts.tsx`](../components/planning/reservation-parts.tsx).
   - `PriseRdvModal` — [`components/prise-rdv/prise-rdv-modal.tsx`](../components/prise-rdv/prise-rdv-modal.tsx) — « Modifier » : le parcours de prise de rendez-vous b&co, pré-rempli avec la réservation (ADR 0032). Voir la ligne « Créer / modifier un rendez-vous » plus bas.
 
 ### Clientèle — `/clientele` — [`components/clientele/repertoire-view.tsx`](../components/clientele/repertoire-view.tsx)
@@ -101,6 +102,12 @@ Recherche d'abord (mécanisme partagé = `ClientSearchField` / `searchClients`).
 - Hors recherche : `Board` « Vues récemment » (store `recentClientIds`) + « Attendues aujourd'hui ».
 - `Board` « Tout l'annuaire » avec `ChipFilter` (Toutes / Nouvelles / Historique / VIP).
 - `NewClientDialog` — [`components/clientele/new-client-dialog.tsx`](../components/clientele/new-client-dialog.tsx) — création cliente, pré-remplissage depuis la requête, garde anti-doublon téléphone, pays de résidence.
+
+### Détail de la réservation — `/reservations/[id]` — [`components/planning/reservation-detail-view.tsx`](../components/planning/reservation-detail-view.tsx)
+
+- Bandeau collant : retour, référence `RV-…`, jour · plage horaire · composition · salon ; Annuler / Modifier / Encaisser.
+- Gauche : **Déroulé** (une ligne par rendez-vous : début/fin, prestation, durée, bénéficiaire, praticiennes, prix, « Couverte » si pack/forfait), **Extras pré-commandés**, **Note pour le salon**, **Préférences des bénéficiaires** (hors payeuse).
+- Droite : **Règlement** (prestations, couvert, extras, total, acompte, reste à encaisser), **Payeuse** (avantages, préférences, dernière note), **Réservation** (provenance, création, salon, statut, motif d'annulation).
 
 ### Fiche cliente — `/clientele/[id]` — [`components/clientele/fiche-cliente-view.tsx`](../components/clientele/fiche-cliente-view.tsx)
 En-tête collant : retour + avatar + nom + **N° cliente** + Contacter / Nouvelle vente, puis ligne « d'un coup d'œil » (`AtAGlance` : abonnement + statut, pack + restantes, points, visites, total dépensé). 2 colonnes de `Board` (ADR 0035) :

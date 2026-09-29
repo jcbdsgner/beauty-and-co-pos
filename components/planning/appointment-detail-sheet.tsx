@@ -2,18 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import {
-  Coffee,
-  ShoppingBag,
-  User,
-  UserRound,
-  Users,
-  SlidersHorizontal,
-  Gift,
-  Star,
-  CalendarClock,
-  PackageCheck,
-} from "lucide-react";
+import { ArrowUpRight, Coffee, ShoppingBag, User, UserRound, Users, SlidersHorizontal } from "lucide-react";
 import { Dialog } from "@/components/ui/molecules/dialog";
 import { CloseButton } from "@/components/ui/atoms/icon-button";
 import { Button } from "@/components/ui/atoms/button";
@@ -21,26 +10,26 @@ import { Badge } from "@/components/ui/atoms/badge";
 import { TIER_LABEL } from "@/lib/data/tiers";
 import { Avatar } from "@/components/ui/atoms/avatar";
 import { ServiceCategoryIcon } from "@/components/ui/atoms/service-category-icons";
-import { Textarea } from "@/components/ui/atoms/textarea";
-import { Field } from "@/components/ui/molecules/field";
 import { FlipChip, Legend } from "@/components/ui/board";
 import { PriseRdvModal } from "@/components/prise-rdv/prise-rdv-modal";
 import { useAppData } from "@/components/providers/app-data-provider";
-import { giftCardForClient } from "@/lib/data/cartes-cadeaux";
-import { abonnementsForClient, abonnementStatus, ABONNEMENT_STATUS_LABEL } from "@/lib/data/abonnements";
-import { forfaitById } from "@/lib/data/forfaits";
-import { packPurchasesForClient, packRemainingPrestations } from "@/lib/data/pack-purchases";
-import { packById } from "@/lib/data/packs";
 import { clientFullName, clientInitial } from "@/lib/data/clientele";
 import { ClientPreferences } from "@/components/shared/client-preferences";
 import { praticienneById } from "@/lib/data/praticiennes";
 import { boissonById } from "@/lib/data/boissons";
 import { produitById, serviceById } from "@/lib/data/menu";
-import { rendezVousCoverage, type RendezVousCoverage } from "@/lib/data/coverage";
-import { appointmentEndTime, reservationComposition, reservationDate, reservationForRendezVous, timeToMinutes } from "@/lib/data/planning";
+import { appointmentEndTime, reservationComposition, reservationDate, reservationForRendezVous } from "@/lib/data/planning";
 import { formatFcfa } from "@/lib/utils";
-import type { BeneficiaryKind, Cliente, RendezVous } from "@/lib/data/types";
-
+import type { RendezVous } from "@/lib/data/types";
+import {
+  CancelReservationDialog,
+  PayerAvantages,
+  beneficiaryGroups,
+  fmtMin,
+  formatShortDay,
+  reservationFigures,
+  staffLabel,
+} from "@/components/planning/reservation-parts";
 
 type Props = {
   /** The rendez-vous the receptionist tapped — the panel shows its whole réservation. */
@@ -49,138 +38,30 @@ type Props = {
   onEncaisser: (reservationId: string) => void;
 };
 
-type BeneficiaryGroup = {
-  key: string;
-  label: string;
-  href: string | null;
-  kind: BeneficiaryKind;
-  /** The fiche behind this beneficiary, when known — the payer herself for "Elle-même", or the
-   *  linked fiche for a named beneficiary. Powers the Préférences block; stays null for a
-   *  beneficiary named free-text (no fiche to read preferences from). */
-  client: Cliente | null;
-  lines: RendezVous[];
-};
-
-/** Same key + kind derivation as `reservationComposition` (lib/data/planning.ts) — the panel's
- *  groups must always match the composition line shown on the Accueil card and the header here. */
-function beneficiaryGroups(lines: RendezVous[], clients: Cliente[], payer: Cliente | undefined): BeneficiaryGroup[] {
-  const groups = new Map<string, BeneficiaryGroup>();
-  for (const rv of lines) {
-    const key = rv.beneficiaryClientId ?? rv.beneficiaryName ?? "__payer__";
-    const service = serviceById(rv.serviceId);
-    const kind: BeneficiaryKind = service?.categoryId === "mini-co" ? "enfant" : (rv.beneficiaryKind ?? "femme");
-    if (!groups.has(key)) {
-      const fiche = rv.beneficiaryClientId ? clients.find((c) => c.id === rv.beneficiaryClientId) : undefined;
-      // Le nom de la payeuse plutôt qu'un générique « Elle-même » (audit UX du 19/09). Pour un
-      // bénéficiaire sans fiche, son prénom sans la précision de lien de parenté entre parenthèses
-      // (ex. « sœur ») — non pertinente, non récupérable dans les données de l'app.
-      const label =
-        key === "__payer__"
-          ? payer
-            ? clientFullName(payer)
-            : "Elle-même"
-          : fiche
-            ? clientFullName(fiche)
-            : (rv.beneficiaryName ?? "Bénéficiaire").replace(/\s*\([^)]*\)\s*$/, "");
-      const client = key === "__payer__" ? (payer ?? null) : (fiche ?? null);
-      groups.set(key, { key, label, href: fiche ? `/clientele/${fiche.id}` : null, kind, client, lines: [] });
-    }
-    groups.get(key)!.lines.push(rv);
-  }
-  return [...groups.values()].sort((a, b) => {
-    const aStart = Math.min(...a.lines.map((rv) => timeToMinutes(rv.start)));
-    const bStart = Math.min(...b.lines.map((rv) => timeToMinutes(rv.start)));
-    return aStart - bStart;
-  });
-}
-
-/** One advantage on the payer's always-visible summary line — a compact segment (icon, label,
- *  optional trailing status badge) rather than a full row: the detail lives on her fiche. */
-function AvantageChip({
-  icon,
-  children,
-  badge,
-}: {
-  icon: React.ReactNode;
-  children: React.ReactNode;
-  badge?: { label: string; tone: "warning" | "neutral" };
-}) {
-  return (
-    <span className="inline-flex items-center gap-1.5 rounded-sm bg-[var(--color-gray-50)] py-1 pr-2.5 pl-2 text-xs font-semibold text-[var(--color-gray-700)] ring-1 ring-inset ring-[var(--board-groove)]">
-      <span className="text-[var(--brand-taupe-muted)]">{icon}</span>
-      <span className="tabular-nums">{children}</span>
-      {badge && <Badge variant={badge.tone}>{badge.label}</Badge>}
-    </span>
-  );
-}
-
-/** « Jeu. 25 sept » — short fr-FR day for the header's slot line (no trailing abbreviation dot). */
-function formatShortDay(iso: string): string {
-  const [y, m, d] = iso.split("-").map(Number);
-  const label = new Date(y, m - 1, d)
-    .toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })
-    .replace(/\.$/, "");
-  return label.charAt(0).toUpperCase() + label.slice(1);
-}
-
 /** Fiche réservation — panneau latéral droit (payeuse, avantages, prestations groupées par
  *  bénéficiaire, praticiennes), avec Encaisser, Modifier et Annuler la réservation entière (motif
  *  facultatif). La création de réservation se fait en ligne (ADR 0006/0009) ; ce panneau se ferme
  *  au clic dehors / Échap — c'est une lecture, rien à y perdre (ADR 0023). */
 export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Props) {
-  const { clients, praticiennes, reservations, cancelReservation } = useAppData();
+  const { clients, praticiennes, reservations } = useAppData();
   const [confirmCancel, setConfirmCancel] = useState(false);
-  const [cancelReason, setCancelReason] = useState("");
   const [editing, setEditing] = useState(false);
   if (!appointment) return null;
 
   const reservation = reservationForRendezVous(reservations, appointment.id);
   const payer = clients.find((c) => c.id === reservation?.payerClientId);
   const lines = reservation?.rendezVous ?? [appointment];
-  const extras = reservation?.extras ?? [];
   const reservationCancelled = lines.length > 0 && lines.every((rv) => rv.status === "annule");
   const hasSale = Boolean(reservation?.saleId);
-  // Lignes décomptées d'un pack / abonnement : facturées 0 F (ADR 0017), hors Total et sous-totaux.
-  const coverage = reservation ? rendezVousCoverage(reservation.payerClientId, lines) : new Map<string, RendezVousCoverage>();
-  const billable = (rv: RendezVous) => rv.status !== "annule" && !coverage.has(rv.id);
-  const prestationsTotal = lines
-    .filter(billable)
-    .reduce((sum, rv) => sum + (serviceById(rv.serviceId)?.price ?? 0), 0);
-  const extrasTotal = extras.reduce((sum, extra) => {
-    const unitPrice = extra.kind === "boisson" ? (boissonById(extra.refId)?.price ?? 0) : (produitById(extra.refId)?.price ?? 0);
-    return sum + unitPrice * extra.qty;
-  }, 0);
-  const total = prestationsTotal + extrasTotal;
-
+  const { extras, coverage, billable, total, rangeStart, rangeEnd } = reservationFigures(reservation, lines);
   const groups = beneficiaryGroups(lines, clients, payer);
-  const startTimes = lines.map((rv) => timeToMinutes(rv.start));
-  const endTimes = lines.map((rv) => timeToMinutes(appointmentEndTime(rv)));
-  const rangeStart = startTimes.length ? Math.min(...startTimes) : 0;
-  const rangeEnd = endTimes.length ? Math.max(...endTimes) : 0;
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const fmtMin = (m: number) => `${pad(Math.floor(m / 60))}:${pad(m % 60)}`;
-
-  function staffLabel(rv: RendezVous) {
-    const first = praticiennes.find((p) => p.id === rv.staffId)?.name ?? "Inconnue";
-    const second = rv.secondStaffId ? praticiennes.find((p) => p.id === rv.secondStaffId)?.name : null;
-    return second ? `${first} + ${second} · à 2` : first;
-  }
-
-  const giftCard = payer ? giftCardForClient(payer.id) : undefined;
-  const abonnements = payer
-    ? abonnementsForClient(payer.id).filter((ab) => abonnementStatus(ab) !== "revoque")
-    : [];
-  const packs = payer
-    ? packPurchasesForClient(payer.id).filter((pp) => packRemainingPrestations(pp).length > 0)
-    : [];
-  const hasAvantages = Boolean(giftCard) || (payer && payer.points > 0) || abonnements.length > 0 || packs.length > 0;
 
   return (
     <>
-      <Dialog open variant="side" onClose={onClose} labelledBy="rdv-detail-title" className="relative flex flex-col p-0">
+      <Dialog open variant="side" onClose={onClose} labelledBy="rdv-detail-title" className="relative flex max-w-[640px] flex-col p-0">
         <CloseButton onClick={onClose} />
 
-        <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-[var(--board-groove)] bg-base-100 py-4 pr-16 pl-6 text-base-content">
+        <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-[var(--board-groove)] bg-base-100 py-5 pr-16 pl-8 text-base-content">
           {/* Référence de la réservation plutôt que le nom de la payeuse (audit UX du 19/09) —
               son nom reste lisible plus bas, dans le bloc payeuse. */}
           <h2 id="rdv-detail-title" className="font-[family-name:var(--font-heading)] text-xl font-semibold tabular-nums">
@@ -206,7 +87,7 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
 
         <div className="min-h-0 flex-1 overflow-y-auto">
           {payer && (
-            <div className="border-b border-[var(--board-groove)] px-6 py-4">
+            <div className="border-b border-[var(--board-groove)] px-8 py-5">
               <div className="flex items-center gap-3">
                 <Avatar
                   initial={clientInitial(payer)}
@@ -228,40 +109,7 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
                 </Button>
               </div>
 
-              {hasAvantages && (
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {payer.points > 0 && <AvantageChip icon={<Star className="size-3.5" />}>{payer.points} pts</AvantageChip>}
-                  {giftCard && (
-                    <AvantageChip icon={<Gift className="size-3.5" />}>
-                      Carte cadeau · {giftCard.kind === "montant" ? formatFcfa(giftCard.balance) : "prestations prépayées"}
-                    </AvantageChip>
-                  )}
-                  {packs.map((pp) => {
-                    const pack = packById(pp.packId);
-                    if (!pack) return null;
-                    const remaining = packRemainingPrestations(pp).length;
-                    return (
-                      <AvantageChip key={pp.id} icon={<PackageCheck className="size-3.5" />}>
-                        {pack.label} · {remaining} restante{remaining > 1 ? "s" : ""} sur {pack.prestationIds.length}
-                      </AvantageChip>
-                    );
-                  })}
-                  {abonnements.map((ab) => {
-                    const forfait = forfaitById(ab.forfaitId);
-                    if (!forfait) return null;
-                    const status = abonnementStatus(ab);
-                    return (
-                      <AvantageChip
-                        key={ab.id}
-                        icon={<CalendarClock className="size-3.5" />}
-                        badge={{ label: ABONNEMENT_STATUS_LABEL[status], tone: status === "a_regler" ? "warning" : "neutral" }}
-                      >
-                        {forfait.label}
-                      </AvantageChip>
-                    );
-                  })}
-                </div>
-              )}
+              <PayerAvantages payer={payer} className="mt-3" />
 
               {/* Préférences toujours visibles, jamais derrière un dépliage (demande utilisateur 25/09). */}
               <div className="mt-3 flex flex-col gap-3">
@@ -285,7 +133,7 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
                 .filter(billable)
                 .reduce((sum, rv) => sum + (serviceById(rv.serviceId)?.price ?? 0), 0);
               return (
-                <div key={group.key} className="border-b border-[var(--board-groove)] px-6 py-4">
+                <div key={group.key} className="border-b border-[var(--board-groove)] px-8 py-5">
                   <div className="flex items-center justify-between gap-2">
                     <span className="inline-flex items-center gap-1.5">
                       {group.href ? (
@@ -332,8 +180,12 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
                               {rv.status === "annule" && <span className="ml-1.5 text-[var(--color-gray-400)]">· annulé</span>}
                             </p>
                             <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[var(--color-gray-500)]">
+                              <span className="tabular-nums">
+                                {rv.start} – {appointmentEndTime(rv)}
+                              </span>
+                              <span aria-hidden>·</span>
                               <span className="inline-flex items-center gap-1">
-                                {rv.secondStaffId ? <Users className="size-3" /> : <User className="size-3" />} {staffLabel(rv)}
+                                {rv.secondStaffId ? <Users className="size-3" /> : <User className="size-3" />} {staffLabel(rv, praticiennes)}
                               </span>
                               {covered && (
                                 <span className="rounded-sm bg-[var(--color-gray-100)] px-2 py-0.5 font-semibold text-[var(--color-gray-600)]">
@@ -356,7 +208,7 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
             })}
 
             {extras.length > 0 && (
-              <div className="px-6 py-4">
+              <div className="px-8 py-5">
                 <Legend>Extras</Legend>
                 <div className="mt-2 flex flex-col divide-y divide-[var(--board-groove)]">
                   {extras.map((extra) => {
@@ -387,73 +239,61 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
           </div>
         </div>
 
-        <div className="shrink-0 border-t border-[var(--board-groove)] px-6 py-3">
+        <div className="shrink-0 border-t border-[var(--board-groove)] px-8 py-4">
           <div className="flex items-baseline justify-between">
             <Legend>Total</Legend>
             <span className="text-xl font-bold tabular-nums text-[var(--color-gray-900)]">{formatFcfa(total)}</span>
           </div>
         </div>
 
-        <div className="flex shrink-0 flex-col gap-2 p-5">
+        <div className="flex shrink-0 flex-col gap-2 px-8 pt-1 pb-6">
           {reservation && !reservationCancelled && (
             <Button variant="dark" className="highlight-rose w-full" onClick={() => onEncaisser(reservation.id)}>
               {hasSale ? "Voir la vente" : "Encaisser"}
             </Button>
           )}
-          {!reservationCancelled && (
-            <div className="flex gap-2">
-              {reservation && (
-                <Button variant="outline" icon={<SlidersHorizontal className="size-4" />} className="shrink-0 px-6" onClick={() => setEditing(true)}>
-                  Modifier
-                </Button>
-              )}
+          <div className="flex gap-2">
+            {reservation && !reservationCancelled && (
+              <Button variant="outline" icon={<SlidersHorizontal className="size-4" />} className="shrink-0 px-6" onClick={() => setEditing(true)}>
+                Modifier
+              </Button>
+            )}
+            {reservation && (
+              <Button
+                href={`/reservations/${reservation.id}`}
+                variant="outline"
+                icon={<ArrowUpRight className="size-4" />}
+                className="shrink-0 px-6"
+              >
+                Voir les détails
+              </Button>
+            )}
+            {!reservationCancelled && (
               <button
                 type="button"
                 onClick={() => setConfirmCancel(true)}
-                className="btn btn-ghost btn-md flex-1 whitespace-nowrap border-transparent text-[16px] font-medium text-error normal-case hover:bg-error/10 active:scale-[0.97]"
+                className="btn btn-ghost btn-md ml-auto whitespace-nowrap border-transparent px-5 text-[16px] font-medium text-error normal-case hover:bg-error/10 active:scale-[0.97]"
               >
                 Annuler la réservation
               </button>
-            </div>
-          )}
+            )}
+          </div>
           {reservationCancelled && appointment.cancelReason && (
             <p className="px-1 text-xs text-[var(--color-gray-500)]">Motif : {appointment.cancelReason}</p>
           )}
         </div>
       </Dialog>
 
-      <Dialog open={confirmCancel} labelledBy="cancel-reservation-title" className="max-w-sm p-6">
-        <h3 id="cancel-reservation-title" className="font-[family-name:var(--font-heading)] text-lg font-semibold text-[var(--color-gray-900)]">
-          Annuler cette réservation ?
-        </h3>
-        <p className="mt-2 text-sm text-[var(--color-gray-500)]">
-          {hasSale
-            ? "Une vente est ouverte pour cette réservation — l'annuler ne la fermera pas."
-            : "Toutes ses prestations passeront au statut Annulé et resteront consultables via « Afficher les annulés »."}
-        </p>
-        <Field label="Motif (facultatif)" className="mt-4">
-          <Textarea value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} rows={2} placeholder="Ex. la cliente a décalé sa venue" />
-        </Field>
-        <div className="mt-4 flex gap-3">
-          <Button variant="outline" className="flex-1" onClick={() => setConfirmCancel(false)}>
-            Retour
-          </Button>
-          <Button
-            variant="danger"
-            className="flex-1"
-            onClick={() => {
-              if (reservation) {
-                cancelReservation(reservation.id, cancelReason);
-              }
-              setConfirmCancel(false);
-              setCancelReason("");
-              onClose();
-            }}
-          >
-            Annuler la réservation
-          </Button>
-        </div>
-      </Dialog>
+      <CancelReservationDialog
+        open={confirmCancel}
+        reservationId={reservation?.id}
+        hasSale={hasSale}
+        onClose={() => setConfirmCancel(false)}
+        onCancelled={() => {
+          setConfirmCancel(false);
+          onClose();
+        }}
+      />
 
       <PriseRdvModal open={editing && Boolean(reservation)} reservationId={reservation?.id} onClose={() => setEditing(false)} />
     </>
