@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Coffee, ShoppingBag, SlidersHorizontal, UserRound } from "lucide-react";
+import { ChevronLeft, ChevronRight, Coffee, MessageCircle, Phone, ShoppingBag, SlidersHorizontal, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/atoms/button";
 import { Badge } from "@/components/ui/atoms/badge";
 import { Avatar } from "@/components/ui/atoms/avatar";
 import { ServiceCategoryIcon } from "@/components/ui/atoms/service-category-icons";
-import { Board, BoardEmpty, FlipChip, Legend } from "@/components/ui/board";
+import { BoardEmpty, FlipChip } from "@/components/ui/board";
 import { PriseRdvModal } from "@/components/prise-rdv/prise-rdv-modal";
 import { ClientPreferences } from "@/components/shared/client-preferences";
 import { useEncaissement } from "@/components/journee/use-encaissement";
@@ -19,25 +19,33 @@ import { praticienneById } from "@/lib/data/praticiennes";
 import { salonById } from "@/lib/data/entreprises";
 import { boissonById } from "@/lib/data/boissons";
 import { produitById, serviceById } from "@/lib/data/menu";
-import { appointmentEndTime, reservationById, reservationComposition, reservationDate, timeToMinutes } from "@/lib/data/planning";
+import {
+  appointmentEndTime,
+  reservationById,
+  reservationComposition,
+  reservationDate,
+  timeToMinutes,
+  todayISO,
+} from "@/lib/data/planning";
 import { cn, formatFcfa } from "@/lib/utils";
-import type { DepositMode, Praticienne, RendezVous } from "@/lib/data/types";
+import type { DepositMode, Praticienne, Reservation, RendezVous } from "@/lib/data/types";
 import {
   CancelReservationDialog,
   PayerAvantages,
   beneficiaryGroups,
   fmtMin,
   formatDuration,
+  formatShortDay,
   reservationFigures,
+  type BeneficiaryGroup,
 } from "@/components/planning/reservation-parts";
 
 const DEPOSIT_MODE_LABEL: Record<DepositMode, string> = {
-  especes: "espèces, au comptoir",
-  mobile_money: "mobile money",
-  carte: "carte",
+  especes: "en espèces",
+  mobile_money: "par mobile money",
+  carte: "par carte",
 };
 
-/** « jeudi 25 septembre » — le jour en toutes lettres pour l'en-tête de la page. */
 function formatLongDay(iso: string): string {
   const label = new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long" }).format(
     new Date(`${iso}T00:00:00`),
@@ -45,51 +53,178 @@ function formatLongDay(iso: string): string {
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
-/** Praticienne(s) d'une ligne, avec pastilles d'initiales — « à 2 » se lit sans légende. */
-function StaffCell({ rv, praticiennes }: { rv: RendezVous; praticiennes: Praticienne[] }) {
-  const staff = [rv.staffId, rv.secondStaffId]
+function formatStamp(iso: string): string {
+  return new Date(iso).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+}
+
+function currentMinute(): number {
+  const d = new Date();
+  return d.getHours() * 60 + d.getMinutes();
+}
+
+/** Carte de la page — titre court en phrase (pas de surtitre capitales), méta à droite. */
+function Panel({ title, meta, children }: { title: string; meta?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <section className="overflow-hidden rounded-box border border-base-300 bg-base-100">
+      <header className="flex min-h-11 items-center justify-between gap-3 border-b border-base-300 px-4 py-2">
+        <h2 className="text-sm font-semibold text-base-content">{title}</h2>
+        {meta && <div className="text-xs text-base-content/60">{meta}</div>}
+      </header>
+      {children}
+    </section>
+  );
+}
+
+function staffOf(rv: RendezVous, praticiennes: Praticienne[]) {
+  return [rv.staffId, rv.secondStaffId]
     .filter((id): id is string => Boolean(id))
     .map((id) => praticiennes.find((p) => p.id === id));
+}
+
+const staffNames = (rv: RendezVous, praticiennes: Praticienne[]) =>
+  staffOf(rv, praticiennes)
+    .map((p) => p?.name ?? "Inconnue")
+    .join(" + ");
+
+function StaffAvatars({ rv, praticiennes, size }: { rv: RendezVous; praticiennes: Praticienne[]; size: number }) {
   return (
-    <span className="flex min-w-0 items-center gap-2">
-      <span className="flex shrink-0 -space-x-1.5">
-        {staff.map((p, i) => (
-          <Avatar
-            key={p?.id ?? i}
-            initial={p?.name.charAt(0) ?? "?"}
-            size={26}
-            className="bg-accent text-[11px] font-bold text-base-content ring-2 ring-base-100"
-          />
-        ))}
-      </span>
-      <span className="truncate text-sm text-base-content/75">
-        {staff.map((p) => p?.name ?? "Inconnue").join(" + ")}
-      </span>
+    <span className="flex shrink-0 -space-x-1.5">
+      {staffOf(rv, praticiennes).map((p, i) => (
+        <Avatar
+          key={p?.id ?? i}
+          photoUrl={p?.photoUrl}
+          initial={p?.initial ?? p?.name.charAt(0) ?? "?"}
+          size={size}
+          className="bg-accent text-[10px] font-bold text-base-content ring-2 ring-base-100"
+        />
+      ))}
     </span>
   );
 }
 
-/** A label/value line of the right-hand summaries (Règlement, Réservation). */
-function Row({ label, children, strong }: { label: string; children: React.ReactNode; strong?: boolean }) {
+/**
+ * Frise de la réservation : une rangée par bénéficiaire, un bloc par rendez-vous posé sur l'axe
+ * horaire — ce que le panneau ne sait pas montrer : qui passe en même temps que qui, et chez quelle
+ * praticienne. Filet ambre « maintenant » si la réservation est du jour (le seul signal, DESIGN.md).
+ */
+function ReservationTimeline({
+  groups,
+  praticiennes,
+  coveredIds,
+  isToday,
+}: {
+  groups: BeneficiaryGroup[];
+  praticiennes: Praticienne[];
+  coveredIds: Set<string>;
+  isToday: boolean;
+}) {
+  const all = groups.flatMap((g) => g.lines);
+  const start = Math.floor(Math.min(...all.map((rv) => timeToMinutes(rv.start))) / 60) * 60;
+  const end = Math.ceil(Math.max(...all.map((rv) => timeToMinutes(appointmentEndTime(rv)))) / 60) * 60;
+  const span = Math.max(60, end - start);
+  const pct = (m: number) => `${((m - start) / span) * 100}%`;
+  const ticks: number[] = [];
+  for (let m = start; m <= start + span; m += 30) ticks.push(m);
+  const now = currentMinute();
+  const showNow = isToday && now >= start && now <= start + span;
+
   return (
-    <div className="flex items-baseline justify-between gap-4 py-1.5 text-sm">
+    <div className="px-4 pt-1 pb-2">
+      <div className="flex">
+        <div className="w-44 shrink-0" />
+        <div className="relative mr-6 h-6 flex-1">
+          {ticks.map((m) => (
+            <span
+              key={m}
+              className={cn(
+                "absolute top-1 -translate-x-1/2 text-[11px] tabular-nums",
+                m % 60 === 0 ? "font-semibold text-base-content/75" : "text-base-content/55",
+              )}
+              style={{ left: pct(m) }}
+            >
+              {fmtMin(m)}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {groups.map((g) => (
+        <div key={g.key} className="flex items-center border-t border-base-300/70">
+          <div className="flex w-44 shrink-0 items-center gap-1.5 py-2 pr-3">
+            <span className="truncate text-sm font-medium text-base-content">{g.label}</span>
+            {g.kind !== "femme" && (
+              <span className="shrink-0 rounded-sm bg-[var(--brand-rose-soft)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--brand-taupe-muted)]">
+                {g.kind === "homme" ? "Homme" : "Enfant"}
+              </span>
+            )}
+          </div>
+          <div className="relative mr-6 h-14 flex-1">
+            {ticks.map((m) => (
+              <span
+                key={m}
+                aria-hidden
+                className={cn("absolute inset-y-0 w-px", m % 60 === 0 ? "bg-base-300" : "bg-base-300/40")}
+                style={{ left: pct(m) }}
+              />
+            ))}
+            {g.lines.map((rv) => {
+              const s = timeToMinutes(rv.start);
+              const e = timeToMinutes(appointmentEndTime(rv));
+              const service = serviceById(rv.serviceId);
+              const voided = rv.status === "annule";
+              const covered = coveredIds.has(rv.id);
+              return (
+                <div
+                  key={rv.id}
+                  title={`${service?.name ?? "Prestation"} · ${rv.start}–${appointmentEndTime(rv)} · ${staffNames(rv, praticiennes)}`}
+                  className={cn(
+                    "absolute inset-y-1.5 flex min-w-0 items-center gap-2 overflow-hidden rounded-field border px-2",
+                    voided
+                      ? "border-dashed border-base-300 bg-base-100 text-base-content/45 line-through"
+                      : covered
+                        ? "border-base-300 bg-base-200 text-base-content"
+                        : "border-primary/35 bg-[var(--brand-rose-soft)] text-base-content",
+                  )}
+                  style={{ left: `calc(${pct(s)} + 2px)`, width: `calc(${((e - s) / span) * 100}% - 4px)` }}
+                >
+                  <StaffAvatars rv={rv} praticiennes={praticiennes} size={22} />
+                  <span className="min-w-0 leading-tight">
+                    <span className="block truncate text-xs font-semibold">{service?.name ?? "Prestation"}</span>
+                    <span className="block truncate text-[11px] text-base-content/65">
+                      {rv.start}–{appointmentEndTime(rv)} · {staffNames(rv, praticiennes)}
+                    </span>
+                  </span>
+                </div>
+              );
+            })}
+            {showNow && <span aria-hidden className="absolute inset-y-0 w-0.5 bg-[var(--board-amber)]" style={{ left: pct(now) }} />}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** A label/value line of the invoice foot. */
+function SumRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-baseline justify-between gap-6 py-0.5 text-sm">
       <span className="text-base-content/70">{label}</span>
-      <span className={cn("text-right tabular-nums", strong ? "font-semibold text-base-content" : "text-base-content/85")}>{children}</span>
+      <span className="tabular-nums text-base-content/85">{children}</span>
     </div>
   );
 }
 
 /**
- * Page détaillée d'une réservation (/reservations/[id]) — la version pleine page de la fiche
- * réservation (`AppointmentDetailSheet`), ouverte depuis son bouton « Voir les détails ». Là où le
- * panneau résume, la page déroule : chaque rendez-vous sur sa ligne horaire (début → fin, durée,
- * bénéficiaire, praticiennes, prix), les préférences de chaque bénéficiaire, le règlement complet
- * (couvert par forfait, acompte déjà versé, reste à encaisser) et la provenance de la réservation.
- * Mêmes actions que le panneau : Encaisser, Modifier, Annuler.
+ * Page détaillée d'une réservation (/reservations/[id]), ouverte par « Voir les détails » de la
+ * fiche réservation. Le panneau résume pour agir vite ; la page sert quand il faut comprendre ou
+ * répondre : la frise (qui passe quand, chez qui, en parallèle), la facture ligne à ligne jusqu'au
+ * reste à encaisser, et côté payeuse de quoi répondre à un appel — contact, avantages, préférences,
+ * suivi de la réservation, ses autres réservations. Dense par choix : l'essentiel tient sur un écran.
  */
 export function ReservationDetailView({ reservationId }: { reservationId: string }) {
   const router = useRouter();
-  const { reservations, clients, praticiennes, markReservationSeen } = useAppData();
+  const { reservations, clients, praticiennes, sales, markReservationSeen } = useAppData();
   const { requestEncaissement, encaissementDialog } = useEncaissement();
   const [editing, setEditing] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
@@ -103,7 +238,7 @@ export function ReservationDetailView({ reservationId }: { reservationId: string
 
   if (!reservation) {
     return (
-      <Board legend="Réservation introuvable">
+      <div className="rounded-box border border-base-300 bg-base-100">
         <BoardEmpty
           title="Cette réservation est introuvable"
           hint={`Aucune réservation ne porte la référence ${reservationId}.`}
@@ -113,289 +248,413 @@ export function ReservationDetailView({ reservationId }: { reservationId: string
             </Button>
           }
         />
-      </Board>
+      </div>
     );
   }
 
   const payer = clients.find((c) => c.id === reservation.payerClientId);
   const lines = [...reservation.rendezVous].sort((a, b) => timeToMinutes(a.start) - timeToMinutes(b.start));
   const cancelled = lines.length > 0 && lines.every((rv) => rv.status === "annule");
+  const sale = reservation.saleId ? sales.find((s) => s.id === reservation.saleId) : undefined;
   const hasSale = Boolean(reservation.saleId);
+  const settled = sale?.status === "encaissee";
   const { extras, coverage, prestationsTotal, coveredTotal, extrasTotal, total, rangeStart, rangeEnd } =
     reservationFigures(reservation, lines);
   const deposit = reservation.depositPaid ?? 0;
   const remaining = Math.max(0, total - deposit);
   const groups = beneficiaryGroups(lines, clients, payer);
   const groupOf = (rv: RendezVous) => groups.find((g) => g.lines.includes(rv));
-  const otherBeneficiaries = groups.filter((g) => g.client && g.client.id !== payer?.id);
+  const prefPeople = [
+    ...(payer ? [payer] : []),
+    ...groups.flatMap((g) => (g.client && g.client.id !== payer?.id ? [g.client] : [])),
+  ];
   const salons = [...new Set(lines.map((rv) => rv.salonId))].map((id) => salonById(id)?.name ?? id);
+  const staffCount = new Set(lines.flatMap((rv) => [rv.staffId, rv.secondStaffId].filter(Boolean))).size;
+  const date = reservationDate(reservation);
   const cancelReason = lines.find((rv) => rv.cancelReason)?.cancelReason;
+
+  // Suivi — uniquement ce que les données attestent, dans l'ordre où c'est arrivé.
+  const events: { label: string; at?: string; tone?: "done" | "void" }[] = [
+    {
+      label: reservation.source === "en_ligne" ? "Réservée en ligne" : "Créée au comptoir",
+      at: reservation.createdAt,
+      tone: "done",
+    },
+  ];
+  if (deposit > 0) {
+    events.push({
+      label: `Acompte de ${formatFcfa(deposit)} ${reservation.depositMode ? DEPOSIT_MODE_LABEL[reservation.depositMode] : "en ligne"}`,
+      at: reservation.depositPaidAt,
+      tone: "done",
+    });
+  }
+  if (sale) events.push({ label: "Vente ouverte au comptoir", at: sale.createdAt, tone: "done" });
+  if (settled) events.push({ label: "Encaissée", at: sale?.encaisseeAt, tone: "done" });
+  if (cancelled) events.push({ label: cancelReason ? `Annulée · ${cancelReason}` : "Annulée", tone: "void" });
+  if (!cancelled && !settled) events.push({ label: hasSale ? "En cours d'encaissement" : "À encaisser" });
+
+  const otherReservations: Reservation[] = payer
+    ? reservations
+        .filter((r) => r.payerClientId === payer.id && r.id !== reservation.id)
+        .sort((a, b) => reservationDate(b).localeCompare(reservationDate(a)))
+        .slice(0, 4)
+    : [];
 
   function goBack() {
     if (window.history.length > 1) router.back();
     else router.push("/");
   }
 
+  const whatsapp = payer?.whatsapp ?? payer?.phone;
+
   return (
     <div className="flex flex-col">
-      {/* Bandeau collant, même grammaire que la fiche cliente : retour, référence, quand et pour qui,
-          et les actions de la réservation toujours à portée. */}
-      <div className="sticky top-0 z-30 isolate -mx-8 -mt-8 mb-8 border-b border-base-300 bg-white px-8 py-5 shadow-[0_8px_10px_-6px_rgba(0,0,0,0.07)]">
-        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
-          <div className="flex min-w-0 items-center gap-3">
+      {/* Bandeau collant : identité de la réservation + ses trois actions, rien d'autre. */}
+      <div className="sticky top-0 z-30 isolate -mx-8 -mt-8 mb-5 border-b border-base-300 bg-white px-8 py-3 shadow-[0_8px_10px_-6px_rgba(0,0,0,0.07)]">
+        <div className="flex items-center justify-between gap-6">
+          <div className="flex min-w-0 items-center gap-2">
             <button
               type="button"
               onClick={goBack}
               aria-label="Retour"
-              className="-ml-7 flex size-10 shrink-0 items-center justify-center text-secondary transition hover:text-primary active:scale-90"
+              className="-ml-4 flex size-12 shrink-0 items-center justify-center rounded-field text-secondary transition hover:bg-base-200 active:scale-90"
             >
               <ChevronLeft aria-hidden className="size-6" />
             </button>
             <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2.5">
-                <h1 className="font-[family-name:var(--font-heading)] text-[28px] font-semibold leading-tight tracking-[-0.01em] tabular-nums text-base-content">
+              <div className="flex items-center gap-2.5">
+                <h1 className="truncate font-[family-name:var(--font-heading)] text-[22px] font-semibold leading-tight tabular-nums text-base-content">
                   {reservation.id}
                 </h1>
-                {cancelled && <FlipChip value="Annulé" tone="void" />}
-                {hasSale && <FlipChip value="En cours" tone="signal" />}
+                {cancelled ? (
+                  <FlipChip value="Annulée" tone="void" />
+                ) : settled ? (
+                  <FlipChip value="Encaissée" tone="neutral" />
+                ) : hasSale ? (
+                  <FlipChip value="En cours" tone="signal" />
+                ) : null}
               </div>
-              <p className="mt-1 text-sm text-base-content/60">
-                {formatLongDay(reservationDate(reservation))}
-                {lines.length > 0 && (
-                  <span className="tabular-nums">{` · ${fmtMin(rangeStart)} – ${fmtMin(rangeEnd)}`}</span>
-                )}
-                {` · Réservé pour ${reservationComposition(reservation)}`}
+              <p className="mt-0.5 truncate text-sm text-base-content/65">
+                <span className="font-medium text-base-content/85">{formatLongDay(date)}</span>
+                <span className="tabular-nums">{` · ${fmtMin(rangeStart)} – ${fmtMin(rangeEnd)}`}</span>
+                {` · ${reservationComposition(reservation)}`}
                 {salons.length > 0 && ` · ${salons.join(" + ")}`}
               </p>
             </div>
           </div>
 
-          <div className="flex shrink-0 items-center gap-2">
-            {!cancelled && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setConfirmCancel(true)}
-                  className="btn btn-ghost btn-md whitespace-nowrap border-transparent px-5 text-[16px] font-medium text-error normal-case hover:bg-error/10 active:scale-[0.97]"
-                >
-                  Annuler la réservation
-                </button>
-                <Button variant="outline" icon={<SlidersHorizontal className="size-4" />} className="px-6" onClick={() => setEditing(true)}>
-                  Modifier
-                </Button>
-                <Button variant="dark" className="highlight-rose min-w-44 px-8" onClick={() => requestEncaissement(reservation.id)}>
-                  {hasSale ? "Voir la vente" : "Encaisser"}
-                </Button>
-              </>
-            )}
-          </div>
+          {!cancelled && (
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmCancel(true)}
+                className="btn btn-ghost btn-md whitespace-nowrap border-transparent px-4 text-[15px] font-medium text-error normal-case hover:bg-error/10 active:scale-[0.97]"
+              >
+                Annuler la réservation
+              </button>
+              <Button variant="outline" icon={<SlidersHorizontal className="size-4" />} className="px-5" onClick={() => setEditing(true)}>
+                Modifier
+              </Button>
+              <Button variant="dark" className="highlight-rose min-w-48 px-6" onClick={() => requestEncaissement(reservation.id)}>
+                {hasSale ? (
+                  "Voir la vente"
+                ) : (
+                  <>
+                    Encaisser <span className="ml-1.5 tabular-nums opacity-80">{formatFcfa(remaining)}</span>
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="grid grid-cols-[minmax(0,1fr)_400px] items-start gap-8">
-        {/* ── Colonne principale : le déroulé ─────────────────────────────── */}
-        <div className="flex min-w-0 flex-col gap-8">
-          <Board legend="Déroulé" legendRight={<span className="text-sm text-base-content/55">{lines.length} prestation{lines.length > 1 ? "s" : ""}</span>}>
-            <ol className="divide-y divide-[var(--board-groove)]">
-              {lines.map((rv) => {
-                const service = serviceById(rv.serviceId);
-                const covered = coverage.get(rv.id);
-                const group = groupOf(rv);
-                const voided = rv.status === "annule";
-                return (
-                  <li key={rv.id} className={cn("flex items-stretch", voided && "opacity-55")}>
-                    <div className="flex w-24 shrink-0 flex-col justify-center border-r border-[var(--board-groove)] bg-black/[0.015] px-4 py-4 tabular-nums">
-                      <span className="text-base font-semibold text-base-content">{rv.start}</span>
-                      <span className="text-sm text-base-content/55">{appointmentEndTime(rv)}</span>
-                    </div>
-                    <div className="flex min-w-0 flex-1 items-center gap-4 px-5 py-4">
-                      <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--brand-rose-soft)] text-[var(--brand-taupe-muted)]">
-                        <ServiceCategoryIcon categoryId={service?.categoryId ?? ""} className="size-5" />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className={cn("text-base font-semibold text-base-content", voided && "line-through")}>
-                          {service?.name ?? "Prestation"}
-                        </p>
-                        <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-base-content/60">
-                          <span className="tabular-nums">{formatDuration(rv.durationMin)}</span>
-                          {group && (
-                            <>
-                              <span aria-hidden>·</span>
-                              {group.href ? (
-                                <Link
-                                  href={group.href}
-                                  className="font-medium text-base-content/80 underline decoration-base-300 underline-offset-2 transition hover:decoration-secondary"
-                                >
-                                  {group.label}
-                                </Link>
-                              ) : (
-                                <span className="font-medium text-base-content/80">{group.label}</span>
-                              )}
-                              {group.kind !== "femme" && (
-                                <span className="rounded-sm bg-[var(--brand-rose-soft)] px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-[var(--brand-taupe-muted)]">
-                                  {group.kind === "homme" ? "Homme" : "Enfant"}
-                                </span>
-                              )}
-                            </>
-                          )}
-                          {voided && <span className="font-medium text-error">· annulé</span>}
-                          {covered && (
-                            <span className="rounded-sm bg-[var(--color-gray-100)] px-2 py-0.5 text-xs font-semibold text-[var(--color-gray-600)]">
-                              Couverte · {covered.planLabel}
-                            </span>
-                          )}
-                        </p>
-                      </div>
-                      <div className="w-48 shrink-0">
-                        <StaffCell rv={rv} praticiennes={praticiennes} />
-                      </div>
-                      <span
+      <div className="grid grid-cols-[minmax(0,1fr)_360px] items-start gap-5">
+        {/* ── Gauche : le passage (frise) puis l'argent (facture) ─────────── */}
+        <div className="flex min-w-0 flex-col gap-5">
+          {reservation.note && (
+            <p className="rounded-box border border-primary/25 bg-[var(--brand-rose-soft)] px-4 py-2.5 text-sm text-base-content">
+              <span className="font-semibold">Note de la cliente · </span>
+              {reservation.note}
+            </p>
+          )}
+
+          {lines.length > 0 && (
+            <Panel
+              title="Déroulé"
+              meta={
+                <>
+                  {lines.length} prestation{lines.length > 1 ? "s" : ""} · {staffCount} praticienne{staffCount > 1 ? "s" : ""} ·{" "}
+                  {formatDuration(rangeEnd - rangeStart)}
+                </>
+              }
+            >
+              <ReservationTimeline
+                groups={groups}
+                praticiennes={praticiennes}
+                coveredIds={new Set(coverage.keys())}
+                isToday={date === todayISO()}
+              />
+            </Panel>
+          )}
+
+          <Panel title="Détail et règlement" meta={deposit > 0 ? `Acompte de ${formatFcfa(deposit)} déjà versé` : undefined}>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-base-300 text-left text-xs text-base-content/60">
+                  <th className="w-20 py-2 pl-4 font-medium">Heure</th>
+                  <th className="py-2 font-medium">Prestation</th>
+                  <th className="py-2 font-medium">Pour</th>
+                  <th className="py-2 font-medium">Praticienne</th>
+                  <th className="w-20 py-2 text-right font-medium">Durée</th>
+                  <th className="w-28 py-2 pr-4 text-right font-medium">Montant</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-base-300/70">
+                {lines.map((rv) => {
+                  const service = serviceById(rv.serviceId);
+                  const covered = coverage.get(rv.id);
+                  const voided = rv.status === "annule";
+                  const group = groupOf(rv);
+                  return (
+                    <tr key={rv.id} className={cn(voided && "text-base-content/45")}>
+                      <td className="py-2.5 pl-4 align-top font-medium tabular-nums">{rv.start}</td>
+                      <td className="py-2.5 pr-3 align-top">
+                        <span className="flex items-start gap-2">
+                          <ServiceCategoryIcon
+                            categoryId={service?.categoryId ?? ""}
+                            className="mt-0.5 size-4 shrink-0 text-[var(--brand-taupe-muted)]"
+                          />
+                          <span>
+                            <span className={cn("font-medium", voided && "line-through")}>{service?.name ?? "Prestation"}</span>
+                            {covered && (
+                              <span className="ml-2 inline-block rounded-sm bg-base-200 px-1.5 py-0.5 align-middle text-[11px] font-semibold text-base-content/70">
+                                {covered.planLabel}
+                              </span>
+                            )}
+                            {voided && <span className="ml-2 text-xs font-medium text-error">annulée</span>}
+                          </span>
+                        </span>
+                      </td>
+                      <td className="py-2.5 pr-3 align-top whitespace-nowrap">
+                        {group?.href ? (
+                          <Link href={group.href} className="underline decoration-base-300 underline-offset-2 hover:decoration-secondary">
+                            {group.label}
+                          </Link>
+                        ) : (
+                          group?.label
+                        )}
+                      </td>
+                      <td className="py-2.5 pr-3 align-top">
+                        <span className="flex items-center gap-2">
+                          <StaffAvatars rv={rv} praticiennes={praticiennes} size={20} />
+                          <span className="truncate">{staffNames(rv, praticiennes)}</span>
+                        </span>
+                      </td>
+                      <td className="py-2.5 text-right align-top tabular-nums text-base-content/70">{formatDuration(rv.durationMin)}</td>
+                      <td
                         className={cn(
-                          "w-24 shrink-0 text-right text-base font-semibold tabular-nums",
-                          covered || voided ? "text-base-content/40 line-through" : "text-base-content",
+                          "py-2.5 pr-4 text-right align-top font-medium tabular-nums",
+                          (covered || voided) && "text-base-content/40 line-through",
                         )}
                       >
                         {service ? formatFcfa(service.price) : "—"}
-                      </span>
-                    </div>
-                  </li>
-                );
-              })}
-            </ol>
-          </Board>
-
-          {extras.length > 0 && (
-            <Board legend="Extras pré-commandés">
-              <ul className="divide-y divide-[var(--board-groove)]">
+                      </td>
+                    </tr>
+                  );
+                })}
                 {extras.map((extra) => {
                   const item = extra.kind === "boisson" ? boissonById(extra.refId) : produitById(extra.refId);
                   return (
-                    <li key={`${extra.kind}-${extra.refId}`} className="flex items-center gap-4 px-5 py-4">
-                      <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--brand-rose-soft)] text-[var(--brand-taupe-muted)]">
-                        {extra.kind === "boisson" ? <Coffee className="size-5" /> : <ShoppingBag className="size-5" />}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-base font-semibold text-base-content">
-                          {extra.qty > 1 ? `${extra.qty}× ` : ""}
-                          {item?.name ?? "Article"}
-                        </p>
-                        <p className="mt-1 text-sm text-base-content/60">
-                          {extra.kind === "boisson" ? "Boisson · à retirer sur place" : "Produit · à emporter"}
-                        </p>
-                      </div>
-                      <span className="w-24 shrink-0 text-right text-base font-semibold tabular-nums text-base-content">
+                    <tr key={`${extra.kind}-${extra.refId}`}>
+                      <td className="py-2.5 pl-4 align-top text-xs text-base-content/60">Extra</td>
+                      <td className="py-2.5 pr-3 align-top">
+                        <span className="flex items-start gap-2">
+                          {extra.kind === "boisson" ? (
+                            <Coffee className="mt-0.5 size-4 shrink-0 text-[var(--brand-taupe-muted)]" />
+                          ) : (
+                            <ShoppingBag className="mt-0.5 size-4 shrink-0 text-[var(--brand-taupe-muted)]" />
+                          )}
+                          <span className="font-medium">
+                            {extra.qty > 1 ? `${extra.qty}× ` : ""}
+                            {item?.name ?? "Article"}
+                          </span>
+                        </span>
+                      </td>
+                      <td colSpan={3} className="py-2.5 pr-3 align-top text-base-content/65">
+                        {extra.kind === "boisson" ? "Boisson, à servir sur place" : "Produit à emporter"}
+                      </td>
+                      <td className="py-2.5 pr-4 text-right align-top font-medium tabular-nums">
                         {item ? formatFcfa(item.price * extra.qty) : "—"}
-                      </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+
+            {/* Pied de facture : se lit de haut en bas jusqu'au montant que la réceptionniste va demander. */}
+            <div className="flex justify-end border-t border-base-300 bg-base-200/40 px-4 py-3">
+              <div className="w-80">
+                <SumRow label="Prestations">{formatFcfa(prestationsTotal + coveredTotal)}</SumRow>
+                {coveredTotal > 0 && <SumRow label="Couvert par pack ou forfait">− {formatFcfa(coveredTotal)}</SumRow>}
+                {extrasTotal > 0 && <SumRow label="Extras">{formatFcfa(extrasTotal)}</SumRow>}
+                {deposit > 0 && (
+                  <>
+                    <SumRow label="Total">{formatFcfa(total)}</SumRow>
+                    <SumRow label="Acompte versé">− {formatFcfa(deposit)}</SumRow>
+                  </>
+                )}
+                <div className="mt-1.5 flex items-baseline justify-between border-t border-base-300 pt-2">
+                  <span className="text-sm font-semibold text-base-content">
+                    {settled ? "Encaissé" : cancelled ? "Total" : "Reste à encaisser"}
+                  </span>
+                  <span className="text-xl font-bold tabular-nums text-base-content">{formatFcfa(remaining)}</span>
+                </div>
+              </div>
+            </div>
+          </Panel>
+
+          {/* Préférences toujours visibles, jamais derrière un dépliage (demande utilisateur 25/09) —
+              de chaque personne servie, pour préparer le passage. */}
+          {prefPeople.length > 0 && (
+            <Panel title="Préférences">
+              <div className={cn("grid gap-4 p-4", prefPeople.length > 1 && "grid-cols-2")}>
+                {prefPeople.map((c) => (
+                  <div key={c.id} className="min-w-0">
+                    {prefPeople.length > 1 && (
+                      <Link href={`/clientele/${c.id}`} className="mb-2 block text-sm font-semibold text-base-content hover:underline">
+                        {clientFullName(c)}
+                      </Link>
+                    )}
+                    <ClientPreferences client={c} />
+                  </div>
+                ))}
+              </div>
+            </Panel>
+          )}
+        </div>
+
+        {/* ── Droite : la payeuse, de quoi répondre si elle appelle ─────────── */}
+        <div className="flex flex-col gap-5">
+          {payer && (
+            <Panel
+              title="Payeuse"
+              meta={
+                <Link
+                  href={`/clientele/${payer.id}`}
+                  className="-my-2 -mr-2 inline-flex h-11 items-center gap-1.5 rounded-field px-2 text-sm font-medium text-secondary hover:bg-base-200"
+                >
+                  <UserRound className="size-4" /> Fiche
+                </Link>
+              }
+            >
+              <div className="flex flex-col gap-3 p-4">
+                <div className="flex items-center gap-3">
+                  <Avatar
+                    initial={clientInitial(payer)}
+                    size={44}
+                    className="bg-[var(--brand-rose-soft)] text-base font-semibold text-[var(--brand-taupe-muted)]"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="truncate font-semibold text-base-content">{clientFullName(payer)}</span>
+                      {payer.tier && <Badge variant={payer.tier}>{TIER_LABEL[payer.tier]}</Badge>}
+                    </div>
+                    <p className="truncate text-xs tabular-nums text-base-content/60">
+                      {clientNumberLabel(payer)} · {payer.totalVisits} passage{payer.totalVisits > 1 ? "s" : ""} ·{" "}
+                      {formatFcfa(payer.totalSpent)}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <a
+                    href={`tel:${payer.phone.replace(/\s/g, "")}`}
+                    className="flex h-12 min-w-0 flex-1 items-center gap-2 rounded-field border border-base-300 px-3 text-sm font-medium tabular-nums text-base-content transition hover:bg-base-200 active:scale-[0.98]"
+                  >
+                    <Phone className="size-4 shrink-0 text-secondary" />
+                    <span className="truncate">{payer.phone}</span>
+                  </a>
+                  {whatsapp && (
+                    <a
+                      href={`https://wa.me/${whatsapp.replace(/\D/g, "")}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label="Écrire sur WhatsApp"
+                      className="flex size-12 shrink-0 items-center justify-center rounded-field border border-base-300 text-secondary transition hover:bg-base-200 active:scale-[0.95]"
+                    >
+                      <MessageCircle className="size-5" />
+                    </a>
+                  )}
+                </div>
+
+                <PayerAvantages payer={payer} />
+                {payer.notes?.[0] && (
+                  <p className="border-l-2 border-base-300 pl-3 text-xs leading-snug text-base-content/70">
+                    <span className="font-semibold text-base-content/80">
+                      {praticienneById(payer.notes[0].authorId)?.name ?? "Équipe"},{" "}
+                      {new Date(payer.notes[0].at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })} ·{" "}
+                    </span>
+                    {payer.notes[0].text}
+                  </p>
+                )}
+              </div>
+            </Panel>
+          )}
+
+          <Panel title="Suivi">
+            <ol className="px-4 py-3">
+              {events.map((ev, i) => (
+                <li key={i} className="relative flex gap-3 pb-3 last:pb-0">
+                  {i < events.length - 1 && <span aria-hidden className="absolute top-3 bottom-0 left-[4.5px] w-px bg-base-300" />}
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "relative mt-1.5 size-2.5 shrink-0 rounded-full",
+                      ev.tone === "done" ? "bg-secondary" : ev.tone === "void" ? "bg-error" : "border-2 border-secondary bg-base-100",
+                    )}
+                  />
+                  <div className="min-w-0 text-sm leading-snug">
+                    <p className={cn("text-base-content", !ev.tone && "font-semibold")}>{ev.label}</p>
+                    {ev.at && <p className="text-xs tabular-nums text-base-content/60">{formatStamp(ev.at)}</p>}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </Panel>
+
+          {otherReservations.length > 0 && (
+            <Panel title="Ses autres réservations">
+              <ul className="divide-y divide-base-300/70">
+                {otherReservations.map((r) => {
+                  const names = r.rendezVous.map((rv) => serviceById(rv.serviceId)?.name ?? "Prestation");
+                  const upcoming = reservationDate(r) >= todayISO();
+                  return (
+                    <li key={r.id}>
+                      <Link
+                        href={`/reservations/${r.id}`}
+                        className="flex min-h-12 items-center gap-3 px-4 py-2 transition hover:bg-base-200/60 active:bg-base-200"
+                      >
+                        <span className="w-20 shrink-0 text-xs font-medium tabular-nums text-base-content/70">
+                          {formatShortDay(reservationDate(r))}
+                          {upcoming && <span className="block text-[11px] font-semibold text-secondary">à venir</span>}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-sm text-base-content">
+                          {names[0]}
+                          {names.length > 1 && <span className="text-base-content/60"> + {names.length - 1}</span>}
+                        </span>
+                        <span className="shrink-0 text-sm tabular-nums text-base-content/70">
+                          {formatFcfa(reservationFigures(r, r.rendezVous).total)}
+                        </span>
+                        <ChevronRight className="size-4 shrink-0 text-base-content/40" />
+                      </Link>
                     </li>
                   );
                 })}
               </ul>
-            </Board>
+            </Panel>
           )}
-
-          {reservation.note && (
-            <Board legend="Note pour le salon">
-              <p className="px-5 py-4 text-sm leading-relaxed text-base-content/80">{reservation.note}</p>
-            </Board>
-          )}
-
-          {otherBeneficiaries.length > 0 && (
-            <Board legend="Préférences des bénéficiaires">
-              <div className="divide-y divide-[var(--board-groove)]">
-                {otherBeneficiaries.map((g) => (
-                  <div key={g.key} className="px-5 py-4">
-                    <Link
-                      href={g.href ?? "#"}
-                      className="text-sm font-semibold text-base-content underline decoration-base-300 underline-offset-2 transition hover:decoration-secondary"
-                    >
-                      {g.label}
-                    </Link>
-                    <ClientPreferences client={g.client!} className="mt-2" />
-                  </div>
-                ))}
-              </div>
-            </Board>
-          )}
-        </div>
-
-        {/* ── Colonne latérale : qui paie, combien, d'où vient la réservation ── */}
-        <div className="flex flex-col gap-8">
-          <Board legend="Règlement">
-            <div className="px-5 py-4">
-              <Row label="Prestations">{formatFcfa(prestationsTotal + coveredTotal)}</Row>
-              {coveredTotal > 0 && <Row label="Couvert par forfait ou pack">− {formatFcfa(coveredTotal)}</Row>}
-              {extrasTotal > 0 && <Row label="Extras">{formatFcfa(extrasTotal)}</Row>}
-              <div className="mt-2 border-t border-[var(--board-groove)] pt-2">
-                <Row label="Total" strong>
-                  {formatFcfa(total)}
-                </Row>
-                {deposit > 0 && (
-                  <Row label={`Acompte versé${reservation.depositMode ? ` · ${DEPOSIT_MODE_LABEL[reservation.depositMode]}` : " en ligne"}`}>
-                    − {formatFcfa(deposit)}
-                  </Row>
-                )}
-              </div>
-              <div className="mt-2 flex items-baseline justify-between border-t border-[var(--board-groove)] pt-3">
-                <span className="text-sm font-semibold text-base-content">{hasSale ? "Vente ouverte" : "Reste à encaisser"}</span>
-                <span className="text-2xl font-bold tabular-nums text-base-content">{formatFcfa(remaining)}</span>
-              </div>
-            </div>
-          </Board>
-
-          {payer && (
-            <Board legend="Payeuse">
-              <div className="flex flex-col gap-4 px-5 py-5">
-                <div className="flex items-center gap-3">
-                  <Avatar
-                    initial={clientInitial(payer)}
-                    size={52}
-                    className="bg-[var(--brand-rose-soft)] text-lg font-semibold text-[var(--brand-taupe-muted)]"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="truncate text-base font-semibold text-base-content">{clientFullName(payer)}</span>
-                      {payer.tier && <Badge variant={payer.tier}>{TIER_LABEL[payer.tier]}</Badge>}
-                    </div>
-                    <span className="text-sm tabular-nums text-base-content/55">{clientNumberLabel(payer)}</span>
-                  </div>
-                  <Button href={`/clientele/${payer.id}`} variant="outline" size="sm" icon={<UserRound className="size-4" />} className="h-12 min-h-12 shrink-0">
-                    Fiche
-                  </Button>
-                </div>
-                <PayerAvantages payer={payer} />
-                {/* Préférences toujours visibles, jamais derrière un dépliage (demande utilisateur 25/09). */}
-                <ClientPreferences client={payer} />
-                {payer.notes?.[0] && (
-                  <div className="rounded-lg bg-[var(--color-gray-50)] px-3 py-2">
-                    <Legend className="text-[var(--color-gray-500)]">
-                      Dernière note · {praticienneById(payer.notes[0].authorId)?.name ?? "Équipe"},{" "}
-                      {new Date(payer.notes[0].at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
-                    </Legend>
-                    <p className="mt-1 text-sm leading-snug text-base-content/70">{payer.notes[0].text}</p>
-                  </div>
-                )}
-              </div>
-            </Board>
-          )}
-
-          <Board legend="Réservation">
-            <div className="px-5 py-4">
-              <Row label="Provenance">{reservation.source === "en_ligne" ? "Réservée en ligne" : "Créée au comptoir"}</Row>
-              {reservation.createdAt && (
-                <Row label="Créée le">
-                  {new Date(reservation.createdAt).toLocaleString("fr-FR", {
-                    day: "numeric",
-                    month: "long",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </Row>
-              )}
-              <Row label="Salon">{salons.join(" + ") || "—"}</Row>
-              <Row label="Statut">{cancelled ? "Annulée" : hasSale ? "Vente en cours" : "À encaisser"}</Row>
-              {cancelled && cancelReason && <Row label="Motif">{cancelReason}</Row>}
-            </div>
-          </Board>
         </div>
       </div>
 

@@ -105,9 +105,9 @@ Recherche d'abord (mécanisme partagé = `ClientSearchField` / `searchClients`).
 
 ### Détail de la réservation — `/reservations/[id]` — [`components/planning/reservation-detail-view.tsx`](../components/planning/reservation-detail-view.tsx)
 
-- Bandeau collant : retour, référence `RV-…`, jour · plage horaire · composition · salon ; Annuler / Modifier / Encaisser.
-- Gauche : **Déroulé** (une ligne par rendez-vous : début/fin, prestation, durée, bénéficiaire, praticiennes, prix, « Couverte » si pack/forfait), **Extras pré-commandés**, **Note pour le salon**, **Préférences des bénéficiaires** (hors payeuse).
-- Droite : **Règlement** (prestations, couvert, extras, total, acompte, reste à encaisser), **Payeuse** (avantages, préférences, dernière note), **Réservation** (provenance, création, salon, statut, motif d'annulation).
+- Bandeau collant compact : retour, référence `RV-…`, jour · plage · composition · salon ; Annuler / Modifier / « Encaisser <reste> ».
+- Gauche : **Déroulé** (frise horaire, une rangée par bénéficiaire, blocs par rendez-vous avec praticiennes, filet ambre « maintenant » le jour même), **Détail et règlement** (tableau Heure/Prestation/Pour/Praticienne/Durée/Montant + extras, pied de facture jusqu'au reste à encaisser), **Préférences** (payeuse + bénéficiaires avec fiche). Note de la cliente en bandeau rose au-dessus si présente.
+- Droite : **Payeuse** (N°, passages, total dépensé, téléphone + WhatsApp, avantages, dernière note), **Suivi** (réservée → acompte → vente → encaissée/annulée, seulement ce que les données attestent), **Ses autres réservations** (4 dernières, liens).
 
 ### Fiche cliente — `/clientele/[id]` — [`components/clientele/fiche-cliente-view.tsx`](../components/clientele/fiche-cliente-view.tsx)
 En-tête collant : retour + avatar + nom + **N° cliente** + Contacter / Nouvelle vente, puis ligne « d'un coup d'œil » (`AtAGlance` : abonnement + statut, pack + restantes, points, visites, total dépensé). 2 colonnes de `Board` (ADR 0035) :
