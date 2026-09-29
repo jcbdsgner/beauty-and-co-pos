@@ -92,8 +92,7 @@ plus de bascule de vue, plus de liste de réservations (celle-ci ne vit plus que
   sous-lignes (`pack`), jamais superposées. Taper un bloc ouvre `AppointmentDetailSheet`.
   Couleur par praticienne : `praticienneAccent`, 16 teintes (ADR 0024, 2ᵉ exception nommée à la
   règle du signal unique après ADR 0022).
-- **Aucune création de réservation** (ADR 0006/0009) — le bouton « Créer un
-  rendez-vous » ne vit plus que sur l'Accueil. Sous-composants (inchangés) :
+- **Clic sur une demi-heure libre** (vue Jour, `DayTimeline` `onPickSlot`) → `PriseRdvModal` avec `pickedSlot` (jour, heure, praticienne) + `defaultSalonId` de la plage (ADR 0037) ; survol = bloc « + HH:MM » en pointillés. Sous-composants (inchangés) :
   - `AppointmentDetailSheet` — [`components/planning/appointment-detail-sheet.tsx`](../components/planning/appointment-detail-sheet.tsx) — fiche réservation : payeuse, prestations, praticiennes ; Encaisser / Ajuster / Annuler (motif facultatif).
   - `PriseRdvModal` — [`components/prise-rdv/prise-rdv-modal.tsx`](../components/prise-rdv/prise-rdv-modal.tsx) — « Modifier » : le parcours de prise de rendez-vous b&co, pré-rempli avec la réservation (ADR 0032). Voir la ligne « Créer / modifier un rendez-vous » plus bas.
 

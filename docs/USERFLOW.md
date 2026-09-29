@@ -113,6 +113,15 @@
 > - Modifier : même parcours pré-rempli ; une prestation retirée annule son rendez-vous ; un
 >   acompte déjà réglé n'est pas redemandé. L'ancien éditeur d'ajustement disparaît.
 
+> **Amendement 2026-09-29 (v2.9) — Créer un rendez-vous depuis le Planning ; plus d'âge des
+> enfants (ADR 0037).**
+> - Planning, vue Jour : survol d'une demi-heure libre → « + 17:30 » en pointillés ; clic → le
+>   parcours « Créer un rendez-vous » pré-réglé sur ce jour, cette heure, ce salon et cette
+>   praticienne (posée d'office si libre, modifiable). Pas cliquable : passé, pris, hors horaire,
+>   trajet, autre salon, « Fermé », praticienne absente. Vue Semaine inchangée.
+> - Un enfant bénéficiaire se nomme par son prénom seul (plus de « (7 ans) ») ; l'indice Mini & Co
+>   dit « Petites filles ».
+
 > **Amendement 2026-08-27 (v2.2) — Refonte 2 : Planning · Clientèle · Relances · Catalogue.** Ces
 > quatre sections (et leurs sous-écrans : Équipe, Fiche cliente, Carte de fidélité, Détail planche)
 > ont été **redesignées à partir des seules job stories**, dans un **nouveau langage visuel
@@ -513,7 +522,7 @@ seulement ça ; la liste de réservations à encaisser ne vit plus ici, voir Acc
   - « Marquer absente aujourd'hui » (absence de dernière minute) → ses rendez-vous du jour sont signalés « absente » partout (ici + Chronologie de l'Accueil) ; « Encaisser » l'un d'eux impose d'indiquer la remplaçante avant d'ouvrir le Comptoir — jamais une vente attribuée à quelqu'un qui n'était pas là
 - plusieurs rendez-vous à la même heure = normal (praticiennes différentes) ; un rendez-vous « à 2 » apparaît sur les deux lignes
 - choisir un rendez-vous existant → Fiche réservation
-- **pas de création de réservation** — la prise de rendez-vous se fait en ligne (`docs/adr/0006`) ; l'**ajustement** d'une réservation qui arrive, lui, se fait au comptoir (v2.4, `docs/adr/0009`) ; le bouton « Créer un rendez-vous » ne vit plus que sur l'Accueil
+- clic sur une **demi-heure libre** (vue Jour) → « Créer un rendez-vous » pré-réglé sur ce jour, cette heure, ce salon et cette praticienne (v2.9, `docs/adr/0037`) ; l'**ajustement** d'une réservation qui arrive se fait depuis sa fiche (v2.4, `docs/adr/0009`)
 [ jour affiché sans rendez-vous (le mock ne couvre qu'aujourd'hui) → le dire franchement, pas un vide muet ]
 [ aucune praticienne cochée dans le filtre → le dire ]
 
