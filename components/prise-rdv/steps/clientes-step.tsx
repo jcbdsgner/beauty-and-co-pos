@@ -339,7 +339,7 @@ function PersonBlock({
                 id={`name-${slot.id}`}
                 value={assignment?.name ?? ""}
                 onChange={(event) => onAssign(event.target.value ? { name: event.target.value } : {})}
-                placeholder={slot.type === "child" ? "Ex. Salématou (7 ans)" : "Ex. Awa (amie)"}
+                placeholder={slot.type === "child" ? "Ex. Salématou" : "Ex. Awa (amie)"}
                 className={cn("mt-2 sm:max-w-[420px]", inputClassName)}
               />
             </div>

@@ -129,7 +129,7 @@ function AccueilPageInner() {
       if (reservationNumberMatches(row.reservation.id, q)) return true;
       const payer = clients.find((c) => c.id === row.reservation.payerClientId);
       const payerMatch = payer ? clientMatchesQuery(payer, q) : false;
-      // Une réservation se retrouve aussi par la personne servie (« Salématou (7 ans) ») — pas
+      // Une réservation se retrouve aussi par la personne servie (« Salématou ») — pas
       // seulement par la payeuse.
       const beneficiaryMatch = row.reservation.rendezVous.some((rdv) =>
         rdv.beneficiaryName?.toLowerCase().includes(q),

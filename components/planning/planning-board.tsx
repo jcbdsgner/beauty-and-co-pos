@@ -11,6 +11,7 @@ import { PeriodNav } from "@/components/planning/period-nav";
 import { DayTimeline } from "@/components/planning/day-timeline";
 import { WeekTimeline } from "@/components/planning/week-timeline";
 import { AppointmentDetailSheet } from "@/components/planning/appointment-detail-sheet";
+import { PriseRdvModal } from "@/components/prise-rdv/prise-rdv-modal";
 import { useEncaissement } from "@/components/journee/use-encaissement";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { SALONS, salonById } from "@/lib/data/entreprises";
@@ -66,6 +67,8 @@ function PlanningBoardInner() {
   const [metierFilter, setMetierFilter] = useState<MetierFilter>("tous");
   const [visibleIds, setVisibleIds] = useState<Set<string> | null>(null);
   const [detail, setDetail] = useState<RendezVous | null>(null);
+  // Créneau cliqué dans la vue Jour → « Créer un rendez-vous » pré-réglé dessus.
+  const [pickedSlot, setPickedSlot] = useState<{ date: Date; time: string; staffId: string; salonId: string } | null>(null);
 
   const isToday = sameDay(selectedDate, today);
 
@@ -248,6 +251,9 @@ function PlanningBoardInner() {
             onShowAll={showAll}
             onMarkAbsent={markStaffUnavailable}
             onReorder={movePraticienne}
+            onPickSlot={(staffId, time, slotSalonId) =>
+              setPickedSlot({ date: selectedDate, time, staffId, salonId: slotSalonId })
+            }
           />
         )}
       </div>
@@ -259,6 +265,12 @@ function PlanningBoardInner() {
           setDetail(null);
           requestEncaissement(id);
         }}
+      />
+      <PriseRdvModal
+        open={pickedSlot !== null}
+        defaultSalonId={pickedSlot?.salonId}
+        pickedSlot={pickedSlot ?? undefined}
+        onClose={() => setPickedSlot(null)}
       />
       {encaissementDialog}
     </div>

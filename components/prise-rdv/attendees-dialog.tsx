@@ -95,7 +95,7 @@ export function AttendeesDialog({ open, onConfirm, initial, onCancel }: Attendee
         />
         <Stepper
           label="Enfants (Mini & Co)"
-          hint="Petites filles de 4 à 12 ans"
+          hint="Petites filles"
           value={children}
           min={MIN_CHILDREN}
           max={MAX_TOGETHER - adults}

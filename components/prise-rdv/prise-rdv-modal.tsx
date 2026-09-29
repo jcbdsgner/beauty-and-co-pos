@@ -137,6 +137,9 @@ type PriseRdvModalProps = {
   /** Création seulement : cliente déjà posée comme payeuse à l'étape Clientes (ex. reprise de
    *  rendez-vous depuis le reçu), modifiable. */
   payerClientId?: string;
+  /** Création seulement : créneau cliqué au Planning — jour, heure et praticienne pré-choisis à
+   *  l'étape Créneau (la praticienne posée d'office si elle est libre), tous modifiables. */
+  pickedSlot?: { date: Date; time: string; staffId?: string };
   onClose: () => void;
 };
 
@@ -145,6 +148,7 @@ export function PriseRdvModal({
   reservationId,
   defaultSalonId = POSTE_SALON_ID,
   payerClientId,
+  pickedSlot,
   onClose,
 }: PriseRdvModalProps) {
   if (!open) return null;
@@ -156,6 +160,7 @@ export function PriseRdvModal({
           reservationId={reservationId ?? null}
           defaultSalonId={defaultSalonId ?? null}
           payerClientId={reservationId ? undefined : payerClientId}
+          pickedSlot={reservationId ? undefined : pickedSlot}
           scroller={scroller}
           onClose={onClose}
         />
@@ -352,12 +357,14 @@ function PriseRdvFlow({
   reservationId,
   defaultSalonId,
   payerClientId,
+  pickedSlot,
   scroller,
   onClose,
 }: {
   reservationId: string | null;
   defaultSalonId: string | null;
   payerClientId?: string;
+  pickedSlot?: { date: Date; time: string; staffId?: string };
   scroller: React.RefObject<HTMLDivElement | null>;
   onClose: () => void;
 }) {
@@ -391,7 +398,7 @@ function PriseRdvFlow({
   );
   const [questionAnswers, setQuestionAnswers] = useState<QuestionAnswers>({});
   const [selectedDate, setSelectedDate] = useState<Date | null>(
-    prefill?.date ?? null,
+    prefill?.date ?? pickedSlot?.date ?? null,
   );
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(
     prefill
@@ -401,7 +408,7 @@ function PriseRdvFlow({
         : null,
   );
   const [selectedTime, setSelectedTime] = useState<string | null>(
-    prefill?.time ?? null,
+    prefill?.time ?? pickedSlot?.time ?? null,
   );
   const [twoPractitioners, setTwoPractitioners] = useState(
     prefill?.twoPractitioners ?? false,
@@ -612,6 +619,7 @@ function PriseRdvFlow({
           effectiveTime,
           twoPractitioners,
           staffOverrides,
+          pickedSlot?.staffId,
         )
       : null;
   const staffRows: StaffRow[] =

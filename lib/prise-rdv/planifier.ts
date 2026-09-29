@@ -98,7 +98,7 @@ function lineDuration(item: PlanItem, twoPractitioners: boolean) {
 /**
  * Pose toutes les prestations à partir de `start` : chaque personne enchaîne les siennes, les
  * personnes sont servies en parallèle (même lecture que le site). `overrides` garde le choix
- * manuel d'une ligne tant qu'il reste libre ; sinon, la moins chargée du jour. `null` ⇒ horaire
+ * manuel d'une ligne tant qu'il reste libre ; sinon `preferredStaffId` si libre, puis la moins chargée du jour. `null` ⇒ horaire
  * impossible (pas assez de praticiennes libres).
  */
 export function planAt(
@@ -107,6 +107,8 @@ export function planAt(
   start: string,
   twoPractitioners: boolean,
   overrides: Record<string, string[]> = {},
+  /** Praticienne à poser d'office quand elle est libre (créneau cliqué au Planning), avant la moins chargée. */
+  preferredStaffId?: string,
 ): PlanLine[] | null {
   if (!salonOpen(ctx)) return null;
   const { busy, load } = busyAndLoad(ctx);
@@ -129,7 +131,12 @@ export function planAt(
       } else {
         if (free.length < need) return null;
         chosen = [...free]
-          .sort((a, b) => (load.get(a.id) ?? 0) - (load.get(b.id) ?? 0) || a.name.localeCompare(b.name))
+          .sort(
+            (a, b) =>
+              Number(b.id === preferredStaffId) - Number(a.id === preferredStaffId) ||
+              (load.get(a.id) ?? 0) - (load.get(b.id) ?? 0) ||
+              a.name.localeCompare(b.name),
+          )
           .slice(0, need)
           .map((p) => p.id);
       }
