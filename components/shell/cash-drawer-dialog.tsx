@@ -20,40 +20,53 @@ type CashDrawerDialogProps = {
 
 /**
  * Comptage de caisse — à la connexion et à la déconnexion. Démo : le montant n'est pas conservé.
- * À la déconnexion, le minimum n'est jamais annoncé pendant la saisie : c'est seulement au clic sur
- * « Se déconnecter » que, s'il manque de l'argent, un second écran indique le montant à rajouter,
- * avec un bouton OK qui mène à l'écran de déconnexion.
+ * Le montant attendu n'est jamais annoncé pendant la saisie. Une fois le montant validé, un second
+ * écran « Écart » donne la différence avec le montant attendu (CASH_FLOAT_MIN — démo : le fond laissé
+ * à la dernière déconnexion n'est pas mémorisé), avec un bouton OK qui poursuit.
+ * - Connexion : l'écart est toujours affiché (manquant, en trop ou nul).
+ * - Déconnexion : seulement s'il manque de l'argent ; le sous-titre dit alors le montant à rajouter.
  */
 export function CashDrawerDialog({ open, mode, onConfirm, onCancel }: CashDrawerDialogProps) {
   const [value, setValue] = useState("");
-  const [shortfall, setShortfall] = useState<number | null>(null);
+  const [ecart, setEcart] = useState<number | null>(null);
   const amount = Number(value);
   const valid = value !== "";
 
   function close(fn: () => void) {
     setValue("");
-    setShortfall(null);
+    setEcart(null);
     fn();
   }
 
   function submit() {
     if (!valid) return;
-    const missing = mode === "close" ? Math.max(0, CASH_FLOAT_MIN - amount) : 0;
-    if (missing > 0) setShortfall(missing);
+    const diff = amount - CASH_FLOAT_MIN;
+    if (mode === "open" || diff < 0) setEcart(diff);
     else close(() => onConfirm(amount));
   }
 
-  if (shortfall !== null) {
+  if (ecart !== null) {
+    const sign = ecart < 0 ? "−" : ecart > 0 ? "+" : "";
+    const subtitle =
+      mode === "close"
+        ? "Montant à rajouter en caisse"
+        : ecart < 0
+          ? "Montant manquant en caisse"
+          : ecart > 0
+            ? "Montant en trop en caisse"
+            : "Aucun écart";
     return (
       <Dialog open={open} labelledBy="cash-drawer-title" className="max-w-sm p-6">
         <h2 id="cash-drawer-title" className="font-heading text-lg font-semibold text-base-content">
-          Montant à rajouter en caisse
+          Écart
         </h2>
         <p className="mt-4 font-heading text-3xl font-semibold tabular-nums text-base-content">
-          {formatFcfa(shortfall)}
+          {sign}
+          {formatFcfa(Math.abs(ecart))}
         </p>
-        <p className="mt-2 text-sm text-base-content/70">
-          Rajoutez ce montant dans la caisse avant de quitter le poste.
+        <p className="mt-2 text-sm text-base-content/70">{subtitle}</p>
+        <p className="mt-1 text-sm text-base-content/55">
+          Montant attendu : {formatFcfa(CASH_FLOAT_MIN)} · compté : {formatFcfa(amount)}
         </p>
         <Button type="button" variant="brand" autoFocus onClick={() => close(() => onConfirm(amount))} className="mt-6 w-full">
           OK
