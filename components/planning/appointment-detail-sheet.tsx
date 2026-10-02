@@ -11,7 +11,7 @@ import { TIER_LABEL } from "@/lib/data/tiers";
 import { Avatar } from "@/components/ui/atoms/avatar";
 import { ServiceCategoryIcon } from "@/components/ui/atoms/service-category-icons";
 import { FlipChip, Legend } from "@/components/ui/board";
-import { PriseRdvModal } from "@/components/prise-rdv/prise-rdv-modal";
+import { RdvDialog } from "@/components/planning/rdv-dialog";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { clientFullName, clientInitial } from "@/lib/data/clientele";
 import { ClientPreferences } from "@/components/shared/client-preferences";
@@ -295,7 +295,7 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
         }}
       />
 
-      <PriseRdvModal open={editing && Boolean(reservation)} reservationId={reservation?.id} onClose={() => setEditing(false)} />
+      <RdvDialog open={editing && Boolean(reservation)} reservationId={reservation?.id} onClose={() => setEditing(false)} />
     </>
   );
 }

@@ -4,14 +4,10 @@ import { coversInterval, dayOfWeek } from "@/lib/data/praticiennes";
 import { SALON_CLOSING, SALON_OPENING, minutesToTime, reservationDate, timeToMinutes, todayISO } from "@/lib/data/planning";
 
 /**
- * Le pont entre le parcours b&co recopié (ADR 0032) et l'agenda réel de l'équipe : quels horaires
+ * Le pont entre la fenêtre de rendez-vous (`RdvDialog`, ADR 0041) et l'agenda réel de l'équipe : quels horaires
  * proposer, et quelle praticienne poser d'office sur chaque prestation — la moins chargée ce
  * jour-là parmi celles libres, modifiable ensuite parmi les seules libres.
  */
-
-/** Les ids de lieu du site b&co ↔ les `Salon.id` du point de vente. */
-export const SALON_ID_BY_LOCATION: Record<string, string> = { "sea-plaza": "sea-plaza-bco", almadies: "almadies" };
-export const LOCATION_ID_BY_SALON: Record<string, string> = { "sea-plaza-bco": "sea-plaza", almadies: "almadies" };
 
 /** Heures d'ouverture des deux salons (CONTEXT.md, Praticienne) : tout se tient entre 10h et 20h. */
 const OPENING = timeToMinutes(SALON_OPENING);
@@ -23,7 +19,7 @@ function roleFor(categoryId: string): Role {
 }
 
 export type PlanItem = {
-  /** `${personId}:${subServiceId}` — la clé du CartItem. */
+  /** La clé de la ligne. */
   key: string;
   personId: string;
   serviceId: string;

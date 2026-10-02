@@ -1,5 +1,5 @@
 ---
-status: accepted — remplace ADR 0027 ; amende ADR 0015 et ADR 0017 (point 1)
+status: remplacé par ADR 0041 (02/10) — remplaçait ADR 0027 ; amende ADR 0015 et ADR 0017 (point 1)
 ---
 
 # Le parcours de prise de rendez-vous b&co, recopié au comptoir

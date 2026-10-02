@@ -11,7 +11,7 @@ import { PeriodNav } from "@/components/planning/period-nav";
 import { DayTimeline } from "@/components/planning/day-timeline";
 import { WeekTimeline } from "@/components/planning/week-timeline";
 import { AppointmentDetailSheet } from "@/components/planning/appointment-detail-sheet";
-import { PriseRdvModal } from "@/components/prise-rdv/prise-rdv-modal";
+import { RdvDialog } from "@/components/planning/rdv-dialog";
 import { useEncaissement } from "@/components/journee/use-encaissement";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { SALONS, salonById } from "@/lib/data/entreprises";
@@ -266,7 +266,7 @@ function PlanningBoardInner() {
           requestEncaissement(id);
         }}
       />
-      <PriseRdvModal
+      <RdvDialog
         open={pickedSlot !== null}
         defaultSalonId={pickedSlot?.salonId}
         pickedSlot={pickedSlot ?? undefined}

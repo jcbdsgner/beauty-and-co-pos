@@ -12,7 +12,7 @@ import { DatePicker } from "@/components/ui/molecules/date-picker";
 import { BoardHeader, Legend } from "@/components/ui/board";
 import { Separator } from "@/components/ui/atoms/separator";
 import { AppointmentDetailSheet } from "@/components/planning/appointment-detail-sheet";
-import { PriseRdvModal } from "@/components/prise-rdv/prise-rdv-modal";
+import { RdvDialog } from "@/components/planning/rdv-dialog";
 import { AccueilCalendar } from "@/components/journee/accueil-calendar";
 import { AccueilDayList } from "@/components/journee/accueil-day-list";
 import { AccueilAlerts } from "@/components/journee/accueil-alerts";
@@ -277,7 +277,7 @@ function AccueilPageInner() {
 
       {encaissementDialog}
 
-      <PriseRdvModal
+      <RdvDialog
         open={creatingRdv}
         defaultSalonId={salonFilter === TOUS_LES_SALONS ? null : salonFilter}
         onClose={() => setCreatingRdv(false)}

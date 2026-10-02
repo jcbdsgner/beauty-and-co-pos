@@ -10,7 +10,7 @@ import { NoterClienteDialog } from "@/components/comptoir/noter-cliente-dialog";
 import { SendReceiptButtons } from "@/components/comptoir/send-receipt-buttons";
 import { PAYMENT_MODE_LABEL, PaymentModeGlyph } from "@/components/comptoir/payment-modes";
 import { PrintedReceipt } from "@/components/comptoir/printed-receipt";
-import { PriseRdvModal } from "@/components/prise-rdv/prise-rdv-modal";
+import { RdvDialog } from "@/components/planning/rdv-dialog";
 import { clientFullName } from "@/lib/data/clientele";
 import { formatFcfa } from "@/lib/utils";
 import type { Sale } from "@/lib/data/types";
@@ -187,7 +187,7 @@ export function ReceiptStep({ sale }: { sale: Sale }) {
         <NoterClienteDialog open={noterOpen} sale={sale} client={client} needsReason={needsReason} onClose={() => setNoterOpen(false)} />
       )}
       {client && (
-        <PriseRdvModal open={bookingOpen} payerClientId={client.id} onClose={() => setBookingOpen(false)} />
+        <RdvDialog open={bookingOpen} payerClientId={client.id} onClose={() => setBookingOpen(false)} />
       )}
     </div>
   );

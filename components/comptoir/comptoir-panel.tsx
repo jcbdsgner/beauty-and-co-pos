@@ -10,7 +10,7 @@ import { SaleCartPanel } from "@/components/comptoir/sale-cart-panel";
 import { SettlementStep } from "@/components/comptoir/settlement-step";
 import { ReceiptStep, isReceiptLocked } from "@/components/comptoir/receipt-step";
 import { IdentifyDialog } from "@/components/comptoir/identify-dialog";
-import { PriseRdvModal } from "@/components/prise-rdv/prise-rdv-modal";
+import { RdvDialog } from "@/components/planning/rdv-dialog";
 import { Logo } from "@/components/ui/atoms/logo";
 import { useAppData } from "@/components/providers/app-data-provider";
 
@@ -109,7 +109,7 @@ export function ComptoirPanel() {
         <IdentifyDialog open sale={activeSale} onClose={() => setScanOpen(false)} />
       )}
 
-      <PriseRdvModal open={creatingRdv} onClose={() => setCreatingRdv(false)} />
+      <RdvDialog open={creatingRdv} onClose={() => setCreatingRdv(false)} />
     </div>
   );
 }

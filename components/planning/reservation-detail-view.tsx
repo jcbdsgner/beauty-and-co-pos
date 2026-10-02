@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/atoms/badge";
 import { Avatar } from "@/components/ui/atoms/avatar";
 import { ServiceCategoryIcon } from "@/components/ui/atoms/service-category-icons";
 import { BoardEmpty, FlipChip } from "@/components/ui/board";
-import { PriseRdvModal } from "@/components/prise-rdv/prise-rdv-modal";
+import { RdvDialog } from "@/components/planning/rdv-dialog";
 import { ClientPreferences } from "@/components/shared/client-preferences";
 import { useEncaissement } from "@/components/journee/use-encaissement";
 import { useAppData } from "@/components/providers/app-data-provider";
@@ -668,7 +668,7 @@ export function ReservationDetailView({ reservationId }: { reservationId: string
         onCancelled={() => setConfirmCancel(false)}
       />
 
-      <PriseRdvModal open={editing} reservationId={reservation.id} onClose={() => setEditing(false)} />
+      <RdvDialog open={editing} reservationId={reservation.id} onClose={() => setEditing(false)} />
     </div>
   );
 }

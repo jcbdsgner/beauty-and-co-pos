@@ -148,6 +148,16 @@ export function serviceById(id: string) {
   return SERVICES.find((s) => s.id === id);
 }
 
+// Soin du visage, épilation, spa et head spa (sous-catégorie de Coiffure) ne se font qu'aux
+// Almadies — Sea Plaza n'a pas de cabine pour eux (même règle que le site de réservation b&co).
+const ALMADIES_ONLY_CATEGORY_IDS = new Set(["soin-du-visage", "epilation", "spa"]);
+
+/** Le salon propose-t-il cette prestation ? */
+export function serviceOfferedAt(service: Service, salonId: string) {
+  if (salonId === "almadies") return true;
+  return !ALMADIES_ONLY_CATEGORY_IDS.has(service.categoryId) && service.subcategory !== "Head Spa";
+}
+
 /** Les catégories de produits — des marques. Ordre d'affichage, « Autres » en dernier. Les
  *  boissons ne sont pas là : c'est leur propre famille (`Boisson`, ADR 0016). */
 export const PRODUCT_CATEGORIES: ProductCategory[] = [
