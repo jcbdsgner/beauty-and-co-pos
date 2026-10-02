@@ -58,12 +58,8 @@ function todayCrew(praticiennes: Praticienne[]): Praticienne[] {
  * d'œil que le geste a bien été pris.
  */
 export function AccueilPointage() {
-  const { pointages, praticiennes } = useAppData();
   const [open, setOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-
-  const last = [...pointages].reverse().find((p) => isToday(p.at));
-  const lastStaff = last ? praticiennes.find((p) => p.id === last.staffId) : undefined;
 
   return (
     <>
@@ -73,25 +69,15 @@ export function AccueilPointage() {
         aria-haspopup="dialog"
         className={cn(
           POINTAGE_BLOCK,
-          "highlight-rose group flex shrink-0 flex-col justify-between rounded-box border bg-base-100 p-5 text-left transition",
+          "highlight-rose group flex shrink-0 flex-col items-center justify-center gap-4 rounded-box border bg-base-100 p-5 transition",
           "hover:bg-accent active:scale-[0.985] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary",
         )}
       >
-        <span className="flex items-center gap-3">
-          <span className="flex size-10 items-center justify-center rounded-field bg-accent text-primary transition group-hover:bg-base-100">
-            <ScanLine aria-hidden className="size-6" strokeWidth={1.75} />
-          </span>
-          <span className="font-[family-name:var(--font-heading)] text-lg leading-none font-semibold text-base-content">
-            Scanner
-          </span>
+        <span className="flex size-20 items-center justify-center rounded-field bg-accent text-primary transition group-hover:bg-base-100">
+          <ScanLine aria-hidden className="size-11" strokeWidth={1.5} />
         </span>
-        <span className="flex flex-col gap-1">
-          <span className="text-sm leading-snug text-base-content/60">Arrivée et départ de l&apos;équipe</span>
-          <span className="mt-1.5 truncate text-xs text-base-content/45 tabular-nums">
-            {last && lastStaff
-              ? `${lastStaff.name.split(" ")[0]} · ${KIND_LABEL[last.kind].toLowerCase()} ${clock(last.at)}`
-              : "Aucun pointage"}
-          </span>
+        <span className="font-[family-name:var(--font-heading)] text-xl leading-none font-semibold text-base-content">
+          Scanner
         </span>
       </button>
 
