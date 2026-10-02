@@ -370,8 +370,27 @@ export function ReservationDetailView({ reservationId }: { reservationId: string
       </div>
 
       <div className="grid grid-cols-[minmax(0,1fr)_360px] items-start gap-5">
-        {/* ── Gauche : le passage (frise) puis l'argent (facture) ─────────── */}
+        {/* ── Gauche : les préférences, le passage (frise) puis l'argent (facture) ─────────── */}
         <div className="flex min-w-0 flex-col gap-5">
+          {/* Préférences toujours visibles, jamais derrière un dépliage (demande utilisateur 25/09) —
+              de chaque personne servie, pour préparer le passage. */}
+          {prefPeople.length > 0 && (
+            <Panel title="Préférences">
+              <div className={cn("grid gap-4 p-4", prefPeople.length > 1 && "grid-cols-2")}>
+                {prefPeople.map((c) => (
+                  <div key={c.id} className="min-w-0">
+                    {prefPeople.length > 1 && (
+                      <Link href={`/clientele/${c.id}`} className="mb-2 block text-sm font-semibold text-base-content hover:underline">
+                        {clientFullName(c)}
+                      </Link>
+                    )}
+                    <ClientPreferences client={c} />
+                  </div>
+                ))}
+              </div>
+            </Panel>
+          )}
+
           {reservation.note && (
             <p className="rounded-box border border-primary/25 bg-[var(--brand-rose-soft)] px-4 py-2.5 text-sm text-base-content">
               <span className="font-semibold">Note de la cliente · </span>
@@ -514,25 +533,6 @@ export function ReservationDetailView({ reservationId }: { reservationId: string
               </div>
             </div>
           </Panel>
-
-          {/* Préférences toujours visibles, jamais derrière un dépliage (demande utilisateur 25/09) —
-              de chaque personne servie, pour préparer le passage. */}
-          {prefPeople.length > 0 && (
-            <Panel title="Préférences">
-              <div className={cn("grid gap-4 p-4", prefPeople.length > 1 && "grid-cols-2")}>
-                {prefPeople.map((c) => (
-                  <div key={c.id} className="min-w-0">
-                    {prefPeople.length > 1 && (
-                      <Link href={`/clientele/${c.id}`} className="mb-2 block text-sm font-semibold text-base-content hover:underline">
-                        {clientFullName(c)}
-                      </Link>
-                    )}
-                    <ClientPreferences client={c} />
-                  </div>
-                ))}
-              </div>
-            </Panel>
-          )}
         </div>
 
         {/* ── Droite : la payeuse, de quoi répondre si elle appelle ─────────── */}
