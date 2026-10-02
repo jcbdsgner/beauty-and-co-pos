@@ -17,7 +17,6 @@ import { AccueilCalendar } from "@/components/journee/accueil-calendar";
 import { AccueilDayList } from "@/components/journee/accueil-day-list";
 import { AccueilAlerts } from "@/components/journee/accueil-alerts";
 import { AccueilPointage } from "@/components/journee/accueil-pointage";
-import { AccueilUnseenReservations } from "@/components/journee/accueil-unseen-reservations";
 import { useEncaissement } from "@/components/journee/use-encaissement";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { dateISO, groupDayByReservation, reservationDate, todayISO } from "@/lib/data/planning";
@@ -58,9 +57,8 @@ function reservationNumberMatches(reservationId: string, q: string): boolean {
  * Accueil — l'écran d'atterrissage (Figma 242:1735). Tout en haut, le bloc « Scanner » (pointage
  * arrivée / départ de l'équipe) et, à côté, les alertes — rendez-vous imminent, carte cadeau à
  * imprimer (ADR 0040, qui retire d'ici l'aperçu « Cartes cadeaux » : la file a son item de
- * sidebar). Puis la bande rose « Réservations reçues » (ADR 0030, rév. 25/09), présente seulement
- * s'il y a des réservations en ligne pas encore vues. Puis
- * « Rendez-vous » (docs/adr/0014), plus figée sur le seul jour courant (docs/adr/0029) — une
+ * sidebar). La bande rose « Réservations reçues » (ADR 0030) a été retirée le
+ * 02/10. Puis « Rendez-vous » (docs/adr/0014), plus figée sur le seul jour courant (docs/adr/0029) — une
  * recherche (cliente ou numéro de rendez-vous) et deux dates Du/Au (défaut aujourd'hui) filtrent
  * la liste des réservations. Basculable entre **Liste** (grille de cartes par réservation, groupée
  * par jour puis par tranche de 2h, docs/adr/0018) et **Calendrier** (rail heures, un bloc = une
@@ -195,8 +193,6 @@ function AccueilPageInner() {
         <AccueilPointage />
         <AccueilAlerts onOpenReservation={openReservation} />
       </div>
-
-      <AccueilUnseenReservations onOpenReservation={openReservation} />
 
       <section>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3 pl-1">

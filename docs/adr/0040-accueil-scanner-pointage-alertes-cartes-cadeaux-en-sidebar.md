@@ -57,3 +57,7 @@ autre chemin pour y aller.
   sidebar ») est amendé sur ce point.
 - La sidebar passe à 6 items.
 - Pas encore de lecture des pointages ailleurs (Planning, récap) — à décider le jour où on en a besoin.
+- **Rév. 02/10** : la bande rose « Réservations reçues » (ADR 0030) est retirée de l'Accueil, et
+  avec elle le point taupe de l'item Accueil de la sidebar, qui n'avait plus rien à désigner.
+  `Reservation.seen` / `isUnseenReservation` restent dans le modèle (la fiche réservation marque
+  toujours vue), sans signal à l'écran.

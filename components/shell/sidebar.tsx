@@ -11,7 +11,6 @@ import { useSession } from "@/lib/session";
 import { HomeIcon, CalendarIcon, PeopleIcon, GearIcon, LogoutIcon } from "@/components/ui/atoms/icons";
 import { Gift, MessageCircle, Sparkles } from "lucide-react";
 import { useAppData } from "@/components/providers/app-data-provider";
-import { isUnseenReservation } from "@/lib/data/planning";
 import { unseenBirthdayWish } from "@/components/messages/lib";
 import { cn } from "@/lib/utils";
 
@@ -32,11 +31,9 @@ export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { currentUser, photoUrl, logout } = useSession();
-  const { conversations, reservations, giftCardOrders } = useAppData();
+  const { conversations, giftCardOrders } = useAppData();
   const unreadCount = conversations.filter((c) => c.unread).length;
   const hasUnseenBirthday = conversations.some((c) => unseenBirthdayWish(c.messages));
-  // Quel que soit le jour réservé — comme la bande « Réservations reçues » de l'Accueil qui le résout.
-  const hasUnseenReservation = reservations.some(isUnseenReservation);
   const hasGiftCardToPrint = giftCardOrders.some((o) => o.status === "a_imprimer");
   const [confirmLogout, setConfirmLogout] = useState(false);
 
@@ -50,17 +47,13 @@ export function Sidebar() {
         {NAV.map((item) => {
           const active = item.match(pathname);
           const Icon = item.icon;
-          // Messages porte le signal ambre (« Non lu » — needs action). Accueil porte le même point
-          // en taupe (« Non vue », ADR 0030) : une réservation en ligne vient d'arriver — la bande rose
-          // en tête de l'Accueil la montre —, à noter
-          // mais pas à encaisser — l'ambre reste réservé à « à encaisser » sur cette même page.
-          // Messages prend ce même point taupe pour un anniversaire souhaité pas encore vu (l'ambre
-          // du « Non lu » passe devant).
+          // Messages porte le signal ambre (« Non lu » — needs action), ou un point taupe pour un
+          // anniversaire souhaité pas encore vu (l'ambre du « Non lu » passe devant). L'Accueil n'a
+          // plus de point depuis le retrait de la bande « Réservations reçues » (02/10).
           const badge =
             item.href === "/messages" && unreadCount > 0
               ? "warning"
               : (item.href === "/messages" && hasUnseenBirthday) ||
-                  (item.href === "/" && hasUnseenReservation) ||
                   // Une carte attend l'impression — même point taupe : à faire, pas urgent (ADR 0040).
                   (item.href === "/cartes-cadeaux" && hasGiftCardToPrint)
                 ? "primary"
@@ -83,7 +76,7 @@ export function Sidebar() {
                       "absolute -top-1 -right-1.5 size-2 rounded-full",
                       badge === "warning"
                         ? "bg-warning"
-                        : // Anneau clair : sans lui, le point taupe de l'Accueil disparaîtrait
+                        : // Anneau clair : sans lui, le point taupe disparaîtrait
                           // sur le fond déjà taupe de l'item actif (contrairement à l'ambre de
                           // Messages, qui contraste avec le taupe sans y avoir besoin).
                           "bg-primary ring-2 ring-base-100",
