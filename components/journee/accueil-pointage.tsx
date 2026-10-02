@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 import type { Pointage, PointageKind, Praticienne } from "@/lib/data/types";
 
 /** Côté du bloc Scanner — les alertes à côté prennent exactement cette hauteur. */
-export const POINTAGE_BLOCK = "size-54";
+export const POINTAGE_BLOCK = "size-48";
 
 /** Prototype : aucun badge ne porte encore de QR lisible. Sans détection réelle au bout de ce
  *  délai, la caméra « reconnaît » la première personne de l'équipe du jour pas encore arrivée —
@@ -77,13 +77,15 @@ export function AccueilPointage() {
           "hover:bg-accent active:scale-[0.985] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary",
         )}
       >
-        <span className="flex size-14 items-center justify-center rounded-field bg-accent text-primary transition group-hover:bg-base-100">
-          <ScanLine aria-hidden className="size-8" strokeWidth={1.75} />
-        </span>
-        <span className="flex flex-col gap-1">
-          <span className="font-[family-name:var(--font-heading)] text-[26px] leading-none font-bold tracking-[-0.01em] text-base-content">
+        <span className="flex items-center gap-3">
+          <span className="flex size-10 items-center justify-center rounded-field bg-accent text-primary transition group-hover:bg-base-100">
+            <ScanLine aria-hidden className="size-6" strokeWidth={1.75} />
+          </span>
+          <span className="font-[family-name:var(--font-heading)] text-lg leading-none font-semibold text-base-content">
             Scanner
           </span>
+        </span>
+        <span className="flex flex-col gap-1">
           <span className="text-sm leading-snug text-base-content/60">Arrivée et départ de l&apos;équipe</span>
           <span className="mt-1.5 truncate text-xs text-base-content/45 tabular-nums">
             {last && lastStaff

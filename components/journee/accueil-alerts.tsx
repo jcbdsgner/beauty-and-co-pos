@@ -177,7 +177,7 @@ function AlertSlot({ index, children }: { index: number; children: React.ReactNo
   );
 }
 
-const CARD = "flex h-54 w-[19.5rem] flex-col rounded-box border border-base-300 bg-base-100 p-4";
+const CARD = "flex h-48 w-[19.5rem] flex-col rounded-box border border-base-300 bg-base-100 p-4";
 
 function AlertKind({ icon, label, aside }: { icon: React.ReactNode; label: string; aside?: React.ReactNode }) {
   return (
@@ -213,12 +213,12 @@ function ImminentAlert({ row, inMin, onOpen }: { row: ReservationDayRow; inMin: 
         aside={<ChevronRight aria-hidden className="size-4 text-base-content/35" />}
       />
       <span className="mt-3 flex items-baseline gap-2">
-        <span className="font-[family-name:var(--font-heading)] text-[28px] leading-none font-bold text-primary tabular-nums">
+        <span className="font-[family-name:var(--font-heading)] text-xl leading-none font-semibold text-primary tabular-nums">
           {inMin === 0 ? "Maintenant" : `Dans ${inMin} min`}
         </span>
         <span className="text-sm text-base-content/55 tabular-nums">à {row.start}</span>
       </span>
-      <span className="mt-auto flex items-end justify-between gap-3">
+      <span className="mt-3 flex items-end justify-between gap-3">
         <span className="flex min-w-0 flex-col">
           <span className="truncate text-base font-semibold text-base-content">
             {payer ? clientFullName(payer) : "Cliente"}
