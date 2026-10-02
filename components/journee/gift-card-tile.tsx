@@ -34,6 +34,31 @@ function shortDate(iso: string): string {
   return `${d}/${m}`;
 }
 
+/**
+ * L'impression d'une carte (code-barres + code juste en dessous), partagée par la tuile de la file
+ * et l'alerte « Carte cadeau à imprimer » de l'Accueil. `printTarget` doit rester monté :
+ * react-to-print lit le DOM vivant (hors écran, pas d'aperçu).
+ */
+export function useGiftCardPrint(order: GiftCardOrder) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const print = useReactToPrint({
+    contentRef: cardRef,
+    documentTitle: `Carte-cadeau-${order.code}`,
+    pageStyle: PRINT_PAGE_STYLE,
+  });
+  const printTarget = (
+    <div aria-hidden className="pointer-events-none fixed -left-[9999px] top-0">
+      <div ref={cardRef}>
+        <div className="w-[60mm] bg-white text-black">
+          <Barcode seed={order.code} className="h-16" />
+          <p className="mt-1.5 text-center font-mono text-sm tracking-[0.2em]">{order.code}</p>
+        </div>
+      </div>
+    </div>
+  );
+  return { print, printTarget };
+}
+
 /** The grid both screens lay tiles in — the Accueil preview and `/cartes-cadeaux` must look alike. */
 export const GIFT_CARD_GRID = "grid grid-cols-2 gap-4 xl:grid-cols-3";
 
@@ -65,12 +90,7 @@ export function GiftCardTile({
 
   const tileRef = useRef<HTMLElement>(null);
   const actionRef = useRef<HTMLDivElement>(null);
-  const cardRef = useRef<HTMLDivElement>(null);
-  const print = useReactToPrint({
-    contentRef: cardRef,
-    documentTitle: `Carte-cadeau-${order.code}`,
-    pageStyle: PRINT_PAGE_STYLE,
-  });
+  const { print, printTarget } = useGiftCardPrint(order);
 
   useEffect(() => {
     if (!highlighted) return;
@@ -95,15 +115,7 @@ export function GiftCardTile({
         highlighted ? "highlight-rose" : "border-base-300",
       )}
     >
-      {/* Off-screen print target — react-to-print reads the live DOM, so keep it mounted (pas d'aperçu à l'écran). */}
-      <div aria-hidden className="pointer-events-none fixed -left-[9999px] top-0">
-        <div ref={cardRef}>
-          <div className="w-[60mm] bg-white text-black">
-            <Barcode seed={order.code} className="h-16" />
-            <p className="mt-1.5 text-center font-mono text-sm tracking-[0.2em]">{order.code}</p>
-          </div>
-        </div>
-      </div>
+      {printTarget}
 
       <div className="flex flex-1 flex-col gap-3 p-4">
         <div className="flex items-center justify-between gap-2">

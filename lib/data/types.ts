@@ -327,6 +327,19 @@ export type GiftCardOrderStatus = "a_imprimer" | "imprimee" | "remise" | "livree
  * prepare: print it, then hand it over (retrait) or pass it to delivery (livraison). No cashing —
  * it is already paid (ADR 0001, 0012).
  */
+/** Un pointage d'un membre de l'équipe (ADR 0040) : son badge scanné au comptoir, puis « Arrivée »
+ *  ou « Départ ». Rien n'est déduit de l'horaire — c'est elle (ou la réceptionniste) qui choisit. */
+export type PointageKind = "arrivee" | "depart";
+
+export type Pointage = {
+  id: string;
+  /** `Praticienne.id` — toute l'équipe pointe, ménage compris. */
+  staffId: string;
+  kind: PointageKind;
+  /** ISO datetime. */
+  at: string;
+};
+
 export type GiftCardOrder = {
   id: string;
   /** The buyer — always a known cliente fiche. */

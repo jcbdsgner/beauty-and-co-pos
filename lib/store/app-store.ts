@@ -28,6 +28,8 @@ import type {
   ClientNote,
   Conversation,
   GiftCardOrder,
+  Pointage,
+  PointageKind,
   PaymentMode,
   Praticienne,
   Produit,
@@ -359,6 +361,9 @@ export type AppState = {
   /** Printed gift cards bought on the external platform, awaiting preparation (ADR 0012). Reactive
    *  so marking one handed-over drops its row from the queue immediately. */
   giftCardOrders: GiftCardOrder[];
+  /** Arrivées / départs de l'équipe pointés au comptoir (ADR 0040), du plus ancien au plus récent.
+   *  Session-only, comme le reste. */
+  pointages: Pointage[];
 
   // Clients
   addClient: (data: Omit<Cliente, "id" | "number" | "loyaltyCode" | "points" | "totalSpent" | "totalVisits" | "createdAt" | "tier">) => Cliente;
@@ -478,6 +483,12 @@ export type AppState = {
   printGiftCardOrder: (orderId: string) => void;
   /** `imprimee → remise` (retrait) / `→ livree` (livraison) — the order leaves the queue. */
   markGiftCardOrderHandedOver: (orderId: string) => void;
+
+  // Pointage de l'équipe (ADR 0040)
+  recordPointage: (staffId: string, kind: PointageKind) => Pointage;
+  /** Une réservation arrive de la plateforme en ligne — sert à la démo de l'alerte « Rendez-vous
+   *  imminent » (l'Accueil en fait arriver une qui commence dans 15 min). */
+  receiveReservation: (reservation: Reservation) => void;
 };
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -492,6 +503,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   recentClientIds: [],
   conversations: CONVERSATIONS,
   giftCardOrders: GIFT_CARD_ORDERS,
+  pointages: [],
 
   addClient: (data) => {
     const client: Cliente = {
@@ -1160,4 +1172,14 @@ export const useAppStore = create<AppState>((set, get) => ({
           : o,
       ),
     })),
+
+  // ── Pointage de l'équipe (ADR 0040) ────────────────────────────────────
+  recordPointage: (staffId, kind) => {
+    const pointage: Pointage = { id: nextId("pt"), staffId, kind, at: new Date().toISOString() };
+    set((s) => ({ pointages: [...s.pointages, pointage] }));
+    return pointage;
+  },
+
+  receiveReservation: (reservation) =>
+    set((s) => (s.reservations.some((r) => r.id === reservation.id) ? s : { reservations: [...s.reservations, reservation] })),
 }));

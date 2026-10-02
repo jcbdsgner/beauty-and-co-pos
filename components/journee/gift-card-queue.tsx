@@ -96,7 +96,7 @@ export function GiftCardQueue() {
 
   return (
     <div className="flex flex-col gap-6">
-      <BoardHeader section="Cartes cadeaux" backHref="/" backLabel="Accueil" />
+      <BoardHeader section="Cartes cadeaux" />
 
       <div className="flex max-w-3xl gap-3">
         <div className="relative flex-1">
