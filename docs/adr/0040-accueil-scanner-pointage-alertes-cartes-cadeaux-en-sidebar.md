@@ -16,21 +16,20 @@ autre chemin pour y aller.
 
 ## Décision
 
-- **Rangée de tête** de l'Accueil, juste sous le titre : le bloc **Scanner** (carré de 216 px,
+- **Rangée de tête** de l'Accueil, juste sous le titre : le bloc **Scanner** (carré de 192 px, grande icône au-dessus du libellé « Scanner »,
   mise en évidence rosée `highlight-rose`) puis les **Alertes**, à sa hauteur exacte.
-- **Pointage** : toucher Scanner ouvre un dialogue caméra (« Présentez votre badge ») ; repli
-  « Badge oublié ? Touchez votre nom » = l'équipe attendue à ce poste aujourd'hui. Une fois
+- **Pointage** : toucher Scanner ouvre un dialogue caméra (« Présentez votre badge »), le badge est le seul
+  moyen de pointer (le repli « Badge oublié ? Touchez votre nom » a été retiré le 2026-10-02). Une fois
   identifiée : photo, nom, rôle, horaire du jour, dernier pointage du jour, et deux grands boutons
   **Arrivée** / **Départ**. Le geste attendu (arrivée si rien pointé aujourd'hui, départ si elle est
   arrivée) est mis en avant, **les deux restent disponibles** — c'est elle qui sait. « Ce n'est pas
-  moi » revient au scan. Confirmation par toast ; le bloc affiche ensuite le dernier pointage
-  (« Gnagna · arrivée 15:47 »). Modèle : `Pointage { staffId, kind: arrivee | depart, at }`,
+  moi » revient au scan. Confirmation par toast (le bloc n'affiche plus de sous-titre ni le dernier pointage, rév. 2026-10-02). Modèle : `Pointage { staffId, kind: arrivee | depart, at }`,
   slice `pointages` + `recordPointage` dans le store, session seulement. Toute l'équipe
   (`Praticienne`, ménage compris) pointe.
 - **Prototype** : aucun badge ne porte de QR lisible ; sans détection réelle au bout de 2,2 s, la
   caméra « reconnaît » la première personne du jour pas encore arrivée (même parti que le scan de
   carte cadeau).
-- **Alertes** — ce qui demande la réceptionniste maintenant, une carte par alerte (312 × 216 px) :
+- **Alertes** — ce qui demande la réceptionniste maintenant, une carte par alerte (312 × 192 px) :
   - **Rendez-vous imminent** : réservation du jour, pas encore encaissée, qui commence dans
     ≤ 30 min. « Dans 13 min · à 16:00 » (décompte à la minute), payeuse, prestation(s), avatars des
     praticiennes. Toucher → fiche réservation.

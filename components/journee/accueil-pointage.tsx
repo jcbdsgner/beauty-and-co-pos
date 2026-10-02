@@ -152,24 +152,6 @@ function PointageDialog({
             Pointer une arrivée ou un départ
           </h2>
           <ScanCamera active={scanning} onDetect={resolve} hint="Présentez votre badge devant la caméra." />
-
-          <div className="mt-5 border-t border-base-300 pt-4">
-            <p className="text-sm font-medium text-base-content/60">Badge oublié ? Touchez votre nom</p>
-            <ul className="mt-3 grid grid-cols-3 gap-2">
-              {crew.map((p) => (
-                <li key={p.id}>
-                  <button
-                    type="button"
-                    onClick={() => setStaffId(p.id)}
-                    className="flex min-h-14 w-full items-center gap-2 rounded-field border border-base-300 px-2 py-1.5 text-left transition hover:border-primary hover:bg-accent active:scale-[0.97]"
-                  >
-                    <Avatar photoUrl={p.photoUrl} initial={p.initial} size={32} className="bg-accent text-xs font-semibold text-secondary" />
-                    <span className="min-w-0 truncate text-sm font-medium text-base-content">{p.name.split(" ")[0]}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
         </>
       )}
     </Dialog>
