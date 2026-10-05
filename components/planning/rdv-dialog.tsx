@@ -346,6 +346,11 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
               ? "Rien n'a changé."
               : null;
 
+  // En modification tout s'ouvre replié : le détail « 2 praticiennes » n'apparaît qu'une fois
+  // le créneau, les prestations ou l'interrupteur touchés.
+  const showDuoDetail =
+    isCreate || duo !== initialDuo || chosenTime !== currentTime || day !== currentDay || salon !== initial.salon || !sameLines;
+
   /* ---- prestations ---- */
 
   const personLines = lines.filter((l) => l.personKey === person);
@@ -781,7 +786,7 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
                 </span>
                 <Switch checked={duo} onChange={setDuo} disabled={duoEligible.length === 0 && !duo} label="2 praticiennes" />
               </div>
-              {duo && duoEligible.length > 0 && (
+              {duo && duoEligible.length > 0 && showDuoDetail && (
                 <div className="mt-3 rounded-box bg-base-100 px-4 py-3 ring-1 ring-base-300">
                   {!plan ? (
                     <p className="text-sm text-base-content/70">
@@ -828,21 +833,24 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
 
             {/* Questions de catégorie (celles de la prise de RDV b&co) */}
             {questionPeople.length > 0 && (
-              <section aria-labelledby="rdv-questions">
-                <h3 id="rdv-questions" className="mb-3 text-[17px] font-semibold text-base-content">
-                  Questions
-                  {unanswered > 0 && <span className="ml-2 text-sm font-normal text-base-content/50">{unanswered} sans réponse</span>}
-                </h3>
-                <RdvQuestions people={questionPeople} answers={answers} onAnswer={answer} />
-              </section>
+              <Block
+                id="rdv-questions"
+                title="Questions"
+                defaultOpen={isCreate}
+                badge={unanswered > 0 ? <span className="text-sm font-normal text-base-content/50">{unanswered} sans réponse</span> : null}
+              >
+                <div className="p-4">
+                  <RdvQuestions people={questionPeople} answers={answers} onAnswer={answer} />
+                </div>
+              </Block>
             )}
 
-            {/* Extensions : quand une cliente coiffure n'apporte pas les siennes — déplié, il y a à choisir */}
+            {/* Extensions : quand une cliente coiffure n'apporte pas les siennes — déplié à la création, il y a à choisir */}
             {showExtensions && (
               <ExtraBlock
                 id="rdv-extensions"
                 title="Extensions"
-                defaultOpen
+                defaultOpen={isCreate}
                 rows={extensionProducts.map((p) => ({ id: p.id, name: p.name, price: p.price, image: p.image }))}
                 qty={(id) => extraQty("produit", id)}
                 onQty={(id, q) => setExtraQty("produit", id, q)}
@@ -865,24 +873,31 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
             />
 
             {/* Notes libres de la réceptionniste */}
-            <section aria-labelledby="rdv-note">
-              <h3 id="rdv-note" className="mb-3 text-[17px] font-semibold text-base-content">
-                Notes
-              </h3>
-              {reservation?.note && (
-                <p className="mb-3 rounded-box bg-base-100 px-4 py-2.5 text-sm text-base-content ring-1 ring-base-300">
-                  <span className="font-semibold">Note de la cliente · </span>
-                  {reservation.note}
-                </p>
-              )}
-              <Textarea
-                value={staffNote}
-                onChange={(e) => setStaffNote(e.target.value)}
-                rows={3}
-                aria-labelledby="rdv-note"
-                placeholder="Ajouter une note sur ce rendez-vous"
-              />
-            </section>
+            <Block
+              id="rdv-note"
+              title="Notes"
+              defaultOpen={isCreate}
+              badge={(() => {
+                const n = (reservation?.note ? 1 : 0) + (staffNote.trim() ? 1 : 0);
+                return n > 0 ? <CountBadge n={n} /> : null;
+              })()}
+            >
+              <div className="space-y-3 p-4">
+                {reservation?.note && (
+                  <p className="rounded-field bg-base-200 px-4 py-2.5 text-sm text-base-content">
+                    <span className="font-semibold">Note de la cliente · </span>
+                    {reservation.note}
+                  </p>
+                )}
+                <Textarea
+                  value={staffNote}
+                  onChange={(e) => setStaffNote(e.target.value)}
+                  rows={3}
+                  aria-labelledby="rdv-note"
+                  placeholder="Ajouter une note sur ce rendez-vous"
+                />
+              </div>
+            </Block>
           </aside>
         </div>
 
@@ -947,6 +962,44 @@ function subGroups(items: Service[]) {
 /* Extensions et boissons : un bloc encadré, repliable, à quantités    */
 /* ------------------------------------------------------------------ */
 
+const CountBadge = ({ n }: { n: number }) => (
+  <span className="rounded-full bg-accent px-2.5 py-0.5 text-sm font-semibold tabular-nums text-secondary">{n}</span>
+);
+
+/** Un bloc de la colonne de droite : cadre, en-tête cliquable (titre + repère), contenu repliable. */
+function Block({
+  id,
+  title,
+  badge,
+  defaultOpen = false,
+  children,
+}: {
+  id: string;
+  title: string;
+  badge?: React.ReactNode;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <section aria-labelledby={id} className="overflow-hidden rounded-box border border-base-300 bg-base-100">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="flex h-14 w-full items-center gap-2.5 px-4 text-left transition hover:bg-base-200/60"
+      >
+        <span id={id} className="text-[17px] font-semibold text-base-content">
+          {title}
+        </span>
+        {badge}
+        <ChevronDown aria-hidden className={cn("ml-auto size-5 text-secondary transition", open && "rotate-180")} />
+      </button>
+      {open && <div className="border-t border-base-300">{children}</div>}
+    </section>
+  );
+}
+
 function ExtraBlock({
   id,
   title,
@@ -962,26 +1015,11 @@ function ExtraBlock({
   qty: (id: string) => number;
   onQty: (id: string, q: number) => void;
 }) {
-  const [open, setOpen] = useState(defaultOpen);
   const count = rows.reduce((n, r) => n + qty(r.id), 0);
   return (
-    <section aria-labelledby={id} className="overflow-hidden rounded-box border border-base-300 bg-base-100">
-      <button
-        type="button"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-        className="flex h-14 w-full items-center gap-2.5 px-4 text-left transition hover:bg-base-200/60"
-      >
-        <span id={id} className="text-[17px] font-semibold text-base-content">
-          {title}
-        </span>
-        {count > 0 && (
-          <span className="rounded-full bg-accent px-2.5 py-0.5 text-sm font-semibold tabular-nums text-secondary">{count}</span>
-        )}
-        <ChevronDown aria-hidden className={cn("ml-auto size-5 text-secondary transition", open && "rotate-180")} />
-      </button>
-      {open && <ExtraList className="rounded-none border-t border-base-300 ring-0" rows={rows} qty={qty} onQty={onQty} />}
-    </section>
+    <Block id={id} title={title} defaultOpen={defaultOpen} badge={count > 0 ? <CountBadge n={count} /> : null}>
+      <ExtraList className="rounded-none ring-0" rows={rows} qty={qty} onQty={onQty} />
+    </Block>
   );
 }
 
