@@ -42,6 +42,8 @@ choisir la cliente en haut ». Le back-office venait de fondre « Nouveau rendez
 
 ## Conséquences
 
-Plus d'acompte, de note, de questions ni de packs saisis à la prise de rendez-vous au comptoir ;
-ce qu'une réservation porte déjà (acompte, extras, note) est conservé à la reprogrammation. Pas
-d'incompatibilités entre prestations : le Menu du point de vente n'en décrit pas.
+Plus d'acompte ni de packs saisis à la prise de rendez-vous au comptoir ; ce qu'une réservation
+porte déjà (acompte, note de la cliente) est conservé à la modification. Depuis la rév. du 05/10,
+les questions de catégorie, les extensions, les boissons et une note de l'accueil se saisissent
+dans la colonne de droite. Pas d'incompatibilités entre prestations : le Menu du point de vente
+n'en décrit pas.
