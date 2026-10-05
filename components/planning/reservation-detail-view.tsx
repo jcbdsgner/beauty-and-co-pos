@@ -11,6 +11,8 @@ import { ServiceCategoryIcon } from "@/components/ui/atoms/service-category-icon
 import { BoardEmpty, FlipChip } from "@/components/ui/board";
 import { RdvDialog } from "@/components/planning/rdv-dialog";
 import { ClientPreferences } from "@/components/shared/client-preferences";
+import { BookingAnswers } from "@/components/shared/booking-answers";
+import { bookingAnswerGroups } from "@/lib/data/booking-questions";
 import { useEncaissement } from "@/components/journee/use-encaissement";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { TIER_LABEL } from "@/lib/data/tiers";
@@ -158,6 +160,7 @@ export function ReservationDetailView({ reservationId }: { reservationId: string
     ...groups.flatMap((g) => (g.client && g.client.id !== payer?.id ? [g.client] : [])),
   ];
   const salons = [...new Set(lines.map((rv) => rv.salonId))].map((id) => salonById(id)?.name ?? id);
+  const answerGroups = groups.filter((g) => bookingAnswerGroups(g.lines).length > 0);
   const date = reservationDate(reservation);
   const cancelReason = lines.find((rv) => rv.cancelReason)?.cancelReason;
 
@@ -273,6 +276,20 @@ export function ReservationDetailView({ reservationId }: { reservationId: string
                       </Link>
                     )}
                     <ClientPreferences client={c} />
+                  </div>
+                ))}
+              </div>
+            </Panel>
+          )}
+
+          {/* Réponses aux questions de catégorie de la prise de RDV en ligne, par personne servie. */}
+          {answerGroups.length > 0 && (
+            <Panel title="Réponses à la réservation">
+              <div className={cn("grid gap-4 p-4", answerGroups.length > 1 && "grid-cols-2")}>
+                {answerGroups.map((g) => (
+                  <div key={g.key} className="min-w-0">
+                    {groups.length > 1 && <p className="mb-2 text-sm font-semibold text-base-content">{g.label}</p>}
+                    <BookingAnswers lines={g.lines} bare />
                   </div>
                 ))}
               </div>

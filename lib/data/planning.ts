@@ -1,3 +1,4 @@
+import { seedBookingAnswers } from "@/lib/data/booking-questions";
 import { serviceById } from "@/lib/data/menu";
 import { PRATICIENNES, coversInterval, isSalonClosed } from "@/lib/data/praticiennes";
 import { SALON_CLOSING, SALON_OPENING, minutesToTime, timeToMinutes } from "@/lib/data/time";
@@ -705,7 +706,17 @@ function fitSeedToSchedules(input: SeedReservation[]): Reservation[] {
   const seed: Reservation[] = input.map((r) => ({
     ...r,
     rendezVous: r.rendezVous
-      .map((rv) => ({ ...rv, salonId: SEED_SALON[rv.staffId] ?? "sea-plaza-bco" }))
+      .map((rv) => ({
+        ...rv,
+        salonId: SEED_SALON[rv.staffId] ?? "sea-plaza-bco",
+        // Réservations en ligne : les réponses aux questions de catégorie de la prise de RDV b&co.
+        ...(r.source === "en_ligne" && {
+          bookingAnswers: seedBookingAnswers(
+            `${r.id}:${rv.beneficiaryClientId ?? rv.beneficiaryName ?? r.payerClientId}`,
+            rv.serviceId,
+          ),
+        }),
+      }))
       .filter((rv) => !isSalonClosed(rv.salonId, day(reservationDate(r)))),
   }));
 

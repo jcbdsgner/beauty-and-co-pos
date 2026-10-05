@@ -268,6 +268,10 @@ export type RendezVous = {
   status: AppointmentStatus;
   /** Free-text reason captured when the receptionist cancels — visible in the annulés history (ADR 0009). */
   cancelReason?: string;
+  /** Réponses aux questions obligatoires de la catégorie, données par la bénéficiaire à la prise
+   *  de rendez-vous en ligne (id de question → réponse, cf. `BOOKING_QUESTIONS`). Identiques sur
+   *  ses rendez-vous d'une même catégorie. Absent pour un rendez-vous pris au comptoir. */
+  bookingAnswers?: Record<string, string>;
 };
 
 /** Moyens d'acompte du parcours de prise de rendez-vous : ceux du site b&co, plus les espèces (ADR 0032). */

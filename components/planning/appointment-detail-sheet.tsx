@@ -15,6 +15,7 @@ import { RdvDialog } from "@/components/planning/rdv-dialog";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { clientFullName, clientInitial } from "@/lib/data/clientele";
 import { ClientPreferences } from "@/components/shared/client-preferences";
+import { BookingAnswers } from "@/components/shared/booking-answers";
 import { praticienneById } from "@/lib/data/praticiennes";
 import { boissonById } from "@/lib/data/boissons";
 import { produitById, serviceById } from "@/lib/data/menu";
@@ -175,6 +176,8 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
                     if (!group.client || group.client.id === payer?.id) return null;
                     return <ClientPreferences client={group.client} className="mt-2" />;
                   })()}
+
+                  <BookingAnswers lines={group.lines} className="mt-2" />
 
                   <div className="mt-2 flex flex-col divide-y divide-[var(--board-groove)]">
                     {group.lines.map((rv) => {
