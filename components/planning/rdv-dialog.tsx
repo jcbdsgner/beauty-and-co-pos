@@ -2,13 +2,14 @@
 
 import { useMemo, useState } from "react";
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
-import { CalendarDays, Check, ChevronDown, MapPin, Plus, UserRound, Users, X } from "lucide-react";
+import { CalendarDays, Check, ChevronDown, CupSoda, MapPin, Plus, Scissors, UserRound, Users, X } from "lucide-react";
 import { Dialog } from "@/components/ui/molecules/dialog";
 import { DatePicker } from "@/components/ui/molecules/date-picker";
 import { CloseButton } from "@/components/ui/atoms/icon-button";
 import { Button } from "@/components/ui/atoms/button";
 import { SearchInput } from "@/components/ui/atoms/search-input";
 import { Switch } from "@/components/ui/atoms/switch";
+import { RoundStepButton } from "@/components/ui/atoms/round-step-button";
 import { Textarea } from "@/components/ui/atoms/textarea";
 import { RdvQuestions, missingAnswers, rdvAnswerKey, type RdvAnswers } from "@/components/planning/rdv-questions";
 import { BOOKING_QUESTIONS } from "@/lib/data/booking-questions";
@@ -17,21 +18,23 @@ import { useAppData } from "@/components/providers/app-data-provider";
 import { cn, formatFcfa } from "@/lib/utils";
 import { clientFullName, clientMatchesQuery, clientNumberLabel } from "@/lib/data/clientele";
 import { SALONS, salonById } from "@/lib/data/entreprises";
-import { SERVICES, SERVICE_CATEGORIES, serviceOfferedAt } from "@/lib/data/menu";
+import { PRODUITS, SERVICES, SERVICE_CATEGORIES, produitById, serviceOfferedAt } from "@/lib/data/menu";
+import { BOISSONS, boissonById } from "@/lib/data/boissons";
 import { isSalonClosed } from "@/lib/data/praticiennes";
 import { SALON_CLOSING, SALON_OPENING, dateISO, reservationById, reservationDate, todayISO } from "@/lib/data/planning";
-import type { Cliente, RendezVous, Service } from "@/lib/data/types";
+import type { Cliente, RendezVous, ReservationExtra, Service } from "@/lib/data/types";
 import { availableTimes, planAt, type PlanContext, type PlanItem } from "@/lib/prise-rdv/planifier";
 import { POSTE_SALON_ID } from "@/lib/session";
 
-// Le bloc unique de rendez-vous, recopié du back-office (`rendezvous/RdvDialog`) :
-// « Nouveau rendez-vous » (sans `reservationId`) et « Reprogrammer le rendez-vous »
-// (« Modifier », avec `reservationId`) sont la même fenêtre — date, salon, horaire
-// et les prestations par personne. La création ajoute seulement le choix de la
-// cliente, en tête. Les praticiennes suivent (affectation automatique) : à la
-// reprogrammation, l'actuelle est gardée si elle reste libre. Une prestation
-// « réalisable à 2 » se fait, au choix ligne par ligne, avec 2 praticiennes :
-// durée divisée par deux, et seuls les horaires où deux sont libres ensemble.
+// Le bloc unique de rendez-vous (ADR 0041) : « Nouveau rendez-vous » (sans
+// `reservationId`) et « Modifier le rendez-vous » (avec) sont la même fenêtre,
+// large, en deux colonnes vues d'un coup — à gauche le rendez-vous (cliente en
+// création, prestations par personne, salon, date, horaire), à droite ce qui
+// l'accompagne (2 praticiennes, questions, extensions, boissons, notes). Les
+// praticiennes suivent (affectation automatique) : à la modification, l'actuelle
+// est gardée si elle reste libre. « 2 praticiennes » est un seul interrupteur,
+// appliqué là où c'est faisable : prestations réalisables à 2, quand deux
+// praticiennes sont libres ensemble — il ne retire jamais un horaire.
 // 1. Elle arrive souvent au téléphone (« la cliente veut samedi ») : les
 //    choix dans l'ordre où on les dicte.
 // 2. Ce qui compte : les horaires réellement libres ce jour-là, dans ce salon,
@@ -68,8 +71,12 @@ const fold = (s: string) =>
 
 // Une ligne en cours d'édition : un rendez-vous existant (gardé tel quel,
 // praticienne comprise si elle reste libre) ou une prestation du Menu ajoutée
-// pour une personne. `duo` : faite à 2 praticiennes (prestation « réalisable à 2 » seulement).
-type Line = { key: string; personKey: string; serviceId: string; duo: boolean; existing?: RendezVous };
+// pour une personne.
+type Line = { key: string; personKey: string; serviceId: string; existing?: RendezVous };
+
+// Les extensions proposées quand une cliente coiffure n'apporte pas les siennes (règle du site
+// b&co, `needsSalonExtensions`) : les cheveux vendus en boutique.
+const EXTENSION_CATEGORIES = new Set(["beccy-wave", "nefertiti"]);
 
 // `source` : un rendez-vous existant de la personne (reprogrammation) ; absent
 // pour la payeuse d'un nouveau rendez-vous ou une personne ajoutée.
@@ -154,7 +161,6 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
         key: rv.id,
         personKey: personKeyOf(rv),
         serviceId: rv.serviceId,
-        duo: Boolean(rv.secondStaffId),
         existing: rv,
       })),
     [initial],
@@ -184,6 +190,20 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
   }, [initial]);
   const [answers, setAnswers] = useState<RdvAnswers>(initialAnswers);
   const initialStaffNote = reservation?.staffNote ?? "";
+  const initialDuo = initial.rvs.some((rv) => rv.secondStaffId);
+  const [duo, setDuo] = useState(initialDuo);
+  const initialExtras = reservation?.extras ?? [];
+  const [extras, setExtras] = useState<ReservationExtra[]>(initialExtras);
+  const extraQty = (kind: ReservationExtra["kind"], refId: string) =>
+    extras.find((x) => x.kind === kind && x.refId === refId)?.qty ?? 0;
+  const setExtraQty = (kind: ReservationExtra["kind"], refId: string, qty: number) =>
+    setExtras((list) => {
+      const rest = list.filter((x) => !(x.kind === kind && x.refId === refId));
+      return qty > 0 ? [...rest, { kind, refId, qty }] : rest;
+    });
+  const extraPrice = (x: ReservationExtra) =>
+    (x.kind === "boisson" ? boissonById(x.refId)?.price : produitById(x.refId)?.price) ?? 0;
+  const extrasTotal = extras.reduce((sum, x) => sum + extraPrice(x) * x.qty, 0);
   const [staffNote, setStaffNote] = useState(initialStaffNote);
   const answer = (personKey: string, categoryId: string, questionId: string, value: string) =>
     setAnswers((prev) => {
@@ -198,14 +218,13 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
     SERVICE_CATEGORIES.find((c) => c.id === categoryId)?.name ?? "Autres prestations";
 
   // Durée seule d'une ligne : celle du rendez-vous pour une ligne gardée (celle
-  // du Menu si elle était « à deux », sa durée y étant déjà divisée), celle du
-  // Menu pour une ligne ajoutée. `lineDuration` : la durée réelle, à deux comprise.
+  // du Menu si elle était à deux, sa durée y étant déjà divisée), celle du Menu
+  // pour une ligne ajoutée.
   const soloDuration = (l: Line) => {
     const menu = byId.get(l.serviceId)?.durationMinutes;
     if (l.existing && !l.existing.secondStaffId) return l.existing.durationMin;
     return menu ?? (l.existing ? l.existing.durationMin * 2 : 0);
   };
-  const lineDuration = (l: Line) => (l.duo ? Math.round(soloDuration(l) / 2) : soloDuration(l));
   const canDuo = (l: Line) => Boolean(byId.get(l.serviceId)?.twoPractitionersEligible);
   const linePrice = (l: Line) => byId.get(l.serviceId)?.price ?? 0;
   const lineName = (l: Line) => byId.get(l.serviceId)?.name ?? "Prestation";
@@ -222,9 +241,7 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
     serviceId: l.serviceId,
     categoryId: byId.get(l.serviceId)?.categoryId ?? "",
     durationMinutes: soloDuration(l),
-    // Le planificateur divise et demande 2 praticiennes pour les lignes marquées : ici, celles
-    // passées « à deux » (`planAt(…, true)`), pas toutes les éligibles.
-    twoPractitionersEligible: l.duo && canDuo(l),
+    twoPractitionersEligible: canDuo(l),
   }));
   // Les intervenantes actuelles sont gardées tant qu'elles restent libres.
   const overrides = Object.fromEntries(
@@ -242,11 +259,23 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
   const opening = openingLabel(salon, day);
   const itemsKey = JSON.stringify(items);
   const times = useMemo(
-    () => (opening && notOffered.length === 0 ? availableTimes(ctx, items, true) : []),
+    () => (opening && notOffered.length === 0 ? availableTimes(ctx, items, duo) : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [ctx, opening, notOffered.length, itemsKey],
+    [ctx, opening, notOffered.length, itemsKey, duo],
   );
   const chosenTime = time && times.includes(time) ? time : null;
+  // Le plan à l'horaire choisi : dit où « 2 praticiennes » s'applique vraiment.
+  const plan = useMemo(
+    () => (chosenTime ? planAt(ctx, items, chosenTime, duo, overrides, pickedSlot?.staffId) : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [ctx, chosenTime, itemsKey, duo],
+  );
+  const planned = (l: Line) => plan?.find((pl) => pl.key === l.key);
+  // Durée réelle d'une ligne : celle du plan ; sans horaire, à deux dès que l'interrupteur et la prestation le permettent.
+  const lineDuration = (l: Line) =>
+    planned(l)?.durationMin ?? (duo && canDuo(l) ? Math.round(soloDuration(l) / 2) : soloDuration(l));
+  const duoEligible = lines.filter(canDuo);
+  const duoMissed = duo && plan ? duoEligible.filter((l) => (planned(l)?.staffIds.length ?? 0) < 2) : [];
 
   const totalMin = (() => {
     // Amplitude de la visite : chaque personne enchaîne ses prestations, en parallèle des autres.
@@ -254,11 +283,14 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
     for (const l of lines) perPerson.set(l.personKey, (perPerson.get(l.personKey) ?? 0) + lineDuration(l));
     return Math.max(0, ...perPerson.values());
   })();
-  const totalPrice = lines.reduce((s, l) => s + linePrice(l), 0);
+  const soloTotalMin = (() => {
+    const perPerson = new Map<string, number>();
+    for (const l of lines) perPerson.set(l.personKey, (perPerson.get(l.personKey) ?? 0) + soloDuration(l));
+    return Math.max(0, ...perPerson.values());
+  })();
+  const totalPrice = lines.reduce((s, l) => s + linePrice(l), 0) + extrasTotal;
 
-  const duoCount = lines.filter((l) => l.duo).length;
-  const sameLines =
-    lines.length === initialLines.length && lines.every((l, i) => l.key === initialLines[i].key && l.duo === initialLines[i].duo);
+  const sameLines = lines.length === initialLines.length && lines.every((l, i) => l.key === initialLines[i].key);
   // Personnes servies × catégories choisies : ce sur quoi portent les questions.
   const questionPeople = people
     .map((p, i) => ({
@@ -284,6 +316,8 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
     salon !== initial.salon ||
     chosenTime !== currentTime ||
     !sameLines ||
+    duo !== initialDuo ||
+    JSON.stringify(extras) !== JSON.stringify(initialExtras) ||
     answersChanged ||
     staffNote.trim() !== initialStaffNote.trim();
   const canConfirm =
@@ -329,9 +363,17 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
     }
     // Une ligne retirée puis recochée retrouve sa place (et sa praticienne).
     const original = initialLines.find((l) => l.personKey === person && l.serviceId === s.id);
-    setLines((list) => [...list, original ?? { key: newLineId(), personKey: person, serviceId: s.id, duo: false }]);
+    setLines((list) => [...list, original ?? { key: newLineId(), personKey: person, serviceId: s.id }]);
   };
-  const setDuo = (key: string, duo: boolean) => setLines((list) => list.map((l) => (l.key === key ? { ...l, duo } : l)));
+
+  // Extensions : dès qu'une personne en coiffure n'apporte pas les siennes — ou déjà réservées.
+  const showExtensions =
+    people.some(
+      (p) =>
+        lines.some((l) => l.personKey === p.key && byId.get(l.serviceId)?.categoryId === "coiffure") &&
+        answers[rdvAnswerKey(p.key, "coiffure")]?.["propres-extensions"] === "Non",
+    ) || extras.some((x) => x.kind === "produit" && EXTENSION_CATEGORIES.has(produitById(x.refId)?.categoryId ?? ""));
+  const extensionProducts = PRODUITS.filter((p) => p.active && EXTENSION_CATEGORIES.has(p.categoryId));
 
   const groups = useMemo(() => {
     const q = fold(query.trim());
@@ -350,9 +392,7 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
   /* ---- confirmation ---- */
 
   const confirm = () => {
-    if (!chosenTime || !client) return;
-    const plan = planAt(ctx, items, chosenTime, true, overrides, pickedSlot?.staffId);
-    if (!plan) return;
+    if (!chosenTime || !client || !plan) return;
     const result = saveParcoursReservation({
       reservationId: reservation?.id,
       payerClientId: client.id,
@@ -383,6 +423,7 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
         };
       }),
       staffNote,
+      extras,
     });
     if (!result.ok) {
       setError(result.message);
@@ -394,10 +435,15 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
 
   return (
     <>
-      <Dialog open onClose={onClose} labelledBy="resched-title" className="relative flex max-h-[90vh] max-w-3xl flex-col">
+      <Dialog
+        open
+        onClose={onClose}
+        labelledBy="resched-title"
+        className="relative flex h-[90vh] max-w-[1200px] flex-col overflow-hidden"
+      >
         <CloseButton onClick={onClose} className="top-4 right-4" />
 
-        <header className="shrink-0 px-8 pt-7 pb-5">
+        <header className="shrink-0 border-b border-base-300 px-8 pt-7 pb-5">
           <h2 id="resched-title" className="text-[24px] font-semibold tracking-[-0.01em] text-base-content">
             {isCreate ? "Nouveau rendez-vous" : "Modifier le rendez-vous"}
           </h2>
@@ -406,339 +452,417 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
               ? `${payerName} · actuellement ${frFullDate(currentDay!)} à ${currentTime}, ${salonById(initial.salon ?? "")?.name ?? ""}`
               : client
                 ? `Pour ${payerName} · ${clientNumberLabel(client)}`
-                : "Choisissez la cliente, la date, le salon, l'horaire et les prestations."}
+                : "Choisissez la cliente, les prestations, le salon, la date et l'horaire."}
           </p>
         </header>
 
-        <div className="min-h-0 flex-1 space-y-8 overflow-y-auto px-8 pb-8">
-          {/* Cliente (création seulement) */}
-          {isCreate && (
-            <ClientPicker clients={clients} value={client} onChange={setClientId} onCreateNew={(prefill) => setNewClient(prefill)} />
-          )}
-
-          {/* Date */}
-          <section aria-labelledby="resched-date">
-            <h3 id="resched-date" className="mb-3 text-[17px] font-semibold text-base-content">
-              {isCreate ? "Date" : "Nouvelle date"}
-            </h3>
-            <DatePicker
-              value={isoToDate(day)}
-              minDate={isoToDate(todayISO())}
-              onChange={(d) => setDay(dateISO(d))}
-              trigger={
-                <button
-                  type="button"
-                  className="input h-14 w-full items-center gap-3 bg-base-100 text-left text-[17px] first-letter:uppercase"
-                >
-                  <CalendarDays aria-hidden className="size-5 shrink-0 text-base-content/45" />
-                  <span className="first-letter:uppercase">{frFullDate(day)}</span>
-                </button>
-              }
-            />
-          </section>
-
-          {/* Salon */}
-          <section aria-labelledby="resched-salon">
-            <h3 id="resched-salon" className="mb-3 text-[17px] font-semibold text-base-content">
-              Salon
-            </h3>
-            <div role="radiogroup" aria-labelledby="resched-salon" className="grid grid-cols-2 gap-3">
-              {activeSalons.map((s) => {
-                const selected = s.id === salon;
-                const hours = openingLabel(s.id, day);
-                return (
-                  <button
-                    key={s.id}
-                    type="button"
-                    role="radio"
-                    aria-checked={selected}
-                    onClick={() => setSalon(s.id)}
-                    className={cn(
-                      "flex items-start gap-3 rounded-box border px-4 py-4 text-left transition",
-                      selected ? "border-primary bg-accent ring-1 ring-primary" : "border-base-300 bg-base-100 hover:border-base-content/25",
-                    )}
-                  >
-                    <MapPin aria-hidden className={cn("mt-0.5 size-5 shrink-0", selected ? "text-primary" : "text-base-content/45")} />
-                    <span className="min-w-0">
-                      <span className="block text-[16px] font-semibold text-base-content">{s.name}</span>
-                      <span className="block truncate text-sm text-base-content/60">{s.address}</span>
-                      <span className={cn("mt-1 block text-sm", hours ? "text-base-content/70" : "font-medium text-error")}>
-                        {hours ?? "Fermé ce jour-là"}
-                      </span>
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-
-          {/* Horaire */}
-          <section aria-labelledby="resched-time">
-            <h3 id="resched-time" className="mb-3 text-[17px] font-semibold text-base-content">
-              Horaire
-            </h3>
-            {!opening ? (
-              <p className="rounded-box bg-base-200 px-4 py-4 text-[15px] text-base-content/70">
-                {salonById(salon)?.name} est fermé {frFullDate(day)}. Choisissez un autre jour ou l&apos;autre salon.
-              </p>
-            ) : notOffered.length > 0 ? (
-              <p className="rounded-box bg-warning/10 px-4 py-4 text-[15px] text-warning">
-                {notOffered.map(lineName).join(", ")} {notOffered.length > 1 ? "ne sont pas proposées" : "n'est pas proposée"} à{" "}
-                {salonById(salon)?.name}. Retirez-{notOffered.length > 1 ? "les" : "la"} dans « Prestations » ci-dessous ou gardez
-                l&apos;autre salon.
-              </p>
-            ) : lines.length === 0 ? (
-              <p className="rounded-box bg-base-200 px-4 py-4 text-[15px] text-base-content/70">
-                Ajoutez au moins une prestation pour voir les horaires.
-              </p>
-            ) : times.length === 0 ? (
-              <p className="rounded-box bg-base-200 px-4 py-4 text-[15px] text-base-content/70">
-                Aucun horaire libre ce jour-là pour {lines.length > 1 ? "ces prestations" : "cette prestation"} : les praticiennes
-                compétentes sont absentes ou déjà prises.{" "}
-                {duoCount > 0
-                  ? "À 2 praticiennes, il en faut deux libres en même temps : repassez à une seule dans « Prestations » ou essayez un autre jour."
-                  : "Essayez un autre jour ou l'autre salon."}
-              </p>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {times.map((t) => {
-                  const selected = t === chosenTime;
-                  const isCurrent = t === currentTime && day === currentDay && salon === initial.salon;
-                  return (
-                    <button
-                      key={t}
-                      type="button"
-                      aria-pressed={selected}
-                      onClick={() => setTime(t)}
-                      title={isCurrent ? "Horaire actuel" : undefined}
-                      className={cn(
-                        "h-10 min-w-[72px] rounded-field border px-3 text-[15px] font-medium tabular-nums transition",
-                        selected
-                          ? "border-primary bg-primary text-primary-content"
-                          : "border-base-300 bg-base-100 text-base-content hover:border-base-content/30",
-                        isCurrent && !selected && "border-dashed border-primary/60",
-                      )}
-                    >
-                      {t}
-                    </button>
-                  );
-                })}
-              </div>
+        <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_440px]">
+          {/* ---- Le rendez-vous ---- */}
+          <div className="min-h-0 space-y-8 overflow-y-auto px-8 pt-6 pb-8">
+            {isCreate && (
+              <ClientPicker clients={clients} value={client} onChange={setClientId} onCreateNew={(prefill) => setNewClient(prefill)} />
             )}
-          </section>
 
-          {/* Prestations (repliées) */}
-          <section aria-labelledby="resched-prestations" className="rounded-box border border-base-300">
-            <button
-              type="button"
-              aria-expanded={editingOpen}
-              onClick={() => setEditingOpen((v) => !v)}
-              className="flex w-full items-center gap-3 px-5 py-4 text-left"
-            >
-              <span className="min-w-0 flex-1">
-                <span id="resched-prestations" className="block text-[17px] font-semibold text-base-content">
-                  Prestations
+            {/* Prestations (repliées à la modification : on y vient surtout pour l'horaire) */}
+            <section aria-labelledby="resched-prestations" className="rounded-box border border-base-300">
+              <button
+                type="button"
+                aria-expanded={editingOpen}
+                onClick={() => setEditingOpen((v) => !v)}
+                className="flex w-full items-center gap-3 px-5 py-4 text-left"
+              >
+                <span className="min-w-0 flex-1">
+                  <span id="resched-prestations" className="block text-[17px] font-semibold text-base-content">
+                    Prestations
+                  </span>
+                  <span className="block truncate text-sm text-base-content/60">
+                    {lines.length === 0
+                      ? "Aucune prestation"
+                      : `${lines.length} prestation${lines.length > 1 ? "s" : ""} · ${durationLabel(totalMin)} · ${formatFcfa(totalPrice - extrasTotal)}`}
+                    {!sameLines && !isCreate && " · modifiées"}
+                  </span>
                 </span>
-                <span className="block truncate text-sm text-base-content/60">
-                  {lines.length === 0
-                    ? "Aucune prestation"
-                    : `${lines.length} prestation${lines.length > 1 ? "s" : ""}${duoCount > 0 ? ` dont ${duoCount} à 2 praticiennes` : ""} · ${durationLabel(totalMin)} · ${formatFcfa(totalPrice)}`}
-                  {!sameLines && !isCreate && " · modifiées"}
-                </span>
-              </span>
-              <span className="text-[15px] font-medium text-secondary">{editingOpen ? "Replier" : "Modifier les prestations"}</span>
-              <ChevronDown aria-hidden className={cn("size-4 text-secondary transition", editingOpen && "rotate-180")} />
-            </button>
+                <span className="text-[15px] font-medium text-secondary">{editingOpen ? "Replier" : "Modifier les prestations"}</span>
+                <ChevronDown aria-hidden className={cn("size-4 text-secondary transition", editingOpen && "rotate-180")} />
+              </button>
 
-            {editingOpen && (
-              <div className="border-t border-base-300 px-5 pt-4 pb-5">
-                <div className="-mt-1 mb-4 flex items-end gap-6 border-b border-base-300">
-                  <div role="tablist" aria-label="Prestations de" className="flex min-w-0 gap-6">
-                    {people.map((p, i) => {
-                      const count = lines.filter((l) => l.personKey === p.key).length;
-                      const active = p.key === person;
-                      return (
-                        <button
-                          key={p.key}
-                          type="button"
-                          role="tab"
-                          aria-selected={active}
-                          onClick={() => setPerson(p.key)}
-                          className={cn(
-                            "-mb-px truncate border-b-2 pb-2.5 text-[15px] font-medium transition",
-                            active ? "border-primary text-base-content" : "border-transparent text-base-content/60 hover:text-base-content",
-                          )}
+              {editingOpen && (
+                <div className="border-t border-base-300 px-5 pt-4 pb-5">
+                  <div className="-mt-1 mb-4 flex items-end gap-6 border-b border-base-300">
+                    <div role="tablist" aria-label="Prestations de" className="flex min-w-0 gap-6">
+                      {people.map((p, i) => {
+                        const count = lines.filter((l) => l.personKey === p.key).length;
+                        const active = p.key === person;
+                        return (
+                          <button
+                            key={p.key}
+                            type="button"
+                            role="tab"
+                            aria-selected={active}
+                            onClick={() => setPerson(p.key)}
+                            className={cn(
+                              "-mb-px truncate border-b-2 pb-2.5 text-[15px] font-medium transition",
+                              active ? "border-primary text-base-content" : "border-transparent text-base-content/60 hover:text-base-content",
+                            )}
+                          >
+                            {p.added ? addedName(p, i) : personLabel(p)} <span className="tabular-nums text-base-content/45">{count}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={addPerson}
+                      className="mb-2 ml-auto inline-flex shrink-0 items-center gap-1.5 text-[15px] font-medium text-secondary hover:underline"
+                    >
+                      <Plus aria-hidden className="size-4" />
+                      Ajouter une personne
+                    </button>
+                  </div>
+
+                  {activePerson?.added && (
+                    <div className="mb-4 flex items-center gap-3">
+                      <input
+                        value={activePerson.label}
+                        onChange={(e) => renamePerson(activePerson.key, e.target.value)}
+                        placeholder="Prénom de la personne (facultatif)"
+                        aria-label="Prénom de la personne"
+                        className="input h-11 flex-1 bg-base-100 text-[15px]"
+                      />
+                      <Button variant="outline" onClick={() => removePerson(activePerson.key)}>
+                        Retirer cette personne
+                      </Button>
+                    </div>
+                  )}
+
+                  {personLines.length > 0 && (
+                    <ul className="mb-4 flex flex-wrap gap-2" aria-label="Prestations choisies">
+                      {personLines.map((l) => (
+                        <li
+                          key={l.key}
+                          className="inline-flex items-center gap-2 rounded-full bg-accent py-1.5 pr-1.5 pl-3.5 text-sm font-medium text-secondary"
                         >
-                          {p.added ? addedName(p, i) : personLabel(p)} <span className="tabular-nums text-base-content/45">{count}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={addPerson}
-                    className="mb-2 ml-auto inline-flex shrink-0 items-center gap-1.5 text-[15px] font-medium text-secondary hover:underline"
-                  >
-                    <Plus aria-hidden className="size-4" />
-                    Ajouter une personne
-                  </button>
-                </div>
-
-                {activePerson?.added && (
-                  <div className="mb-4 flex items-center gap-3">
-                    <input
-                      value={activePerson.label}
-                      onChange={(e) => renamePerson(activePerson.key, e.target.value)}
-                      placeholder="Prénom de la personne (facultatif)"
-                      aria-label="Prénom de la personne"
-                      className="input h-11 flex-1 bg-base-100 text-[15px]"
-                    />
-                    <Button variant="outline" onClick={() => removePerson(activePerson.key)}>
-                      Retirer cette personne
-                    </Button>
-                  </div>
-                )}
-
-                {personLines.length > 0 && (
-                  <ul className="mb-4 divide-y divide-base-300 rounded-field bg-accent" aria-label="Prestations choisies">
-                    {personLines.map((l) => {
-                      const eligible = canDuo(l);
-                      return (
-                        <li key={l.key} className="flex min-h-14 items-center gap-3 py-1 pr-1 pl-4">
-                          <span className="min-w-0 flex-1 py-2">
-                            <span className="block text-[15px] font-medium text-base-content">{lineName(l)}</span>
-                            <span className="block text-sm tabular-nums text-secondary">
-                              {l.duo ? (
-                                <>
-                                  <s className="mr-1.5 text-secondary/60">{durationLabel(soloDuration(l))}</s>
-                                  {durationLabel(lineDuration(l))}
-                                </>
-                              ) : (
-                                durationLabel(lineDuration(l))
-                              )}
-                            </span>
-                          </span>
-                          {eligible && (
-                            <label className="flex shrink-0 items-center gap-0.5 pl-2 text-sm font-medium text-secondary">
-                              <Users aria-hidden className="size-4" />
-                              <span className="ml-1">2 praticiennes</span>
-                              <Switch
-                                checked={l.duo}
-                                onChange={(on) => setDuo(l.key, on)}
-                                label={`${lineName(l)} à 2 praticiennes`}
-                              />
-                            </label>
-                          )}
+                          {lineName(l)}
+                          {(planned(l)?.staffIds.length ?? 0) > 1 && <Users aria-label="à 2 praticiennes" className="size-3.5" />}
                           <button
                             type="button"
                             aria-label={`Retirer ${lineName(l)}`}
                             onClick={() => setLines((list) => list.filter((x) => x.key !== l.key))}
-                            className="flex size-12 shrink-0 items-center justify-center rounded-full text-secondary/70 hover:bg-base-100 hover:text-secondary"
+                            className="flex size-6 items-center justify-center rounded-full text-secondary/70 hover:bg-base-100 hover:text-secondary"
                           >
-                            <X aria-hidden className="size-4" strokeWidth={2.5} />
+                            <X aria-hidden className="size-3.5" strokeWidth={2.5} />
                           </button>
                         </li>
-                      );
-                    })}
-                  </ul>
-                )}
+                      ))}
+                    </ul>
+                  )}
 
-                <SearchInput
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Rechercher une prestation"
-                  aria-label="Rechercher une prestation"
+                  <SearchInput
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Rechercher une prestation"
+                    aria-label="Rechercher une prestation"
+                  />
+
+                  <div className="mt-3 max-h-[340px] overflow-y-auto rounded-field border border-base-300">
+                    {groups.length === 0 ? (
+                      <p className="px-4 py-6 text-center text-sm text-base-content/60">
+                        Aucune prestation ne correspond à « {query.trim()} ».
+                      </p>
+                    ) : (
+                      groups.map((g) => (
+                        <div key={g.id}>
+                          <p className="sticky top-0 z-10 bg-base-200 px-4 py-2 text-xs font-semibold tracking-wide text-base-content/60 uppercase">
+                            {g.name}
+                          </p>
+                          <ul>
+                            {g.items.map((s) => {
+                              const checked = selectedIds.has(s.id);
+                              return (
+                                <li key={s.id}>
+                                  <label className="flex min-h-12 cursor-pointer items-center gap-3 border-t border-base-300 px-4 py-2 first:border-t-0 hover:bg-base-200/60">
+                                    <CheckboxPrimitive.Root
+                                      checked={checked}
+                                      onCheckedChange={() => toggle(s)}
+                                      className="checkbox checkbox-primary size-5 shrink-0 data-[state=checked]:border-primary data-[state=checked]:bg-primary"
+                                    >
+                                      <CheckboxPrimitive.Indicator>
+                                        <Check aria-hidden className="size-3.5 text-primary-content" strokeWidth={3} />
+                                      </CheckboxPrimitive.Indicator>
+                                    </CheckboxPrimitive.Root>
+                                    <span className="min-w-0 flex-1 text-[15px] text-base-content">
+                                      {s.name}
+                                      {s.twoPractitionersEligible && (
+                                        <span
+                                          title="Réalisable à 2 praticiennes"
+                                          className="ml-2 inline-flex translate-y-[-1px] items-center gap-1 align-middle text-xs font-medium whitespace-nowrap text-base-content/50"
+                                        >
+                                          <Users aria-hidden className="size-3.5" />à 2
+                                        </span>
+                                      )}
+                                    </span>
+                                    <span className="shrink-0 text-sm tabular-nums text-base-content/60">{durationLabel(s.durationMinutes)}</span>
+                                    <span className="w-28 shrink-0 text-right text-[15px] font-medium tabular-nums text-base-content">
+                                      {formatFcfa(s.price)}
+                                    </span>
+                                  </label>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </section>
+
+            {/* Salon et date, sur une rangée */}
+            <div className="grid grid-cols-2 gap-6">
+              <section aria-labelledby="resched-salon">
+                <h3 id="resched-salon" className="mb-3 text-[17px] font-semibold text-base-content">
+                  Salon
+                </h3>
+                <div role="radiogroup" aria-labelledby="resched-salon" className="grid grid-cols-2 gap-2">
+                  {activeSalons.map((s) => {
+                    const selected = s.id === salon;
+                    const closed = !openingLabel(s.id, day);
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={selected}
+                        onClick={() => setSalon(s.id)}
+                        title={s.address}
+                        className={cn(
+                          "flex h-14 items-center gap-2.5 rounded-field border px-3 text-left transition",
+                          selected ? "border-primary bg-accent ring-1 ring-primary" : "border-base-300 bg-base-100 hover:border-base-content/25",
+                        )}
+                      >
+                        <MapPin aria-hidden className={cn("size-5 shrink-0", selected ? "text-primary" : "text-base-content/45")} />
+                        <span className="min-w-0">
+                          <span className="block truncate text-[16px] font-semibold text-base-content">{s.name}</span>
+                          {closed && <span className="block text-xs font-medium text-error">Fermé ce jour-là</span>}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+
+              <section aria-labelledby="resched-date">
+                <h3 id="resched-date" className="mb-3 text-[17px] font-semibold text-base-content">
+                  {isCreate ? "Date" : "Nouvelle date"}
+                </h3>
+                <DatePicker
+                  value={isoToDate(day)}
+                  minDate={isoToDate(todayISO())}
+                  onChange={(d) => setDay(dateISO(d))}
+                  trigger={
+                    <button
+                      type="button"
+                      className="input h-14 w-full items-center gap-3 bg-base-100 text-left text-[17px] first-letter:uppercase"
+                    >
+                      <CalendarDays aria-hidden className="size-5 shrink-0 text-base-content/45" />
+                      <span className="truncate first-letter:uppercase">{frFullDate(day)}</span>
+                    </button>
+                  }
                 />
+              </section>
+            </div>
 
-                <div className="mt-3 max-h-[340px] overflow-y-auto rounded-field border border-base-300">
-                  {groups.length === 0 ? (
-                    <p className="px-4 py-6 text-center text-sm text-base-content/60">
-                      Aucune prestation ne correspond à « {query.trim()} ».
+            {/* Horaire */}
+            <section aria-labelledby="resched-time">
+              <h3 id="resched-time" className="mb-3 text-[17px] font-semibold text-base-content">
+                Horaire
+              </h3>
+              {!opening ? (
+                <p className="rounded-box bg-base-200 px-4 py-4 text-[15px] text-base-content/70">
+                  {salonById(salon)?.name} est fermé {frFullDate(day)}. Choisissez un autre jour ou l&apos;autre salon.
+                </p>
+              ) : notOffered.length > 0 ? (
+                <p className="rounded-box bg-warning/10 px-4 py-4 text-[15px] text-warning">
+                  {notOffered.map(lineName).join(", ")} {notOffered.length > 1 ? "ne sont pas proposées" : "n'est pas proposée"} à{" "}
+                  {salonById(salon)?.name}. Retirez-{notOffered.length > 1 ? "les" : "la"} dans « Prestations » ou gardez
+                  l&apos;autre salon.
+                </p>
+              ) : lines.length === 0 ? (
+                <p className="rounded-box bg-base-200 px-4 py-4 text-[15px] text-base-content/70">
+                  Ajoutez au moins une prestation pour voir les horaires.
+                </p>
+              ) : times.length === 0 ? (
+                <p className="rounded-box bg-base-200 px-4 py-4 text-[15px] text-base-content/70">
+                  Aucun horaire libre ce jour-là pour {lines.length > 1 ? "ces prestations" : "cette prestation"} : les praticiennes
+                  compétentes sont absentes ou déjà prises. Essayez un autre jour ou l&apos;autre salon.
+                </p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {times.map((t) => {
+                    const selected = t === chosenTime;
+                    const isCurrent = t === currentTime && day === currentDay && salon === initial.salon;
+                    return (
+                      <button
+                        key={t}
+                        type="button"
+                        aria-pressed={selected}
+                        onClick={() => setTime(t)}
+                        title={isCurrent ? "Horaire actuel" : undefined}
+                        className={cn(
+                          "h-10 min-w-[72px] rounded-field border px-3 text-[15px] font-medium tabular-nums transition",
+                          selected
+                            ? "border-primary bg-primary text-primary-content"
+                            : "border-base-300 bg-base-100 text-base-content hover:border-base-content/30",
+                          isCurrent && !selected && "border-dashed border-primary/60",
+                        )}
+                      >
+                        {t}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          </div>
+
+          {/* ---- Ce qui l'accompagne ---- */}
+          <aside aria-label="Options du rendez-vous" className="min-h-0 space-y-8 overflow-y-auto border-l border-base-300 bg-base-200/40 px-7 pt-6 pb-8">
+            {/* 2 praticiennes : un seul interrupteur, appliqué là où c'est faisable */}
+            <section aria-labelledby="rdv-duo">
+              <div className="flex items-center gap-3">
+                <span className="min-w-0 flex-1">
+                  <span id="rdv-duo" className="flex items-center gap-2 text-[17px] font-semibold text-base-content">
+                    <Users aria-hidden className="size-5 text-secondary" />2 praticiennes
+                  </span>
+                  <span className="mt-0.5 block text-sm text-base-content/60">
+                    {duoEligible.length === 0
+                      ? "Aucune prestation choisie n'est réalisable à 2."
+                      : "Sur les prestations réalisables à 2, quand deux praticiennes sont libres ensemble."}
+                  </span>
+                </span>
+                <Switch checked={duo} onChange={setDuo} disabled={duoEligible.length === 0 && !duo} label="2 praticiennes" />
+              </div>
+              {duo && duoEligible.length > 0 && (
+                <div className="mt-3 rounded-box bg-base-100 px-4 py-3 ring-1 ring-base-300">
+                  {!plan ? (
+                    <p className="text-sm text-base-content/70">
+                      Jusqu&apos;à{" "}
+                      <span className="font-semibold text-base-content tabular-nums">
+                        {durationLabel(soloTotalMin)} → {durationLabel(totalMin)}
+                      </span>{" "}
+                      · le détail s&apos;affiche une fois l&apos;horaire choisi.
                     </p>
                   ) : (
-                    groups.map((g) => (
-                      <div key={g.id}>
-                        <p className="sticky top-0 z-10 bg-base-200 px-4 py-2 text-xs font-semibold tracking-wide text-base-content/60 uppercase">
-                          {g.name}
-                        </p>
-                        <ul>
-                          {g.items.map((s) => {
-                            const checked = selectedIds.has(s.id);
-                            return (
-                              <li key={s.id}>
-                                <label className="flex min-h-12 cursor-pointer items-center gap-3 border-t border-base-300 px-4 py-2 first:border-t-0 hover:bg-base-200/60">
-                                  <CheckboxPrimitive.Root
-                                    checked={checked}
-                                    onCheckedChange={() => toggle(s)}
-                                    className="checkbox checkbox-primary size-5 shrink-0 data-[state=checked]:border-primary data-[state=checked]:bg-primary"
-                                  >
-                                    <CheckboxPrimitive.Indicator>
-                                      <Check aria-hidden className="size-3.5 text-primary-content" strokeWidth={3} />
-                                    </CheckboxPrimitive.Indicator>
-                                  </CheckboxPrimitive.Root>
-                                  <span className="min-w-0 flex-1 text-[15px] text-base-content">
-                                    {s.name}
-                                    {s.twoPractitionersEligible && (
-                                      <span
-                                        title="Réalisable à 2 praticiennes"
-                                        className="ml-2 inline-flex translate-y-[-1px] items-center gap-1 align-middle text-xs font-medium whitespace-nowrap text-base-content/50"
-                                      >
-                                        <Users aria-hidden className="size-3.5" />
-                                        à 2
-                                      </span>
-                                    )}
-                                  </span>
-                                  <span className="shrink-0 text-sm tabular-nums text-base-content/60">{durationLabel(s.durationMinutes)}</span>
-                                  <span className="w-28 shrink-0 text-right text-[15px] font-medium tabular-nums text-base-content">
-                                    {formatFcfa(s.price)}
-                                  </span>
-                                </label>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      </div>
-                    ))
+                    <>
+                      <p className="text-sm text-base-content/70">
+                        Visite{" "}
+                        <span className="font-semibold text-base-content tabular-nums">
+                          {soloTotalMin === totalMin ? durationLabel(totalMin) : `${durationLabel(soloTotalMin)} → ${durationLabel(totalMin)}`}
+                        </span>
+                      </p>
+                      <ul className="mt-2 space-y-1.5">
+                        {duoEligible.map((l) => {
+                          const two = (planned(l)?.staffIds.length ?? 0) > 1;
+                          return (
+                            <li key={l.key} className="flex items-start gap-2 text-sm">
+                              {two ? (
+                                <Check aria-hidden className="mt-0.5 size-4 shrink-0 text-success" strokeWidth={2.5} />
+                              ) : (
+                                <span aria-hidden className="mt-2 size-1.5 shrink-0 rounded-full bg-base-content/35" />
+                              )}
+                              <span className="min-w-0 flex-1">
+                                <span className="text-base-content">{lineName(l)}</span>
+                                <span className="block text-base-content/60">
+                                  {two
+                                    ? `À 2 · ${durationLabel(lineDuration(l))} au lieu de ${durationLabel(soloDuration(l))}`
+                                    : `Reste à 1 : une seule praticienne libre à ${chosenTime}`}
+                                </span>
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </>
                   )}
                 </div>
-              </div>
-            )}
-          </section>
-
-          {/* Questions de catégorie (celles de la prise de RDV b&co) */}
-          {questionPeople.length > 0 && (
-            <section aria-labelledby="rdv-questions">
-              <h3 id="rdv-questions" className="text-[17px] font-semibold text-base-content">
-                Questions
-              </h3>
-              <p className="mt-0.5 mb-3 text-sm text-base-content/60">
-                {unanswered > 0
-                  ? `Les questions de la prise de rendez-vous en ligne · ${unanswered} sans réponse`
-                  : "Les questions de la prise de rendez-vous en ligne · toutes renseignées"}
-              </p>
-              <RdvQuestions people={questionPeople} answers={answers} onAnswer={answer} />
+              )}
+              {duo && duoMissed.length === duoEligible.length && duoEligible.length > 0 && plan && (
+                <p className="mt-2 text-sm text-base-content/60">Un autre horaire peut libérer deux praticiennes.</p>
+              )}
             </section>
-          )}
 
-          {/* Notes libres de la réceptionniste */}
-          <section aria-labelledby="rdv-note">
-            <h3 id="rdv-note" className="mb-3 text-[17px] font-semibold text-base-content">
-              Notes
-            </h3>
-            {reservation?.note && (
-              <p className="mb-3 rounded-box bg-base-200 px-4 py-2.5 text-sm text-base-content">
-                <span className="font-semibold">Note de la cliente · </span>
-                {reservation.note}
-              </p>
+            {/* Questions de catégorie (celles de la prise de RDV b&co) */}
+            {questionPeople.length > 0 && (
+              <section aria-labelledby="rdv-questions">
+                <h3 id="rdv-questions" className="text-[17px] font-semibold text-base-content">
+                  Questions
+                </h3>
+                <p className="mt-0.5 mb-3 text-sm text-base-content/60">
+                  {unanswered > 0
+                    ? `Les questions de la prise de rendez-vous en ligne · ${unanswered} sans réponse`
+                    : "Les questions de la prise de rendez-vous en ligne · toutes renseignées"}
+                </p>
+                <RdvQuestions people={questionPeople} answers={answers} onAnswer={answer} />
+              </section>
             )}
-            <Textarea
-              value={staffNote}
-              onChange={(e) => setStaffNote(e.target.value)}
-              rows={3}
-              aria-labelledby="rdv-note"
-              placeholder="Ajouter une note sur ce rendez-vous"
-            />
-          </section>
+
+            {/* Extensions : quand une cliente coiffure n'apporte pas les siennes */}
+            {showExtensions && (
+              <section aria-labelledby="rdv-extensions">
+                <h3 id="rdv-extensions" className="flex items-center gap-2 text-[17px] font-semibold text-base-content">
+                  <Scissors aria-hidden className="size-5 text-secondary" />
+                  Extensions
+                </h3>
+                <p className="mt-0.5 mb-3 text-sm text-base-content/60">La cliente n&apos;apporte pas les siennes : à préparer pour sa venue.</p>
+                <ExtraList
+                  rows={extensionProducts.map((p) => ({ id: p.id, name: p.name, price: p.price, image: p.image }))}
+                  qty={(id) => extraQty("produit", id)}
+                  onQty={(id, q) => setExtraQty("produit", id, q)}
+                />
+              </section>
+            )}
+
+            {/* Boissons du Bar Beauty & Co */}
+            <section aria-labelledby="rdv-boissons">
+              <h3 id="rdv-boissons" className="flex items-center gap-2 text-[17px] font-semibold text-base-content">
+                <CupSoda aria-hidden className="size-5 text-secondary" />
+                Boissons
+              </h3>
+              <p className="mt-0.5 mb-3 text-sm text-base-content/60">Servies pendant le soin.</p>
+              <ExtraList
+                rows={BOISSONS.filter((b) => b.active || extraQty("boisson", b.id) > 0).map((b) => ({
+                  id: b.id,
+                  name: b.name,
+                  price: b.price,
+                  image: b.image,
+                  detail: b.description,
+                }))}
+                qty={(id) => extraQty("boisson", id)}
+                onQty={(id, q) => setExtraQty("boisson", id, q)}
+              />
+            </section>
+
+            {/* Notes libres de la réceptionniste */}
+            <section aria-labelledby="rdv-note">
+              <h3 id="rdv-note" className="mb-3 text-[17px] font-semibold text-base-content">
+                Notes
+              </h3>
+              {reservation?.note && (
+                <p className="mb-3 rounded-box bg-base-100 px-4 py-2.5 text-sm text-base-content ring-1 ring-base-300">
+                  <span className="font-semibold">Note de la cliente · </span>
+                  {reservation.note}
+                </p>
+              )}
+              <Textarea
+                value={staffNote}
+                onChange={(e) => setStaffNote(e.target.value)}
+                rows={3}
+                aria-labelledby="rdv-note"
+                placeholder="Ajouter une note sur ce rendez-vous"
+              />
+            </section>
+          </aside>
         </div>
 
         <footer className="flex shrink-0 items-center gap-4 border-t border-base-300 px-8 py-5">
@@ -748,7 +872,8 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
             ) : canConfirm && chosenTime ? (
               <>
                 <span className="font-medium text-base-content">
-                  {shortDay(day)} à {chosenTime} · {salonById(salon)?.name}
+                  {shortDay(day)} à {chosenTime} · {salonById(salon)?.name} · {durationLabel(totalMin)} ·{" "}
+                  <span className="tabular-nums">{formatFcfa(totalPrice)}</span>
                 </span>
                 <span className="block">
                   {isCreate ? "La cliente recevra une confirmation par email." : "La cliente sera prévenue par email."}
@@ -779,6 +904,48 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
         />
       )}
     </>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Extensions et boissons : une liste à quantités                      */
+/* ------------------------------------------------------------------ */
+
+type ExtraRow = { id: string; name: string; price: number; image?: string; detail?: string };
+
+function ExtraList({ rows, qty, onQty }: { rows: ExtraRow[]; qty: (id: string) => number; onQty: (id: string, q: number) => void }) {
+  return (
+    <ul className="divide-y divide-base-300 overflow-hidden rounded-box bg-base-100 ring-1 ring-base-300">
+      {rows.map((r) => {
+        const n = qty(r.id);
+        return (
+          <li key={r.id} className={cn("flex items-center gap-3 px-3 py-2.5", n > 0 && "bg-accent/60")}>
+            {r.image ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={r.image} alt="" className="size-11 shrink-0 rounded-field object-cover" />
+            ) : (
+              <span aria-hidden className="size-11 shrink-0 rounded-field bg-base-200" />
+            )}
+            <span className="min-w-0 flex-1">
+              <span className="line-clamp-2 text-[15px] leading-snug font-medium text-base-content">{r.name}</span>
+              <span className="block truncate text-sm text-base-content/60">
+                <span className="tabular-nums">{formatFcfa(r.price)}</span>
+                {r.detail && ` · ${r.detail}`}
+              </span>
+            </span>
+            {n === 0 ? (
+              <RoundStepButton direction="increment" size="sm" ariaLabel={`Ajouter ${r.name}`} onClick={() => onQty(r.id, 1)} />
+            ) : (
+              <span className="flex shrink-0 items-center gap-2">
+                <RoundStepButton direction="decrement" size="sm" ariaLabel={`Retirer un ${r.name}`} onClick={() => onQty(r.id, n - 1)} />
+                <span className="w-5 text-center text-[15px] font-semibold tabular-nums text-base-content">{n}</span>
+                <RoundStepButton direction="increment" size="sm" ariaLabel={`Ajouter un ${r.name}`} onClick={() => onQty(r.id, n + 1)} />
+              </span>
+            )}
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 

@@ -115,13 +115,23 @@ export function planAt(
   for (const personItems of byPerson.values()) {
     let cursor = timeToMinutes(start);
     for (const item of personItems) {
-      const durationMin = lineDuration(item, twoPractitioners);
-      const iv = { start: cursor, end: cursor + durationMin };
+      // « 2 praticiennes » est une préférence, jamais une contrainte : une prestation réalisable à 2
+      // passe à deux (durée divisée) quand deux praticiennes sont libres ensemble, sinon elle reste
+      // à une seule, durée pleine. L'option ne retire donc jamais un horaire.
+      const tryDuo = twoPractitioners && item.twoPractitionersEligible;
+      let durationMin = lineDuration(item, twoPractitioners);
+      let iv = { start: cursor, end: cursor + durationMin };
+      let free = iv.end <= CLOSING ? freeStaff(ctx, busy, item.categoryId, iv) : [];
+      let need = tryDuo ? 2 : 1;
+      if (tryDuo && free.length < 2) {
+        durationMin = item.durationMinutes;
+        iv = { start: cursor, end: cursor + durationMin };
+        free = iv.end <= CLOSING ? freeStaff(ctx, busy, item.categoryId, iv) : [];
+        need = 1;
+      }
       if (iv.end > CLOSING) return null;
-      const need = twoPractitioners && item.twoPractitionersEligible ? 2 : 1;
-      const free = freeStaff(ctx, busy, item.categoryId, iv);
       if (free.length < need) return null;
-      // Les praticiennes voulues encore libres d'abord (une prestation passée « à deux » garde la
+      // Les praticiennes voulues encore libres d'abord (une prestation passée à deux garde la
       // sienne et en reçoit une 2ᵉ), complétées par la préférée puis les moins chargées.
       const wanted = (overrides[item.key] ?? []).filter((id) => free.some((p) => p.id === id)).slice(0, need);
       const chosen = [

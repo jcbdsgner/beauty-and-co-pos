@@ -593,7 +593,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       payerClientId: input.payerClientId,
       date: input.date,
       rendezVous: [...next, ...dropped],
-      ...(input.extras?.length ? { extras: input.extras } : {}),
+      // Extras saisis au comptoir : remplacent ceux portés (liste vide ⇒ retirés) ; absent ⇒ inchangés.
+      ...(input.extras ? { extras: input.extras.length ? input.extras : undefined } : {}),
       ...(input.note?.trim() ? { note: input.note.trim() } : {}),
       ...(deposit
         ? { depositPaid: (existing?.depositPaid ?? 0) + deposit.amount, depositMode: deposit.mode, depositPaidAt: new Date().toISOString() }

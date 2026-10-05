@@ -24,12 +24,20 @@ choisir la cliente en haut ». Le back-office venait de fondre « Nouveau rendez
 - Praticiennes posées d'office (`planAt`) ; à la reprogrammation l'actuelle — et la 2ᵉ d'une
   prestation « à deux » — est gardée si elle reste libre. Prestation retirée ⇒ rendez-vous annulé
   (`saveParcoursReservation`, inchangé).
-- **Rév. 05/10 — « 2 praticiennes » par prestation.** Chaque prestation choisie « réalisable à 2 »
-  (`twoPractitionersEligible`, 76/106, verbatim b&co) porte un interrupteur « 2 praticiennes »,
-  éteint par défaut : durée divisée par deux, et seuls les horaires où deux praticiennes du métier
-  sont libres ensemble restent proposés. Choix ligne par ligne (le site b&co, lui, a un interrupteur
-  global côté cliente). Le Menu de la fenêtre marque les éligibles « à 2 ». À la reprogrammation,
-  une ligne déjà à deux s'ouvre allumée ; passée à deux, elle garde sa praticienne et en reçoit une 2ᵉ.
+- **Rév. 05/10 — fenêtre large en deux colonnes, vues d'un coup** (création et modification,
+  même fenêtre, pas d'étapes). À gauche le rendez-vous : cliente (création), prestations par
+  personne, salon et date sur une rangée, horaire. À droite ce qui l'accompagne : **2 praticiennes**,
+  questions de catégorie, **extensions** (cheveux Beccy Wave / Nefertiti, seulement quand une
+  personne en coiffure répond « Non » à « propres extensions » — règle du site b&co), **boissons**
+  du Bar, notes. Pied pleine largeur : créneau, durée, total (extras compris), bouton.
+- **« 2 praticiennes » = un seul interrupteur, appliqué là où c'est faisable** : sur les
+  prestations réalisables à 2 (`twoPractitionersEligible`, 76/106, verbatim b&co), quand deux
+  praticiennes du métier sont libres ensemble — sinon la prestation reste à une seule, durée
+  pleine. Une préférence, jamais une contrainte : l'option ne retire aucun horaire (`planAt`).
+  Une fois l'horaire choisi, la fenêtre dit ce qui passe à deux et ce qui reste à une
+  (« Reste à 1 : une seule praticienne libre à 15:00 »). À la modification, allumé si la
+  réservation a déjà une prestation à deux ; une ligne qui passe à deux garde sa praticienne.
+  Le Menu de la fenêtre marque les éligibles « à 2 ».
 - Head spa, soins visage, épilation, spa : Almadies seulement (`serviceOfferedAt`), dit en clair.
 
 ## Conséquences
