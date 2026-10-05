@@ -289,6 +289,13 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
     for (const l of lines) perPerson.set(l.personKey, (perPerson.get(l.personKey) ?? 0) + soloDuration(l));
     return Math.max(0, ...perPerson.values());
   })();
+  // La visite au mieux, si toutes les prestations éligibles passent à deux : le temps que l'option peut faire gagner.
+  const duoBestMin = (() => {
+    const perPerson = new Map<string, number>();
+    for (const l of lines)
+      perPerson.set(l.personKey, (perPerson.get(l.personKey) ?? 0) + (canDuo(l) ? Math.round(soloDuration(l) / 2) : soloDuration(l)));
+    return Math.max(0, ...perPerson.values());
+  })();
   const totalPrice = lines.reduce((s, l) => s + linePrice(l), 0) + extrasTotal;
 
   const sameLines = lines.length === initialLines.length && lines.every((l, i) => l.key === initialLines[i].key);
@@ -778,56 +785,54 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
 
           {/* ---- Ce qui l'accompagne ---- */}
           <aside aria-label="Options du rendez-vous" className="min-h-0 space-y-8 overflow-y-auto border-l border-base-300 bg-base-200/40 px-7 pt-6 pb-8">
-            {/* 2 praticiennes : un seul interrupteur, appliqué là où c'est faisable */}
-            <section aria-labelledby="rdv-duo">
+            {/* 2 praticiennes : un seul interrupteur, appliqué là où c'est faisable. Le bloc du site b&co :
+                rose dès qu'une prestation y a droit, avec le temps gagné, et il tremble une fois. */}
+            <section
+              key={duoEligible.length > 0 ? "duo-eligible" : "duo-none"}
+              aria-labelledby="rdv-duo"
+              className={cn(
+                "rounded-box p-[18px] transition-colors",
+                duoEligible.length > 0 ? "bg-[rgba(253,207,202,0.35)]" : "bg-base-100 ring-1 ring-base-300",
+                duoEligible.length > 0 && !duo && (isCreate || !sameLines) && "attention-shake-once",
+              )}
+            >
               <div className="flex items-center gap-3">
-                <span id="rdv-duo" className="flex min-w-0 flex-1 items-center gap-2 text-[17px] font-semibold text-base-content">
-                  2 praticiennes
+                <span className="min-w-0 flex-1">
+                  <span id="rdv-duo" className="block text-[17px] font-semibold text-base-content">
+                    2 praticiennes
+                  </span>
+                  {duoEligible.length > 0 && duoBestMin < soloTotalMin && (
+                    <span className="block text-[15px] tabular-nums text-base-content/70">
+                      {durationLabel(soloTotalMin)} →{" "}
+                      <span className="font-semibold text-secondary">{durationLabel(duo && plan ? totalMin : duoBestMin)}</span>
+                    </span>
+                  )}
                 </span>
                 <Switch checked={duo} onChange={setDuo} disabled={duoEligible.length === 0 && !duo} label="2 praticiennes" />
               </div>
-              {duo && duoEligible.length > 0 && showDuoDetail && (
-                <div className="mt-3 rounded-box bg-base-100 px-4 py-3 ring-1 ring-base-300">
-                  {!plan ? (
-                    <p className="text-sm text-base-content/70">
-                      Visite jusqu&apos;à{" "}
-                      <span className="font-semibold text-base-content tabular-nums">
-                        {durationLabel(soloTotalMin)} → {durationLabel(totalMin)}
-                      </span>
-                    </p>
-                  ) : (
-                    <>
-                      <p className="text-sm text-base-content/70">
-                        Visite{" "}
-                        <span className="font-semibold text-base-content tabular-nums">
-                          {soloTotalMin === totalMin ? durationLabel(totalMin) : `${durationLabel(soloTotalMin)} → ${durationLabel(totalMin)}`}
+              {duo && duoEligible.length > 0 && plan && showDuoDetail && (
+                <ul className="mt-3 space-y-1.5 rounded-field bg-base-100 px-4 py-3">
+                  {duoEligible.map((l) => {
+                    const two = (planned(l)?.staffIds.length ?? 0) > 1;
+                    return (
+                      <li key={l.key} className="flex items-start gap-2 text-sm">
+                        {two ? (
+                          <Check aria-hidden className="mt-0.5 size-4 shrink-0 text-success" strokeWidth={2.5} />
+                        ) : (
+                          <span aria-hidden className="mt-2 size-1.5 shrink-0 rounded-full bg-base-content/35" />
+                        )}
+                        <span className="min-w-0 flex-1">
+                          <span className="text-base-content">{lineName(l)}</span>
+                          <span className="block text-base-content/60">
+                            {two
+                              ? `À 2 · ${durationLabel(lineDuration(l))} au lieu de ${durationLabel(soloDuration(l))}`
+                              : `Reste à 1 : une seule praticienne libre à ${chosenTime}`}
+                          </span>
                         </span>
-                      </p>
-                      <ul className="mt-2 space-y-1.5">
-                        {duoEligible.map((l) => {
-                          const two = (planned(l)?.staffIds.length ?? 0) > 1;
-                          return (
-                            <li key={l.key} className="flex items-start gap-2 text-sm">
-                              {two ? (
-                                <Check aria-hidden className="mt-0.5 size-4 shrink-0 text-success" strokeWidth={2.5} />
-                              ) : (
-                                <span aria-hidden className="mt-2 size-1.5 shrink-0 rounded-full bg-base-content/35" />
-                              )}
-                              <span className="min-w-0 flex-1">
-                                <span className="text-base-content">{lineName(l)}</span>
-                                <span className="block text-base-content/60">
-                                  {two
-                                    ? `À 2 · ${durationLabel(lineDuration(l))} au lieu de ${durationLabel(soloDuration(l))}`
-                                    : `Reste à 1 : une seule praticienne libre à ${chosenTime}`}
-                                </span>
-                              </span>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </>
-                  )}
-                </div>
+                      </li>
+                    );
+                  })}
+                </ul>
               )}
             </section>
 
