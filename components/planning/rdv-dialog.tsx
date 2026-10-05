@@ -391,9 +391,6 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
     onClose();
   };
 
-  const morning = times.filter((t) => t < "12:00");
-  const afternoon = times.filter((t) => t >= "12:00" && t < "17:00");
-  const evening = times.filter((t) => t >= "17:00");
 
   return (
     <>
@@ -477,12 +474,9 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
 
           {/* Horaire */}
           <section aria-labelledby="resched-time">
-            <h3 id="resched-time" className="text-[17px] font-semibold text-base-content">
+            <h3 id="resched-time" className="mb-3 text-[17px] font-semibold text-base-content">
               Horaire
             </h3>
-            <p className="mt-0.5 mb-3 text-sm text-base-content/60">
-              Seuls les horaires où les praticiennes nécessaires sont libres sont proposés.
-            </p>
             {!opening ? (
               <p className="rounded-box bg-base-200 px-4 py-4 text-[15px] text-base-content/70">
                 {salonById(salon)?.name} est fermé {frFullDate(day)}. Choisissez un autre jour ou l&apos;autre salon.
@@ -506,44 +500,29 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
                   : "Essayez un autre jour ou l'autre salon."}
               </p>
             ) : (
-              <div className="space-y-3">
-                {(
-                  [
-                    ["Matin", morning],
-                    ["Après-midi", afternoon],
-                    ["Soir", evening],
-                  ] as const
-                ).map(([label, list]) =>
-                  list.length === 0 ? null : (
-                    <div key={label} className="flex items-start gap-4">
-                      <span className="w-24 shrink-0 pt-2.5 text-sm text-base-content/60">{label}</span>
-                      <div className="flex flex-wrap gap-2">
-                        {list.map((t) => {
-                          const selected = t === chosenTime;
-                          const isCurrent = t === currentTime && day === currentDay && salon === initial.salon;
-                          return (
-                            <button
-                              key={t}
-                              type="button"
-                              aria-pressed={selected}
-                              onClick={() => setTime(t)}
-                              title={isCurrent ? "Horaire actuel" : undefined}
-                              className={cn(
-                                "h-10 min-w-[72px] rounded-field border px-3 text-[15px] font-medium tabular-nums transition",
-                                selected
-                                  ? "border-primary bg-primary text-primary-content"
-                                  : "border-base-300 bg-base-100 text-base-content hover:border-base-content/30",
-                                isCurrent && !selected && "border-dashed border-primary/60",
-                              )}
-                            >
-                              {t}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ),
-                )}
+              <div className="flex flex-wrap gap-2">
+                {times.map((t) => {
+                  const selected = t === chosenTime;
+                  const isCurrent = t === currentTime && day === currentDay && salon === initial.salon;
+                  return (
+                    <button
+                      key={t}
+                      type="button"
+                      aria-pressed={selected}
+                      onClick={() => setTime(t)}
+                      title={isCurrent ? "Horaire actuel" : undefined}
+                      className={cn(
+                        "h-10 min-w-[72px] rounded-field border px-3 text-[15px] font-medium tabular-nums transition",
+                        selected
+                          ? "border-primary bg-primary text-primary-content"
+                          : "border-base-300 bg-base-100 text-base-content hover:border-base-content/30",
+                        isCurrent && !selected && "border-dashed border-primary/60",
+                      )}
+                    >
+                      {t}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </section>
