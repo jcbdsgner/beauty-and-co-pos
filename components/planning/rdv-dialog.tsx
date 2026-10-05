@@ -204,6 +204,8 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
   const extraPrice = (x: ReservationExtra) =>
     (x.kind === "boisson" ? boissonById(x.refId)?.price : produitById(x.refId)?.price) ?? 0;
   const extrasTotal = extras.reduce((sum, x) => sum + extraPrice(x) * x.qty, 0);
+  const drinkCount = extras.filter((x) => x.kind === "boisson").reduce((n, x) => n + x.qty, 0);
+  const [barOpen, setBarOpen] = useState(false);
   const [staffNote, setStaffNote] = useState(initialStaffNote);
   const answer = (personKey: string, categoryId: string, questionId: string, value: string) =>
     setAnswers((prev) => {
@@ -275,7 +277,6 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
   const lineDuration = (l: Line) =>
     planned(l)?.durationMin ?? (duo && canDuo(l) ? Math.round(soloDuration(l) / 2) : soloDuration(l));
   const duoEligible = lines.filter(canDuo);
-  const duoMissed = duo && plan ? duoEligible.filter((l) => (planned(l)?.staffIds.length ?? 0) < 2) : [];
 
   const totalMin = (() => {
     // Amplitude de la visite : chaque personne enchaîne ses prestations, en parallèle des autres.
@@ -447,13 +448,11 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
           <h2 id="resched-title" className="text-[24px] font-semibold tracking-[-0.01em] text-base-content">
             {isCreate ? "Nouveau rendez-vous" : "Modifier le rendez-vous"}
           </h2>
-          <p className="mt-1 text-[15px] text-base-content/60">
-            {!isCreate
-              ? `${payerName} · actuellement ${frFullDate(currentDay!)} à ${currentTime}, ${salonById(initial.salon ?? "")?.name ?? ""}`
-              : client
-                ? `Pour ${payerName} · ${clientNumberLabel(client)}`
-                : "Choisissez la cliente, les prestations, le salon, la date et l'horaire."}
-          </p>
+          {!isCreate && (
+            <p className="mt-1 text-[15px] text-base-content/60">
+              {`${payerName} · actuellement ${frFullDate(currentDay!)} à ${currentTime}, ${salonById(initial.salon ?? "")?.name ?? ""}`}
+            </p>
+          )}
         </header>
 
         <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_440px]">
@@ -618,8 +617,28 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
               )}
             </section>
 
-            {/* Salon et date, sur une rangée */}
+            {/* Date et salon, sur une rangée */}
             <div className="grid grid-cols-2 gap-6">
+              <section aria-labelledby="resched-date">
+                <h3 id="resched-date" className="mb-3 text-[17px] font-semibold text-base-content">
+                  {isCreate ? "Date" : "Nouvelle date"}
+                </h3>
+                <DatePicker
+                  value={isoToDate(day)}
+                  minDate={isoToDate(todayISO())}
+                  onChange={(d) => setDay(dateISO(d))}
+                  trigger={
+                    <button
+                      type="button"
+                      className="input h-14 w-full items-center gap-3 bg-base-100 text-left text-[17px] first-letter:uppercase"
+                    >
+                      <CalendarDays aria-hidden className="size-5 shrink-0 text-base-content/45" />
+                      <span className="truncate first-letter:uppercase">{frFullDate(day)}</span>
+                    </button>
+                  }
+                />
+              </section>
+
               <section aria-labelledby="resched-salon">
                 <h3 id="resched-salon" className="mb-3 text-[17px] font-semibold text-base-content">
                   Salon
@@ -650,26 +669,6 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
                     );
                   })}
                 </div>
-              </section>
-
-              <section aria-labelledby="resched-date">
-                <h3 id="resched-date" className="mb-3 text-[17px] font-semibold text-base-content">
-                  {isCreate ? "Date" : "Nouvelle date"}
-                </h3>
-                <DatePicker
-                  value={isoToDate(day)}
-                  minDate={isoToDate(todayISO())}
-                  onChange={(d) => setDay(dateISO(d))}
-                  trigger={
-                    <button
-                      type="button"
-                      className="input h-14 w-full items-center gap-3 bg-base-100 text-left text-[17px] first-letter:uppercase"
-                    >
-                      <CalendarDays aria-hidden className="size-5 shrink-0 text-base-content/45" />
-                      <span className="truncate first-letter:uppercase">{frFullDate(day)}</span>
-                    </button>
-                  }
-                />
               </section>
             </div>
 
@@ -731,15 +730,8 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
             {/* 2 praticiennes : un seul interrupteur, appliqué là où c'est faisable */}
             <section aria-labelledby="rdv-duo">
               <div className="flex items-center gap-3">
-                <span className="min-w-0 flex-1">
-                  <span id="rdv-duo" className="flex items-center gap-2 text-[17px] font-semibold text-base-content">
-                    <Users aria-hidden className="size-5 text-secondary" />2 praticiennes
-                  </span>
-                  <span className="mt-0.5 block text-sm text-base-content/60">
-                    {duoEligible.length === 0
-                      ? "Aucune prestation choisie n'est réalisable à 2."
-                      : "Sur les prestations réalisables à 2, quand deux praticiennes sont libres ensemble."}
-                  </span>
+                <span id="rdv-duo" className="flex min-w-0 flex-1 items-center gap-2 text-[17px] font-semibold text-base-content">
+                  <Users aria-hidden className="size-5 text-secondary" />2 praticiennes
                 </span>
                 <Switch checked={duo} onChange={setDuo} disabled={duoEligible.length === 0 && !duo} label="2 praticiennes" />
               </div>
@@ -747,11 +739,10 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
                 <div className="mt-3 rounded-box bg-base-100 px-4 py-3 ring-1 ring-base-300">
                   {!plan ? (
                     <p className="text-sm text-base-content/70">
-                      Jusqu&apos;à{" "}
+                      Visite jusqu&apos;à{" "}
                       <span className="font-semibold text-base-content tabular-nums">
                         {durationLabel(soloTotalMin)} → {durationLabel(totalMin)}
-                      </span>{" "}
-                      · le détail s&apos;affiche une fois l&apos;horaire choisi.
+                      </span>
                     </p>
                   ) : (
                     <>
@@ -787,22 +778,15 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
                   )}
                 </div>
               )}
-              {duo && duoMissed.length === duoEligible.length && duoEligible.length > 0 && plan && (
-                <p className="mt-2 text-sm text-base-content/60">Un autre horaire peut libérer deux praticiennes.</p>
-              )}
             </section>
 
             {/* Questions de catégorie (celles de la prise de RDV b&co) */}
             {questionPeople.length > 0 && (
               <section aria-labelledby="rdv-questions">
-                <h3 id="rdv-questions" className="text-[17px] font-semibold text-base-content">
+                <h3 id="rdv-questions" className="mb-3 text-[17px] font-semibold text-base-content">
                   Questions
+                  {unanswered > 0 && <span className="ml-2 text-sm font-normal text-base-content/50">{unanswered} sans réponse</span>}
                 </h3>
-                <p className="mt-0.5 mb-3 text-sm text-base-content/60">
-                  {unanswered > 0
-                    ? `Les questions de la prise de rendez-vous en ligne · ${unanswered} sans réponse`
-                    : "Les questions de la prise de rendez-vous en ligne · toutes renseignées"}
-                </p>
                 <RdvQuestions people={questionPeople} answers={answers} onAnswer={answer} />
               </section>
             )}
@@ -810,11 +794,10 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
             {/* Extensions : quand une cliente coiffure n'apporte pas les siennes */}
             {showExtensions && (
               <section aria-labelledby="rdv-extensions">
-                <h3 id="rdv-extensions" className="flex items-center gap-2 text-[17px] font-semibold text-base-content">
+                <h3 id="rdv-extensions" className="mb-3 flex items-center gap-2 text-[17px] font-semibold text-base-content">
                   <Scissors aria-hidden className="size-5 text-secondary" />
                   Extensions
                 </h3>
-                <p className="mt-0.5 mb-3 text-sm text-base-content/60">La cliente n&apos;apporte pas les siennes : à préparer pour sa venue.</p>
                 <ExtraList
                   rows={extensionProducts.map((p) => ({ id: p.id, name: p.name, price: p.price, image: p.image }))}
                   qty={(id) => extraQty("produit", id)}
@@ -823,24 +806,37 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
               </section>
             )}
 
-            {/* Boissons du Bar Beauty & Co */}
+            {/* Bar Beauty : replié par défaut */}
             <section aria-labelledby="rdv-boissons">
-              <h3 id="rdv-boissons" className="flex items-center gap-2 text-[17px] font-semibold text-base-content">
+              <button
+                type="button"
+                aria-expanded={barOpen}
+                onClick={() => setBarOpen((v) => !v)}
+                className="flex min-h-12 w-full items-center gap-2 text-left"
+              >
                 <CupSoda aria-hidden className="size-5 text-secondary" />
-                Boissons
-              </h3>
-              <p className="mt-0.5 mb-3 text-sm text-base-content/60">Servies pendant le soin.</p>
-              <ExtraList
-                rows={BOISSONS.filter((b) => b.active || extraQty("boisson", b.id) > 0).map((b) => ({
-                  id: b.id,
-                  name: b.name,
-                  price: b.price,
-                  image: b.image,
-                  detail: b.description,
-                }))}
-                qty={(id) => extraQty("boisson", id)}
-                onQty={(id, q) => setExtraQty("boisson", id, q)}
-              />
+                <span id="rdv-boissons" className="text-[17px] font-semibold text-base-content">
+                  Bar Beauty
+                </span>
+                {drinkCount > 0 && (
+                  <span className="rounded-full bg-accent px-2.5 py-0.5 text-sm font-semibold tabular-nums text-secondary">{drinkCount}</span>
+                )}
+                <ChevronDown aria-hidden className={cn("ml-auto size-5 text-secondary transition", barOpen && "rotate-180")} />
+              </button>
+              {barOpen && (
+                <ExtraList
+                  className="mt-2"
+                  rows={BOISSONS.filter((b) => b.active || extraQty("boisson", b.id) > 0).map((b) => ({
+                    id: b.id,
+                    name: b.name,
+                    price: b.price,
+                    image: b.image,
+                    detail: b.description,
+                  }))}
+                  qty={(id) => extraQty("boisson", id)}
+                  onQty={(id, q) => setExtraQty("boisson", id, q)}
+                />
+              )}
             </section>
 
             {/* Notes libres de la réceptionniste */}
@@ -866,23 +862,25 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
         </div>
 
         <footer className="flex shrink-0 items-center gap-4 border-t border-base-300 px-8 py-5">
-          <p className="min-w-0 flex-1 text-sm text-base-content/60">
+          <div className="min-w-0 flex-1">
             {error ? (
-              <span className="font-medium text-error">{error}</span>
+              <p className="text-sm font-medium text-error">{error}</p>
             ) : canConfirm && chosenTime ? (
-              <>
-                <span className="font-medium text-base-content">
-                  {shortDay(day)} à {chosenTime} · {salonById(salon)?.name} · {durationLabel(totalMin)} ·{" "}
-                  <span className="tabular-nums">{formatFcfa(totalPrice)}</span>
+              <p>
+                <span className="block text-[17px] font-semibold text-base-content first-letter:uppercase">
+                  {shortDay(day)} · {chosenTime}
                 </span>
-                <span className="block">
-                  {isCreate ? "La cliente recevra une confirmation par email." : "La cliente sera prévenue par email."}
+                <span className="block text-sm text-base-content/60">
+                  {salonById(salon)?.name} · {durationLabel(totalMin)}
                 </span>
-              </>
+              </p>
             ) : (
-              blocker
+              <p className="text-sm text-base-content/60">{blocker}</p>
             )}
-          </p>
+          </div>
+          {lines.length > 0 && (
+            <span className="mr-2 text-[20px] font-semibold tabular-nums text-base-content">{formatFcfa(totalPrice)}</span>
+          )}
           <Button variant="outline" onClick={onClose}>
             Annuler
           </Button>
@@ -913,9 +911,19 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
 
 type ExtraRow = { id: string; name: string; price: number; image?: string; detail?: string };
 
-function ExtraList({ rows, qty, onQty }: { rows: ExtraRow[]; qty: (id: string) => number; onQty: (id: string, q: number) => void }) {
+function ExtraList({
+  rows,
+  qty,
+  onQty,
+  className,
+}: {
+  rows: ExtraRow[];
+  qty: (id: string) => number;
+  onQty: (id: string, q: number) => void;
+  className?: string;
+}) {
   return (
-    <ul className="divide-y divide-base-300 overflow-hidden rounded-box bg-base-100 ring-1 ring-base-300">
+    <ul className={cn("divide-y divide-base-300 overflow-hidden rounded-box bg-base-100 ring-1 ring-base-300", className)}>
       {rows.map((r) => {
         const n = qty(r.id);
         return (
