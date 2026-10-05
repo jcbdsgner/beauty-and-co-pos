@@ -303,6 +303,13 @@ export function ReservationDetailView({ reservationId }: { reservationId: string
             </p>
           )}
 
+          {reservation.staffNote && (
+            <p className="rounded-box border border-primary/25 bg-[var(--brand-rose-soft)] px-4 py-2.5 text-sm whitespace-pre-line text-base-content">
+              <span className="font-semibold">Note de l&apos;accueil · </span>
+              {reservation.staffNote}
+            </p>
+          )}
+
           <Panel title="Détail et règlement" meta={deposit > 0 ? `Acompte de ${formatFcfa(deposit)} déjà versé` : undefined}>
             <table className="w-full text-sm">
               <thead>

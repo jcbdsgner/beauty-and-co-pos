@@ -392,10 +392,12 @@ export type AppState = {
     salonId: string;
     lines: Array<
       Pick<RendezVous, "serviceId" | "staffId" | "start" | "durationMin"> &
-        Partial<Pick<RendezVous, "secondStaffId" | "beneficiaryClientId" | "beneficiaryName" | "beneficiaryKind">>
+        Partial<Pick<RendezVous, "secondStaffId" | "beneficiaryClientId" | "beneficiaryName" | "beneficiaryKind" | "bookingAnswers">>
     >;
     extras?: ReservationExtra[];
     note?: string;
+    /** Note libre de la réceptionniste. Absent ⇒ inchangée ; chaîne vide ⇒ effacée. */
+    staffNote?: string;
     deposit?: { amount: number; mode: DepositMode };
   }) => { ok: boolean; message: string; reservationId?: string };
   cancelAppointment: (rvId: string, reason?: string) => void;
@@ -574,6 +576,8 @@ export const useAppStore = create<AppState>((set, get) => ({
         ...(line.beneficiaryClientId ? { beneficiaryClientId: line.beneficiaryClientId } : {}),
         ...(line.beneficiaryName ? { beneficiaryName: line.beneficiaryName } : {}),
         ...(line.beneficiaryKind ? { beneficiaryKind: line.beneficiaryKind } : {}),
+        // Réponses saisies au comptoir, sinon celles déjà portées (prise en ligne).
+        ...((line.bookingAnswers ?? match?.bookingAnswers) ? { bookingAnswers: line.bookingAnswers ?? match?.bookingAnswers } : {}),
       });
     }
     // Retirée du parcours ⇒ annulée, pas effacée (ADR 0009 : l'historique des annulés reste lisible).
@@ -582,8 +586,10 @@ export const useAppStore = create<AppState>((set, get) => ({
       .map((rv) => (rv.status === "annule" ? rv : { ...rv, status: "annule" }));
 
     const deposit = input.deposit;
+    const staffNote = (input.staffNote ?? existing?.staffNote ?? "").trim();
     const reservation: Reservation = {
       ...(existing ?? { id: reservationId, source: "comptoir" as const, createdAt: new Date().toISOString() }),
+      staffNote: staffNote || undefined,
       payerClientId: input.payerClientId,
       date: input.date,
       rendezVous: [...next, ...dropped],

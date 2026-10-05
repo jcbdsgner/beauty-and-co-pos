@@ -9,6 +9,9 @@ import { CloseButton } from "@/components/ui/atoms/icon-button";
 import { Button } from "@/components/ui/atoms/button";
 import { SearchInput } from "@/components/ui/atoms/search-input";
 import { Switch } from "@/components/ui/atoms/switch";
+import { Textarea } from "@/components/ui/atoms/textarea";
+import { RdvQuestions, missingAnswers, rdvAnswerKey, type RdvAnswers } from "@/components/planning/rdv-questions";
+import { BOOKING_QUESTIONS } from "@/lib/data/booking-questions";
 import { NewClientDialog } from "@/components/clientele/new-client-dialog";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { cn, formatFcfa } from "@/lib/utils";
@@ -168,7 +171,27 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
   const [query, setQuery] = useState("");
   const [newClient, setNewClient] = useState<Partial<Record<"firstName" | "lastName" | "phone", string>> | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Réponses aux questions de catégorie, reprises des rendez-vous existants (prise en ligne ou
+  // saisie précédente), et note libre de la réceptionniste.
+  const initialAnswers = useMemo<RdvAnswers>(() => {
+    const out: RdvAnswers = {};
+    for (const rv of initial.rvs) {
+      const cat = SERVICES.find((x) => x.id === rv.serviceId)?.categoryId;
+      const k = cat ? rdvAnswerKey(personKeyOf(rv), cat) : null;
+      if (k && rv.bookingAnswers && !out[k]) out[k] = { ...rv.bookingAnswers };
+    }
+    return out;
+  }, [initial]);
+  const [answers, setAnswers] = useState<RdvAnswers>(initialAnswers);
+  const initialStaffNote = reservation?.staffNote ?? "";
+  const [staffNote, setStaffNote] = useState(initialStaffNote);
+  const answer = (personKey: string, categoryId: string, questionId: string, value: string) =>
+    setAnswers((prev) => {
+      const k = rdvAnswerKey(personKey, categoryId);
+      return { ...prev, [k]: { ...(prev[k] ?? {}), [questionId]: value } };
+    });
   const personLabel = (p: Person) => (p.key === PAYER ? payerName : p.label);
+  const addedName = (p: Person, i: number) => p.label.trim() || `Personne ${i + 1}`;
 
   const byId = useMemo(() => new Map(catalog.map((s) => [s.id, s])), [catalog]);
   const categoryName = (categoryId: string) =>
@@ -236,7 +259,33 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
   const duoCount = lines.filter((l) => l.duo).length;
   const sameLines =
     lines.length === initialLines.length && lines.every((l, i) => l.key === initialLines[i].key && l.duo === initialLines[i].duo);
-  const dirty = isCreate || day !== currentDay || salon !== initial.salon || chosenTime !== currentTime || !sameLines;
+  // Personnes servies × catégories choisies : ce sur quoi portent les questions.
+  const questionPeople = people
+    .map((p, i) => ({
+      key: p.key,
+      label: p.added ? addedName(p, i) : personLabel(p),
+      categoryIds: [
+        ...new Set(lines.filter((l) => l.personKey === p.key).map((l) => byId.get(l.serviceId)?.categoryId ?? "")),
+      ].filter((c) => BOOKING_QUESTIONS[c]),
+    }))
+    .filter((p) => p.categoryIds.length > 0);
+  const unanswered = missingAnswers(questionPeople, answers);
+  // Réponses à porter par une ligne : celles de sa personne pour sa catégorie, sans les vides.
+  const answersFor = (l: Line) => {
+    const cat = byId.get(l.serviceId)?.categoryId;
+    const raw = cat ? answers[rdvAnswerKey(l.personKey, cat)] : undefined;
+    const kept = Object.entries(raw ?? {}).filter(([, v]) => v.trim());
+    return kept.length > 0 ? Object.fromEntries(kept.map(([k, v]) => [k, v.trim()])) : undefined;
+  };
+  const answersChanged = JSON.stringify(answers) !== JSON.stringify(initialAnswers);
+  const dirty =
+    isCreate ||
+    day !== currentDay ||
+    salon !== initial.salon ||
+    chosenTime !== currentTime ||
+    !sameLines ||
+    answersChanged ||
+    staffNote.trim() !== initialStaffNote.trim();
   const canConfirm =
     (!isCreate || Boolean(client)) && Boolean(chosenTime) && lines.length > 0 && notOffered.length === 0 && dirty;
 
@@ -270,7 +319,6 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
   };
   const renamePerson = (key: string, label: string) =>
     setPeople((list) => list.map((p) => (p.key === key ? { ...p, label } : p)));
-  const addedName = (p: Person, i: number) => p.label.trim() || `Personne ${i + 1}`;
   const selectedIds = new Set(personLines.map((l) => l.serviceId));
 
   const toggle = (s: Service) => {
@@ -322,6 +370,7 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
           start: pl.start,
           durationMin: pl.durationMin,
           ...(secondStaffId ? { secondStaffId } : {}),
+          bookingAnswers: answersFor(line),
           ...(target?.added
             ? { beneficiaryName: addedName(target, personIndex) }
             : who
@@ -333,6 +382,7 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
               : {}),
         };
       }),
+      staffNote,
     });
     if (!result.ok) {
       setError(result.message);
@@ -674,6 +724,41 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
                 </div>
               </div>
             )}
+          </section>
+
+          {/* Questions de catégorie (celles de la prise de RDV b&co) */}
+          {questionPeople.length > 0 && (
+            <section aria-labelledby="rdv-questions">
+              <h3 id="rdv-questions" className="text-[17px] font-semibold text-base-content">
+                Questions
+              </h3>
+              <p className="mt-0.5 mb-3 text-sm text-base-content/60">
+                {unanswered > 0
+                  ? `Les questions de la prise de rendez-vous en ligne · ${unanswered} sans réponse`
+                  : "Les questions de la prise de rendez-vous en ligne · toutes renseignées"}
+              </p>
+              <RdvQuestions people={questionPeople} answers={answers} onAnswer={answer} />
+            </section>
+          )}
+
+          {/* Note libre de la réceptionniste */}
+          <section aria-labelledby="rdv-note">
+            <h3 id="rdv-note" className="mb-3 text-[17px] font-semibold text-base-content">
+              Note de l&apos;accueil
+            </h3>
+            {reservation?.note && (
+              <p className="mb-3 rounded-box bg-base-200 px-4 py-2.5 text-sm text-base-content">
+                <span className="font-semibold">Note de la cliente · </span>
+                {reservation.note}
+              </p>
+            )}
+            <Textarea
+              value={staffNote}
+              onChange={(e) => setStaffNote(e.target.value)}
+              rows={3}
+              aria-labelledby="rdv-note"
+              placeholder="Ex. arrive avec sa fille, préfère Fatou, allergie précisée au téléphone…"
+            />
           </section>
         </div>
 

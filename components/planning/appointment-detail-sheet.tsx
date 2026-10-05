@@ -139,6 +139,23 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
             </div>
           )}
 
+          {(reservation?.note || reservation?.staffNote) && (
+            <div className="flex flex-col gap-2 border-b border-[var(--board-groove)] px-8 py-4">
+              {reservation.note && (
+                <p className="text-sm text-base-content">
+                  <span className="font-semibold">Note de la cliente · </span>
+                  {reservation.note}
+                </p>
+              )}
+              {reservation.staffNote && (
+                <p className="text-sm whitespace-pre-line text-base-content">
+                  <span className="font-semibold">Note de l&apos;accueil · </span>
+                  {reservation.staffNote}
+                </p>
+              )}
+            </div>
+          )}
+
           <div className="flex flex-col">
             {groups.map((group) => {
               const groupTotal = group.lines

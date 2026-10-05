@@ -222,6 +222,9 @@ export type Reservation = {
   depositPaidAt?: string;
   /** « Note pour le salon » left in the booking journey (ADR 0032). */
   note?: string;
+  /** Note libre de la réceptionniste, saisie dans la fenêtre rendez-vous (créer / modifier) —
+   *  distincte de `note`, écrite par la cliente en ligne. */
+  staffNote?: string;
   /** Boissons / produits pré-commandés en ligne avec la réservation, pour retrait le jour même —
    *  arrivent verbatim comme le reste et s'ajoutent au panier avec les prestations à « Encaisser ».
    *  Jamais de prestation ici (elle naît toujours d'un Rendez-vous). */
