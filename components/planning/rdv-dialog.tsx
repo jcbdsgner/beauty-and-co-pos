@@ -323,8 +323,15 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
     JSON.stringify(extras) !== JSON.stringify(initialExtras) ||
     answersChanged ||
     staffNote.trim() !== initialStaffNote.trim();
+  // Une personne ajoutée qui a des prestations doit porter son nom complet.
+  const unnamed = people.filter((p) => p.added && !p.label.trim() && lines.some((l) => l.personKey === p.key));
   const canConfirm =
-    (!isCreate || Boolean(client)) && Boolean(chosenTime) && lines.length > 0 && notOffered.length === 0 && dirty;
+    (!isCreate || Boolean(client)) &&
+    Boolean(chosenTime) &&
+    lines.length > 0 &&
+    notOffered.length === 0 &&
+    unnamed.length === 0 &&
+    dirty;
 
   const blocker =
     isCreate && !client
@@ -333,11 +340,13 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
         ? isCreate
           ? "Choisissez au moins une prestation."
           : "Gardez au moins une prestation."
-        : !chosenTime
-          ? "Choisissez un horaire."
-          : !dirty
-            ? "Rien n'a changé."
-            : null;
+        : unnamed.length > 0
+          ? "Saisissez le nom complet de chaque personne ajoutée."
+          : !chosenTime
+            ? "Choisissez un horaire."
+            : !dirty
+              ? "Rien n'a changé."
+              : null;
 
   /* ---- prestations ---- */
 
@@ -526,8 +535,10 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
                       <input
                         value={activePerson.label}
                         onChange={(e) => renamePerson(activePerson.key, e.target.value)}
-                        placeholder="Prénom de la personne (facultatif)"
-                        aria-label="Prénom de la personne"
+                        placeholder="Nom complet de la personne"
+                        aria-label="Nom complet de la personne"
+                        aria-required
+                        autoFocus
                         className="input h-11 flex-1 bg-base-100 text-[15px]"
                       />
                       <Button variant="outline" onClick={() => removePerson(activePerson.key)}>
