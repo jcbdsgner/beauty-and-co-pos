@@ -658,12 +658,13 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
                         className={cn(
                           "flex h-14 items-center gap-2.5 rounded-field border px-3 text-left transition",
                           selected ? "border-primary bg-accent ring-1 ring-primary" : "border-base-300 bg-base-100 hover:border-base-content/25",
+                          closed && !selected && "bg-base-200 opacity-70",
                         )}
                       >
                         <MapPin aria-hidden className={cn("size-5 shrink-0", selected ? "text-primary" : "text-base-content/45")} />
                         <span className="min-w-0">
                           <span className="block truncate text-[16px] font-semibold text-base-content">{s.name}</span>
-                          {closed && <span className="block text-xs font-medium text-error">Fermé ce jour-là</span>}
+                          {closed && <span className="block text-xs font-medium whitespace-nowrap text-error">Fermé</span>}
                         </span>
                       </button>
                     );
