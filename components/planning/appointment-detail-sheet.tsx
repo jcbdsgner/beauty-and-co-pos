@@ -18,7 +18,8 @@ import { ClientPreferences } from "@/components/shared/client-preferences";
 import { praticienneById } from "@/lib/data/praticiennes";
 import { boissonById } from "@/lib/data/boissons";
 import { produitById, serviceById } from "@/lib/data/menu";
-import { appointmentEndTime, reservationComposition, reservationDate, reservationForRendezVous } from "@/lib/data/planning";
+import { appointmentEndTime, reservationComposition, reservationDate, reservationForRendezVous, reservationSalonIds } from "@/lib/data/planning";
+import { salonById } from "@/lib/data/entreprises";
 import { formatFcfa } from "@/lib/utils";
 import type { RendezVous } from "@/lib/data/types";
 import {
@@ -55,6 +56,10 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
   const hasSale = Boolean(reservation?.saleId);
   const { extras, coverage, billable, total, rangeStart, rangeEnd } = reservationFigures(reservation, lines);
   const groups = beneficiaryGroups(lines, clients, payer);
+  // Almadies ou Sea Plaza — le salon vient des rendez-vous (ADR 0036).
+  const salonNames = reservation
+    ? reservationSalonIds(reservation).map((id) => salonById(id)?.name ?? id).join(" + ")
+    : "";
 
   return (
     <>
@@ -74,6 +79,12 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
               <>
                 {formatShortDay(reservationDate(reservation))}
                 {lines.length > 0 && ` · ${fmtMin(rangeStart)} – ${fmtMin(rangeEnd)}`}
+                {salonNames && (
+                  <>
+                    {" · "}
+                    <span className="font-semibold text-base-content">{salonNames}</span>
+                  </>
+                )}
                 {` · Réservé pour ${reservationComposition(reservation)}`}
               </>
             ) : (
