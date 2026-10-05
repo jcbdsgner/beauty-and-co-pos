@@ -175,6 +175,8 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
   const [editingOpen, setEditingOpen] = useState(isCreate);
   const [person, setPerson] = useState(initialPeople[0]?.key ?? PAYER);
   const [query, setQuery] = useState("");
+  const [openCat, setOpenCat] = useState<string | null>(null);
+  const searching = query.trim() !== "";
   const [newClient, setNewClient] = useState<Partial<Record<"firstName" | "lastName" | "phone", string>> | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Réponses aux questions de catégorie, reprises des rendez-vous existants (prise en ligne ou
@@ -563,54 +565,88 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
                     aria-label="Rechercher une prestation"
                   />
 
-                  <div className="mt-3 max-h-[340px] overflow-y-auto rounded-field border border-base-300">
+                  <div className="mt-3 divide-y divide-base-300 rounded-field border border-base-300">
                     {groups.length === 0 ? (
                       <p className="px-4 py-6 text-center text-sm text-base-content/60">
                         Aucune prestation ne correspond à « {query.trim()} ».
                       </p>
                     ) : (
-                      groups.map((g) => (
-                        <div key={g.id}>
-                          <p className="sticky top-0 z-10 bg-base-200 px-4 py-2 text-xs font-semibold tracking-wide text-base-content/60 uppercase">
-                            {g.name}
-                          </p>
-                          <ul>
-                            {g.items.map((s) => {
-                              const checked = selectedIds.has(s.id);
-                              return (
-                                <li key={s.id}>
-                                  <label className="flex min-h-12 cursor-pointer items-center gap-3 border-t border-base-300 px-4 py-2 first:border-t-0 hover:bg-base-200/60">
-                                    <CheckboxPrimitive.Root
-                                      checked={checked}
-                                      onCheckedChange={() => toggle(s)}
-                                      className="checkbox checkbox-primary size-5 shrink-0 data-[state=checked]:border-primary data-[state=checked]:bg-primary"
-                                    >
-                                      <CheckboxPrimitive.Indicator>
-                                        <Check aria-hidden className="size-3.5 text-primary-content" strokeWidth={3} />
-                                      </CheckboxPrimitive.Indicator>
-                                    </CheckboxPrimitive.Root>
-                                    <span className="min-w-0 flex-1 text-[15px] text-base-content">
-                                      {s.name}
-                                      {s.twoPractitionersEligible && (
-                                        <span
-                                          title="Réalisable à 2 praticiennes"
-                                          className="ml-2 inline-flex translate-y-[-1px] items-center gap-1 align-middle text-xs font-medium whitespace-nowrap text-base-content/50"
-                                        >
-                                          <Users aria-hidden className="size-3.5" />à 2
-                                        </span>
-                                      )}
-                                    </span>
-                                    <span className="shrink-0 text-sm tabular-nums text-base-content/60">{durationLabel(s.durationMinutes)}</span>
-                                    <span className="w-28 shrink-0 text-right text-[15px] font-medium tabular-nums text-base-content">
-                                      {formatFcfa(s.price)}
-                                    </span>
-                                  </label>
-                                </li>
-                              );
-                            })}
-                          </ul>
-                        </div>
-                      ))
+                      groups.map((g) => {
+                        // Une seule catégorie ouverte à la fois ; une recherche ouvre toutes celles qui ont un résultat.
+                        const isOpen = searching || openCat === g.id;
+                        const chosen = personLines.filter((l) => byId.get(l.serviceId)?.categoryId === g.id).length;
+                        return (
+                          <div key={g.id}>
+                            <button
+                              type="button"
+                              aria-expanded={isOpen}
+                              disabled={searching}
+                              onClick={() => setOpenCat(isOpen ? null : g.id)}
+                              className={cn(
+                                "flex h-14 w-full items-center gap-3 px-4 text-left transition enabled:hover:bg-base-200/60",
+                                isOpen && "sticky top-0 z-10 border-b border-base-300 bg-base-200",
+                              )}
+                            >
+                              <span className="text-[16px] font-semibold text-base-content">{g.name}</span>
+                              {chosen > 0 && (
+                                <span className="rounded-full bg-accent px-2.5 py-0.5 text-sm font-semibold tabular-nums text-secondary">
+                                  {chosen}
+                                </span>
+                              )}
+                              {!searching && (
+                                <ChevronDown aria-hidden className={cn("ml-auto size-5 text-secondary transition", isOpen && "rotate-180")} />
+                              )}
+                            </button>
+                            {isOpen &&
+                              subGroups(g.items).map((sg) => (
+                                <div key={sg.name ?? "_"}>
+                                  {sg.name && (
+                                    <p className="px-4 pt-3 pb-1 text-xs font-semibold tracking-wide text-base-content/50 uppercase">
+                                      {sg.name}
+                                    </p>
+                                  )}
+                                  <ul>
+                                    {sg.items.map((s) => {
+                                      const checked = selectedIds.has(s.id);
+                                      return (
+                                        <li key={s.id}>
+                                          <label className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-2 hover:bg-base-200/60">
+                                            <CheckboxPrimitive.Root
+                                              checked={checked}
+                                              onCheckedChange={() => toggle(s)}
+                                              className="checkbox checkbox-primary size-5 shrink-0 data-[state=checked]:border-primary data-[state=checked]:bg-primary"
+                                            >
+                                              <CheckboxPrimitive.Indicator>
+                                                <Check aria-hidden className="size-3.5 text-primary-content" strokeWidth={3} />
+                                              </CheckboxPrimitive.Indicator>
+                                            </CheckboxPrimitive.Root>
+                                            <span className="min-w-0 flex-1 text-[15px] text-base-content">
+                                              {s.name}
+                                              {s.twoPractitionersEligible && (
+                                                <span
+                                                  title="Réalisable à 2 praticiennes"
+                                                  className="ml-2 inline-flex translate-y-[-1px] items-center gap-1 align-middle text-xs font-medium whitespace-nowrap text-base-content/50"
+                                                >
+                                                  <Users aria-hidden className="size-3.5" />à 2
+                                                </span>
+                                              )}
+                                            </span>
+                                            <span className="shrink-0 text-sm tabular-nums text-base-content/60">
+                                              {durationLabel(s.durationMinutes)}
+                                            </span>
+                                            <span className="w-28 shrink-0 text-right text-[15px] font-medium tabular-nums text-base-content">
+                                              {formatFcfa(s.price)}
+                                            </span>
+                                          </label>
+                                        </li>
+                                      );
+                                    })}
+                                  </ul>
+                                </div>
+                              ))}
+                          </div>
+                        );
+                      })
                     )}
                   </div>
                 </div>
@@ -904,6 +940,19 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
       )}
     </>
   );
+}
+
+/** Les prestations d'une catégorie rangées par sous-catégorie (Tissage, Brushing…), dans l'ordre
+ *  où le Menu les présente ; `name: null` pour celles qui n'en ont pas. */
+function subGroups(items: Service[]) {
+  const out: { name: string | null; items: Service[] }[] = [];
+  for (const s of items) {
+    const name = s.subcategory ?? null;
+    const group = out.find((g) => g.name === name);
+    if (group) group.items.push(s);
+    else out.push({ name, items: [s] });
+  }
+  return out;
 }
 
 /* ------------------------------------------------------------------ */
