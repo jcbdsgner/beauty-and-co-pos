@@ -855,12 +855,12 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
             )}
 
             {/* Bar Beauty : replié par défaut */}
-            <section aria-labelledby="rdv-boissons">
+            <section aria-labelledby="rdv-boissons" className="overflow-hidden rounded-box border border-base-300 bg-base-100">
               <button
                 type="button"
                 aria-expanded={barOpen}
                 onClick={() => setBarOpen((v) => !v)}
-                className="flex min-h-12 w-full items-center gap-2 text-left"
+                className="flex h-14 w-full items-center gap-2.5 px-4 text-left transition hover:bg-base-200/60"
               >
                 <CupSoda aria-hidden className="size-5 text-secondary" />
                 <span id="rdv-boissons" className="text-[17px] font-semibold text-base-content">
@@ -873,7 +873,7 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
               </button>
               {barOpen && (
                 <ExtraList
-                  className="mt-2"
+                  className="rounded-none border-t border-base-300 ring-0"
                   rows={BOISSONS.filter((b) => b.active || extraQty("boisson", b.id) > 0).map((b) => ({
                     id: b.id,
                     name: b.name,
