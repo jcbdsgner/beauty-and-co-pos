@@ -402,7 +402,7 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
 
         <header className="shrink-0 px-8 pt-7 pb-5">
           <h2 id="resched-title" className="text-[24px] font-semibold tracking-[-0.01em] text-base-content">
-            {isCreate ? "Nouveau rendez-vous" : "Reprogrammer le rendez-vous"}
+            {isCreate ? "Nouveau rendez-vous" : "Modifier le rendez-vous"}
           </h2>
           <p className="mt-1 text-[15px] text-base-content/60">
             {!isCreate
@@ -783,7 +783,7 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
             Annuler
           </Button>
           <Button disabled={!canConfirm} onClick={confirm}>
-            {isCreate ? "Créer le rendez-vous" : "Confirmer la reprogrammation"}
+            {isCreate ? "Créer le rendez-vous" : "Confirmer la modification"}
           </Button>
         </footer>
       </Dialog>
