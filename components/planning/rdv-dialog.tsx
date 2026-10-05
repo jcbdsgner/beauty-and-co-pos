@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
-import { CalendarDays, Check, ChevronDown, CupSoda, MapPin, Plus, Scissors, UserRound, Users, X } from "lucide-react";
+import { CalendarDays, Check, ChevronDown, MapPin, Plus, UserRound, Users, X } from "lucide-react";
 import { Dialog } from "@/components/ui/molecules/dialog";
 import { DatePicker } from "@/components/ui/molecules/date-picker";
 import { CloseButton } from "@/components/ui/atoms/icon-button";
@@ -206,8 +206,6 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
   const extraPrice = (x: ReservationExtra) =>
     (x.kind === "boisson" ? boissonById(x.refId)?.price : produitById(x.refId)?.price) ?? 0;
   const extrasTotal = extras.reduce((sum, x) => sum + extraPrice(x) * x.qty, 0);
-  const drinkCount = extras.filter((x) => x.kind === "boisson").reduce((n, x) => n + x.qty, 0);
-  const [barOpen, setBarOpen] = useState(false);
   const [staffNote, setStaffNote] = useState(initialStaffNote);
   const answer = (personKey: string, categoryId: string, questionId: string, value: string) =>
     setAnswers((prev) => {
@@ -779,7 +777,7 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
             <section aria-labelledby="rdv-duo">
               <div className="flex items-center gap-3">
                 <span id="rdv-duo" className="flex min-w-0 flex-1 items-center gap-2 text-[17px] font-semibold text-base-content">
-                  <Users aria-hidden className="size-5 text-secondary" />2 praticiennes
+                  2 praticiennes
                 </span>
                 <Switch checked={duo} onChange={setDuo} disabled={duoEligible.length === 0 && !duo} label="2 praticiennes" />
               </div>
@@ -839,53 +837,32 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
               </section>
             )}
 
-            {/* Extensions : quand une cliente coiffure n'apporte pas les siennes */}
+            {/* Extensions : quand une cliente coiffure n'apporte pas les siennes — déplié, il y a à choisir */}
             {showExtensions && (
-              <section aria-labelledby="rdv-extensions">
-                <h3 id="rdv-extensions" className="mb-3 flex items-center gap-2 text-[17px] font-semibold text-base-content">
-                  <Scissors aria-hidden className="size-5 text-secondary" />
-                  Extensions
-                </h3>
-                <ExtraList
-                  rows={extensionProducts.map((p) => ({ id: p.id, name: p.name, price: p.price, image: p.image }))}
-                  qty={(id) => extraQty("produit", id)}
-                  onQty={(id, q) => setExtraQty("produit", id, q)}
-                />
-              </section>
+              <ExtraBlock
+                id="rdv-extensions"
+                title="Extensions"
+                defaultOpen
+                rows={extensionProducts.map((p) => ({ id: p.id, name: p.name, price: p.price, image: p.image }))}
+                qty={(id) => extraQty("produit", id)}
+                onQty={(id, q) => setExtraQty("produit", id, q)}
+              />
             )}
 
             {/* Bar Beauty : replié par défaut */}
-            <section aria-labelledby="rdv-boissons" className="overflow-hidden rounded-box border border-base-300 bg-base-100">
-              <button
-                type="button"
-                aria-expanded={barOpen}
-                onClick={() => setBarOpen((v) => !v)}
-                className="flex h-14 w-full items-center gap-2.5 px-4 text-left transition hover:bg-base-200/60"
-              >
-                <CupSoda aria-hidden className="size-5 text-secondary" />
-                <span id="rdv-boissons" className="text-[17px] font-semibold text-base-content">
-                  Bar Beauty
-                </span>
-                {drinkCount > 0 && (
-                  <span className="rounded-full bg-accent px-2.5 py-0.5 text-sm font-semibold tabular-nums text-secondary">{drinkCount}</span>
-                )}
-                <ChevronDown aria-hidden className={cn("ml-auto size-5 text-secondary transition", barOpen && "rotate-180")} />
-              </button>
-              {barOpen && (
-                <ExtraList
-                  className="rounded-none border-t border-base-300 ring-0"
-                  rows={BOISSONS.filter((b) => b.active || extraQty("boisson", b.id) > 0).map((b) => ({
-                    id: b.id,
-                    name: b.name,
-                    price: b.price,
-                    image: b.image,
-                    detail: b.description,
-                  }))}
-                  qty={(id) => extraQty("boisson", id)}
-                  onQty={(id, q) => setExtraQty("boisson", id, q)}
-                />
-              )}
-            </section>
+            <ExtraBlock
+              id="rdv-boissons"
+              title="Bar Beauty"
+              rows={BOISSONS.filter((b) => b.active || extraQty("boisson", b.id) > 0).map((b) => ({
+                id: b.id,
+                name: b.name,
+                price: b.price,
+                image: b.image,
+                detail: b.description,
+              }))}
+              qty={(id) => extraQty("boisson", id)}
+              onQty={(id, q) => setExtraQty("boisson", id, q)}
+            />
 
             {/* Notes libres de la réceptionniste */}
             <section aria-labelledby="rdv-note">
@@ -967,8 +944,46 @@ function subGroups(items: Service[]) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Extensions et boissons : une liste à quantités                      */
+/* Extensions et boissons : un bloc encadré, repliable, à quantités    */
 /* ------------------------------------------------------------------ */
+
+function ExtraBlock({
+  id,
+  title,
+  defaultOpen = false,
+  rows,
+  qty,
+  onQty,
+}: {
+  id: string;
+  title: string;
+  defaultOpen?: boolean;
+  rows: ExtraRow[];
+  qty: (id: string) => number;
+  onQty: (id: string, q: number) => void;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  const count = rows.reduce((n, r) => n + qty(r.id), 0);
+  return (
+    <section aria-labelledby={id} className="overflow-hidden rounded-box border border-base-300 bg-base-100">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="flex h-14 w-full items-center gap-2.5 px-4 text-left transition hover:bg-base-200/60"
+      >
+        <span id={id} className="text-[17px] font-semibold text-base-content">
+          {title}
+        </span>
+        {count > 0 && (
+          <span className="rounded-full bg-accent px-2.5 py-0.5 text-sm font-semibold tabular-nums text-secondary">{count}</span>
+        )}
+        <ChevronDown aria-hidden className={cn("ml-auto size-5 text-secondary transition", open && "rotate-180")} />
+      </button>
+      {open && <ExtraList className="rounded-none border-t border-base-300 ring-0" rows={rows} qty={qty} onQty={onQty} />}
+    </section>
+  );
+}
 
 type ExtraRow = { id: string; name: string; price: number; image?: string; detail?: string };
 
