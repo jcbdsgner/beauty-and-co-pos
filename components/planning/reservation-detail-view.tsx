@@ -20,7 +20,6 @@ import { salonById } from "@/lib/data/entreprises";
 import { boissonById } from "@/lib/data/boissons";
 import { produitById, serviceById } from "@/lib/data/menu";
 import {
-  appointmentEndTime,
   reservationById,
   reservationComposition,
   reservationDate,
@@ -37,7 +36,6 @@ import {
   formatDuration,
   formatShortDay,
   reservationFigures,
-  type BeneficiaryGroup,
 } from "@/components/planning/reservation-parts";
 
 const DEPOSIT_MODE_LABEL: Record<DepositMode, string> = {
@@ -55,11 +53,6 @@ function formatLongDay(iso: string): string {
 
 function formatStamp(iso: string): string {
   return new Date(iso).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-}
-
-function currentMinute(): number {
-  const d = new Date();
-  return d.getHours() * 60 + d.getMinutes();
 }
 
 /** Carte de la page — titre court en phrase (pas de surtitre capitales), méta à droite. */
@@ -102,110 +95,6 @@ function StaffAvatars({ rv, praticiennes, size }: { rv: RendezVous; praticiennes
   );
 }
 
-/**
- * Frise de la réservation : une rangée par bénéficiaire, un bloc par rendez-vous posé sur l'axe
- * horaire — ce que le panneau ne sait pas montrer : qui passe en même temps que qui, et chez quelle
- * praticienne. Filet ambre « maintenant » si la réservation est du jour (le seul signal, DESIGN.md).
- */
-function ReservationTimeline({
-  groups,
-  praticiennes,
-  coveredIds,
-  isToday,
-}: {
-  groups: BeneficiaryGroup[];
-  praticiennes: Praticienne[];
-  coveredIds: Set<string>;
-  isToday: boolean;
-}) {
-  const all = groups.flatMap((g) => g.lines);
-  const start = Math.floor(Math.min(...all.map((rv) => timeToMinutes(rv.start))) / 60) * 60;
-  const end = Math.ceil(Math.max(...all.map((rv) => timeToMinutes(appointmentEndTime(rv)))) / 60) * 60;
-  const span = Math.max(60, end - start);
-  const pct = (m: number) => `${((m - start) / span) * 100}%`;
-  const ticks: number[] = [];
-  for (let m = start; m <= start + span; m += 30) ticks.push(m);
-  const now = currentMinute();
-  const showNow = isToday && now >= start && now <= start + span;
-
-  return (
-    <div className="px-4 pt-1 pb-2">
-      <div className="flex">
-        <div className="w-44 shrink-0" />
-        <div className="relative mr-6 h-6 flex-1">
-          {ticks.map((m) => (
-            <span
-              key={m}
-              className={cn(
-                "absolute top-1 -translate-x-1/2 text-[11px] tabular-nums",
-                m % 60 === 0 ? "font-semibold text-base-content/75" : "text-base-content/55",
-              )}
-              style={{ left: pct(m) }}
-            >
-              {fmtMin(m)}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {groups.map((g) => (
-        <div key={g.key} className="flex items-center border-t border-base-300/70">
-          <div className="flex w-44 shrink-0 items-center gap-1.5 py-2 pr-3">
-            <span className="truncate text-sm font-medium text-base-content">{g.label}</span>
-            {g.kind !== "femme" && (
-              <span className="shrink-0 rounded-sm bg-[var(--brand-rose-soft)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--brand-taupe-muted)]">
-                {g.kind === "homme" ? "Homme" : "Enfant"}
-              </span>
-            )}
-          </div>
-          <div className="relative mr-6 h-14 flex-1">
-            {ticks.map((m) => (
-              <span
-                key={m}
-                aria-hidden
-                className={cn("absolute inset-y-0 w-px", m % 60 === 0 ? "bg-base-300" : "bg-base-300/40")}
-                style={{ left: pct(m) }}
-              />
-            ))}
-            {g.lines.map((rv) => {
-              const s = timeToMinutes(rv.start);
-              const e = timeToMinutes(appointmentEndTime(rv));
-              const service = serviceById(rv.serviceId);
-              const voided = rv.status === "annule";
-              const covered = coveredIds.has(rv.id);
-              return (
-                <div
-                  key={rv.id}
-                  title={`${service?.name ?? "Prestation"} · ${rv.start}–${appointmentEndTime(rv)} · ${staffNames(rv, praticiennes)}`}
-                  className={cn(
-                    "absolute inset-y-1.5 flex min-w-0 items-center gap-2 overflow-hidden rounded-field border px-2",
-                    voided
-                      ? "border-dashed border-base-300 bg-base-100 text-base-content/45 line-through"
-                      : covered
-                        ? "border-base-300 bg-base-200 text-base-content"
-                        : "border-primary/35 bg-[var(--brand-rose-soft)] text-base-content",
-                  )}
-                  style={{ left: `calc(${pct(s)} + 2px)`, width: `calc(${((e - s) / span) * 100}% - 4px)` }}
-                >
-                  <StaffAvatars rv={rv} praticiennes={praticiennes} size={22} />
-                  <span className="min-w-0 leading-tight">
-                    <span className="block truncate text-xs font-semibold">{service?.name ?? "Prestation"}</span>
-                    <span className="block truncate text-[11px] text-base-content/65">
-                      {rv.start}–{appointmentEndTime(rv)} · {staffNames(rv, praticiennes)}
-                    </span>
-                  </span>
-                </div>
-              );
-            })}
-            {showNow && <span aria-hidden className="absolute inset-y-0 w-0.5 bg-[var(--board-amber)]" style={{ left: pct(now) }} />}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/** A label/value line of the invoice foot. */
 function SumRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-baseline justify-between gap-6 py-0.5 text-sm">
@@ -269,7 +158,6 @@ export function ReservationDetailView({ reservationId }: { reservationId: string
     ...groups.flatMap((g) => (g.client && g.client.id !== payer?.id ? [g.client] : [])),
   ];
   const salons = [...new Set(lines.map((rv) => rv.salonId))].map((id) => salonById(id)?.name ?? id);
-  const staffCount = new Set(lines.flatMap((rv) => [rv.staffId, rv.secondStaffId].filter(Boolean))).size;
   const date = reservationDate(reservation);
   const cancelReason = lines.find((rv) => rv.cancelReason)?.cancelReason;
 
@@ -396,25 +284,6 @@ export function ReservationDetailView({ reservationId }: { reservationId: string
               <span className="font-semibold">Note de la cliente · </span>
               {reservation.note}
             </p>
-          )}
-
-          {lines.length > 0 && (
-            <Panel
-              title="Déroulé"
-              meta={
-                <>
-                  {lines.length} prestation{lines.length > 1 ? "s" : ""} · {staffCount} praticienne{staffCount > 1 ? "s" : ""} ·{" "}
-                  {formatDuration(rangeEnd - rangeStart)}
-                </>
-              }
-            >
-              <ReservationTimeline
-                groups={groups}
-                praticiennes={praticiennes}
-                coveredIds={new Set(coverage.keys())}
-                isToday={date === todayISO()}
-              />
-            </Panel>
           )}
 
           <Panel title="Détail et règlement" meta={deposit > 0 ? `Acompte de ${formatFcfa(deposit)} déjà versé` : undefined}>
