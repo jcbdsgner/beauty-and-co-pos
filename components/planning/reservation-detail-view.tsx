@@ -305,7 +305,7 @@ export function ReservationDetailView({ reservationId }: { reservationId: string
 
           {reservation.staffNote && (
             <p className="rounded-box border border-primary/25 bg-[var(--brand-rose-soft)] px-4 py-2.5 text-sm whitespace-pre-line text-base-content">
-              <span className="font-semibold">Note de l&apos;accueil · </span>
+              <span className="font-semibold">Notes · </span>
               {reservation.staffNote}
             </p>
           )}

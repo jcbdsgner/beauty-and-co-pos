@@ -149,7 +149,7 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
               )}
               {reservation.staffNote && (
                 <p className="text-sm whitespace-pre-line text-base-content">
-                  <span className="font-semibold">Note de l&apos;accueil · </span>
+                  <span className="font-semibold">Notes · </span>
                   {reservation.staffNote}
                 </p>
               )}

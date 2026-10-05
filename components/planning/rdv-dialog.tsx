@@ -741,10 +741,10 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
             </section>
           )}
 
-          {/* Note libre de la réceptionniste */}
+          {/* Notes libres de la réceptionniste */}
           <section aria-labelledby="rdv-note">
             <h3 id="rdv-note" className="mb-3 text-[17px] font-semibold text-base-content">
-              Note de l&apos;accueil
+              Notes
             </h3>
             {reservation?.note && (
               <p className="mb-3 rounded-box bg-base-200 px-4 py-2.5 text-sm text-base-content">
@@ -757,7 +757,7 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
               onChange={(e) => setStaffNote(e.target.value)}
               rows={3}
               aria-labelledby="rdv-note"
-              placeholder="Ex. arrive avec sa fille, préfère Fatou, allergie précisée au téléphone…"
+              placeholder="Ajouter une note sur ce rendez-vous"
             />
           </section>
         </div>
