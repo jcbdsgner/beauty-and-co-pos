@@ -863,10 +863,11 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
               />
             )}
 
-            {/* Bar Beauty : replié par défaut */}
+            {/* Bar Beauty : déplié à la création, replié à la modification */}
             <ExtraBlock
               id="rdv-boissons"
               title="Bar Beauty"
+              defaultOpen={isCreate}
               rows={BOISSONS.filter((b) => b.active || extraQty("boisson", b.id) > 0).map((b) => ({
                 id: b.id,
                 name: b.name,
