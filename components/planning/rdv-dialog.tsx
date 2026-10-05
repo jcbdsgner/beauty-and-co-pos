@@ -2,12 +2,13 @@
 
 import { useMemo, useState } from "react";
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
-import { CalendarDays, Check, ChevronDown, MapPin, Plus, UserRound, X } from "lucide-react";
+import { CalendarDays, Check, ChevronDown, MapPin, Plus, UserRound, Users, X } from "lucide-react";
 import { Dialog } from "@/components/ui/molecules/dialog";
 import { DatePicker } from "@/components/ui/molecules/date-picker";
 import { CloseButton } from "@/components/ui/atoms/icon-button";
 import { Button } from "@/components/ui/atoms/button";
 import { SearchInput } from "@/components/ui/atoms/search-input";
+import { Switch } from "@/components/ui/atoms/switch";
 import { NewClientDialog } from "@/components/clientele/new-client-dialog";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { cn, formatFcfa } from "@/lib/utils";
@@ -17,7 +18,7 @@ import { SERVICES, SERVICE_CATEGORIES, serviceOfferedAt } from "@/lib/data/menu"
 import { isSalonClosed } from "@/lib/data/praticiennes";
 import { SALON_CLOSING, SALON_OPENING, dateISO, reservationById, reservationDate, todayISO } from "@/lib/data/planning";
 import type { Cliente, RendezVous, Service } from "@/lib/data/types";
-import { alternativesFor, availableTimes, planAt, type PlanContext, type PlanItem } from "@/lib/prise-rdv/planifier";
+import { availableTimes, planAt, type PlanContext, type PlanItem } from "@/lib/prise-rdv/planifier";
 import { POSTE_SALON_ID } from "@/lib/session";
 
 // Le bloc unique de rendez-vous, recopié du back-office (`rendezvous/RdvDialog`) :
@@ -25,7 +26,9 @@ import { POSTE_SALON_ID } from "@/lib/session";
 // (« Modifier », avec `reservationId`) sont la même fenêtre — date, salon, horaire
 // et les prestations par personne. La création ajoute seulement le choix de la
 // cliente, en tête. Les praticiennes suivent (affectation automatique) : à la
-// reprogrammation, l'actuelle est gardée si elle reste libre.
+// reprogrammation, l'actuelle est gardée si elle reste libre. Une prestation
+// « réalisable à 2 » se fait, au choix ligne par ligne, avec 2 praticiennes :
+// durée divisée par deux, et seuls les horaires où deux sont libres ensemble.
 // 1. Elle arrive souvent au téléphone (« la cliente veut samedi ») : les
 //    choix dans l'ordre où on les dicte.
 // 2. Ce qui compte : les horaires réellement libres ce jour-là, dans ce salon,
@@ -62,8 +65,8 @@ const fold = (s: string) =>
 
 // Une ligne en cours d'édition : un rendez-vous existant (gardé tel quel,
 // praticienne comprise si elle reste libre) ou une prestation du Menu ajoutée
-// pour une personne.
-type Line = { key: string; personKey: string; serviceId: string; existing?: RendezVous };
+// pour une personne. `duo` : faite à 2 praticiennes (prestation « réalisable à 2 » seulement).
+type Line = { key: string; personKey: string; serviceId: string; duo: boolean; existing?: RendezVous };
 
 // `source` : un rendez-vous existant de la personne (reprogrammation) ; absent
 // pour la payeuse d'un nouveau rendez-vous ou une personne ajoutée.
@@ -143,7 +146,14 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
   }, []);
 
   const initialLines = useMemo<Line[]>(
-    () => initial.rvs.map((rv) => ({ key: rv.id, personKey: personKeyOf(rv), serviceId: rv.serviceId, existing: rv })),
+    () =>
+      initial.rvs.map((rv) => ({
+        key: rv.id,
+        personKey: personKeyOf(rv),
+        serviceId: rv.serviceId,
+        duo: Boolean(rv.secondStaffId),
+        existing: rv,
+      })),
     [initial],
   );
 
@@ -164,9 +174,16 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
   const categoryName = (categoryId: string) =>
     SERVICE_CATEGORIES.find((c) => c.id === categoryId)?.name ?? "Autres prestations";
 
-  // Durée d'une ligne : celle du rendez-vous pour une ligne gardée (« à deux »
-  // déjà divisée), celle du Menu pour une ligne ajoutée.
-  const lineDuration = (l: Line) => l.existing?.durationMin ?? byId.get(l.serviceId)?.durationMinutes ?? 0;
+  // Durée seule d'une ligne : celle du rendez-vous pour une ligne gardée (celle
+  // du Menu si elle était « à deux », sa durée y étant déjà divisée), celle du
+  // Menu pour une ligne ajoutée. `lineDuration` : la durée réelle, à deux comprise.
+  const soloDuration = (l: Line) => {
+    const menu = byId.get(l.serviceId)?.durationMinutes;
+    if (l.existing && !l.existing.secondStaffId) return l.existing.durationMin;
+    return menu ?? (l.existing ? l.existing.durationMin * 2 : 0);
+  };
+  const lineDuration = (l: Line) => (l.duo ? Math.round(soloDuration(l) / 2) : soloDuration(l));
+  const canDuo = (l: Line) => Boolean(byId.get(l.serviceId)?.twoPractitionersEligible);
   const linePrice = (l: Line) => byId.get(l.serviceId)?.price ?? 0;
   const lineName = (l: Line) => byId.get(l.serviceId)?.name ?? "Prestation";
 
@@ -181,11 +198,17 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
     personId: l.personKey,
     serviceId: l.serviceId,
     categoryId: byId.get(l.serviceId)?.categoryId ?? "",
-    durationMinutes: lineDuration(l),
-    twoPractitionersEligible: false,
+    durationMinutes: soloDuration(l),
+    // Le planificateur divise et demande 2 praticiennes pour les lignes marquées : ici, celles
+    // passées « à deux » (`planAt(…, true)`), pas toutes les éligibles.
+    twoPractitionersEligible: l.duo && canDuo(l),
   }));
-  // L'intervenante actuelle est gardée tant qu'elle reste libre.
-  const overrides = Object.fromEntries(lines.filter((l) => l.existing).map((l) => [l.key, [l.existing!.staffId]]));
+  // Les intervenantes actuelles sont gardées tant qu'elles restent libres.
+  const overrides = Object.fromEntries(
+    lines
+      .filter((l) => l.existing)
+      .map((l) => [l.key, [l.existing!.staffId, ...(l.existing!.secondStaffId ? [l.existing!.secondStaffId] : [])]]),
+  );
 
   // Prestations que le salon choisi ne propose pas : bloquant, dit en clair.
   const notOffered = lines.filter((l) => {
@@ -196,7 +219,7 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
   const opening = openingLabel(salon, day);
   const itemsKey = JSON.stringify(items);
   const times = useMemo(
-    () => (opening && notOffered.length === 0 ? availableTimes(ctx, items, false) : []),
+    () => (opening && notOffered.length === 0 ? availableTimes(ctx, items, true) : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [ctx, opening, notOffered.length, itemsKey],
   );
@@ -210,7 +233,9 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
   })();
   const totalPrice = lines.reduce((s, l) => s + linePrice(l), 0);
 
-  const sameLines = lines.length === initialLines.length && lines.every((l, i) => l.key === initialLines[i].key);
+  const duoCount = lines.filter((l) => l.duo).length;
+  const sameLines =
+    lines.length === initialLines.length && lines.every((l, i) => l.key === initialLines[i].key && l.duo === initialLines[i].duo);
   const dirty = isCreate || day !== currentDay || salon !== initial.salon || chosenTime !== currentTime || !sameLines;
   const canConfirm =
     (!isCreate || Boolean(client)) && Boolean(chosenTime) && lines.length > 0 && notOffered.length === 0 && dirty;
@@ -256,8 +281,9 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
     }
     // Une ligne retirée puis recochée retrouve sa place (et sa praticienne).
     const original = initialLines.find((l) => l.personKey === person && l.serviceId === s.id);
-    setLines((list) => [...list, original ?? { key: newLineId(), personKey: person, serviceId: s.id }]);
+    setLines((list) => [...list, original ?? { key: newLineId(), personKey: person, serviceId: s.id, duo: false }]);
   };
+  const setDuo = (key: string, duo: boolean) => setLines((list) => list.map((l) => (l.key === key ? { ...l, duo } : l)));
 
   const groups = useMemo(() => {
     const q = fold(query.trim());
@@ -277,7 +303,7 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
 
   const confirm = () => {
     if (!chosenTime || !client) return;
-    const plan = planAt(ctx, items, chosenTime, false, overrides, pickedSlot?.staffId);
+    const plan = planAt(ctx, items, chosenTime, true, overrides, pickedSlot?.staffId);
     if (!plan) return;
     const result = saveParcoursReservation({
       reservationId: reservation?.id,
@@ -286,13 +312,7 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
       salonId: salon,
       lines: plan.map((pl) => {
         const line = lines.find((l) => l.key === pl.key)!;
-        const staffId = pl.staffIds[0];
-        // 2ᵉ praticienne d'une prestation « à deux » : gardée si elle reste libre.
-        const second = line.existing?.secondStaffId;
-        const keepSecond =
-          second && second !== staffId && alternativesFor(ctx, plan, pl, items.find((i) => i.key === pl.key)!.categoryId).some((alt) => alt.id === second)
-            ? second
-            : undefined;
+        const [staffId, secondStaffId] = pl.staffIds;
         const personIndex = people.findIndex((x) => x.key === line.personKey);
         const target = people[personIndex];
         const who = line.existing ?? target?.source;
@@ -301,7 +321,7 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
           staffId,
           start: pl.start,
           durationMin: pl.durationMin,
-          ...(keepSecond ? { secondStaffId: keepSecond } : {}),
+          ...(secondStaffId ? { secondStaffId } : {}),
           ...(target?.added
             ? { beneficiaryName: addedName(target, personIndex) }
             : who
@@ -430,7 +450,10 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
             ) : times.length === 0 ? (
               <p className="rounded-box bg-base-200 px-4 py-4 text-[15px] text-base-content/70">
                 Aucun horaire libre ce jour-là pour {lines.length > 1 ? "ces prestations" : "cette prestation"} : les praticiennes
-                compétentes sont absentes ou déjà prises. Essayez un autre jour ou l&apos;autre salon.
+                compétentes sont absentes ou déjà prises.{" "}
+                {duoCount > 0
+                  ? "À 2 praticiennes, il en faut deux libres en même temps : repassez à une seule dans « Prestations » ou essayez un autre jour."
+                  : "Essayez un autre jour ou l'autre salon."}
               </p>
             ) : (
               <div className="space-y-3">
@@ -490,7 +513,7 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
                 <span className="block truncate text-sm text-base-content/60">
                   {lines.length === 0
                     ? "Aucune prestation"
-                    : `${lines.length} prestation${lines.length > 1 ? "s" : ""} · ${durationLabel(totalMin)} · ${formatFcfa(totalPrice)}`}
+                    : `${lines.length} prestation${lines.length > 1 ? "s" : ""}${duoCount > 0 ? ` dont ${duoCount} à 2 praticiennes` : ""} · ${durationLabel(totalMin)} · ${formatFcfa(totalPrice)}`}
                   {!sameLines && !isCreate && " · modifiées"}
                 </span>
               </span>
@@ -548,23 +571,46 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
                 )}
 
                 {personLines.length > 0 && (
-                  <ul className="mb-4 flex flex-wrap gap-2" aria-label="Prestations choisies">
-                    {personLines.map((l) => (
-                      <li
-                        key={l.key}
-                        className="inline-flex items-center gap-2 rounded-full bg-accent py-1.5 pr-1.5 pl-3.5 text-sm font-medium text-secondary"
-                      >
-                        {lineName(l)}
-                        <button
-                          type="button"
-                          aria-label={`Retirer ${lineName(l)}`}
-                          onClick={() => setLines((list) => list.filter((x) => x.key !== l.key))}
-                          className="flex size-6 items-center justify-center rounded-full text-secondary/70 hover:bg-base-100 hover:text-secondary"
-                        >
-                          <X aria-hidden className="size-3.5" strokeWidth={2.5} />
-                        </button>
-                      </li>
-                    ))}
+                  <ul className="mb-4 divide-y divide-base-300 rounded-field bg-accent" aria-label="Prestations choisies">
+                    {personLines.map((l) => {
+                      const eligible = canDuo(l);
+                      return (
+                        <li key={l.key} className="flex min-h-14 items-center gap-3 py-1 pr-1 pl-4">
+                          <span className="min-w-0 flex-1 py-2">
+                            <span className="block text-[15px] font-medium text-base-content">{lineName(l)}</span>
+                            <span className="block text-sm tabular-nums text-secondary">
+                              {l.duo ? (
+                                <>
+                                  <s className="mr-1.5 text-secondary/60">{durationLabel(soloDuration(l))}</s>
+                                  {durationLabel(lineDuration(l))}
+                                </>
+                              ) : (
+                                durationLabel(lineDuration(l))
+                              )}
+                            </span>
+                          </span>
+                          {eligible && (
+                            <label className="flex shrink-0 items-center gap-0.5 pl-2 text-sm font-medium text-secondary">
+                              <Users aria-hidden className="size-4" />
+                              <span className="ml-1">2 praticiennes</span>
+                              <Switch
+                                checked={l.duo}
+                                onChange={(on) => setDuo(l.key, on)}
+                                label={`${lineName(l)} à 2 praticiennes`}
+                              />
+                            </label>
+                          )}
+                          <button
+                            type="button"
+                            aria-label={`Retirer ${lineName(l)}`}
+                            onClick={() => setLines((list) => list.filter((x) => x.key !== l.key))}
+                            className="flex size-12 shrink-0 items-center justify-center rounded-full text-secondary/70 hover:bg-base-100 hover:text-secondary"
+                          >
+                            <X aria-hidden className="size-4" strokeWidth={2.5} />
+                          </button>
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
 
@@ -601,7 +647,18 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
                                       <Check aria-hidden className="size-3.5 text-primary-content" strokeWidth={3} />
                                     </CheckboxPrimitive.Indicator>
                                   </CheckboxPrimitive.Root>
-                                  <span className="min-w-0 flex-1 text-[15px] text-base-content">{s.name}</span>
+                                  <span className="min-w-0 flex-1 text-[15px] text-base-content">
+                                    {s.name}
+                                    {s.twoPractitionersEligible && (
+                                      <span
+                                        title="Réalisable à 2 praticiennes"
+                                        className="ml-2 inline-flex translate-y-[-1px] items-center gap-1 align-middle text-xs font-medium whitespace-nowrap text-base-content/50"
+                                      >
+                                        <Users aria-hidden className="size-3.5" />
+                                        à 2
+                                      </span>
+                                    )}
+                                  </span>
                                   <span className="shrink-0 text-sm tabular-nums text-base-content/60">{durationLabel(s.durationMinutes)}</span>
                                   <span className="w-28 shrink-0 text-right text-[15px] font-medium tabular-nums text-base-content">
                                     {formatFcfa(s.price)}

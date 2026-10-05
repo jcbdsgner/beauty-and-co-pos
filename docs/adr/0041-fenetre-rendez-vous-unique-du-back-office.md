@@ -24,6 +24,12 @@ choisir la cliente en haut ». Le back-office venait de fondre « Nouveau rendez
 - Praticiennes posées d'office (`planAt`) ; à la reprogrammation l'actuelle — et la 2ᵉ d'une
   prestation « à deux » — est gardée si elle reste libre. Prestation retirée ⇒ rendez-vous annulé
   (`saveParcoursReservation`, inchangé).
+- **Rév. 05/10 — « 2 praticiennes » par prestation.** Chaque prestation choisie « réalisable à 2 »
+  (`twoPractitionersEligible`, 76/106, verbatim b&co) porte un interrupteur « 2 praticiennes »,
+  éteint par défaut : durée divisée par deux, et seuls les horaires où deux praticiennes du métier
+  sont libres ensemble restent proposés. Choix ligne par ligne (le site b&co, lui, a un interrupteur
+  global côté cliente). Le Menu de la fenêtre marque les éligibles « à 2 ». À la reprogrammation,
+  une ligne déjà à deux s'ouvre allumée ; passée à deux, elle garde sa praticienne et en reçoit une 2ᵉ.
 - Head spa, soins visage, épilation, spa : Almadies seulement (`serviceOfferedAt`), dit en clair.
 
 ## Conséquences

@@ -93,8 +93,8 @@ function lineDuration(item: PlanItem, twoPractitioners: boolean) {
 
 /**
  * Pose toutes les prestations à partir de `start` : chaque personne enchaîne les siennes, les
- * personnes sont servies en parallèle (même lecture que le site). `overrides` garde le choix
- * manuel d'une ligne tant qu'il reste libre ; sinon `preferredStaffId` si libre, puis la moins chargée du jour. `null` ⇒ horaire
+ * personnes sont servies en parallèle (même lecture que le site). `overrides` garde les praticiennes
+ * d'une ligne tant qu'elles restent libres ; le reste vient de `preferredStaffId` si libre, puis des moins chargées du jour. `null` ⇒ horaire
  * impossible (pas assez de praticiennes libres).
  */
 export function planAt(
@@ -120,22 +120,23 @@ export function planAt(
       if (iv.end > CLOSING) return null;
       const need = twoPractitioners && item.twoPractitionersEligible ? 2 : 1;
       const free = freeStaff(ctx, busy, item.categoryId, iv);
-      const wanted = overrides[item.key];
-      let chosen: string[];
-      if (wanted && wanted.length === need && wanted.every((id) => free.some((p) => p.id === id))) {
-        chosen = wanted;
-      } else {
-        if (free.length < need) return null;
-        chosen = [...free]
+      if (free.length < need) return null;
+      // Les praticiennes voulues encore libres d'abord (une prestation passée « à deux » garde la
+      // sienne et en reçoit une 2ᵉ), complétées par la préférée puis les moins chargées.
+      const wanted = (overrides[item.key] ?? []).filter((id) => free.some((p) => p.id === id)).slice(0, need);
+      const chosen = [
+        ...wanted,
+        ...[...free]
+          .filter((p) => !wanted.includes(p.id))
           .sort(
             (a, b) =>
               Number(b.id === preferredStaffId) - Number(a.id === preferredStaffId) ||
               (load.get(a.id) ?? 0) - (load.get(b.id) ?? 0) ||
               a.name.localeCompare(b.name),
           )
-          .slice(0, need)
-          .map((p) => p.id);
-      }
+          .slice(0, need - wanted.length)
+          .map((p) => p.id),
+      ];
       for (const id of chosen) {
         busy.set(id, [...(busy.get(id) ?? []), iv]);
         load.set(id, (load.get(id) ?? 0) + durationMin);
