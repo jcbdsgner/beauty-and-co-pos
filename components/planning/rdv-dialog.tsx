@@ -296,6 +296,8 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
       perPerson.set(l.personKey, (perPerson.get(l.personKey) ?? 0) + (canDuo(l) ? Math.round(soloDuration(l) / 2) : soloDuration(l)));
     return Math.max(0, ...perPerson.values());
   })();
+  // Ce que le bloc annonce : le plan réel à l'horaire choisi quand l'option est allumée, sinon le meilleur cas.
+  const duoGainMin = duo && plan ? totalMin : duoBestMin;
   const totalPrice = lines.reduce((s, l) => s + linePrice(l), 0) + extrasTotal;
 
   const sameLines = lines.length === initialLines.length && lines.every((l, i) => l.key === initialLines[i].key);
@@ -802,10 +804,10 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
                   <span id="rdv-duo" className="block text-[17px] font-semibold text-base-content">
                     2 praticiennes
                   </span>
-                  {duoEligible.length > 0 && duoBestMin < soloTotalMin && (
+                  {duoEligible.length > 0 && duoGainMin < soloTotalMin && (
                     <span className="block text-[15px] tabular-nums text-base-content/70">
                       {durationLabel(soloTotalMin)} →{" "}
-                      <span className="font-semibold text-secondary">{durationLabel(duo && plan ? totalMin : duoBestMin)}</span>
+                      <span className="font-semibold text-secondary">{durationLabel(duoGainMin)}</span>
                     </span>
                   )}
                 </span>
