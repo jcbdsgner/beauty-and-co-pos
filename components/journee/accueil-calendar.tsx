@@ -131,7 +131,7 @@ function pack(rows: ReservationDayRow[], gridStart: number): { placed: Placed[];
     bottom = Math.max(bottom, top + height);
     return { row, services, top, height, lane };
   });
-  return { placed, lanes: Math.max(1, laneEnds.length), bottom };
+  return { placed, lanes: laneEnds.length, bottom };
 }
 
 export function AccueilCalendar({ rows, clients, praticiennes, onOpenReservation, day, onPickSlot }: Props) {
@@ -148,6 +148,9 @@ export function AccueilCalendar({ rows, clients, praticiennes, onOpenReservation
 
   const y = (min: number) => yOf(min, gridStart);
   const { placed, lanes, bottom } = useMemo(() => pack(rows, gridStart), [rows, gridStart]);
+  // Toujours une colonne libre à droite des réservations : on y prend un rendez-vous même à une
+  // heure déjà occupée partout.
+  const cols = onPickSlot ? lanes + 1 : Math.max(1, lanes);
   const bodyH = Math.max(y(gridEnd), bottom);
   const hourMarks: number[] = [];
   for (let m = gridStart; y(m) <= bodyH; m += 60) hourMarks.push(m);
@@ -160,7 +163,7 @@ export function AccueilCalendar({ rows, clients, praticiennes, onOpenReservation
   const slotAt = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const min = gridStart + Math.floor((e.clientY - rect.top) / SLOT_H) * SLOT_MIN;
-    const lane = Math.min(lanes - 1, Math.max(0, Math.floor(((e.clientX - rect.left) / rect.width) * lanes)));
+    const lane = Math.min(cols - 1, Math.max(0, Math.floor(((e.clientX - rect.left) / rect.width) * cols)));
     const open = min >= timeToMinutes(SALON_OPENING) && min < timeToMinutes(SALON_CLOSING);
     const past = day < todayISO() || (day === todayISO() && min + SLOT_MIN <= now);
     return open && !past ? { min, lane } : null;
@@ -168,7 +171,7 @@ export function AccueilCalendar({ rows, clients, praticiennes, onOpenReservation
 
   return (
     <div className="overflow-x-auto rounded-box border border-base-300 bg-base-100 p-4 [scrollbar-width:thin]">
-      <div className="relative flex" style={{ height: bodyH + 12, paddingTop: 12, minWidth: RAIL_W + lanes * LANE_MIN_W }}>
+      <div className="relative flex" style={{ height: bodyH + 12, paddingTop: 12, minWidth: RAIL_W + cols * LANE_MIN_W }}>
         <div className="relative shrink-0 border-r border-base-300" style={{ width: RAIL_W }}>
           <ClosedBand top={closedTop} label />
           {hourMarks.map((m, i) => (
@@ -216,8 +219,8 @@ export function AccueilCalendar({ rows, clients, praticiennes, onOpenReservation
               style={{
                 top: y(hoverSlot.min) + 3,
                 height: SLOT_H - 6,
-                left: `calc(${(hoverSlot.lane / lanes) * 100}% + 5px)`,
-                width: `calc(${100 / lanes}% - 10px)`,
+                left: `calc(${(hoverSlot.lane / cols) * 100}% + 5px)`,
+                width: `calc(${100 / cols}% - 10px)`,
               }}
             >
               <Plus className="size-4" />
@@ -269,8 +272,8 @@ export function AccueilCalendar({ rows, clients, praticiennes, onOpenReservation
                   style={{
                     top,
                     height: height - CARD_GAP,
-                    left: `calc(${(lane / lanes) * 100}% + 5px)`,
-                    width: `calc(${100 / lanes}% - 10px)`,
+                    left: `calc(${(lane / cols) * 100}% + 5px)`,
+                    width: `calc(${100 / cols}% - 10px)`,
                   }}
                   className={cn(
                     "absolute flex flex-col gap-1 overflow-hidden rounded-box bg-[var(--cal-card)] px-4 py-3 text-left [&>*]:shrink-0 transition hover:z-10 hover:brightness-[0.97] active:opacity-80",
