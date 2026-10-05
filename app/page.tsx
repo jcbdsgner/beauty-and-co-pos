@@ -88,6 +88,8 @@ function AccueilPageInner() {
   };
   const [view, setView] = useState<AccueilView>("liste");
   const [creatingRdv, setCreatingRdv] = useState(false);
+  // Créneau vide cliqué dans le Calendrier — pose jour + heure dans la fenêtre RDV.
+  const [pickedSlot, setPickedSlot] = useState<{ date: Date; time: string } | null>(null);
 
   // Recherche (cliente ou numéro de rendez-vous) + dates Du/Au — remplace le filtre figé sur
   // « aujourd'hui » pour retrouver un rendez-vous au-delà du jour courant. Le Calendrier (rail
@@ -163,6 +165,16 @@ function AccueilPageInner() {
     salonFilter !== TOUS_LES_SALONS && rangeStart === rangeEnd && isSalonClosed(salonFilter, isoToDate(rangeStart))
       ? salonById(salonFilter)
       : undefined;
+  // Journée libre sans recherche ni salon fermé : le Calendrier reste affichable, vide, pour y
+  // prendre un rendez-vous d'un clic sur un créneau.
+  const calendarWhenEmpty = !query.trim() && !closedSalon;
+  // Salon pré-choisi dans la fenêtre RDV : le salon filtré, sauf s'il est fermé le jour visé
+  // (Almadies le lundi) — on prend alors le premier salon ouvert.
+  const rdvDate = pickedSlot?.date ?? new Date();
+  const rdvSalonId =
+    salonFilter !== TOUS_LES_SALONS && !isSalonClosed(salonFilter, rdvDate)
+      ? salonFilter
+      : (SALONS.find((s) => s.active && !isSalonClosed(s.id, rdvDate))?.id ?? null);
   const closedWeekday = new Intl.DateTimeFormat("fr-FR", { weekday: "long" }).format(isoToDate(rangeStart));
 
   return (
@@ -197,7 +209,7 @@ function AccueilPageInner() {
       <section>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3 pl-1">
           <Legend size="section">Rendez-vous</Legend>
-          {canShowCalendar && reservationRows.length > 0 && (
+          {canShowCalendar && (reservationRows.length > 0 || calendarWhenEmpty) && (
             <SegmentedToggle
               value={view}
               onChange={(v) => setView(v as AccueilView)}
@@ -235,7 +247,7 @@ function AccueilPageInner() {
           </div>
         )}
 
-        {reservationRows.length === 0 ? (
+        {reservationRows.length === 0 && !(effectiveView === "calendrier" && calendarWhenEmpty) ? (
           <div className="rounded-field border border-dashed border-base-300 px-4 py-12 text-center">
             <p className="font-[family-name:var(--font-heading)] text-[15px] font-semibold text-base-content/60">
               {query ? "Aucun résultat" : closedSalon ? `${closedSalon.name} est fermé le ${closedWeekday}` : "Journée libre"}
@@ -262,6 +274,8 @@ function AccueilPageInner() {
             clients={clients}
             praticiennes={praticiennes}
             onOpenReservation={openReservation}
+            day={rangeStart}
+            onPickSlot={(time) => setPickedSlot({ date: isoToDate(rangeStart), time })}
           />
         )}
       </section>
@@ -278,9 +292,13 @@ function AccueilPageInner() {
       {encaissementDialog}
 
       <RdvDialog
-        open={creatingRdv}
-        defaultSalonId={salonFilter === TOUS_LES_SALONS ? null : salonFilter}
-        onClose={() => setCreatingRdv(false)}
+        open={creatingRdv || pickedSlot !== null}
+        defaultSalonId={rdvSalonId}
+        pickedSlot={pickedSlot ?? undefined}
+        onClose={() => {
+          setCreatingRdv(false);
+          setPickedSlot(null);
+        }}
       />
     </div>
   );

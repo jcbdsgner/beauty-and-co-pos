@@ -1,11 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { Plus } from "lucide-react";
 import { Avatar } from "@/components/ui/atoms/avatar";
 import { Tooltip } from "@/components/ui/atoms/tooltip";
 import { clientFullName } from "@/lib/data/clientele";
 import { serviceById } from "@/lib/data/menu";
-import { GRID_END, SALON_CLOSING, SALON_OPENING, reservationComposition, timeToMinutes, type ReservationDayRow } from "@/lib/data/planning";
+import { GRID_END, SALON_CLOSING, SALON_OPENING, reservationComposition, timeToMinutes, todayISO, type ReservationDayRow } from "@/lib/data/planning";
+import { minutesToTime } from "@/lib/data/time";
 import { cn } from "@/lib/utils";
 import type { Cliente, Praticienne, RendezVous } from "@/lib/data/types";
 
@@ -14,7 +16,8 @@ import type { Cliente, Praticienne, RendezVous } from "@/lib/data/types";
  *  début. Tous les blocs partagent un même fond rosé sans contour ; chacun liste ses prestations
  *  et les praticiennes en avatars. Un bloc n'est jamais rogné : il grandit au-delà de sa durée si
  *  son contenu l'exige, et le lane-packing se fait donc sur l'emprise en pixels, pas sur les
- *  seules heures — deux blocs ne se chevauchent jamais à l'écran. */
+ *  seules heures — deux blocs ne se chevauchent jamais à l'écran. Un clic sur un espace vide
+ *  (ni bloc, ni fermé, ni passé) prend un rendez-vous sur ce créneau de 30 min. */
 const SLOT_MIN = 30;
 const SLOT_H = 90; // px per 30 min — une réservation d'1h à 2 prestations tient dans sa durée
 const RAIL_W = 56;
@@ -40,6 +43,10 @@ type Props = {
   clients: Cliente[];
   praticiennes: Praticienne[];
   onOpenReservation: (rv: RendezVous) => void;
+  /** Jour affiché (ISO) — un créneau déjà passé aujourd'hui ne se prend pas. */
+  day: string;
+  /** Clic sur un espace vide → créer un rendez-vous à cette heure ("HH:MM"). */
+  onPickSlot?: (time: string) => void;
 };
 
 function currentMinute(): number {
@@ -127,8 +134,9 @@ function pack(rows: ReservationDayRow[], gridStart: number): { placed: Placed[];
   return { placed, lanes: Math.max(1, laneEnds.length), bottom };
 }
 
-export function AccueilCalendar({ rows, clients, praticiennes, onOpenReservation }: Props) {
+export function AccueilCalendar({ rows, clients, praticiennes, onOpenReservation, day, onPickSlot }: Props) {
   const now = currentMinute();
+  const [hoverSlot, setHoverSlot] = useState<{ min: number; lane: number } | null>(null);
 
   const { gridStart, gridEnd } = useMemo(() => {
     const marks = rows.flatMap((r) => [timeToMinutes(r.start), timeToMinutes(r.end)]);
@@ -147,6 +155,16 @@ export function AccueilCalendar({ rows, clients, praticiennes, onOpenReservation
   const closedTop = y(timeToMinutes(SALON_CLOSING));
 
   const staffOf = (id: string) => praticiennes.find((p) => p.id === id);
+
+  /** Créneau de 30 min sous le pointeur, ou null s'il n'est pas prenable (fermé, déjà passé). */
+  const slotAt = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const min = gridStart + Math.floor((e.clientY - rect.top) / SLOT_H) * SLOT_MIN;
+    const lane = Math.min(lanes - 1, Math.max(0, Math.floor(((e.clientX - rect.left) / rect.width) * lanes)));
+    const open = min >= timeToMinutes(SALON_OPENING) && min < timeToMinutes(SALON_CLOSING);
+    const past = day < todayISO() || (day === todayISO() && min + SLOT_MIN <= now);
+    return open && !past ? { min, lane } : null;
+  };
 
   return (
     <div className="overflow-x-auto rounded-box border border-base-300 bg-base-100 p-4 [scrollbar-width:thin]">
@@ -170,12 +188,41 @@ export function AccueilCalendar({ rows, clients, praticiennes, onOpenReservation
           ))}
         </div>
 
-        <div className="relative flex-1">
+        <div
+          className={cn("relative flex-1", hoverSlot && "cursor-pointer")}
+          onMouseMove={(e) => {
+            if (!onPickSlot) return;
+            if (e.target !== e.currentTarget) return setHoverSlot(null);
+            const slot = slotAt(e);
+            setHoverSlot((h) => (!slot ? null : h?.min === slot.min && h.lane === slot.lane ? h : slot));
+          }}
+          onMouseLeave={() => setHoverSlot(null)}
+          onClick={(e) => {
+            if (!onPickSlot || e.target !== e.currentTarget) return;
+            const slot = slotAt(e);
+            if (slot) onPickSlot(minutesToTime(slot.min));
+          }}
+        >
           <ClosedBand top={closedTop} />
           {hourMarks.map((m, i) =>
             i === 0 ? null : (
-              <div key={m} aria-hidden className="absolute inset-x-0 border-t border-base-300/70" style={{ top: i * SLOT_H * 2 }} />
+              <div key={m} aria-hidden className="pointer-events-none absolute inset-x-0 border-t border-base-300/70" style={{ top: i * SLOT_H * 2 }} />
             ),
+          )}
+          {hoverSlot && (
+            <div
+              aria-hidden
+              className="pointer-events-none absolute flex items-center gap-1.5 rounded-box border border-dashed border-primary/60 bg-primary/5 px-4 text-xs font-semibold tabular-nums text-primary"
+              style={{
+                top: y(hoverSlot.min) + 3,
+                height: SLOT_H - 6,
+                left: `calc(${(hoverSlot.lane / lanes) * 100}% + 5px)`,
+                width: `calc(${100 / lanes}% - 10px)`,
+              }}
+            >
+              <Plus className="size-4" />
+              Nouveau rendez-vous · {minutesToTime(hoverSlot.min)}
+            </div>
           )}
 
           {placed.map(({ row, services, top, height, lane }) => {
