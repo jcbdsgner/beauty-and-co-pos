@@ -605,7 +605,8 @@ function RdvDialogBody({ reservationId, defaultSalonId = POSTE_SALON_ID, payerCl
                               onClick={() => setOpenCat(isOpen ? null : g.id)}
                               className={cn(
                                 "flex h-14 w-full items-center gap-3 px-4 text-left transition enabled:hover:bg-base-200/60",
-                                isOpen && "sticky top-0 z-10 border-b border-base-300 bg-base-200",
+                                // -top-6 : la colonne défile avec un pt-6, que le collage retire de sa zone.
+                                isOpen && "sticky -top-6 z-10 border-b border-base-300 bg-base-200",
                               )}
                             >
                               <span className="text-[16px] font-semibold text-base-content">{g.name}</span>
