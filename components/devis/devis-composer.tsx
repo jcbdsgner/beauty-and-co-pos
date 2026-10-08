@@ -25,7 +25,7 @@ const EMPTY_COMPANY: BillingCompany = { name: "", address: "", ninea: "" };
  * « Nouveau devis » (ADR 0042) — la grammaire du Comptoir : le Menu à gauche (prestations et
  * produits, jamais de boissons ; le stock s'affiche sans bloquer), le devis à droite comme un
  * ticket. La remise accordée suit les règles du panier (même fenêtre, mêmes plafonds) et son motif
- * se saisit ici. Aucun avantage personnel. Enregistre en brouillon ou envoie dans le fil.
+ * se saisit ici. Aucun avantage personnel. On envoie dans le fil, ou on annule : rien n'est gardé.
  * `devisId` reprend un brouillon — nouveau, ou version suivante d'un devis envoyé.
  */
 export function DevisComposer({ clientId, devisId, onClose }: { clientId: string; devisId?: string; onClose: () => void }) {
@@ -56,7 +56,6 @@ export function DevisComposer({ clientId, devisId, onClose }: { clientId: string
   const totals = documentTotals(lines, remises);
   const hasRemise = totals.discount > 0;
   const companyOk = !toCompany || (company.name.trim() && company.address.trim() && company.ninea.trim());
-  // Un brouillon se garde dès qu'il a une ligne ; l'envoi exige un devis complet.
   const ready = lines.length > 0 && Boolean(companyOk) && (!hasRemise || reason.trim().length > 0);
   const dirty =
     JSON.stringify([lines, remises, reason]) !== JSON.stringify([existing?.lines ?? [], existing?.remises ?? [], existing?.remiseReason ?? ""]);
@@ -80,14 +79,14 @@ export function DevisComposer({ clientId, devisId, onClose }: { clientId: string
     if (qty <= 0) setRemises((rs) => rs.map((r) => ({ ...r, lineIds: r.lineIds.filter((x) => x !== id) })).filter((r) => r.lineIds.length > 0));
   };
 
-  function save(send: boolean) {
-    if (lines.length === 0 || (send && !ready)) return;
-    const billTo = toCompany && companyOk ? { ...company, rccm: company.rccm?.trim() || undefined } : undefined;
-    const data = { lines, remises, remiseReason: hasRemise ? reason.trim() || null : null, billTo };
+  function send() {
+    if (!ready) return;
+    const billTo = toCompany ? { ...company, rccm: company.rccm?.trim() || undefined } : undefined;
+    const data = { lines, remises, remiseReason: hasRemise ? reason.trim() : null, billTo };
     const id = existing ? (updateDevisDraft(existing.id, data), existing.id) : createDevis({ clientId, salonId: POSTE_SALON_ID, sellerName: currentUser.name, ...data }).id;
     // La société facturée se retient sur la fiche, pour le devis suivant.
     if (billTo) updateClient(clientId, { billingCompany: billTo });
-    if (send) sendDevis(id, channel);
+    sendDevis(id, channel);
     onClose();
   }
 
@@ -175,8 +174,8 @@ export function DevisComposer({ clientId, devisId, onClose }: { clientId: string
               </p>
             )}
             <div className="grid grid-cols-[auto_1fr] gap-3">
-              <Button variant="outline" disabled={lines.length === 0} onClick={() => save(false)}>Brouillon</Button>
-              <Button disabled={!ready} onClick={() => save(true)}>
+              <Button variant="outline" onClick={requestClose}>Annuler</Button>
+              <Button disabled={!ready} onClick={send}>
                 {channel === "email" ? "Envoyer par e-mail" : "Envoyer par WhatsApp"}
               </Button>
             </div>
