@@ -109,6 +109,7 @@ Recherche d'abord (mécanisme partagé = `ClientSearchField` / `searchClients`).
 - Droite : **Payeuse** (N°, passages, total dépensé, téléphone + WhatsApp, avantages, dernière note), **Suivi** (réservée → acompte → vente → encaissée/annulée, seulement ce que les données attestent), **Ses autres réservations** (4 dernières, liens).
 
 ### Fiche cliente — `/clientele/[id]` — [`components/clientele/fiche-cliente-view.tsx`](../components/clientele/fiche-cliente-view.tsx)
+- Bloc **« Devis et factures »** + « Nouveau devis » ([`components/devis/fiche-devis.tsx`](../components/devis/fiche-devis.tsx)) ; société facturée dans Coordonnées ; pastille « Fiche à compléter » (ADR 0042).
 En-tête collant : retour + avatar + nom + **N° cliente** + Contacter / Nouvelle vente, puis ligne « d'un coup d'œil » (`AtAGlance` : abonnement + statut, pack + restantes, points, visites, total dépensé). 2 colonnes de `Board` (ADR 0035) :
 - Gauche : **Préférences** (lecture seule, une ligne par domaine ; chaque réponse de Noter la cliente avec son « ×N », la dernière en rose ; « Voir les préférences » ou le nom d'un domaine → `PreferencesDialog`), **Abonnements & Packs** ([`abonnements-packs-board.tsx`](../components/clientele/abonnements-packs-board.tsx)), **Notes internes** (saisie + « Par … » + « Joindre », journal signé `Cliente.notes` ; fichiers joints via [`note-attachments.tsx`](../components/clientele/note-attachments.tsx) — vignettes photo + visionneuse, pastilles PDF, ADR 0039).
 - Droite : **Coordonnées** (+ praticienne préférée), **Carte de fidélité** (→ `/clientele/[id]/fidelite`), **Échanges** en dernier (2 derniers messages + « Voir tout » → `/messages?client=<id>`).
@@ -128,6 +129,13 @@ Messagerie maître-détail. Sélection par `?client=<id>`. **La réceptionniste 
 - [`channel-glyph.tsx`](../components/messages/channel-glyph.tsx), [`lib.ts`](../components/messages/lib.ts) (libellés d'état, horodatage relatif, tri).
 - Store : `conversations` + actions `takeOverConversation` / `handBackToBot` / `transferToManager` / `sendClientMessage` (réponse cliente scriptée ~1,5 s) / `markConversationRead`. Données : [`lib/data/conversations.ts`](../lib/data/conversations.ts) (`CONVERSATIONS`, 9 fils).
 - Sidebar : item « Messages » + badge ambre `conversations.filter(c => c.unread).length`.
+
+#### Devis & factures dans Messages (ADR 0042) — [`components/devis/`](../components/devis/)
+- En-tête de Messages : **« Nouveau devis »** → [`new-devis-launcher.tsx`](../components/devis/new-devis-launcher.tsx) (cliente du fil ouvert proposée, recherche, ou **fiche à compléter** via `NewClientDialog minimal`).
+- Composition : [`devis-composer.tsx`](../components/devis/devis-composer.tsx) — `MenuBrowser` du Comptoir à gauche (prestations + produits), devis à droite, remise accordée via `RemisesDialog` (`handlers`), motif, société facturée, WhatsApp / e-mail.
+- Dans le fil : [`devis-in-thread.tsx`](../components/devis/devis-in-thread.tsx) — `ThreadDocument` (PDF joint au message, version remplacée barrée) + `PinnedDossier` (bandeau sous l'en-tête : brouillon → Reprendre ; envoyé → Refusé / Modifier (v2) / Facturer ; facture → Annuler par un avoir / Enregistrer le paiement). Dialogues : [`facture-dialogs.tsx`](../components/devis/facture-dialogs.tsx).
+- Inbox : section **« Devis en cours »** (devis sans réponse, factures à payer).
+- Document (devis / facture, PDF imprimable) : [`devis-document.tsx`](../components/devis/devis-document.tsx). Lien de paiement du PDF : hors périmètre.
 
 ### Catalogue — `/catalogue` — [`app/catalogue/page.tsx`](../app/catalogue/page.tsx)
 `CatalogueSwitch` à 2 volets — **jamais relié à la caisse** (volet « Les Planches » et volet « Photos de référence » retirés, ADR 0021). Grammaire visuelle propre — [`components/catalogue/catalogue-parts.tsx`](../components/catalogue/catalogue-parts.tsx) (vitrine à cartes flottantes, pas « Le Tableau ») :
@@ -229,6 +237,7 @@ Tokens de marque : [`app/globals.css`](../app/globals.css) — `--core-brand-col
 | Rechercher / créer une cliente | [`components/clientele/repertoire-view.tsx`](../components/clientele/repertoire-view.tsx), `new-client-dialog.tsx`, `shared/client-search-field.tsx` |
 | Fiche cliente, notes, préférences, coordonnées | [`components/clientele/fiche-cliente-view.tsx`](../components/clientele/fiche-cliente-view.tsx) + `edit-coordonnees-dialog.tsx` |
 | Carte / points de fidélité | `fidelite-view.tsx`, `loyalty-card.tsx` ; calcul dans `app-store.ts` (`confirmPayment`) |
+| Devis / factures / avoir / société facturée | [`components/devis/`](../components/devis/) ; store `devis`, `factures` + actions ; données [`lib/data/devis.ts`](../lib/data/devis.ts) ; prépayé au Comptoir via `detectCoverage` (source `facture`) |
 | Messages / échanges / relances / anniversaires | [`components/messages/`](../components/messages/) ; store `conversations` + actions ; données [`lib/data/conversations.ts`](../lib/data/conversations.ts) |
 | Cartes cadeaux (file, impression) | [`components/journee/gift-card-queue.tsx`](../components/journee/gift-card-queue.tsx) + [`components/shared/barcode.tsx`](../components/shared/barcode.tsx) ; ledger [`lib/data/cartes-cadeaux.ts`](../lib/data/cartes-cadeaux.ts) |
 | Produits / boissons du Catalogue | [`app/catalogue/page.tsx`](../app/catalogue/page.tsx) + `components/catalogue/*` |

@@ -32,12 +32,14 @@ import { Board, Lane, BoardEmpty } from "@/components/ui/board";
 import { DemoQrBlock } from "@/components/clientele/loyalty-card";
 import { ChannelGlyph } from "@/components/messages/channel-glyph";
 import { AbonnementsPacksBoard } from "@/components/clientele/abonnements-packs-board";
+import { DevisComposer } from "@/components/devis/devis-composer";
+import { BillingCompanyRow, DevisFacturesBoard } from "@/components/devis/fiche-devis";
 import { EditCoordonneesDialog } from "@/components/clientele/edit-coordonnees-dialog";
 import { PreferencesDialog, defaultPreferenceDomain } from "@/components/clientele/preferences-dialog";
 import { NotationPhoto } from "@/components/clientele/notation-photo";
 import { AttachButton, NoteAttachments, PendingAttachments, filesToAttachments } from "@/components/clientele/note-attachments";
 import { useAppData } from "@/components/providers/app-data-provider";
-import { ETHNICITY_LABEL, clientFullName, clientInitial, clientNumberLabel, formatBirthday } from "@/lib/data/clientele";
+import { ETHNICITY_LABEL, clientFullName, clientInitial, clientNumberLabel, formatBirthday, isFicheACompleter } from "@/lib/data/clientele";
 import { ContactRow as Row } from "@/components/shared/contact-row";
 import { abonnementsForClient, abonnementStatus, ABONNEMENT_STATUS_LABEL, type AbonnementStatus } from "@/lib/data/abonnements";
 import { forfaitById } from "@/lib/data/forfaits";
@@ -99,6 +101,7 @@ function FicheClienteViewInner({ clientId }: { clientId: string }) {
   const [editCoordOpen, setEditCoordOpen] = useState(false);
   const [prefsOpen, setPrefsOpen] = useState(false);
   const [prefsDomain, setPrefsDomain] = useState<PreferenceDomain | null>(null);
+  const [devisOpen, setDevisOpen] = useState(false);
 
   if (!client) {
     return (
@@ -152,6 +155,15 @@ function FicheClienteViewInner({ clientId }: { clientId: string }) {
                 <span className="rounded-md bg-base-200 px-2 py-0.5 font-semibold tabular-nums text-base-content">
                   {clientNumberLabel(client)}
                 </span>
+                {isFicheACompleter(client) && (
+                  <button
+                    type="button"
+                    onClick={() => setEditCoordOpen(true)}
+                    className="highlight-rose rounded-md border bg-white px-2 py-0.5 font-semibold text-secondary"
+                  >
+                    Fiche à compléter
+                  </button>
+                )}
                 <span className="truncate">
                   Cliente depuis{" "}
                   {new Date(client.createdAt).toLocaleDateString("fr-FR", {
@@ -203,6 +215,7 @@ function FicheClienteViewInner({ clientId }: { clientId: string }) {
             preferredStaff={client.preferredStaffId ? praticiennes.find((p) => p.id === client.preferredStaffId) : undefined}
             onEdit={() => setEditCoordOpen(true)}
           />
+          <DevisFacturesBoard client={client} onNew={() => setDevisOpen(true)} />
           <Board legend="Carte de fidélité">
             <div className="flex items-center justify-between gap-4 p-4">
               <div className="flex flex-col gap-3">
@@ -223,6 +236,7 @@ function FicheClienteViewInner({ clientId }: { clientId: string }) {
         </div>
       </div>
 
+      {devisOpen && <DevisComposer clientId={client.id} onClose={() => setDevisOpen(false)} />}
       <EditCoordonneesDialog open={editCoordOpen} client={client} onClose={() => setEditCoordOpen(false)} />
       <PreferencesDialog
         open={prefsOpen}
@@ -585,7 +599,8 @@ function CoordonneesBoard({
         <Row icon={<MapPin className="size-5" />} label="Adresse" value={client.address} />
         <Row icon={<Globe className="size-5" />} label="Pays de résidence" value={client.residenceCountry} />
         <Row icon={<Cake className="size-5" />} label="Anniversaire" value={formatBirthday(client.birthday)} />
-        <Row icon={<Users className="size-5" />} label="Ethnicité" value={ETHNICITY_LABEL[client.ethnicity]} />
+        <Row icon={<Users className="size-5" />} label="Ethnicité" value={client.ethnicity ? ETHNICITY_LABEL[client.ethnicity] : undefined} />
+        <BillingCompanyRow client={client} />
         {preferredStaff && (
           <button
             type="button"

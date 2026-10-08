@@ -25,6 +25,9 @@ type NewClientDialogProps = {
   onCreated?: (clientId: string) => void;
   /** Pre-fill fields from what the caller already knows — e.g. the text typed into "Chercher une cliente" before the search came up empty. */
   initialValues?: Partial<typeof emptyForm>;
+  /** Fiche à compléter (ADR 0042) : nom, téléphone, e-mail seulement — pour lui envoyer un devis.
+   *  Anniversaire, origine et le reste se demandent à sa première venue. */
+  minimal?: boolean;
 };
 
 const emptyForm = {
@@ -46,7 +49,7 @@ const emptyForm = {
  * from the Comptoir later (per USERFLOW.md), hence the optional `onCreated` escape hatch instead
  * of a hardcoded redirect.
  */
-export function NewClientDialog({ open, onClose, onCreated, initialValues }: NewClientDialogProps) {
+export function NewClientDialog({ open, onClose, onCreated, initialValues, minimal = false }: NewClientDialogProps) {
   const router = useRouter();
   const { addClient, findDuplicatePhone } = useAppData();
 
@@ -78,9 +81,8 @@ export function NewClientDialog({ open, onClose, onCreated, initialValues }: New
     form.lastName.trim() !== "" &&
     form.phone.trim() !== "" &&
     form.email.trim() !== "" &&
-    form.residenceCountry.trim() !== "" &&
-    form.ethnicity !== "" &&
-    birthdayFromParts(birthday) !== null;
+    (minimal ||
+      (form.residenceCountry.trim() !== "" && form.ethnicity !== "" && birthdayFromParts(birthday) !== null));
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -96,8 +98,8 @@ export function NewClientDialog({ open, onClose, onCreated, initialValues }: New
       address: form.address.trim() || undefined,
       residenceCountry: form.residenceCountry,
       profession: form.profession.trim() || undefined,
-      birthday: birthdayFromParts(birthday)!,
-      ethnicity: form.ethnicity as Ethnicity,
+      birthday: birthdayFromParts(birthday) ?? undefined,
+      ethnicity: (form.ethnicity || undefined) as Ethnicity | undefined,
       hairType: form.hairType.trim() || undefined,
       colorReference: form.colorReference.trim() || undefined,
     });
@@ -123,6 +125,9 @@ export function NewClientDialog({ open, onClose, onCreated, initialValues }: New
       <h2 id="new-client-title" className="font-[family-name:var(--font-heading)] font-semibold text-2xl text-base-content">
         Nouvelle cliente
       </h2>
+      {minimal && (
+        <p className="mt-1 text-sm text-base-content/60">Fiche à compléter — le reste lui sera demandé à sa première venue.</p>
+      )}
 
       <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-5">
         <Card className="flex flex-col gap-4 p-5">
@@ -142,12 +147,16 @@ export function NewClientDialog({ open, onClose, onCreated, initialValues }: New
                 placeholder="+221 77 000 00 00"
               />
             </Field>
+            {!minimal && (
             <Field label="WhatsApp">
               <TextInput value={form.whatsapp} onChange={(e) => set("whatsapp", e.target.value)} placeholder="+221 77 000 00 00" />
             </Field>
+            )}
             <Field label="Email" required>
               <TextInput type="email" value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="awa@example.com" />
             </Field>
+            {!minimal && (
+            <>
             <Field label="Profession">
               <TextInput value={form.profession} onChange={(e) => set("profession", e.target.value)} />
             </Field>
@@ -174,6 +183,8 @@ export function NewClientDialog({ open, onClose, onCreated, initialValues }: New
             <Field label="Anniversaire" required>
               <BirthdaySelect value={birthday} onChange={setBirthday} />
             </Field>
+            </>
+            )}
           </div>
 
           {duplicate && (
@@ -193,6 +204,7 @@ export function NewClientDialog({ open, onClose, onCreated, initialValues }: New
           )}
         </Card>
 
+        {!minimal && (
         <Card className="flex flex-col gap-4 p-5">
           <FieldLabel>Profil beauté</FieldLabel>
           <div className="grid grid-cols-2 gap-4">
@@ -207,9 +219,18 @@ export function NewClientDialog({ open, onClose, onCreated, initialValues }: New
             Les préférences détaillées (onglerie, coiffure, spa, épilation, boisson) se renseignent ensuite sur la fiche.
           </p>
         </Card>
+        )}
 
         {attempted && !canSubmit && (
-          <Alert tone="error" title="Complétez les champs obligatoires" description="Prénom, nom, téléphone, e-mail, pays de résidence, ethnicité et anniversaire (jour et mois) sont nécessaires pour créer la fiche." />
+          <Alert
+            tone="error"
+            title="Complétez les champs obligatoires"
+            description={
+              minimal
+                ? "Prénom, nom, téléphone et e-mail sont nécessaires pour lui envoyer un devis."
+                : "Prénom, nom, téléphone, e-mail, pays de résidence, ethnicité et anniversaire (jour et mois) sont nécessaires pour créer la fiche."
+            }
+          />
         )}
 
         <div className="flex gap-3">

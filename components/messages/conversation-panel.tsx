@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { FileText } from "lucide-react";
 import { DevisComposer } from "@/components/devis/devis-composer";
 import { PinnedDossier, ThreadDocument } from "@/components/devis/devis-in-thread";
 import { Send } from "lucide-react";
@@ -39,7 +38,6 @@ export function ConversationPanel({ conversationId }: { conversationId: string }
     handBackToBot,
     transferToManager,
     sendClientMessage,
-    devis,
   } = useAppData();
 
   const conv = conversations.find((c) => c.id === conversationId);
@@ -101,15 +99,6 @@ export function ConversationPanel({ conversationId }: { conversationId: string }
             <span>{STATE_LABEL[conv.state]}</span>
           </div>
         </div>
-        {conv.state !== "manager" && (
-          <Button variant="outline" size="sm" icon={<FileText className="size-4" />} onClick={() => {
-              // Un brouillon déjà commencé pour elle se reprend au lieu d'en ouvrir un second.
-              const draft = devis.find((d) => d.clientId === client.id && d.status === "brouillon");
-              setComposing(draft ? { devisId: draft.id } : {});
-            }}>
-            Nouveau devis
-          </Button>
-        )}
         <HandActions state={conv.state} onHandBack={() => handBackToBot(conv.id)} onTransfer={() => setConfirmTransfer(true)} />
       </div>
 

@@ -12,6 +12,12 @@ export const CLIENTS: Cliente[] = [
     ],
     number: 1006,
     loyaltyCode: "BACO-FID-1042",
+    billingCompany: {
+      name: "Kër Digital SARL",
+      address: "Immeuble Fayçal, 4e étage, rue Carnot, Dakar",
+      ninea: "009876543 2G3",
+      rccm: "SN-DKR-2021-B-14532",
+    },
     firstName: "Awa",
     lastName: "Sarr",
     phone: "+221784455661",
@@ -330,7 +336,13 @@ export const MONTH_NAMES = [
 ];
 
 /** « MM-JJ » → « 27 septembre ». */
-export function formatBirthday(birthday: string): string {
+/** Une fiche créée pour un devis avec le strict minimum — anniversaire, origine à demander (ADR 0042). */
+export function isFicheACompleter(c: Cliente): boolean {
+  return !c.birthday || !c.ethnicity;
+}
+
+export function formatBirthday(birthday: string | undefined): string | undefined {
+  if (!birthday) return undefined;
   const [m, d] = birthday.split("-").map(Number);
   if (!m || !d) return birthday;
   return `${d === 1 ? "1er" : d} ${MONTH_NAMES[m - 1]}`;

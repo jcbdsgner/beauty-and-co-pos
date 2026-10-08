@@ -39,7 +39,7 @@ function EditCoordonneesForm({ client, onClose }: { client: Cliente; onClose: ()
   const [address, setAddress] = useState(client.address ?? "");
   const [residenceCountry, setResidenceCountry] = useState(client.residenceCountry || PAYS_DEFAUT);
   const [profession, setProfession] = useState(client.profession ?? "");
-  const [ethnicity, setEthnicity] = useState<string>(client.ethnicity);
+  const [ethnicity, setEthnicity] = useState<string>(client.ethnicity ?? "");
   const [birthday, setBirthday] = useState(() => birthdayParts(client.birthday));
   const birthdayValue = birthdayFromParts(birthday);
   const canSave = Boolean(phone.trim() && email.trim() && residenceCountry.trim() && ethnicity && birthdayValue);

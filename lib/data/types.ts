@@ -86,9 +86,11 @@ export type Cliente = {
   email: string;
   address?: string;
   profession?: string;
-  /** Jour et mois seulement, « MM-JJ » (ex. « 09-27 ») — jamais l'année. Obligatoire. */
-  birthday: string;
-  ethnicity: Ethnicity;
+  /** Jour et mois seulement, « MM-JJ » (ex. « 09-27 ») — jamais l'année. Obligatoire, sauf sur une
+   *  fiche à compléter (créée pour un devis, ADR 0042) : demandé à sa première venue. */
+  birthday?: string;
+  /** Idem : absente sur une fiche à compléter. */
+  ethnicity?: Ethnicity;
   /** Pays de résidence — obligatoire à la création (défaut « Sénégal »). */
   residenceCountry: string;
   /** Code carried by her loyalty card — the counter's identification token: scanning its QR or
