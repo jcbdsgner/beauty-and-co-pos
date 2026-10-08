@@ -29,7 +29,7 @@ const EMPTY_COMPANY: BillingCompany = { name: "", address: "", ninea: "" };
  * `devisId` reprend un brouillon — nouveau, ou version suivante d'un devis envoyé.
  */
 export function DevisComposer({ clientId, devisId, onClose }: { clientId: string; devisId?: string; onClose: () => void }) {
-  const { clients, devis, createDevis, updateDevisDraft, sendDevis, updateClient } = useAppData();
+  const { clients, devis, createDevis, updateDevisDraft, sendDevis, updateClient, deleteDevisDraft } = useAppData();
   const { currentUser } = useSession();
   const client = clients.find((c) => c.id === clientId);
   const existing = devisId ? devis.find((d) => d.id === devisId && d.status === "brouillon") : undefined;
@@ -60,7 +60,16 @@ export function DevisComposer({ clientId, devisId, onClose }: { clientId: string
   const ready = lines.length > 0 && Boolean(companyOk) && (!hasRemise || reason.trim().length > 0);
   const dirty =
     JSON.stringify([lines, remises, reason]) !== JSON.stringify([existing?.lines ?? [], existing?.remises ?? [], existing?.remiseReason ?? ""]);
-  const requestClose = () => (dirty ? setConfirmClose(true) : onClose());
+  // « Modifier » ouvre une v2 recopiée de la version envoyée : fermée sans rien y changer, elle ne
+  // sert à rien — on la jette plutôt que de laisser un brouillon vide dans le bandeau du fil.
+  const previous = existing && existing.version > 1 ? devis.find((d) => d.number === existing.number && d.version === existing.version - 1) : undefined;
+  const untouchedRevision =
+    existing && previous && JSON.stringify([existing.lines, existing.remises, existing.billTo ?? null]) === JSON.stringify([previous.lines, previous.remises, previous.billTo ?? null]);
+  const close = () => {
+    if (untouchedRevision) deleteDevisDraft(existing.id);
+    onClose();
+  };
+  const requestClose = () => (dirty ? setConfirmClose(true) : close());
 
   const add = (refId: string) =>
     setLines((ls) =>
@@ -99,36 +108,19 @@ export function DevisComposer({ clientId, devisId, onClose }: { clientId: string
         </div>
 
         <aside className="flex min-h-0 flex-col border-l border-base-300 bg-base-200/50">
-          <div className="flex flex-col gap-3 border-b border-base-300 p-5">
+          {/* Les lignes d'abord, puis la remise et la société : tout défile ensemble, le pied
+              (total + envoi) reste fixe. */}
+          <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-5 [&>*]:shrink-0">
             <p className="text-sm text-base-content/65 tabular-nums">{formatPhone(client.phone)} · {client.email}</p>
-            <label className="flex min-h-12 cursor-pointer items-center gap-3">
-              <input type="checkbox" className="checkbox checkbox-primary" checked={toCompany} onChange={(e) => setToCompany(e.target.checked)} />
-              <Building2 aria-hidden className="size-5 text-base-content/50" />
-              <span className="font-medium">Facturer une société</span>
-            </label>
-            {toCompany && (
-              <div className="grid gap-2">
-                <TextInput placeholder="Nom de la société" aria-label="Nom de la société" value={company.name} onChange={(e) => setCompany({ ...company, name: e.target.value })} />
-                <TextInput placeholder="Adresse" aria-label="Adresse" value={company.address} onChange={(e) => setCompany({ ...company, address: e.target.value })} />
-                <div className="grid grid-cols-2 gap-2">
-                  <TextInput placeholder="NINEA" aria-label="NINEA" value={company.ninea} onChange={(e) => setCompany({ ...company, ninea: e.target.value })} />
-                  <TextInput placeholder="RCCM (facultatif)" aria-label="RCCM" value={company.rccm ?? ""} onChange={(e) => setCompany({ ...company, rccm: e.target.value })} />
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="min-h-0 flex-1 overflow-y-auto px-5">
-            {lines.length === 0 ? (
-              <p className="py-10 text-center text-sm text-base-content/65">Aucune ligne</p>
-            ) : (
-              lines.map((l) => (
-                <LineRow key={l.id} line={l} discount={totals.lineDiscount[l.id] ?? 0} onQty={(q) => setQty(l.id, q)} />
-              ))
-            )}
-          </div>
-
-          <div className="flex flex-col gap-3 border-t border-base-300 p-5">
+            <div className="rounded-field border border-border bg-white px-4">
+              {lines.length === 0 ? (
+                <p className="py-8 text-center text-sm text-base-content/65">Aucune ligne</p>
+              ) : (
+                lines.map((l) => (
+                  <LineRow key={l.id} line={l} discount={totals.lineDiscount[l.id] ?? 0} onQty={(q) => setQty(l.id, q)} />
+                ))
+              )}
+            </div>
             <button
               type="button"
               disabled={!lines.some((l) => l.kind === "service")}
@@ -137,7 +129,7 @@ export function DevisComposer({ clientId, devisId, onClose }: { clientId: string
             >
               <Percent aria-hidden className="size-4 shrink-0 text-secondary" />
               <span className="flex-1 text-[15px] font-semibold text-secondary">Remise accordée</span>
-              <span className={cn("text-sm tabular-nums", hasRemise ? "font-semibold text-success" : "text-base-content/55")}>
+              <span className={cn("text-sm tabular-nums", hasRemise ? "font-semibold text-success" : "text-base-content/65")}>
                 {hasRemise ? `−${formatFcfa(totals.discount)}` : "Aucune"}
               </span>
               <ChevronRight aria-hidden className="size-4 shrink-0 text-base-content/40" />
@@ -145,6 +137,26 @@ export function DevisComposer({ clientId, devisId, onClose }: { clientId: string
             {hasRemise && (
               <TextInput placeholder="Motif de la remise" aria-label="Motif de la remise" value={reason} onChange={(e) => setReason(e.target.value)} />
             )}
+            <div className="flex flex-col gap-2">
+              <label className="flex min-h-12 cursor-pointer items-center gap-3">
+                <input type="checkbox" className="checkbox checkbox-primary" checked={toCompany} onChange={(e) => setToCompany(e.target.checked)} />
+                <Building2 aria-hidden className="size-5 text-base-content/50" />
+                <span className="font-medium">Facturer une société</span>
+              </label>
+              {toCompany && (
+                <div className="grid gap-2">
+                  <TextInput placeholder="Nom de la société" aria-label="Nom de la société" value={company.name} onChange={(e) => setCompany({ ...company, name: e.target.value })} />
+                  <TextInput placeholder="Adresse" aria-label="Adresse" value={company.address} onChange={(e) => setCompany({ ...company, address: e.target.value })} />
+                  <div className="grid grid-cols-2 gap-2">
+                    <TextInput placeholder="NINEA" aria-label="NINEA" value={company.ninea} onChange={(e) => setCompany({ ...company, ninea: e.target.value })} />
+                    <TextInput placeholder="RCCM (facultatif)" aria-label="RCCM" value={company.rccm ?? ""} onChange={(e) => setCompany({ ...company, rccm: e.target.value })} />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex shrink-0 flex-col gap-3 border-t border-base-300 p-5">
             <div className="flex items-baseline justify-between pt-1">
               <span className="font-semibold">Total</span>
               <span className="font-[family-name:var(--font-heading)] text-2xl font-semibold tabular-nums">{formatFcfa(totals.total)}</span>
@@ -181,7 +193,7 @@ export function DevisComposer({ clientId, devisId, onClose }: { clientId: string
         onCancel={() => setConfirmClose(false)}
         onConfirm={() => {
           setConfirmClose(false);
-          onClose();
+          close();
         }}
       />
 
@@ -206,24 +218,26 @@ export function DevisComposer({ clientId, devisId, onClose }: { clientId: string
 
 function LineRow({ line, discount, onQty }: { line: DevisLine; discount: number; onQty: (qty: number) => void }) {
   return (
-    <div className="flex items-center gap-3 border-b border-base-300 py-3 last:border-0">
-      <div className="min-w-0 flex-1">
-        <p className="truncate font-medium" title={line.name}>{line.name}</p>
-        <p className="text-sm text-base-content/55">
+    <div className="flex flex-col gap-2 border-b border-base-300 py-3 last:border-0">
+      <div className="flex items-start justify-between gap-3">
+        <p className="min-w-0 font-medium">{line.name}</p>
+        <span className="shrink-0 font-semibold tabular-nums">{formatFcfa(line.unitPrice * line.qty)}</span>
+      </div>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-base-content/65">
           {line.kind === "service" ? "Prestation" : "Produit"} · <span className="whitespace-nowrap">{formatFcfa(line.unitPrice)}</span>
-          {discount > 0 && <span className="whitespace-nowrap text-success"> · −{formatFcfa(discount)}</span>}
+          {discount > 0 && <span className="whitespace-nowrap font-medium text-success"> · −{formatFcfa(discount)}</span>}
         </p>
+        <div className="flex items-center gap-1">
+          <button type="button" aria-label={line.qty === 1 ? "Retirer la ligne" : "Un de moins"} onClick={() => onQty(line.qty - 1)} className="grid size-14 place-items-center rounded-full border border-base-300 bg-white hover:bg-base-200 active:scale-95">
+            {line.qty === 1 ? <Trash2 className="size-4" /> : <Minus className="size-4" />}
+          </button>
+          <span className="w-8 text-center font-semibold tabular-nums">{line.qty}</span>
+          <button type="button" aria-label="Un de plus" onClick={() => onQty(line.qty + 1)} className="grid size-14 place-items-center rounded-full border border-base-300 bg-white hover:bg-base-200 active:scale-95">
+            <Plus className="size-4" />
+          </button>
+        </div>
       </div>
-      <div className="flex items-center gap-1">
-        <button type="button" aria-label={line.qty === 1 ? "Retirer la ligne" : "Un de moins"} onClick={() => onQty(line.qty - 1)} className="grid size-11 place-items-center rounded-full border border-base-300 bg-white hover:bg-base-200">
-          {line.qty === 1 ? <Trash2 className="size-4" /> : <Minus className="size-4" />}
-        </button>
-        <span className="w-7 text-center font-semibold tabular-nums">{line.qty}</span>
-        <button type="button" aria-label="Un de plus" onClick={() => onQty(line.qty + 1)} className="grid size-11 place-items-center rounded-full border border-base-300 bg-white hover:bg-base-200">
-          <Plus className="size-4" />
-        </button>
-      </div>
-      <span className="w-24 text-right font-semibold tabular-nums">{formatFcfa(line.unitPrice * line.qty)}</span>
     </div>
   );
 }
