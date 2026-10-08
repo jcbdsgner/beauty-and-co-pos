@@ -49,3 +49,7 @@ Prototypée, la section **Devis** reprenait la grammaire maître-détail de Mess
 
 Devis et facture partent dans le fil comme un **PDF** (téléchargeable depuis la pièce jointe). Le PDF de facture porte un lien de paiement, mais **son fonctionnement ne relève pas de ce projet** : pas de page côté cliente, pas de paiement simulé par lien. La réceptionniste **enregistre le paiement reçu** (Wave, Orange Money, carte, espèces) depuis le bandeau du dossier — `Facture.payment` ne garde que le moyen.
 
+## Révision 2026-10-08 — le document suit l'ébauche validée
+
+Le PDF reprend exactement le contenu de l'ébauche fournie : logo, salon et pays, destinataire, « Devis # / Facture # », date, vendeur, tableau description / quantité / prix unitaire / taxes / montant, montant hors taxes, total. La colonne Taxes reste vide (pas de TVA) ; NINEA, RCCM, validité et mentions de paiement ne figurent pas sur le document. Une remise accordée se lit dans le prix unitaire de la ligne. Devis et facture portent le salon et le vendeur.
+
