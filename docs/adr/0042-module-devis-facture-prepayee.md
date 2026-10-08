@@ -62,3 +62,7 @@ Le PDF reprend exactement le contenu de l'ébauche fournie : logo, salon et pays
 - **Nouveau devis** signale ce que la cliente a déjà d'ouvert (« Devis DEV-… en attente · un nouveau devis s'y ajoute », « Reprend le brouillon … »).
 - **Composition** : le titre nomme la cliente ; plus de bouton « Brouillon » : la fenêtre se termine par **Annuler** ou **Envoyer** (la raison d'un envoi bloqué est dite) ; le bouton dit par où le devis part (« Envoyer par WhatsApp / e-mail ») ; fermer avec des changements non enregistrés demande confirmation.
 - **Contraste** : puces de statut relevées partout dans l'app (texte blanc sur taupe, gris « annulé / remplacé » foncé, vert et ambre assombris), horodatages et étiquettes secondaires à 60 % minimum.
+
+## Révision 2026-10-08 — le destinataire complet sur le document
+
+Le bloc destinataire porte tout ce qu'on sait de lui. **Société** : raison sociale, adresse, NINEA, RCCM (chacun sur sa ligne), et à côté « À l'attention de » la cliente avec son téléphone et son e-mail. **Personne** : nom, adresse si la fiche en a une, téléphone, e-mail. Une donnée absente ne laisse pas de ligne vide. (Les NINEA / RCCM écartés plus haut sont ceux de l'émettrice, Beauty and Co.) Un long devis s'imprime sur plusieurs pages A4 : en-tête du tableau répété, aucune ligne coupée, total jamais scindé.

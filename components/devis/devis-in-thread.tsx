@@ -155,8 +155,9 @@ function FullDocDialog({ doc, client, open, onClose }: { doc: ThreadDoc; client:
   const print = useReactToPrint({
     contentRef: ref,
     documentTitle: docNumber(doc).replace(/\s·\s/g, "-"),
-    // Une page A4 pleine : le document porte ses propres marges.
-    pageStyle: "@page { size: A4; margin: 0 } @media print { html, body { margin: 0; background: #fff } }",
+    // A4, marges haute et basse portées par la page pour qu'un long devis continue proprement sur
+    // la suivante ; les marges latérales restent celles du document.
+    pageStyle: "@page { size: A4; margin: 12mm 0 } @media print { html, body { margin: 0; background: #fff } }",
   });
   return (
     <Dialog open={open} onClose={onClose} labelledBy="doc-dialog-title" className="max-h-[92dvh] max-w-[760px] overflow-y-auto rounded-[28px] bg-base-200 p-6">

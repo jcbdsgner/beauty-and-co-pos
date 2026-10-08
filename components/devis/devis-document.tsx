@@ -2,8 +2,8 @@ import Image from "next/image";
 import { salonById } from "@/lib/data/entreprises";
 import { clientFullName } from "@/lib/data/clientele";
 import { documentTotals } from "@/components/devis/lib";
-import { cn } from "@/lib/utils";
-import type { Cliente, Devis, DevisLine, Facture } from "@/lib/data/types";
+import { cn, formatPhone } from "@/lib/utils";
+import type { BillingCompany, Cliente, Devis, DevisLine, Facture } from "@/lib/data/types";
 
 type DevisDocumentProps =
   | { kind: "devis"; devis: Devis; client: Cliente; className?: string }
@@ -19,7 +19,7 @@ const decimal = (n: number) => DECIMAL.format(n).replace(/\s/g, " ");
 
 /**
  * Le PDF envoyé à la cliente (ADR 0042) — devis ou facture, le contenu exact de l'ébauche validée :
- * logo, salon et pays, la cliente, « Devis # / Facture # », date, vendeur, le tableau (description,
+ * logo, salon et pays, le destinataire, « Devis # / Facture # », date, vendeur, le tableau (description,
  * quantité, prix unitaire, taxes, montant), total (TTC). Rien d'autre.
  * Une remise accordée se lit dans le prix unitaire de la ligne (prix négocié) : quantité × prix
  * unitaire = montant, toujours.
@@ -32,14 +32,13 @@ export function DevisDocument(props: DevisDocumentProps) {
   const title = props.kind === "devis" ? "Devis" : "Facture";
   const number = props.kind === "devis" && props.devis.version > 1 ? `${props.devis.number} v${props.devis.version}` : doc.number;
   const date = props.kind === "devis" ? (props.devis.sentAt ?? props.devis.createdAt) : props.facture.issuedAt;
-  const recipient = doc.billTo?.name ?? clientFullName(client);
 
   const net = (l: DevisLine) => l.unitPrice * l.qty - (lineDiscount[l.id] ?? 0);
 
   return (
     <article
       className={cn(
-        "flex aspect-[210/297] w-full flex-col bg-white print:aspect-auto print:h-[297mm] print:w-[210mm] px-[7.5%] pt-[7%] pb-[6%] text-[11px] leading-snug text-[#2a2320]",
+        "flex aspect-[210/297] w-full flex-col bg-white print:aspect-auto print:min-h-[273mm] print:w-[210mm] print:pt-0 print:pb-0 px-[7.5%] pt-[7%] pb-[6%] text-[11px] leading-snug text-[#2a2320]",
         "shadow-[0_1px_2px_rgba(42,35,32,0.06),0_10px_30px_-14px_rgba(42,35,32,0.22)] print:shadow-none",
         className,
       )}
@@ -57,7 +56,7 @@ export function DevisDocument(props: DevisDocumentProps) {
       <h1 className="mt-12 text-[26px] font-light leading-none tracking-[-0.01em] text-[#886666]">
         {title} <span className="text-[#886666]/55">#</span> <span className="tabular-nums">{number}</span>
       </h1>
-      <p className="mt-2.5 text-[14px] font-medium">{recipient}</p>
+      <Recipient client={client} billTo={doc.billTo} />
 
       <dl className="mt-6 grid grid-cols-2 gap-x-10 border-y border-[#886666]/25 py-3">
         <div>
@@ -85,7 +84,7 @@ export function DevisDocument(props: DevisDocumentProps) {
         </thead>
         <tbody>
           {doc.lines.map((l) => (
-            <tr key={l.id} className="align-top [&>td]:border-b [&>td]:border-[#886666]/20">
+            <tr key={l.id} className="break-inside-avoid align-top [&>td]:border-b [&>td]:border-[#886666]/20">
               <td className="py-3 pr-4 font-medium uppercase">{l.name}</td>
               <td className="py-3 text-right tabular-nums text-[#2a2320]/75">{decimal(l.qty)}&nbsp;Unité(s)</td>
               <td className="py-3 text-right tabular-nums text-[#2a2320]/75">{decimal(net(l) / l.qty)}</td>
@@ -97,12 +96,49 @@ export function DevisDocument(props: DevisDocumentProps) {
       </table>
 
       {/* Totaux */}
-      <div className="mt-6 ml-auto w-[52%] tabular-nums">
+      <div className="mt-6 ml-auto w-[52%] break-inside-avoid tabular-nums">
         <div className="flex items-baseline justify-between bg-[#886666] px-4 py-3 text-white [-webkit-print-color-adjust:exact] [print-color-adjust:exact]">
           <span className="text-[11px] font-semibold uppercase tracking-[0.14em]">Total (TTC)</span>
           <span className="text-[16px] font-semibold">{cfa(total)}</span>
         </div>
       </div>
     </article>
+  );
+}
+
+/**
+ * Le destinataire, avec tout ce qu'on sait de lui. Une société : raison sociale, adresse, NINEA,
+ * RCCM, puis la cliente « à l'attention de » avec son téléphone et son e-mail. Une personne : son
+ * nom, son adresse si on l'a, son téléphone, son e-mail. Une ligne manquante ne laisse pas de trou.
+ */
+function Recipient({ client, billTo }: { client: Cliente; billTo?: BillingCompany }) {
+  const contact = [formatPhone(client.phone), client.email].filter(Boolean).join("  ·  ");
+  const label = "mb-1.5 text-[9.5px] font-semibold uppercase tracking-[0.14em] text-[#2a2320]/55";
+  if (billTo) {
+    return (
+      <div className="mt-5 grid grid-cols-2 gap-x-10">
+        <div>
+          <p className={label}>Société</p>
+          <p className="text-[14px] font-medium">{billTo.name}</p>
+          {billTo.address && <p className="mt-0.5 text-[#2a2320]/75">{billTo.address}</p>}
+          {billTo.ninea && <p className="mt-0.5 whitespace-nowrap tabular-nums text-[#2a2320]/75">NINEA {billTo.ninea}</p>}
+          {billTo.rccm && <p className="whitespace-nowrap tabular-nums text-[#2a2320]/75">RCCM {billTo.rccm}</p>}
+        </div>
+        <div>
+          <p className={label}>À l&apos;attention de</p>
+          <p className="text-[12px] font-medium">{clientFullName(client)}</p>
+          <p className="mt-0.5 tabular-nums text-[#2a2320]/75">{formatPhone(client.phone)}</p>
+          {client.email && <p className="break-all text-[#2a2320]/75">{client.email}</p>}
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="mt-5">
+      <p className={label}>Client</p>
+      <p className="text-[14px] font-medium">{clientFullName(client)}</p>
+      {client.address && <p className="mt-0.5 text-[#2a2320]/75">{client.address}</p>}
+      {contact && <p className="mt-0.5 tabular-nums text-[#2a2320]/75">{contact}</p>}
+    </div>
   );
 }
