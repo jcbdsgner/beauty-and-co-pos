@@ -51,5 +51,5 @@ Devis et facture partent dans le fil comme un **PDF** (téléchargeable depuis l
 
 ## Révision 2026-10-08 — le document suit l'ébauche validée
 
-Le PDF reprend exactement le contenu de l'ébauche fournie : logo, salon et pays, destinataire, « Devis # / Facture # », date, vendeur, tableau description / quantité / prix unitaire / taxes / montant, montant hors taxes, total. La colonne Taxes reste vide (pas de TVA) ; NINEA, RCCM, validité et mentions de paiement ne figurent pas sur le document. Une remise accordée se lit dans le prix unitaire de la ligne. Devis et facture portent le salon et le vendeur.
+Le PDF reprend exactement le contenu de l'ébauche fournie : logo, salon et pays, destinataire, « Devis # / Facture # », date, vendeur, tableau description / quantité / prix unitaire / taxes / montant, total (TTC) — la ligne « Montant hors taxes » retirée. La colonne Taxes reste vide (pas de TVA) ; NINEA, RCCM, validité et mentions de paiement ne figurent pas sur le document. Une remise accordée se lit dans le prix unitaire de la ligne. Devis et facture portent le salon et le vendeur.
 

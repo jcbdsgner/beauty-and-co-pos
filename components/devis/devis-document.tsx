@@ -20,7 +20,7 @@ const decimal = (n: number) => DECIMAL.format(n).replace(/\s/g, " ");
 /**
  * Le PDF envoyé à la cliente (ADR 0042) — devis ou facture, le contenu exact de l'ébauche validée :
  * logo, salon et pays, la cliente, « Devis # / Facture # », date, vendeur, le tableau (description,
- * quantité, prix unitaire, taxes, montant), montant hors taxes, total. Rien d'autre.
+ * quantité, prix unitaire, taxes, montant), total (TTC). Rien d'autre.
  * Une remise accordée se lit dans le prix unitaire de la ligne (prix négocié) : quantité × prix
  * unitaire = montant, toujours.
  */
@@ -100,12 +100,8 @@ export function DevisDocument(props: DevisDocumentProps) {
 
       {/* Totaux */}
       <div className="mt-6 ml-auto w-[52%] tabular-nums">
-        <div className="flex items-baseline justify-between px-4 py-2.5 text-[#2a2320]/70">
-          <span>Montant hors taxes</span>
-          <span>{cfa(total)}</span>
-        </div>
         <div className="flex items-baseline justify-between bg-[#886666] px-4 py-3 text-white [-webkit-print-color-adjust:exact] [print-color-adjust:exact]">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.14em]">Total</span>
+          <span className="text-[11px] font-semibold uppercase tracking-[0.14em]">Total (TTC)</span>
           <span className="text-[16px] font-semibold">{cfa(total)}</span>
         </div>
       </div>
