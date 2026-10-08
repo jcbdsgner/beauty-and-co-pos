@@ -31,4 +31,17 @@ Une cliente veut savoir combien lui reviendront des prestations ou des produits,
 - `SaleCoverage.source` gagne une troisième origine (la facture) à côté de `pack` et `abonnement`.
 - Le Récap des ventes porte les paiements de facture comme des lignes à part, le jour où ils arrivent.
 - Une page côté cliente (hors shell) montre devis et facture, bouton Payer sous la facture.
-- Ouvert : mention « TVA non applicable » à confirmer avec le comptable ; numérotation réelle et envois réels attendent le passage de toute l'app en production.
+- Aucune mention de TVA sur les documents (décision 2026-10-08). Numérotation réelle et envois réels attendent le passage de toute l'app en production.
+
+## Révision 2026-10-08 — pas de section : le devis vit dans Messages
+
+Prototypée, la section **Devis** reprenait la grammaire maître-détail de Messages : un doublon. Presque tout le parcours se joue déjà dans le **fil** de la cliente — l'envoi, ses questions, son « oui », le paiement qui revient. On retire la section (et l'entrée de sidebar) :
+
+- **Le devis est une pièce vivante du fil** : envoyé, il apparaît dans la conversation comme un document avec son statut et l'action du moment (Facturer, Enregistrer le paiement…). Ses versions et sa facture s'y succèdent.
+- **L'inbox de Messages** gagne en tête une section **« Devis en cours »** — devis sans réponse, factures à payer — comme « Anniversaires souhaités ».
+- **Nouveau devis** s'ouvre depuis un fil, l'en-tête de Messages ou la fiche cliente, dans une grande fenêtre de composition.
+- **Au Comptoir**, la cliente identifiée amène d'elle-même ses produits à remettre et ses prestations prépayées — plus de file « à remettre » à surveiller.
+- **La fiche cliente** garde l'historique « Devis et factures ».
+
+Écartés : un module en file de tâches façon Cartes cadeaux (ne se justifie qu'à fort volume) ; le devis porté par la seule fiche cliente, suivi par les Alertes (aucune vue d'ensemble).
+

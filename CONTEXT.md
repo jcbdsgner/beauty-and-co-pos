@@ -212,11 +212,11 @@ Le solde de fidélité d'une cliente, avec deux mouvements distincts. L'**acquis
 _Avoid_: Cagnotte, miles, points de fidélité (« points fidélité » à l'écrit)
 
 **Devis**:
-Une estimation chiffrée, envoyée à une cliente qui veut savoir combien lui reviendront des **prestations** et/ou des **produits** du Menu — jamais de boissons, packs, forfaits ou cartes cadeaux. Prix du Menu, éventuelles **remises accordées** (mêmes règles qu'au comptoir), **aucun avantage personnel** (points, carte cadeau, pack, abonnement). Toujours rattaché à une fiche cliente, valable 30 jours à prix figés. Statuts : brouillon → envoyé → facturé ; ou refusé, expiré, remplacé (par sa version suivante — un devis envoyé ne se modifie pas, il se **réémet** en v2). Vit dans la section **Devis** (ADR 0042).
+Une estimation chiffrée, envoyée à une cliente qui veut savoir combien lui reviendront des **prestations** et/ou des **produits** du Menu — jamais de boissons, packs, forfaits ou cartes cadeaux. Prix du Menu, éventuelles **remises accordées** (mêmes règles qu'au comptoir), **aucun avantage personnel** (points, carte cadeau, pack, abonnement). Toujours rattaché à une fiche cliente, valable 30 jours à prix figés. Statuts : brouillon → envoyé → facturé ; ou refusé, expiré, remplacé (par sa version suivante — un devis envoyé ne se modifie pas, il se **réémet** en v2). Vit dans le **fil Messages** de la cliente, comme une pièce de la conversation — pas de section à part (ADR 0042).
 _Avoid_: Estimation, proforma, offre, cotation
 
 **Facture**:
-Le document qui demande le paiement d'un **Devis** accepté : la cliente dit oui (dans son fil ou au téléphone), la réceptionniste **facture**. Numéro unique, jamais modifiée. **À payer** puis **payée** — en une fois, par le bouton « Payer » sous la facture envoyée ou enregistré au salon. Montant unique, sans TVA. Payée, elle devient du **prépayé** : ses prestations sont des **Prestations déjà payées**, ses produits sont **à remettre**. Une facture ne naît jamais d'une vente du comptoir — le reçu y suffit (ADR 0042).
+Le document qui demande le paiement d'un **Devis** accepté : la cliente dit oui (dans son fil ou au téléphone), la réceptionniste **facture**. Numéro unique, jamais modifiée. **À payer** puis **payée** — en une fois, par le bouton « Payer » sous la facture envoyée ou enregistré au salon. Montant unique, sans TVA ni mention de TVA. Payée, elle devient du **prépayé** : ses prestations sont des **Prestations déjà payées**, ses produits sont **à remettre** — tous deux se présentent d'eux-mêmes au Comptoir dès que la cliente est identifiée. Une facture ne naît jamais d'une vente du comptoir — le reçu y suffit (ADR 0042).
 _Avoid_: Note, reçu (le reçu est le document du comptoir), bon de commande
 
 **Avoir**:

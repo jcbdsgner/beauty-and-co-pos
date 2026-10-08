@@ -111,6 +111,17 @@ export type Cliente = {
   totalVisits: number;
   createdAt: string;
   preferredStaffId?: string;
+  /** Société facturée (ADR 0042) — facultative, reprise d'un devis à l'autre. */
+  billingCompany?: BillingCompany;
+};
+
+/** Identité de facturation d'une cliente qui fait facturer sa structure (ADR 0042). Distincte de
+ *  `Company`, qui est l'enseigne émettrice (Beauty and Co). */
+export type BillingCompany = {
+  name: string;
+  address: string;
+  ninea: string;
+  rccm?: string;
 };
 
 export type Ethnicity = "asiatique" | "africain" | "americain" | "europeen";
@@ -545,6 +556,11 @@ export type Message = {
   /** Anniversaire souhaité (relance `anniversaire` envoyée) : mis en évidence dans Messages tant
    *  que la réceptionniste ne l'a pas vu ; passe à true quand elle ouvre la conversation. */
   seen?: boolean;
+  /** Un devis envoyé dans le fil (ADR 0042) — la version précise ; le fil le montre comme une
+   *  pièce vivante (statut et action du moment lus dans le store). */
+  devisId?: string;
+  /** Une facture envoyée dans le fil, bouton Payer compris (ADR 0042). */
+  factureId?: string;
 };
 
 export type Conversation = {
@@ -560,6 +576,12 @@ export type Conversation = {
 export type Company = {
   id: string;
   name: string;
+  /** Mentions d'émettrice des devis et factures (ADR 0042) — valeurs fictives en démo. */
+  address?: string;
+  ninea?: string;
+  rccm?: string;
+  phone?: string;
+  email?: string;
 };
 
 export type Salon = {
@@ -571,3 +593,70 @@ export type Salon = {
   /** Jours de fermeture hebdomadaire — personne n'y travaille, quel que soit son horaire. */
   closedDays?: DayOfWeek[];
 };
+
+/* ── Devis & factures (ADR 0042) ─────────────────────────────────────────── */
+
+/** Une ligne de devis ou de facture : une prestation ou un produit du Menu, au prix du jour du devis. */
+export type DevisLine = {
+  id: string;
+  refId: string;
+  kind: "service" | "produit";
+  name: string;
+  unitPrice: number;
+  qty: number;
+};
+
+/** brouillon → envoye → facture ; ou refuse, expire (30 j), remplace (réémis en version suivante).
+ *  Pas d'« accepté » : facturer enregistre l'accord. */
+export type DevisStatus = "brouillon" | "envoye" | "facture" | "refuse" | "expire" | "remplace";
+
+export type DevisChannel = "whatsapp" | "email";
+
+export type Devis = {
+  id: string;
+  /** « DEV-2026-0012 » — partagé par toutes les versions d'un même devis. */
+  number: string;
+  version: number;
+  clientId: string;
+  /** Société facturée recopiée au moment du devis — absente = facturé à la cliente elle-même. */
+  billTo?: BillingCompany;
+  lines: DevisLine[];
+  /** Remises accordées, mêmes règles qu'au panier (prestations seulement). */
+  remises: RemiseAccordee[];
+  remiseReason: string | null;
+  status: DevisStatus;
+  createdAt: string;
+  sentAt?: string;
+  sentChannel?: DevisChannel;
+  /** ISO date — 30 jours après l'envoi (ou la création pour un brouillon). Prix figés jusque-là. */
+  validUntil: string;
+  /** La facture née de ce devis (status `facture`). */
+  factureId?: string;
+};
+
+/** a_payer → payee ; annulee = un avoir l'a annulée (une facture ne se supprime jamais). */
+export type FactureStatus = "a_payer" | "payee" | "annulee";
+
+export type Facture = {
+  id: string;
+  /** « FAC-2026-0007 » — unique, jamais réattribué. */
+  number: string;
+  devisId: string;
+  clientId: string;
+  billTo?: BillingCompany;
+  /** Recopiées du devis : une facture ne change jamais. */
+  lines: DevisLine[];
+  remises: RemiseAccordee[];
+  total: number;
+  status: FactureStatus;
+  issuedAt: string;
+  paidAt?: string;
+  /** « lien » = payée par la cliente via le bouton Payer ; « salon » = enregistrée au comptoir. */
+  payment?: { mode: PaymentMode; via: "lien" | "salon" };
+  avoir?: { number: string; reason: string; at: string; managerCode: string };
+  /** Lignes de prestation déjà consommées au comptoir (prépayé, comme un Pack). */
+  redeemedLineIds: string[];
+  /** Quand les produits ont été remis à la cliente. */
+  productsHandedOverAt?: string;
+};
+

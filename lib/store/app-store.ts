@@ -15,6 +15,7 @@ import { PRODUITS, serviceById } from "@/lib/data/menu";
 import { boissonById } from "@/lib/data/boissons";
 import { PRATICIENNES } from "@/lib/data/praticiennes";
 import { CONVERSATIONS } from "@/lib/data/conversations";
+import { DEVIS, FACTURES, DEVIS_VALIDITY_DAYS, addDays, withDevisMessages } from "@/lib/data/devis";
 import { CARTES_CADEAUX, GIFT_CARD_ORDERS, giftCardForClient } from "@/lib/data/cartes-cadeaux";
 import { ABONNEMENTS } from "@/lib/data/abonnements";
 import { PACK_PURCHASES } from "@/lib/data/pack-purchases";
@@ -27,12 +28,16 @@ import type {
   Cliente,
   ClientNote,
   Conversation,
+  Devis,
+  DevisChannel,
+  Facture,
   GiftCardOrder,
   Pointage,
   PointageKind,
   PaymentMode,
   Praticienne,
   Produit,
+  RemiseAccordee,
   RemiseMode,
   RendezVous,
   Reservation,
@@ -486,12 +491,127 @@ export type AppState = {
   /** `imprimee → remise` (retrait) / `→ livree` (livraison) — the order leaves the queue. */
   markGiftCardOrderHandedOver: (orderId: string) => void;
 
+  // Devis & factures (ADR 0042) — le devis vit dans le fil Messages de la cliente.
+  devis: Devis[];
+  factures: Facture[];
+  /** Nouveau brouillon (version 1, numéro suivant). */
+  createDevis: (data: Pick<Devis, "clientId" | "lines" | "remises" | "remiseReason" | "billTo">) => Devis;
+  /** Modifie un brouillon — un devis envoyé ne se modifie pas, il se réémet (`reviseDevis`). */
+  updateDevisDraft: (id: string, patch: Partial<Pick<Devis, "lines" | "remises" | "remiseReason" | "billTo">>) => void;
+  deleteDevisDraft: (id: string) => void;
+  /** Envoie le brouillon dans le fil de la cliente (WhatsApp / e-mail) : message porteur du devis,
+   *  prise en main du fil, validité 30 j. Une version > 1 remplace les précédentes. */
+  sendDevis: (id: string, channel: DevisChannel) => void;
+  /** Ouvre la version suivante d'un devis envoyé, en brouillon (même numéro). */
+  reviseDevis: (id: string) => Devis | undefined;
+  refuseDevis: (id: string) => void;
+  /** La cliente a dit oui : émet la facture (à payer) et l'envoie dans le fil, bouton Payer compris. */
+  invoiceDevis: (id: string) => Facture | undefined;
+  recordFacturePayment: (factureId: string, mode: PaymentMode, via: "lien" | "salon") => void;
+  /** Annule une facture à payer par un avoir — code manager + motif. */
+  cancelFacture: (factureId: string, reason: string, managerCode: string) => void;
+  handOverFactureProducts: (factureId: string) => void;
+
   // Pointage de l'équipe (ADR 0040)
   recordPointage: (staffId: string, kind: PointageKind) => Pointage;
   /** Une réservation arrive de la plateforme en ligne — sert à la démo de l'alerte « Rendez-vous
    *  imminent » (l'Accueil en fait arriver une qui commence dans 15 min). */
   receiveReservation: (reservation: Reservation) => void;
 };
+
+/**
+ * La règle de la remise accordée (ADR 0008, 0031), pure : 10 % de l'assiette sans code, 20 % au
+ * plus avec un code manager. Renvoie la liste de remises mise à jour — une ligne n'appartient
+ * qu'à une remise, la nouvelle prend ses lignes aux autres. Partagée par le panier et le devis.
+ */
+export function applyRemise(
+  sale: Sale,
+  lineIds: string[],
+  mode: RemiseMode,
+  value: number,
+  managerCode?: string,
+): { ok: false; message: string } | { ok: true; remises: RemiseAccordee[] } {
+  const { lineAssiette } = computeTotals(sale);
+  const ids = [...new Set(lineIds)].filter((id) => (lineAssiette[id] ?? 0) > 0);
+  const base = ids.reduce((sum, id) => sum + lineAssiette[id], 0);
+  if (ids.length === 0 || base <= 0) return { ok: false, message: "Sélectionnez au moins une prestation à remiser." };
+  if (!Number.isFinite(value) || value <= 0) return { ok: false, message: "Indiquez le montant ou le pourcentage de la remise." };
+
+  // The request as a share of the selected lines, whichever way it was entered.
+  const requestedPct = mode === "pourcentage" ? value : (value / base) * 100;
+  const mgr = managerCode?.trim() ?? "";
+
+  if (requestedPct > MAX_REMISE_PCT + 1e-6) {
+    return mode === "pourcentage"
+      ? { ok: false, message: `${MAX_REMISE_PCT} % est le plafond absolu — aucune remise plus forte n'est possible ici.` }
+      : { ok: false, message: `Le maximum sur ces prestations est ${formatFcfa(Math.round((base * MAX_REMISE_PCT) / 100))} — ${MAX_REMISE_PCT} % de leur prix.` };
+  }
+  if (requestedPct > RECEPTIONIST_MAX_PCT + 1e-6) {
+    if (!mgr) {
+      return mode === "pourcentage"
+        ? { ok: false, message: `Au-delà de ${RECEPTIONIST_MAX_PCT} %, saisissez le code manager.` }
+        : { ok: false, message: `Au-delà de ${formatFcfa(Math.round((base * RECEPTIONIST_MAX_PCT) / 100))} (${RECEPTIONIST_MAX_PCT} % de ces prestations), saisissez le code manager.` };
+    }
+    if (!/^\d{4,6}$/.test(mgr)) {
+      return { ok: false, message: "Le code manager doit faire 4 à 6 chiffres." };
+    }
+  }
+
+  const taken = new Set(ids);
+  const others = sale.remises
+    .map((r) => ({ ...r, lineIds: r.lineIds.filter((id) => !taken.has(id)) }))
+    .filter((r) => r.lineIds.length > 0);
+  return {
+    ok: true,
+    remises: [
+      ...others,
+      {
+        id: nextId("remise"),
+        lineIds: ids,
+        mode,
+        value,
+        ...(requestedPct > RECEPTIONIST_MAX_PCT && mgr ? { managerCode: mgr } : {}),
+      },
+    ],
+  };
+}
+
+/** Un devis lu comme une vente : la même chaîne de remises que le panier, sans avantage personnel. */
+export function devisAsSale(d: Pick<Devis, "lines" | "remises">): Sale {
+  return {
+    id: "devis", label: "", clientId: null, cart: d.lines, giftCardApplied: null, loyaltyPointsUsed: 0,
+    coverage: [], remises: d.remises, remiseReason: null, status: "ouverte", step: "vente", createdAt: "",
+  };
+}
+
+/** Poste un devis / une facture dans le fil de la cliente — crée le fil s'il n'existe pas — et le
+ *  passe en prise en main (ADR 0042). Défini après le store (il en a besoin), appelé par ses actions. */
+function postDocumentMessage(clientId: string, channel: DevisChannel, m: { body: string; devisId?: string; factureId?: string }) {
+  const { conversations } = useAppStore.getState();
+  const at = new Date().toISOString();
+  const existing = conversations.find((c) => c.clientId === clientId);
+  if (existing) {
+    useAppStore.setState({
+      conversations: conversations.map((c) =>
+        c.id === existing.id
+          ? {
+              ...c,
+              state: c.state === "manager" ? c.state : "receptionniste",
+              messages: [...c.messages, { id: `m-${c.id}-${c.messages.length + 1}-dv`, sender: "receptionniste", channel, at, ...m }],
+            }
+          : c,
+      ),
+    });
+  } else {
+    const id = nextId("conv");
+    useAppStore.setState({
+      conversations: [
+        { id, clientId, channel, state: "receptionniste", unread: false, messages: [{ id: `m-${id}-1`, sender: "receptionniste", channel, at, ...m }] },
+        ...conversations,
+      ],
+    });
+  }
+}
 
 export const useAppStore = create<AppState>((set, get) => ({
   clients: CLIENTS,
@@ -503,8 +623,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   activeSaleId: null,
   comptoirDeployed: false,
   recentClientIds: [],
-  conversations: CONVERSATIONS,
+  conversations: withDevisMessages(CONVERSATIONS),
   giftCardOrders: GIFT_CARD_ORDERS,
+  devis: DEVIS,
+  factures: FACTURES,
   pointages: [],
 
   addClient: (data) => {
@@ -949,48 +1071,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   grantDiscount: (saleId, lineIds, mode, value, managerCode) => {
     const sale = get().sales.find((s) => s.id === saleId);
     if (!sale) return { ok: false, message: "Vente introuvable." };
-    const { lineAssiette } = computeTotals(sale);
-    const ids = [...new Set(lineIds)].filter((id) => (lineAssiette[id] ?? 0) > 0);
-    const base = ids.reduce((sum, id) => sum + lineAssiette[id], 0);
-    if (ids.length === 0 || base <= 0) return { ok: false, message: "Sélectionnez au moins une prestation à remiser." };
-    if (!Number.isFinite(value) || value <= 0) return { ok: false, message: "Indiquez le montant ou le pourcentage de la remise." };
-
-    // The request as a share of the selected lines, whichever way it was entered.
-    const requestedPct = mode === "pourcentage" ? value : (value / base) * 100;
-    const mgr = managerCode?.trim() ?? "";
-
-    if (requestedPct > MAX_REMISE_PCT + 1e-6) {
-      return mode === "pourcentage"
-        ? { ok: false, message: `${MAX_REMISE_PCT} % est le plafond absolu — aucune remise plus forte n'est possible ici.` }
-        : { ok: false, message: `Le maximum sur ces prestations est ${formatFcfa(Math.round((base * MAX_REMISE_PCT) / 100))} — ${MAX_REMISE_PCT} % de leur prix.` };
-    }
-    if (requestedPct > RECEPTIONIST_MAX_PCT + 1e-6) {
-      if (!mgr) {
-        return mode === "pourcentage"
-          ? { ok: false, message: `Au-delà de ${RECEPTIONIST_MAX_PCT} %, saisissez le code manager.` }
-          : { ok: false, message: `Au-delà de ${formatFcfa(Math.round((base * RECEPTIONIST_MAX_PCT) / 100))} (${RECEPTIONIST_MAX_PCT} % de ces prestations), saisissez le code manager.` };
-      }
-      if (!/^\d{4,6}$/.test(mgr)) {
-        return { ok: false, message: "Le code manager doit faire 4 à 6 chiffres." };
-      }
-    }
-
-    const taken = new Set(ids);
-    const others = sale.remises
-      .map((r) => ({ ...r, lineIds: r.lineIds.filter((id) => !taken.has(id)) }))
-      .filter((r) => r.lineIds.length > 0);
-    get().updateSale(saleId, {
-      remises: [
-        ...others,
-        {
-          id: nextId("remise"),
-          lineIds: ids,
-          mode,
-          value,
-          ...(requestedPct > RECEPTIONIST_MAX_PCT && mgr ? { managerCode: mgr } : {}),
-        },
-      ],
-    });
+    const res = applyRemise(sale, lineIds, mode, value, managerCode);
+    if (!res.ok) return res;
+    get().updateSale(saleId, { remises: res.remises });
     return { ok: true, message: "Remise accordée. Le motif vous sera demandé après l'encaissement." };
   },
 
@@ -1160,6 +1243,127 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   // ── Cartes cadeaux à préparer (ADR 0012) ───────────────────────────────
+  createDevis: (data) => {
+    const year = new Date().getFullYear();
+    const next = Math.max(0, ...get().devis.map((d) => Number(d.number.slice(-4)))) + 1;
+    const now = new Date().toISOString();
+    const devis: Devis = {
+      ...data,
+      id: nextId("dev"),
+      number: `DEV-${year}-${String(next).padStart(4, "0")}`,
+      version: 1,
+      status: "brouillon",
+      createdAt: now,
+      validUntil: addDays(now, DEVIS_VALIDITY_DAYS),
+    };
+    set((s) => ({ devis: [devis, ...s.devis] }));
+    return devis;
+  },
+
+  updateDevisDraft: (id, patch) =>
+    set((s) => ({ devis: s.devis.map((d) => (d.id === id && d.status === "brouillon" ? { ...d, ...patch } : d)) })),
+
+  deleteDevisDraft: (id) => set((s) => ({ devis: s.devis.filter((d) => !(d.id === id && d.status === "brouillon")) })),
+
+  sendDevis: (id, channel) => {
+    const d = get().devis.find((x) => x.id === id);
+    if (!d || d.status !== "brouillon") return;
+    const now = new Date().toISOString();
+    set((s) => ({
+      devis: s.devis.map((x) => {
+        if (x.id === id) return { ...x, status: "envoye", sentAt: now, sentChannel: channel, validUntil: addDays(now, DEVIS_VALIDITY_DAYS) };
+        if (x.number === d.number && x.status === "envoye") return { ...x, status: "remplace" };
+        return x;
+      }),
+    }));
+    postDocumentMessage(d.clientId, channel, {
+      body:
+        d.version > 1
+          ? "Voici votre devis mis à jour. N'hésitez pas si vous avez une question."
+          : "Bonjour, voici votre devis. N'hésitez pas si vous avez une question.",
+      devisId: id,
+    });
+  },
+
+  reviseDevis: (id) => {
+    const d = get().devis.find((x) => x.id === id);
+    if (!d || d.status !== "envoye") return undefined;
+    const existing = get().devis.find((x) => x.number === d.number && x.status === "brouillon");
+    if (existing) return existing;
+    const now = new Date().toISOString();
+    const draft: Devis = {
+      ...d,
+      id: nextId("dev"),
+      version: Math.max(...get().devis.filter((x) => x.number === d.number).map((x) => x.version)) + 1,
+      status: "brouillon",
+      createdAt: now,
+      sentAt: undefined,
+      sentChannel: undefined,
+      validUntil: addDays(now, DEVIS_VALIDITY_DAYS),
+    };
+    set((s) => ({ devis: [draft, ...s.devis] }));
+    return draft;
+  },
+
+  refuseDevis: (id) => set((s) => ({ devis: s.devis.map((d) => (d.id === id && d.status === "envoye" ? { ...d, status: "refuse" } : d)) })),
+
+  invoiceDevis: (id) => {
+    const d = get().devis.find((x) => x.id === id);
+    if (!d || d.status !== "envoye") return undefined;
+    const year = new Date().getFullYear();
+    const next = Math.max(0, ...get().factures.map((f) => Number(f.number.slice(-4)))) + 1;
+    const facture: Facture = {
+      id: nextId("fac"),
+      number: `FAC-${year}-${String(next).padStart(4, "0")}`,
+      devisId: d.id,
+      clientId: d.clientId,
+      billTo: d.billTo,
+      lines: d.lines,
+      remises: d.remises,
+      total: computeTotals(devisAsSale(d)).total,
+      status: "a_payer",
+      issuedAt: new Date().toISOString(),
+      redeemedLineIds: [],
+    };
+    set((s) => ({
+      factures: [facture, ...s.factures],
+      devis: s.devis.map((x) => (x.id === id ? { ...x, status: "facture", factureId: facture.id } : x)),
+    }));
+    postDocumentMessage(d.clientId, d.sentChannel ?? "whatsapp", {
+      body: "Merci pour votre accord ! Voici votre facture, vous pouvez la régler directement avec le bouton Payer.",
+      factureId: facture.id,
+    });
+    return facture;
+  },
+
+  recordFacturePayment: (factureId, mode, via) =>
+    set((s) => ({
+      factures: s.factures.map((f) =>
+        f.id === factureId && f.status === "a_payer" ? { ...f, status: "payee", paidAt: new Date().toISOString(), payment: { mode, via } } : f,
+      ),
+    })),
+
+  cancelFacture: (factureId, reason, managerCode) =>
+    set((s) => {
+      const next = s.factures.filter((f) => f.avoir).length + 1;
+      return {
+        factures: s.factures.map((f) =>
+          f.id === factureId && f.status === "a_payer"
+            ? {
+                ...f,
+                status: "annulee",
+                avoir: { number: `AV-${new Date().getFullYear()}-${String(next).padStart(4, "0")}`, reason, at: new Date().toISOString(), managerCode },
+              }
+            : f,
+        ),
+      };
+    }),
+
+  handOverFactureProducts: (factureId) =>
+    set((s) => ({
+      factures: s.factures.map((f) => (f.id === factureId && f.status === "payee" ? { ...f, productsHandedOverAt: new Date().toISOString() } : f)),
+    })),
+
   printGiftCardOrder: (orderId) =>
     set((s) => ({
       giftCardOrders: s.giftCardOrders.map((o) =>

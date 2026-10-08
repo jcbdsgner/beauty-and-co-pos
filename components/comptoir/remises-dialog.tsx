@@ -60,12 +60,32 @@ export function RemisesTrigger({ sale, onOpen }: { sale: Sale; onOpen: () => voi
  *   past 10 %) → « Appliquer ». A remise tag on a line reopens it for editing or removal.
  * Under the lines, what the cliente holds (AdvantagesSection). The foot keeps the live total.
  */
-export function RemisesDialog({ sale, open, onClose }: { sale: Sale; open: boolean; onClose: () => void }) {
+/** Où va la remise : par défaut la vente du store ; un devis (ADR 0042) passe ses propres mains. */
+type RemiseHandlers = {
+  grant: (lineIds: string[], mode: RemiseMode, value: number, managerCode?: string) => { ok: boolean; message: string };
+  remove: (remiseId: string) => void;
+};
+
+export function RemisesDialog({
+  sale,
+  open,
+  onClose,
+  handlers,
+  title = "Remises et avantages",
+}: {
+  sale: Sale;
+  open: boolean;
+  onClose: () => void;
+  /** Fournis par un devis : la remise s'écrit dans le brouillon, et la section avantages disparaît
+   *  (un devis n'en porte aucun). */
+  handlers?: RemiseHandlers;
+  title?: string;
+}) {
   if (!open) return null;
-  return <RemisesDialogBody sale={sale} onClose={onClose} />;
+  return <RemisesDialogBody sale={sale} onClose={onClose} handlers={handlers} title={title} />;
 }
 
-function RemisesDialogBody({ sale, onClose }: { sale: Sale; onClose: () => void }) {
+function RemisesDialogBody({ sale, onClose, handlers, title }: { sale: Sale; onClose: () => void; handlers?: RemiseHandlers; title: string }) {
   const totals = computeTotals(sale);
   const eligible = (lineId: string) => (totals.lineAssiette[lineId] ?? 0) > 0;
   const eligibleIds = sale.cart.filter((l) => eligible(l.id)).map((l) => l.id);
@@ -91,7 +111,7 @@ function RemisesDialogBody({ sale, onClose }: { sale: Sale; onClose: () => void 
 
       <div className="shrink-0 px-7 pt-7 pb-4">
         <h2 id="remises-title" className="font-[family-name:var(--font-heading)] text-[24px] font-bold leading-tight text-base-content">
-          Remises et avantages
+          {title}
         </h2>
       </div>
 
@@ -191,7 +211,7 @@ function RemisesDialogBody({ sale, onClose }: { sale: Sale; onClose: () => void 
           })}
         </ul>
 
-        {!composing && <AdvantagesSection sale={sale} />}
+        {!composing && !handlers && <AdvantagesSection sale={sale} />}
       </div>
 
       {/* Foot — the composer while a remise is being set, the live total and « Terminé » otherwise */}
@@ -202,6 +222,7 @@ function RemisesDialogBody({ sale, onClose }: { sale: Sale; onClose: () => void 
             sale={sale}
             editing={draft.remise}
             selected={draft.selected}
+            handlers={handlers}
             onDone={() => setDraft(null)}
           />
         ) : (
@@ -226,14 +247,20 @@ function RemiseComposer({
   sale,
   editing,
   selected,
+  handlers,
   onDone,
 }: {
   sale: Sale;
   editing: RemiseAccordee | null;
   selected: string[];
+  handlers?: RemiseHandlers;
   onDone: () => void;
 }) {
-  const { grantDiscount, removeRemise } = useAppData();
+  const store = useAppData();
+  const grantDiscount = handlers
+    ? (_saleId: string, ids: string[], m: RemiseMode, v: number, code?: string) => handlers.grant(ids, m, v, code)
+    : store.grantDiscount;
+  const removeRemise = handlers ? (_saleId: string, id: string) => handlers.remove(id) : store.removeRemise;
   const totals = computeTotals(sale);
   const base = selected.reduce((sum, id) => sum + (totals.lineAssiette[id] ?? 0), 0);
 

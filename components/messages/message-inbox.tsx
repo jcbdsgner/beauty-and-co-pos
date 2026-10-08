@@ -15,8 +15,9 @@ import {
   unseenBirthdayWish,
 } from "@/components/messages/lib";
 import { useAppData } from "@/components/providers/app-data-provider";
+import { buildDossiers, sinceLabel } from "@/components/devis/lib";
+import { cn, formatFcfa } from "@/lib/utils";
 import { clientFullName, clientInitial } from "@/lib/data/clientele";
-import { cn } from "@/lib/utils";
 import type { Conversation } from "@/lib/data/types";
 
 const RELANCE_DATE_FMT = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short" });
@@ -29,7 +30,7 @@ type MessageInboxProps = {
 };
 
 export function MessageInbox({ selectedClientId, onSelect, filterClientId, onFilter }: MessageInboxProps) {
-  const { conversations, clients } = useAppData();
+  const { conversations, clients, devis, factures } = useAppData();
   const clientFor = (id: string) => clients.find((c) => c.id === id);
 
   const visible = filterClientId ? conversations.filter((c) => c.clientId === filterClientId) : conversations;
@@ -40,8 +41,18 @@ export function MessageInbox({ selectedClientId, onSelect, filterClientId, onFil
     .sort((a, b) => unseenBirthdayWish(b.messages)!.at.localeCompare(unseenBirthdayWish(a.messages)!.at));
   const birthdayIds = new Set(birthdays.map((c) => c.id));
 
+  // Devis en cours (ADR 0042) — un devis qui attend la réponse de la cliente, ou une facture qui
+  // attend son paiement : en tête, sous les anniversaires, le plus ancien d'abord.
+  const pendingDossiers = buildDossiers(devis, factures)
+    .filter((d) => d.stage === "envoye" || d.stage === "a_payer")
+    .sort((a, b) => a.at.localeCompare(b.at));
+  const devisRows = pendingDossiers
+    .map((d) => ({ d, conv: visible.find((c) => c.clientId === d.devis.clientId && !birthdayIds.has(c.id)) }))
+    .filter((r): r is { d: (typeof pendingDossiers)[number]; conv: Conversation } => Boolean(r.conv));
+  const devisConvIds = new Set(devisRows.map((r) => r.conv.id));
+
   const scheduled = visible
-    .filter((c) => !birthdayIds.has(c.id) && c.messages.some((m) => m.pending))
+    .filter((c) => !birthdayIds.has(c.id) && !devisConvIds.has(c.id) && c.messages.some((m) => m.pending))
     .sort((a, b) => {
       const pa = nearestPending(a.messages)!;
       const pb = nearestPending(b.messages)!;
@@ -53,7 +64,7 @@ export function MessageInbox({ selectedClientId, onSelect, filterClientId, onFil
 
   const scheduledIds = new Set(scheduled.map((c) => c.id));
   const rest = visible
-    .filter((c) => !birthdayIds.has(c.id) && !scheduledIds.has(c.id))
+    .filter((c) => !birthdayIds.has(c.id) && !devisConvIds.has(c.id) && !scheduledIds.has(c.id))
     .sort((a, b) => {
       if (a.unread !== b.unread) return a.unread ? -1 : 1;
       const la = lastRealMessage(a.messages)?.at ?? "";
@@ -113,9 +124,37 @@ export function MessageInbox({ selectedClientId, onSelect, filterClientId, onFil
               </>
             )}
 
-            {scheduled.length > 0 && (
+            {devisRows.length > 0 && (
               <>
                 <p className={cn("px-3 pb-1", birthdays.length > 0 ? "pt-3" : "pt-2")}>
+                  <Legend>Devis en cours · {devisRows.length}</Legend>
+                </p>
+                {devisRows.map(({ d, conv }) => {
+                  const client = clientFor(conv.clientId);
+                  if (!client) return null;
+                  const subtitle =
+                    d.stage === "a_payer"
+                      ? `Facture à payer · ${formatFcfa(d.total)}`
+                      : `Devis sans réponse · ${formatFcfa(d.total)}`;
+                  return (
+                    <InboxRow
+                      key={conv.id}
+                      conv={conv}
+                      name={clientFullName(client)}
+                      initial={clientInitial(client)}
+                      subtitle={subtitle}
+                      stamp={sinceLabel(d.at).replace("il y a ", "")}
+                      selected={selectedClientId === conv.clientId}
+                      onSelect={() => onSelect(conv.clientId)}
+                    />
+                  );
+                })}
+              </>
+            )}
+
+            {scheduled.length > 0 && (
+              <>
+                <p className={cn("px-3 pb-1", birthdays.length + devisRows.length > 0 ? "pt-3" : "pt-2")}>
                   <Legend>Programmées · {scheduled.length}</Legend>
                 </p>
                 {scheduled.map((conv) => {
@@ -140,7 +179,7 @@ export function MessageInbox({ selectedClientId, onSelect, filterClientId, onFil
 
             {rest.length > 0 && (
               <>
-                {(scheduled.length > 0 || birthdays.length > 0) && (
+                {(scheduled.length > 0 || birthdays.length > 0 || devisRows.length > 0) && (
                   <p className="px-3 pt-3 pb-1">
                     <Legend>Conversations</Legend>
                   </p>

@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { FileText } from "lucide-react";
+import { DevisComposer } from "@/components/devis/devis-composer";
+import { PinnedDossier, ThreadDocument } from "@/components/devis/devis-in-thread";
 import { Send } from "lucide-react";
 import { Avatar } from "@/components/ui/atoms/avatar";
 import { Badge } from "@/components/ui/atoms/badge";
@@ -36,11 +39,14 @@ export function ConversationPanel({ conversationId }: { conversationId: string }
     handBackToBot,
     transferToManager,
     sendClientMessage,
+    devis,
   } = useAppData();
 
   const conv = conversations.find((c) => c.id === conversationId);
   const client = conv ? clients.find((c) => c.id === conv.clientId) : undefined;
 
+  // Fenêtre de devis ouverte : `{}` = nouveau, `{ devisId }` = reprise d'un brouillon (ADR 0042).
+  const [composing, setComposing] = useState<{ devisId?: string } | null>(null);
   const [draft, setDraft] = useState("");
   const [confirmTransfer, setConfirmTransfer] = useState(false);
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -95,8 +101,19 @@ export function ConversationPanel({ conversationId }: { conversationId: string }
             <span>{STATE_LABEL[conv.state]}</span>
           </div>
         </div>
+        {conv.state !== "manager" && (
+          <Button variant="outline" size="sm" icon={<FileText className="size-4" />} onClick={() => {
+              // Un brouillon déjà commencé pour elle se reprend au lieu d'en ouvrir un second.
+              const draft = devis.find((d) => d.clientId === client.id && d.status === "brouillon");
+              setComposing(draft ? { devisId: draft.id } : {});
+            }}>
+            Nouveau devis
+          </Button>
+        )}
         <HandActions state={conv.state} onHandBack={() => handBackToBot(conv.id)} onTransfer={() => setConfirmTransfer(true)} />
       </div>
+
+      <PinnedDossier client={client} onEditDraft={(devisId) => setComposing({ devisId })} />
 
       {/* Timeline */}
       <div ref={timelineRef} className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-5 py-4">
@@ -105,6 +122,8 @@ export function ConversationPanel({ conversationId }: { conversationId: string }
             <PendingRelance key={m.id} message={m} paused={conv.state === "receptionniste"} />
           ) : m.relanceType ? (
             <RelanceCard key={m.id} message={m} />
+          ) : m.devisId || m.factureId ? (
+            <ThreadDocument key={m.id} message={m} client={client} />
           ) : (
             <MessageBubble key={m.id} message={m} />
           ),
@@ -120,6 +139,10 @@ export function ConversationPanel({ conversationId }: { conversationId: string }
         onSend={send}
         onTakeOver={() => takeOverConversation(conv.id)}
       />
+
+      {composing && (
+        <DevisComposer clientId={client.id} devisId={composing.devisId} onClose={() => setComposing(null)} />
+      )}
 
       <ConfirmDialog
         open={confirmTransfer}

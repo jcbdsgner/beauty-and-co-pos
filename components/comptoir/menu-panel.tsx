@@ -95,17 +95,42 @@ function categoryFilterTree(
 }
 
 export function MenuPanel({ saleId }: { saleId: string }) {
-  const { addCartLine, sales, produits } = useAppData();
-  const [mode, setMode] = useState<MenuMode>("produits");
-  const [query, setQuery] = useState("");
-  const [filterKey, setFilterKey] = useState("all");
-
+  const { addCartLine, sales } = useAppData();
   const countByRef = useMemo(() => {
     const cart = sales.find((s) => s.id === saleId)?.cart ?? [];
     const m: Record<string, number> = {};
     for (const l of cart) m[l.refId] = (m[l.refId] ?? 0) + l.qty;
     return m;
   }, [sales, saleId]);
+  return <MenuBrowser countByRef={countByRef} onAdd={(line) => addCartLine(saleId, line)} />;
+}
+
+type MenuBrowserProps = {
+  /** Quantité déjà choisie par article — la pastille de la tuile. */
+  countByRef: Record<string, number>;
+  onAdd: (line: { refId: string; kind: CartLine["kind"]; name: string; unitPrice: number }) => void;
+  /** Familles proposées — un devis n'offre ni boissons (ADR 0042). */
+  families?: MenuMode[];
+  initialMode?: MenuMode;
+  /** false : le stock s'affiche mais ne bloque pas (un devis vend pour plus tard). */
+  stockGuard?: boolean;
+};
+
+const FAMILY_LABEL: Record<MenuMode, string> = { services: "Prestations", produits: "Produits", boissons: "Boissons" };
+
+/** La grille du Menu — familles, rail de catégories, recherche, tuiles — sans rien savoir de ce
+ *  qu'on remplit : le panier du Comptoir, ou un devis. */
+export function MenuBrowser({
+  countByRef,
+  onAdd,
+  families = ["services", "produits", "boissons"],
+  initialMode = "produits",
+  stockGuard = true,
+}: MenuBrowserProps) {
+  const { produits } = useAppData();
+  const [mode, setMode] = useState<MenuMode>(initialMode);
+  const [query, setQuery] = useState("");
+  const [filterKey, setFilterKey] = useState("all");
 
   const items: ReadonlyArray<Service | Produit | Boisson> =
     mode === "services" ? SERVICES : mode === "produits" ? produits : BOISSONS;
@@ -170,11 +195,7 @@ export function MenuPanel({ saleId }: { saleId: string }) {
       <div className="flex shrink-0 items-center gap-3">
         <SegmentedToggle
           className="shrink-0"
-          options={[
-            { value: "services", label: "Prestations" },
-            { value: "produits", label: "Produits" },
-            { value: "boissons", label: "Boissons" },
-          ]}
+          options={families.map((f) => ({ value: f, label: FAMILY_LABEL[f] }))}
           value={mode}
           onChange={(v) => {
             setMode(v as MenuMode);
@@ -269,14 +290,14 @@ export function MenuPanel({ saleId }: { saleId: string }) {
                   // Les boissons du Bar ne portent pas de stock (un bar ne compte pas au verre).
                   const tracksStock = "stock" in item;
                   const remaining = tracksStock ? item.stock - inCart : null;
-                  const soldOut = remaining !== null && remaining <= 0;
+                  const soldOut = stockGuard && remaining !== null && remaining <= 0;
                   return (
                     <button
                       key={item.id}
                       type="button"
                       disabled={soldOut}
                       onClick={() =>
-                        addCartLine(saleId, {
+                        onAdd({
                           refId: item.id,
                           kind: LINE_KIND[mode],
                           name: item.name,
@@ -336,7 +357,7 @@ export function MenuPanel({ saleId }: { saleId: string }) {
                                     : "text-base-content/55",
                               )}
                             >
-                              {soldOut ? "Rupture" : `${remaining} en stock`}
+                              {remaining !== null && remaining <= 0 ? "Rupture" : `${remaining} en stock`}
                             </span>
                           )}
                         </span>
