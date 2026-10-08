@@ -1,6 +1,6 @@
 "use client";
 
-import { Cake } from "lucide-react";
+import { Cake, FileText } from "lucide-react";
 import { Button } from "@/components/ui/atoms/button";
 import { Avatar } from "@/components/ui/atoms/avatar";
 import { FlipChip, Legend } from "@/components/ui/board";
@@ -15,10 +15,10 @@ import {
   unseenBirthdayWish,
 } from "@/components/messages/lib";
 import { useAppData } from "@/components/providers/app-data-provider";
-import { buildDossiers, sinceLabel } from "@/components/devis/lib";
+import { buildDossiers, documentTotals, sinceLabel } from "@/components/devis/lib";
 import { cn, formatFcfa } from "@/lib/utils";
 import { clientFullName, clientInitial } from "@/lib/data/clientele";
-import type { Conversation } from "@/lib/data/types";
+import type { Conversation, Devis } from "@/lib/data/types";
 
 const RELANCE_DATE_FMT = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short" });
 
@@ -35,21 +35,26 @@ export function MessageInbox({ selectedClientId, onSelect, filterClientId, onFil
 
   const visible = filterClientId ? conversations.filter((c) => c.clientId === filterClientId) : conversations;
 
+  // Devis en cours (ADR 0042) — un fil par cliente qui a un devis ouvert : brouillon pas parti,
+  // devis qui attend sa réponse, facture qui attend son paiement. Il passe avant l'anniversaire
+  // (qui garde son ombre rosée) : sinon la section se compte mal et la ligne change de groupe à
+  // l'ouverture. Une cliente qui a répondu ou un fil non lu remontent, puis le plus ancien.
+  const dossiers = buildDossiers(devis, factures);
+  const devisRows = visible
+    .map((conv) => ({ conv, open: openDevisFor(conv, dossiers, devis) }))
+    .filter((r): r is { conv: Conversation; open: OpenDevis } => Boolean(r.open))
+    .sort((a, b) => {
+      const ra = Number(a.conv.unread) * 2 + Number(a.open.replied);
+      const rb = Number(b.conv.unread) * 2 + Number(b.open.replied);
+      return rb - ra || a.open.at.localeCompare(b.open.at);
+    });
+  const devisConvIds = new Set(devisRows.map((r) => r.conv.id));
+
   // Anniversaire souhaité par le Bot, pas encore vu : en tête, ombre rosée, jusqu'à l'ouverture du fil.
   const birthdays = visible
-    .filter((c) => unseenBirthdayWish(c.messages))
+    .filter((c) => !devisConvIds.has(c.id) && unseenBirthdayWish(c.messages))
     .sort((a, b) => unseenBirthdayWish(b.messages)!.at.localeCompare(unseenBirthdayWish(a.messages)!.at));
   const birthdayIds = new Set(birthdays.map((c) => c.id));
-
-  // Devis en cours (ADR 0042) — un devis qui attend la réponse de la cliente, ou une facture qui
-  // attend son paiement : en tête, sous les anniversaires, le plus ancien d'abord.
-  const pendingDossiers = buildDossiers(devis, factures)
-    .filter((d) => d.stage === "envoye" || d.stage === "a_payer")
-    .sort((a, b) => a.at.localeCompare(b.at));
-  const devisRows = pendingDossiers
-    .map((d) => ({ d, conv: visible.find((c) => c.clientId === d.devis.clientId && !birthdayIds.has(c.id)) }))
-    .filter((r): r is { d: (typeof pendingDossiers)[number]; conv: Conversation } => Boolean(r.conv));
-  const devisConvIds = new Set(devisRows.map((r) => r.conv.id));
 
   const scheduled = visible
     .filter((c) => !birthdayIds.has(c.id) && !devisConvIds.has(c.id) && c.messages.some((m) => m.pending))
@@ -129,23 +134,21 @@ export function MessageInbox({ selectedClientId, onSelect, filterClientId, onFil
                 <p className={cn("px-3 pb-1", birthdays.length > 0 ? "pt-3" : "pt-2")}>
                   <Legend>Devis en cours · {devisRows.length}</Legend>
                 </p>
-                {devisRows.map(({ d, conv }) => {
+                {devisRows.map(({ open, conv }) => {
                   const client = clientFor(conv.clientId);
                   if (!client) return null;
-                  const subtitle =
-                    d.stage === "a_payer"
-                      ? `Facture à payer · ${formatFcfa(d.total)}`
-                      : `Devis sans réponse · ${formatFcfa(d.total)}`;
                   return (
                     <InboxRow
                       key={conv.id}
                       conv={conv}
                       name={clientFullName(client)}
                       initial={clientInitial(client)}
-                      subtitle={subtitle}
-                      stamp={sinceLabel(d.at).replace("il y a ", "")}
+                      subtitle={open.subtitle}
+                      document
+                      stamp={sinceLabel(open.at) === "aujourd'hui" ? shortStamp(open.at) : sinceLabel(open.at).replace("il y a ", "")}
                       selected={selectedClientId === conv.clientId}
                       onSelect={() => onSelect(conv.clientId)}
+                      birthday={Boolean(unseenBirthdayWish(conv.messages))}
                     />
                   );
                 })}
@@ -219,6 +222,7 @@ function InboxRow({
   selected,
   onSelect,
   birthday = false,
+  document = false,
 }: {
   conv: Conversation;
   name: string;
@@ -229,6 +233,8 @@ function InboxRow({
   onSelect: () => void;
   /** An unseen birthday wish — ombre rosée + gâteau on the avatar, until the thread is opened. */
   birthday?: boolean;
+  /** Le sous-titre parle du devis / de la facture — l'icône document le distingue d'un message. */
+  document?: boolean;
 }) {
   return (
     <button
@@ -256,10 +262,13 @@ function InboxRow({
           {conv.unread && <span aria-label="Non lu" className="size-2 shrink-0 rounded-full bg-warning" />}
           {birthday && <span className="sr-only">Anniversaire souhaité, pas encore vu</span>}
         </span>
-        <span className="line-clamp-1 text-[13px] text-base-content/55">{subtitle}</span>
+        <span className={cn("flex items-center gap-1 text-[13px]", document ? "font-medium text-secondary" : "text-base-content/65")}>
+          {document && <FileText aria-hidden className="size-3.5 shrink-0" />}
+          <span className="line-clamp-1">{subtitle}</span>
+        </span>
       </span>
       <span className="flex shrink-0 flex-col items-end gap-1">
-        <span className="flex items-center gap-1.5 text-xs text-base-content/45 tabular-nums">
+        <span className="flex items-center gap-1.5 text-xs text-base-content/60 tabular-nums">
           {stamp}
           <ChannelGlyph channel={conv.channel} className="size-3.5" />
         </span>
@@ -267,4 +276,28 @@ function InboxRow({
       </span>
     </button>
   );
+}
+
+type OpenDevis = { subtitle: string; replied: boolean; at: string };
+
+/** Ce qui reste ouvert côté devis dans ce fil, dit en une ligne — ou rien. Une réponse de la
+ *  cliente arrivée après le dernier document passe devant : c'est elle qu'il faut lire. */
+function openDevisFor(conv: Conversation, dossiers: ReturnType<typeof buildDossiers>, devis: Devis[]): OpenDevis | null {
+  const live = dossiers
+    .filter((d) => d.devis.clientId === conv.clientId && (d.stage === "envoye" || d.stage === "a_payer"))
+    .sort((a, b) => a.at.localeCompare(b.at));
+  const draft = devis.find((d) => d.clientId === conv.clientId && d.status === "brouillon");
+  if (live.length === 0 && !draft) return null;
+  const last = lastRealMessage(conv.messages);
+  const first = live[0];
+  if (first) {
+    const replied = last?.sender === "cliente" && last.at > first.at;
+    const what = first.stage === "a_payer" ? "Facture à payer" : "Devis sans réponse";
+    const subtitle = replied
+      ? `A répondu : ${last!.body}`
+      : `${what} · ${formatFcfa(first.total)}${live.length > 1 ? ` · +${live.length - 1}` : ""}`;
+    return { subtitle, replied, at: first.at };
+  }
+  const total = documentTotals(draft!.lines, draft!.remises).total;
+  return { subtitle: `Brouillon · ${formatFcfa(total)}`, replied: false, at: draft!.createdAt };
 }

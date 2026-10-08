@@ -66,7 +66,7 @@ function ClosedBand({ top, label = false }: { top: number; label?: boolean }) {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 border-t border-base-content/15 bg-base-300/60" style={{ top }}>
       {label && (
-        <span className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-[0.68rem] font-semibold uppercase tracking-[0.1em] text-base-content/40">
+        <span className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-[0.68rem] font-semibold uppercase tracking-[0.1em] text-base-content/60">
           Fermé
         </span>
       )}
@@ -180,7 +180,7 @@ export function AccueilCalendar({ rows, clients, praticiennes, onOpenReservation
               {y(m) <= closedTop && (
                 <span
                   className={cn(
-                    "absolute right-3 text-xs font-semibold tabular-nums text-base-content/40",
+                    "absolute right-3 text-xs font-semibold tabular-nums text-base-content/60",
                     i === 0 ? "top-0" : "-top-2",
                   )}
                 >

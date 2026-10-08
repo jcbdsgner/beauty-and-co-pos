@@ -10,6 +10,7 @@ import { TextInput } from "@/components/ui/atoms/text-input";
 import { Dialog } from "@/components/ui/molecules/dialog";
 import { NewClientDialog } from "@/components/clientele/new-client-dialog";
 import { DevisComposer } from "@/components/devis/devis-composer";
+import { buildDossiers } from "@/components/devis/lib";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { useAppStore } from "@/lib/store/app-store";
 import { clientFullName, clientInitial, searchClients } from "@/lib/data/clientele";
@@ -33,7 +34,7 @@ function draftFromQuery(query: string): { firstName?: string; lastName?: string;
 export function NewDevisLauncher() {
   const router = useRouter();
   const suggestedClientId = useSearchParams().get("client");
-  const { clients, devis } = useAppData();
+  const { clients, devis, factures } = useAppData();
   const [picking, setPicking] = useState(false);
   const [query, setQuery] = useState("");
   const [creating, setCreating] = useState(false);
@@ -41,6 +42,16 @@ export function NewDevisLauncher() {
 
   const suggested = suggestedClientId ? clients.find((c) => c.id === suggestedClientId) : undefined;
   const results = query.trim() ? searchClients(clients, query).slice(0, 6) : [];
+
+  // Ce que la cliente a déjà d'ouvert : un brouillon se reprend (choose), un devis envoyé ou une
+  // facture à payer se signale — sans quoi on en ouvrait un second sans le savoir.
+  function openNote(clientId: string): string | null {
+    const draft = devis.find((d) => d.clientId === clientId && d.status === "brouillon");
+    if (draft) return `Reprend le brouillon ${draft.number}`;
+    const live = buildDossiers(devis.filter((d) => d.clientId === clientId), factures).find((d) => d.stage === "envoye" || d.stage === "a_payer");
+    if (!live) return null;
+    return live.stage === "a_payer" ? `Facture ${live.facture!.number} à payer · un nouveau devis s'y ajoute` : `Devis ${live.number} en attente · un nouveau devis s'y ajoute`;
+  }
 
   function choose(clientId: string) {
     setPicking(false);
@@ -65,12 +76,13 @@ export function NewDevisLauncher() {
             <button
               type="button"
               onClick={() => choose(suggested.id)}
-              className="highlight-rose flex min-h-16 items-center gap-3 rounded-field border bg-white px-4 text-left transition active:scale-[0.99]"
+              className="highlight-rose flex min-h-16 items-center py-2 gap-3 rounded-field border bg-white px-4 text-left transition active:scale-[0.99]"
             >
               <Avatar initial={clientInitial(suggested)} size={40} className="bg-accent font-semibold text-secondary" />
               <span className="min-w-0 flex-1">
                 <span className="block font-semibold">{clientFullName(suggested)}</span>
-                <span className="block text-sm text-base-content/55">Conversation ouverte</span>
+                <span className="block text-sm text-base-content/65">Conversation ouverte</span>
+                {openNote(suggested.id) && <span className="mt-0.5 flex items-center gap-1 text-sm font-medium text-secondary"><FileText aria-hidden className="size-3.5" />{openNote(suggested.id)}</span>}
               </span>
             </button>
           )}
@@ -95,7 +107,8 @@ export function NewDevisLauncher() {
                     <Avatar initial={clientInitial(c)} size={36} className="bg-accent font-semibold text-secondary" />
                     <span className="min-w-0 flex-1">
                       <span className="block font-medium">{clientFullName(c)}</span>
-                      <span className="block text-sm tabular-nums text-base-content/55">{formatPhone(c.phone)}</span>
+                      <span className="block text-sm tabular-nums text-base-content/65">{formatPhone(c.phone)}</span>
+                      {openNote(c.id) && <span className="flex items-center gap-1 text-sm font-medium text-secondary"><FileText aria-hidden className="size-3.5" />{openNote(c.id)}</span>}
                     </span>
                   </button>
                 </li>

@@ -27,7 +27,7 @@ function DossierRow({ d, clientId }: { d: Dossier; clientId: string }) {
       <FileText aria-hidden className="size-5 shrink-0 text-base-content/40" />
       <span className="min-w-0 flex-1">
         <span className="block font-semibold tabular-nums">{d.facture?.number ?? d.number}</span>
-        <span className="block truncate text-sm text-base-content/55">
+        <span className="block truncate text-sm text-base-content/65">
           {SHORT_DATE_FMT.format(new Date(d.at))} · {d.devis.lines.map((l) => l.name.toLowerCase()).join(", ")}
         </span>
       </span>

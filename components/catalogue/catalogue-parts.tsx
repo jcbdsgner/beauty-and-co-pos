@@ -72,7 +72,7 @@ export function CategoryRail({
             )}
           >
             <span className="truncate">{o.label}</span>
-            <span className={cn("shrink-0 text-xs tabular-nums", active ? "text-primary-content/70" : "text-base-content/35")}>
+            <span className={cn("shrink-0 text-xs tabular-nums", active ? "text-primary-content/70" : "text-base-content/60")}>
               {o.count}
             </span>
           </button>

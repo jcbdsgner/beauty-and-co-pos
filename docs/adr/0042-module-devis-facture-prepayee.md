@@ -53,3 +53,12 @@ Devis et facture partent dans le fil comme un **PDF** (téléchargeable depuis l
 
 Le PDF reprend exactement le contenu de l'ébauche fournie : logo, salon et pays, destinataire, « Devis # / Facture # », date, vendeur, tableau description / quantité / prix unitaire / taxes / montant, total (TTC) — la ligne « Montant hors taxes » retirée. La colonne Taxes reste vide (pas de TVA) ; NINEA, RCCM, validité et mentions de paiement ne figurent pas sur le document. Une remise accordée se lit dans le prix unitaire de la ligne. Devis et facture portent le salon et le vendeur.
 
+
+## Révision 2026-10-08 — passe UX : un fil avec devis ne se confond plus avec un simple échange
+
+- **Inbox, « Devis en cours »** : tout fil où la cliente a un devis ouvert — brouillon, devis envoyé, facture à payer. La ligne porte une icône document et parle du devis (« Devis sans réponse · 233 100 F », « Facture à payer », « Brouillon · 89 000 F ») ; si la cliente a répondu après le dernier document, c'est sa réponse qui s'affiche (« A répondu : … ») et la ligne remonte. Cette section passe avant « Anniversaires souhaités » : l'anniversaire garde son ombre rosée dans la ligne, mais le compte des devis n'est plus faux et la ligne ne change plus de groupe à l'ouverture.
+- **Un brouillon a toujours un fil** : créer un devis pour une cliente sans conversation lui en ouvre une, vide — sinon le brouillon n'était joignable que par la fiche.
+- **Bandeau du fil** : tous les dossiers ouverts, empilés (un brouillon de v2 ne cache plus la v1 envoyée). Actions : « Marquer refusé » (et non « Refusé », qui se lisait comme un statut), « Modifier », « Facturer » — **confirmé** désormais, car la facture part tout de suite et ne s'annule que par un avoir. Supprimer un brouillon se confirme aussi.
+- **Nouveau devis** signale ce que la cliente a déjà d'ouvert (« Devis DEV-… en attente · un nouveau devis s'y ajoute », « Reprend le brouillon … »).
+- **Composition** : le titre nomme la cliente ; un brouillon se garde dès qu'il a une ligne (motif et société exigés seulement à l'envoi, la raison du blocage est dite) ; le bouton dit par où le devis part (« Envoyer par WhatsApp / e-mail ») ; fermer avec des changements non enregistrés demande confirmation.
+- **Contraste** : puces de statut relevées partout dans l'app (texte blanc sur taupe, gris « annulé / remplacé » foncé, vert et ambre assombris), horodatages et étiquettes secondaires à 60 % minimum.

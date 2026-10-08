@@ -221,11 +221,11 @@ export type ChipTone = "neutral" | "act" | "now" | "done" | "void" | "signal";
 
 const CHIP_TONE: Record<ChipTone, string> = {
   neutral: "bg-[var(--color-gray-100)] text-[var(--color-gray-600)]",
-  act: "bg-[var(--core-brand-color)] text-black",
+  act: "bg-[var(--core-brand-color)] text-white",
   now: "bg-[var(--brand-taupe-muted)] text-white",
-  done: "bg-[var(--color-success-soft)] text-[var(--color-success)]",
-  void: "bg-transparent text-[var(--color-gray-400)] ring-1 ring-inset ring-[var(--board-groove)]",
-  signal: "bg-[var(--board-amber-soft)] text-[var(--board-amber)] ring-1 ring-inset ring-[var(--board-amber)]/30",
+  done: "bg-[var(--color-success-soft)] text-[#0b6248]",
+  void: "bg-transparent text-[var(--color-gray-500)] ring-1 ring-inset ring-[var(--color-gray-300)]",
+  signal: "bg-[var(--board-amber-soft)] text-[#8f4607] ring-1 ring-inset ring-[var(--board-amber)]/30",
 };
 
 export function FlipChip({ value, tone = "neutral", className }: { value: string; tone?: ChipTone; className?: string }) {
@@ -376,7 +376,7 @@ export function ChipFilter({
           >
             {o.label}
             {typeof o.count === "number" && (
-              <span className={cn("tabular-nums", active ? "text-white/60" : "text-[var(--color-gray-400)]")}>{o.count}</span>
+              <span className={cn("tabular-nums", active ? "text-white/60" : "text-[var(--color-gray-500)]")}>{o.count}</span>
             )}
           </button>
         );
@@ -412,7 +412,7 @@ export function VoletSwitch({
               "after:absolute after:inset-x-3 after:-bottom-px after:h-[2px] after:rounded-full after:transition-colors",
               active
                 ? "text-[var(--color-gray-900)] after:bg-[var(--brand-taupe-muted)]"
-                : "text-[var(--color-gray-400)] after:bg-transparent hover:text-[var(--color-gray-600)]",
+                : "text-[var(--color-gray-500)] after:bg-transparent hover:text-[var(--color-gray-600)]",
             )}
           >
             {o.label}

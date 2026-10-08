@@ -94,7 +94,7 @@ export function ConversationPanel({ conversationId }: { conversationId: string }
             </span>
             {client.tier && <Badge {...TIER_BADGE[client.tier]}>{TIER_BADGE[client.tier].label}</Badge>}
           </div>
-          <div className="mt-0.5 flex items-center gap-1.5 text-xs text-base-content/55">
+          <div className="mt-0.5 flex items-center gap-1.5 text-xs text-base-content/65">
             <ChannelGlyph channel={conv.channel} className="size-3.5" />
             <span>{STATE_LABEL[conv.state]}</span>
           </div>
@@ -247,9 +247,9 @@ function RelanceCard({ message }: { message: Message }) {
         </div>
       )}
       {style && (
-        <p className="mt-2 text-xs text-base-content/55">Style recommandé : {style.name}</p>
+        <p className="mt-2 text-xs text-base-content/65">Style recommandé : {style.name}</p>
       )}
-      <p className="mt-2 text-xs text-base-content/45">Votre conseillère beauté · Beauty and Co</p>
+      <p className="mt-2 text-xs text-base-content/60">Votre conseillère beauté · Beauty and Co</p>
     </div>
   );
 }
@@ -260,7 +260,7 @@ function PendingRelance({ message, paused }: { message: Message; paused: boolean
   return (
     <div
       className={cn(
-        "rounded-field border border-dashed border-base-300 bg-base-200 px-4 py-3 text-sm text-base-content/55 opacity-70",
+        "rounded-field border border-dashed border-base-300 bg-base-200 px-4 py-3 text-sm text-base-content/65",
       )}
     >
       {paused ? (

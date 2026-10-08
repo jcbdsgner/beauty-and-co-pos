@@ -209,7 +209,7 @@ function ClientCard({ client: c, trailing }: { client: Cliente; trailing?: strin
       </div>
       {!trailing && (
         <div className="mt-auto">
-          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-base-content/35">Total dépensé</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-base-content/60">Total dépensé</p>
           <p className="text-sm font-semibold tabular-nums text-primary">{formatFcfa(c.totalSpent)}</p>
         </div>
       )}
@@ -220,7 +220,7 @@ function ClientCard({ client: c, trailing }: { client: Cliente; trailing?: strin
 function EmptyBlock({ title, hint, action }: { title: string; hint?: string; action?: React.ReactNode }) {
   return (
     <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-base-300 px-6 py-14 text-center">
-      <p className="font-[family-name:var(--font-heading)] text-xs font-bold uppercase tracking-[0.12em] text-base-content/40">
+      <p className="font-[family-name:var(--font-heading)] text-xs font-bold uppercase tracking-[0.12em] text-base-content/60">
         {title}
       </p>
       {hint && <p className="max-w-sm text-sm text-base-content/50">{hint}</p>}

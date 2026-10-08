@@ -155,7 +155,7 @@ export function WeekTimeline({ weekDays, salonId, today, staff, accentIndex, all
                   style={{ minWidth: DAY_W, backgroundImage: onlyAway ? HATCH : undefined }}
                 >
                   {closed ? (
-                    <span className="text-xs font-semibold uppercase tracking-[0.1em] text-base-content/35">Fermé</span>
+                    <span className="text-xs font-semibold uppercase tracking-[0.1em] text-base-content/60">Fermé</span>
                   ) : absent ? (
                     <span className="text-xs font-semibold text-warning">Absente</span>
                   ) : onlyAway ? (
@@ -189,7 +189,7 @@ export function WeekTimeline({ weekDays, salonId, today, staff, accentIndex, all
                       )}
                     </>
                   ) : (
-                    <span className="text-xs text-base-content/30">Repos</span>
+                    <span className="text-xs text-base-content/60">Repos</span>
                   )}
                 </button>
               );

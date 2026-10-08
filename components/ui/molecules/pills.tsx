@@ -47,7 +47,7 @@ export function Pills({ options, value, onChange, className, wrap = true }: Pill
             {active ? <Check aria-hidden className="size-3.5 shrink-0" strokeWidth={3} /> : option.icon}
             {option.label}
             {typeof option.count === "number" && (
-              <span className={cn("text-xs", active ? "text-primary-content/60" : "text-base-content/40")}>
+              <span className={cn("text-xs", active ? "text-primary-content/60" : "text-base-content/60")}>
                 {option.count}
               </span>
             )}

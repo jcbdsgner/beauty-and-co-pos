@@ -133,6 +133,7 @@ const SEED: SeedMessage[] = [
   { clientId: "cl-1", m: { sender: "cliente", channel: "whatsapp", at: "2026-10-04T13:20:00", body: "Mon employeur ne prend pas les produits en charge. Vous pouvez retirer le masque ? Et la facture doit être au nom de Kër Digital." } },
   { clientId: "cl-1", m: { sender: "receptionniste", channel: "whatsapp", at: "2026-10-06T15:12:00", body: "C'est fait, voici le devis mis à jour au nom de Kër Digital, avec un geste de 10 %.", devisId: "dev-13-v2" } },
   { clientId: "cl-2", m: { sender: "receptionniste", channel: "email", at: "2026-10-02T10:25:00", body: DEVIS_BODY, devisId: "dev-12" } },
+  { clientId: "cl-2", m: { sender: "cliente", channel: "email", at: "2026-10-03T18:40:00", body: "Merci ! Le soin du visage peut-il se faire un samedi matin ?" } },
   { clientId: "cl-10", m: { sender: "receptionniste", channel: "whatsapp", at: "2026-09-30T16:02:00", body: DEVIS_BODY, devisId: "dev-11" } },
   { clientId: "cl-10", m: { sender: "cliente", channel: "whatsapp", at: "2026-10-05T10:50:00", body: "C'est parfait, je valide 👍" } },
   { clientId: "cl-10", m: { sender: "receptionniste", channel: "whatsapp", at: "2026-10-05T11:30:00", body: FACTURE_BODY, factureId: "fac-07" } },

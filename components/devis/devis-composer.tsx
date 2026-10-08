@@ -7,6 +7,7 @@ import { CloseButton } from "@/components/ui/atoms/icon-button";
 import { TextInput } from "@/components/ui/atoms/text-input";
 import { Dialog } from "@/components/ui/molecules/dialog";
 import { SegmentedToggle } from "@/components/ui/molecules/segmented-toggle";
+import { ConfirmDialog } from "@/components/ui/molecules/confirm-dialog";
 import { MenuBrowser } from "@/components/comptoir/menu-panel";
 import { RemisesDialog } from "@/components/comptoir/remises-dialog";
 import { documentTotals } from "@/components/devis/lib";
@@ -41,6 +42,7 @@ export function DevisComposer({ clientId, devisId, onClose }: { clientId: string
   const [company, setCompany] = useState<BillingCompany>(initialCompany ?? client?.billingCompany ?? EMPTY_COMPANY);
   const [channel, setChannel] = useState<DevisChannel>(existing?.sentChannel ?? "whatsapp");
   const [remisesOpen, setRemisesOpen] = useState(false);
+  const [confirmClose, setConfirmClose] = useState(false);
 
   const countByRef = useMemo(() => {
     const m: Record<string, number> = {};
@@ -54,7 +56,11 @@ export function DevisComposer({ clientId, devisId, onClose }: { clientId: string
   const totals = documentTotals(lines, remises);
   const hasRemise = totals.discount > 0;
   const companyOk = !toCompany || (company.name.trim() && company.address.trim() && company.ninea.trim());
+  // Un brouillon se garde dès qu'il a une ligne ; l'envoi exige un devis complet.
   const ready = lines.length > 0 && Boolean(companyOk) && (!hasRemise || reason.trim().length > 0);
+  const dirty =
+    JSON.stringify([lines, remises, reason]) !== JSON.stringify([existing?.lines ?? [], existing?.remises ?? [], existing?.remiseReason ?? ""]);
+  const requestClose = () => (dirty ? setConfirmClose(true) : onClose());
 
   const add = (refId: string) =>
     setLines((ls) =>
@@ -66,9 +72,9 @@ export function DevisComposer({ clientId, devisId, onClose }: { clientId: string
   };
 
   function save(send: boolean) {
-    if (!ready) return;
-    const billTo = toCompany ? { ...company, rccm: company.rccm?.trim() || undefined } : undefined;
-    const data = { lines, remises, remiseReason: hasRemise ? reason.trim() : null, billTo };
+    if (lines.length === 0 || (send && !ready)) return;
+    const billTo = toCompany && companyOk ? { ...company, rccm: company.rccm?.trim() || undefined } : undefined;
+    const data = { lines, remises, remiseReason: hasRemise ? reason.trim() || null : null, billTo };
     const id = existing ? (updateDevisDraft(existing.id, data), existing.id) : createDevis({ clientId, salonId: POSTE_SALON_ID, sellerName: currentUser.name, ...data }).id;
     // La société facturée se retient sur la fiche, pour le devis suivant.
     if (billTo) updateClient(clientId, { billingCompany: billTo });
@@ -79,10 +85,12 @@ export function DevisComposer({ clientId, devisId, onClose }: { clientId: string
   const title = existing && existing.version > 1 ? `Devis ${existing.number} · v${existing.version}` : "Nouveau devis";
 
   return (
-    <Dialog open onClose={onClose} labelledBy="devis-title" className="relative flex h-[90vh] max-w-[1200px] flex-col overflow-hidden">
-      <CloseButton onClick={onClose} className="top-4 right-4" />
+    <Dialog open onClose={requestClose} labelledBy="devis-title" className="relative flex h-[90vh] max-w-[1200px] flex-col overflow-hidden">
+      <CloseButton onClick={requestClose} className="top-4 right-4" />
       <header className="shrink-0 border-b border-base-300 px-8 pt-7 pb-5">
-        <h2 id="devis-title" className="text-[24px] font-semibold tracking-[-0.01em]">{title}</h2>
+        <h2 id="devis-title" className="text-[24px] font-semibold tracking-[-0.01em]">
+          {title} <span className="font-normal text-base-content/60">· {clientFullName(client)}</span>
+        </h2>
       </header>
 
       <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_420px]">
@@ -92,10 +100,7 @@ export function DevisComposer({ clientId, devisId, onClose }: { clientId: string
 
         <aside className="flex min-h-0 flex-col border-l border-base-300 bg-base-200/50">
           <div className="flex flex-col gap-3 border-b border-base-300 p-5">
-            <div>
-              <p className="font-semibold">{clientFullName(client)}</p>
-              <p className="text-sm text-base-content/55 tabular-nums">{formatPhone(client.phone)} · {client.email}</p>
-            </div>
+            <p className="text-sm text-base-content/65 tabular-nums">{formatPhone(client.phone)} · {client.email}</p>
             <label className="flex min-h-12 cursor-pointer items-center gap-3">
               <input type="checkbox" className="checkbox checkbox-primary" checked={toCompany} onChange={(e) => setToCompany(e.target.checked)} />
               <Building2 aria-hidden className="size-5 text-base-content/50" />
@@ -115,7 +120,7 @@ export function DevisComposer({ clientId, devisId, onClose }: { clientId: string
 
           <div className="min-h-0 flex-1 overflow-y-auto px-5">
             {lines.length === 0 ? (
-              <p className="py-10 text-center text-sm text-base-content/50">Touchez une prestation ou un produit pour l&apos;ajouter.</p>
+              <p className="py-10 text-center text-sm text-base-content/65">Touchez une prestation ou un produit pour l&apos;ajouter.</p>
             ) : (
               lines.map((l) => (
                 <LineRow key={l.id} line={l} discount={totals.lineDiscount[l.id] ?? 0} onQty={(q) => setQty(l.id, q)} />
@@ -152,13 +157,33 @@ export function DevisComposer({ clientId, devisId, onClose }: { clientId: string
               value={channel}
               onChange={(v) => setChannel(v as DevisChannel)}
             />
+            {lines.length > 0 && !ready && (
+              <p className="text-sm font-medium text-warning">
+                {!companyOk ? "Société facturée incomplète : raison sociale, adresse et NINEA." : "Le motif de la remise est demandé avant l'envoi."}
+              </p>
+            )}
             <div className="grid grid-cols-[auto_1fr] gap-3">
-              <Button variant="outline" disabled={!ready} onClick={() => save(false)}>Brouillon</Button>
-              <Button disabled={!ready} onClick={() => save(true)}>Envoyer le devis</Button>
+              <Button variant="outline" disabled={lines.length === 0} onClick={() => save(false)}>Brouillon</Button>
+              <Button disabled={!ready} onClick={() => save(true)}>
+                {channel === "email" ? "Envoyer par e-mail" : "Envoyer par WhatsApp"}
+              </Button>
             </div>
           </div>
         </aside>
       </div>
+
+      <ConfirmDialog
+        open={confirmClose}
+        title="Abandonner ces changements ?"
+        description={existing ? "Le brouillon garde sa version précédente." : "Ce devis n'est enregistré nulle part."}
+        confirmLabel="Abandonner"
+        cancelLabel="Continuer"
+        onCancel={() => setConfirmClose(false)}
+        onConfirm={() => {
+          setConfirmClose(false);
+          onClose();
+        }}
+      />
 
       <RemisesDialog
         sale={sale}

@@ -208,7 +208,7 @@ export function AppointmentDetailSheet({ appointment, onClose, onEncaisser }: Pr
                           <div className="min-w-0 flex-1">
                             <p className="text-sm font-semibold text-[var(--color-gray-900)]">
                               {service?.name ?? "Prestation"}
-                              {rv.status === "annule" && <span className="ml-1.5 text-[var(--color-gray-400)]">· annulé</span>}
+                              {rv.status === "annule" && <span className="ml-1.5 text-[var(--color-gray-500)]">· annulé</span>}
                             </p>
                             <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[var(--color-gray-500)]">
                               <span className="tabular-nums">

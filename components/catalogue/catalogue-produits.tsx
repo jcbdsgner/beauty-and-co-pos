@@ -110,7 +110,7 @@ export function CatalogueProduits() {
             {groups.map((group) => (
               <div key={group.label ?? "all"} className="space-y-3">
                 {group.label && (
-                  <p className="font-[family-name:var(--font-heading)] text-xs font-bold uppercase tracking-[0.12em] text-base-content/40">
+                  <p className="font-[family-name:var(--font-heading)] text-xs font-bold uppercase tracking-[0.12em] text-base-content/60">
                     {group.label}
                   </p>
                 )}

@@ -325,7 +325,7 @@ export function DayTimeline({
                   photoUrl={p.photoUrl}
                   initial={p.initial}
                   size={32}
-                  className={cn("shrink-0 text-[0.72rem] font-semibold", absent && "bg-base-200 text-base-content/40")}
+                  className={cn("shrink-0 text-[0.72rem] font-semibold", absent && "bg-base-200 text-base-content/60")}
                   style={absent ? undefined : { backgroundColor: accent.border, color: "#fff" }}
                 />
                 <div className="min-w-0 flex-1">
@@ -412,7 +412,7 @@ export function DayTimeline({
                     className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-center bg-base-300/60"
                     style={{ height: closedTop }}
                   >
-                    <span className="text-[0.68rem] font-semibold uppercase tracking-[0.1em] text-base-content/40">Repos</span>
+                    <span className="text-[0.68rem] font-semibold uppercase tracking-[0.1em] text-base-content/60">Repos</span>
                   </div>
                 )}
                 {zones.map((z) => {

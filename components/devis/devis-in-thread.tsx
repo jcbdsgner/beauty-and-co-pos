@@ -71,13 +71,13 @@ function docTotal(doc: ThreadDoc) {
 
 /** Ce qu'il y a à faire sur le dossier, maintenant — porté par le bandeau épinglé seulement. */
 function DocActions({ doc, onEditDraft }: { doc: ThreadDoc; onEditDraft: (devisId: string) => void }) {
-  const { invoiceDevis, reviseDevis, refuseDevis } = useAppData();
-  const [dialog, setDialog] = useState<"refuse" | "pay" | "cancel" | null>(null);
+  const { invoiceDevis, reviseDevis, refuseDevis, clients } = useAppData();
+  const [dialog, setDialog] = useState<"refuse" | "invoice" | "pay" | "cancel" | null>(null);
   if (doc.kind === "devis") {
     if (!doc.current || devisStatus(doc.devis) !== "envoye") return null;
     return (
       <div className="flex shrink-0 gap-2">
-        <Button variant="outline" size="sm" onClick={() => setDialog("refuse")}>Refusé</Button>
+        <Button variant="outline" size="sm" onClick={() => setDialog("refuse")}>Marquer refusé</Button>
         <Button
           variant="outline"
           size="sm"
@@ -88,7 +88,20 @@ function DocActions({ doc, onEditDraft }: { doc: ThreadDoc; onEditDraft: (devisI
         >
           Modifier
         </Button>
-        <Button size="sm" onClick={() => invoiceDevis(doc.devis.id)}>Facturer</Button>
+        <Button size="sm" onClick={() => setDialog("invoice")}>Facturer</Button>
+        <ConfirmDialog
+          open={dialog === "invoice"}
+          tone="neutral"
+          confirmVariant="brand"
+          title="La cliente a accepté le devis ?"
+          description={`La facture de ${formatFcfa(docTotal(doc))} part tout de suite à ${clients.find((c) => c.id === doc.devis.clientId)?.firstName ?? "la cliente"} par ${doc.devis.sentChannel === "email" ? "e-mail" : "WhatsApp"}. Elle ne se modifie plus : seul un avoir l'annule.`}
+          confirmLabel="Facturer"
+          onCancel={() => setDialog(null)}
+          onConfirm={() => {
+            invoiceDevis(doc.devis.id);
+            setDialog(null);
+          }}
+        />
         <ConfirmDialog
           open={dialog === "refuse"}
           tone="neutral"
@@ -183,14 +196,14 @@ function DocumentAttachment({ message, doc, client }: { message: Message; doc: T
           <span className="grid size-10 shrink-0 place-items-center rounded-field bg-base-200"><FileText aria-hidden className="size-5 text-[var(--brand-taupe-muted)]" /></span>
           <span className="min-w-0 flex-1">
             <span className={cn("block truncate font-semibold", struck && "text-base-content/45 line-through")}>{doc.kind === "facture" ? "Facture" : "Devis"} {docNumber(doc)}</span>
-            <span className="block text-xs text-base-content/55">
+            <span className="block text-xs text-base-content/65">
               PDF · <span className="tabular-nums">{formatFcfa(docTotal(doc))}</span> · {chip.value}
             </span>
           </span>
         </button>
         <p className="px-1.5 pt-2 pb-0.5">{message.body}</p>
       </div>
-      <span className="px-1 text-xs text-base-content/45">{TIME_FMT.format(new Date(message.at))}</span>
+      <span className="px-1 text-xs text-base-content/60">{TIME_FMT.format(new Date(message.at))}</span>
       <FullDocDialog doc={doc} client={client} open={open} onClose={() => setOpen(false)} />
     </div>
   );
@@ -203,45 +216,65 @@ function DocumentAttachment({ message, doc, client }: { message: Message; doc: T
  */
 export function PinnedDossier({ client, onEditDraft }: { client: Cliente; onEditDraft: (devisId: string) => void }) {
   const { devis, factures, deleteDevisDraft } = useAppData();
-  const [open, setOpen] = useState(false);
   const mine = devis.filter((d) => d.clientId === client.id);
-  const draft = mine.find((d) => d.status === "brouillon");
-  const live = buildDossiers(mine, factures).find((d) => d.stage === "envoye" || d.stage === "a_payer");
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const drafts = mine.filter((d) => d.status === "brouillon");
+  const live = buildDossiers(mine, factures).filter((d) => d.stage === "envoye" || d.stage === "a_payer");
 
-  if (draft) {
-    const total = documentTotals(draft.lines, draft.remises).total;
-    return (
-      <div className="flex shrink-0 items-center gap-3 border-b border-base-300 bg-base-200 px-5 py-3">
-        <FileText aria-hidden className="size-5 text-base-content/45" />
-        <div className="min-w-0 flex-1">
-          <span className="flex items-center gap-2">
-            <span className="font-semibold tabular-nums">{draft.number}{draft.version > 1 ? ` · v${draft.version}` : ""}</span>
-            <FlipChip value="Brouillon" tone="neutral" />
-          </span>
-          <span className="block truncate text-sm text-base-content/60">{formatFcfa(total)} · pas encore envoyé</span>
-        </div>
-        <Button variant="outline" size="sm" onClick={() => deleteDevisDraft(draft.id)}>Supprimer</Button>
-        <Button size="sm" onClick={() => onEditDraft(draft.id)}>Reprendre</Button>
-      </div>
-    );
-  }
-
-  if (!live) {
+  if (drafts.length === 0 && live.length === 0) {
     return <ProductsToHandOver clientId={client.id} className="shrink-0 border-b border-base-300 px-5 py-3" />;
   }
-  const doc: ThreadDoc = live.facture
-    ? { kind: "facture", facture: live.facture, dossier: live, current: true }
-    : { kind: "devis", devis: live.devis, dossier: live, current: true };
+  // Tous les dossiers ouverts, pas seulement le premier : un brouillon de v2 ne cache plus la v1
+  // envoyée, et deux devis distincts restent tous deux joignables.
+  return (
+    <div className="flex shrink-0 flex-col divide-y divide-base-300 border-b border-base-300">
+      {drafts.map((draft) => (
+        <div key={draft.id} className="flex items-center gap-3 bg-base-200 px-5 py-3">
+          <FileText aria-hidden className="size-5 shrink-0 text-base-content/60" />
+          <div className="min-w-0 flex-1">
+            <span className="flex items-center gap-2">
+              <span className="font-semibold tabular-nums">Devis {draft.number}{draft.version > 1 ? ` · v${draft.version}` : ""}</span>
+              <FlipChip value="Brouillon" tone="neutral" className="ring-1 ring-inset ring-[var(--color-gray-300)]" />
+            </span>
+            <span className="block truncate text-sm text-base-content/65">{formatFcfa(documentTotals(draft.lines, draft.remises).total)} · pas encore envoyé à {client.firstName}</span>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setConfirmDelete(draft.id)}>Supprimer</Button>
+          <Button size="sm" onClick={() => onEditDraft(draft.id)}>Reprendre</Button>
+        </div>
+      ))}
+      {live.map((d) => (
+        <LiveDossierRow key={d.number} dossier={d} client={client} onEditDraft={onEditDraft} />
+      ))}
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        title="Supprimer ce brouillon ?"
+        description="Il n'a jamais été envoyé ; rien ne reste dans le fil."
+        confirmLabel="Supprimer"
+        onCancel={() => setConfirmDelete(null)}
+        onConfirm={() => {
+          if (confirmDelete) deleteDevisDraft(confirmDelete);
+          setConfirmDelete(null);
+        }}
+      />
+    </div>
+  );
+}
+
+function LiveDossierRow({ dossier, client, onEditDraft }: { dossier: Dossier; client: Cliente; onEditDraft: (devisId: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const doc: ThreadDoc = dossier.facture
+    ? { kind: "facture", facture: dossier.facture, dossier, current: true }
+    : { kind: "devis", devis: dossier.devis, dossier, current: true };
   const chip = docChip(doc);
   return (
-    <div className="flex shrink-0 items-center gap-3 border-b border-base-300 bg-[var(--brand-rose-soft)] px-5 py-3">
-      <FileText aria-hidden className="size-5 text-[var(--brand-taupe-muted)]" />
-      <button type="button" onClick={() => setOpen(true)} className="min-w-0 flex-1 text-left">
+    <div className="flex items-center gap-3 bg-[var(--brand-rose-soft)] px-5 py-3">
+      <FileText aria-hidden className="size-5 shrink-0 text-secondary" />
+      <button type="button" onClick={() => setOpen(true)} className="min-w-0 flex-1 text-left" title="Voir le PDF">
         <span className="flex items-center gap-2">
-          <span className="font-semibold tabular-nums">{docNumber(doc)}</span>
+          <span className="font-semibold tabular-nums underline-offset-4 hover:underline">{doc.kind === "facture" ? "Facture" : "Devis"} {docNumber(doc)}</span>
           <FlipChip value={chip.value} tone={chip.tone} />
         </span>
-        <span className="block truncate text-sm text-base-content/60">{formatFcfa(docTotal(doc))} · {docStatusLine(doc)}</span>
+        <span className="block truncate text-sm text-base-content/65">{formatFcfa(docTotal(doc))} · {docStatusLine(doc)}</span>
       </button>
       <DocActions doc={doc} onEditDraft={onEditDraft} />
       <FullDocDialog doc={doc} client={client} open={open} onClose={() => setOpen(false)} />

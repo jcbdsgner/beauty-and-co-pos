@@ -134,7 +134,7 @@ Messagerie maître-détail. Sélection par `?client=<id>`. **La réceptionniste 
 - En-tête de Messages : **« Nouveau devis »** → [`new-devis-launcher.tsx`](../components/devis/new-devis-launcher.tsx) (cliente du fil ouvert proposée, recherche, ou **fiche à compléter** via `NewClientDialog minimal`).
 - Composition : [`devis-composer.tsx`](../components/devis/devis-composer.tsx) — `MenuBrowser` du Comptoir à gauche (prestations + produits), devis à droite, remise accordée via `RemisesDialog` (`handlers`), motif, société facturée, WhatsApp / e-mail.
 - Dans le fil : [`devis-in-thread.tsx`](../components/devis/devis-in-thread.tsx) — `ThreadDocument` (PDF joint au message, version remplacée barrée) + `PinnedDossier` (bandeau sous l'en-tête : brouillon → Reprendre ; envoyé → Refusé / Modifier (v2) / Facturer ; facture → Annuler par un avoir / Enregistrer le paiement). Dialogues : [`facture-dialogs.tsx`](../components/devis/facture-dialogs.tsx).
-- Inbox : section **« Devis en cours »** (devis sans réponse, factures à payer).
+- Inbox : section **« Devis en cours »** en tête (brouillons, devis sans réponse, factures à payer ; « A répondu : … » remonte) — `openDevisFor` dans [`message-inbox.tsx`](../components/messages/message-inbox.tsx). Bandeau du fil : tous les dossiers ouverts empilés, « Facturer » confirmé.
 - Document (devis / facture, PDF imprimable) : [`devis-document.tsx`](../components/devis/devis-document.tsx). Lien de paiement du PDF : hors périmètre.
 
 ### Catalogue — `/catalogue` — [`app/catalogue/page.tsx`](../app/catalogue/page.tsx)

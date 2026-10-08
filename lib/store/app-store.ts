@@ -1267,6 +1267,11 @@ export const useAppStore = create<AppState>((set, get) => ({
       validUntil: addDays(now, DEVIS_VALIDITY_DAYS),
     };
     set((s) => ({ devis: [devis, ...s.devis] }));
+    // Un brouillon se retrouve depuis Messages : la cliente sans fil en reçoit un, vide, à son nom.
+    if (!get().conversations.some((c) => c.clientId === data.clientId)) {
+      const id = nextId("conv");
+      set((s) => ({ conversations: [{ id, clientId: data.clientId, channel: "whatsapp", state: "receptionniste", unread: false, messages: [] }, ...s.conversations] }));
+    }
     return devis;
   },
 
