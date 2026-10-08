@@ -200,7 +200,7 @@ Un ensemble **fixe** de prestations **prépayées** — acheté **hors de cette 
 _Avoid_: Forfait (le pack ne se renouvelle pas), carnet, lot, bundle, cure
 
 **Prestation déjà payée**:
-Une ligne de prestation du ticket **couverte** par le **Pack** ou l'**Abonnement** de la payeuse : elle est **facturée 0 F** et **sort de l'assiette des remises**. Ce n'est **pas une Remise** — c'est du prépayé, comme l'**Acompte** (le prix de la vente ne change pas ; la cliente a déjà réglé ces prestations à l'achat du pack ou à la souscription). Au comptoir, **aucun geste obligatoire** : comme la carte cadeau et les points fidélité, la couverture est déjà là — les lignes couvrables sont **cochées d'office**, **groupées par instrument d'origine**, et la réceptionniste valide l'encaissement et avance. Elle ne touche à rien sauf pour **décocher** (un groupe en un clic) quand la cliente préfère garder une prestation pour plus tard. Le **décompte** devient **définitif à « Confirmer l'encaissement »** : la prestation entre dans les prestations consommées du Pack (pour toujours ; « pack entièrement utilisé » quand elles y sont toutes) ou du cycle en cours de l'Abonnement (remis à zéro au cycle suivant). Une vente abandonnée ne décompte rien. Ventilée sur le reçu et le Récap des ventes comme une ligne à part.
+Une ligne de prestation du ticket **couverte** par le **Pack**, l'**Abonnement** ou une **Facture payée** de la payeuse : elle est **facturée 0 F** et **sort de l'assiette des remises**. Ce n'est **pas une Remise** — c'est du prépayé, comme l'**Acompte** (le prix de la vente ne change pas ; la cliente a déjà réglé ces prestations à l'achat du pack ou à la souscription). Au comptoir, **aucun geste obligatoire** : comme la carte cadeau et les points fidélité, la couverture est déjà là — les lignes couvrables sont **cochées d'office**, **groupées par instrument d'origine**, et la réceptionniste valide l'encaissement et avance. Elle ne touche à rien sauf pour **décocher** (un groupe en un clic) quand la cliente préfère garder une prestation pour plus tard. Le **décompte** devient **définitif à « Confirmer l'encaissement »** : la prestation entre dans les prestations consommées du Pack (pour toujours ; « pack entièrement utilisé » quand elles y sont toutes) ou du cycle en cours de l'Abonnement (remis à zéro au cycle suivant). Une vente abandonnée ne décompte rien. Ventilée sur le reçu et le Récap des ventes comme une ligne à part. Une **Facture payée** couvre ses prestations de la même façon (ADR 0042).
 _Avoid_: Remise, gratuité, prestation offerte, avoir, crédit
 
 **Carte de fidélité**:
@@ -210,3 +210,24 @@ _Avoid_: Carte de membre, badge client, carte VIP
 **Points fidélité**:
 Le solde de fidélité d'une cliente, avec deux mouvements distincts. L'**acquisition** : 10 points par tranche de 1 000 F réellement payés (calculée sur le total après remises). L'**utilisation** : 100 points = 1 000 F de réduction, par pas de 100, dans la limite du solde — c'est l'un des trois mécanismes de Remise.
 _Avoid_: Cagnotte, miles, points de fidélité (« points fidélité » à l'écrit)
+
+**Devis**:
+Une estimation chiffrée, envoyée à une cliente qui veut savoir combien lui reviendront des **prestations** et/ou des **produits** du Menu — jamais de boissons, packs, forfaits ou cartes cadeaux. Prix du Menu, éventuelles **remises accordées** (mêmes règles qu'au comptoir), **aucun avantage personnel** (points, carte cadeau, pack, abonnement). Toujours rattaché à une fiche cliente, valable 30 jours à prix figés. Statuts : brouillon → envoyé → facturé ; ou refusé, expiré, remplacé (par sa version suivante — un devis envoyé ne se modifie pas, il se **réémet** en v2). Vit dans la section **Devis** (ADR 0042).
+_Avoid_: Estimation, proforma, offre, cotation
+
+**Facture**:
+Le document qui demande le paiement d'un **Devis** accepté : la cliente dit oui (dans son fil ou au téléphone), la réceptionniste **facture**. Numéro unique, jamais modifiée. **À payer** puis **payée** — en une fois, par le bouton « Payer » sous la facture envoyée ou enregistré au salon. Montant unique, sans TVA. Payée, elle devient du **prépayé** : ses prestations sont des **Prestations déjà payées**, ses produits sont **à remettre**. Une facture ne naît jamais d'une vente du comptoir — le reçu y suffit (ADR 0042).
+_Avoid_: Note, reçu (le reçu est le document du comptoir), bon de commande
+
+**Avoir**:
+Le document qui **annule** une Facture **à payer** — une facture ne se supprime ni ne se corrige jamais. Exige le **code manager** et un motif. Le remboursement d'une facture déjà payée se fait hors de l'app (ADR 0042).
+_Avoid_: Annulation, note de crédit, remboursement
+
+**Société facturée**:
+L'identité de facturation facultative d'une cliente qui fait facturer son employeur ou sa structure : raison sociale, adresse, NINEA (RCCM facultatif). Portée par sa fiche et réutilisée d'un devis à l'autre. Distincte de **Beauty and Co**, l'émettrice de tous les documents.
+_Avoid_: Entreprise (déjà le nom de l'enseigne et de ses salons dans le code), Client B2B, Compte pro
+
+**Fiche à compléter**:
+Une fiche cliente créée avec le strict minimum — nom, téléphone, email — typiquement pour lui envoyer un **Devis**. Anniversaire, origine et pays de résidence lui seront demandés à sa première venue. Une vraie cliente pour tout le reste (fil Messages, devis, factures, prépayé).
+_Avoid_: Prospect, contact, lead
+
