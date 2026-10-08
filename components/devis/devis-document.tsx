@@ -30,20 +30,20 @@ export function DevisDocument(props: DevisDocumentProps) {
   return (
     <article
       className={cn(
-        "relative flex flex-col gap-8 bg-white px-10 py-9 text-[13px] leading-relaxed text-base-content shadow-[0_1px_2px_rgba(42,35,32,0.06),0_8px_24px_-12px_rgba(42,35,32,0.18)]",
+        "relative flex flex-col gap-6 bg-white px-5 py-6 text-[13px] sm:gap-8 sm:px-10 sm:py-9 leading-relaxed text-base-content shadow-[0_1px_2px_rgba(42,35,32,0.06),0_8px_24px_-12px_rgba(42,35,32,0.18)]",
         className,
       )}
     >
-      <header className="flex items-start justify-between gap-6">
+      <header className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:gap-6">
         <Logo size="footer" className="h-12 w-[104px] shrink-0" />
-        <div className="text-right text-xs leading-5 text-base-content/60">
+        <div className="text-xs leading-5 text-base-content/60 sm:text-right">
           <p className="font-semibold text-base-content">{company.name}</p>
           <p>{company.address}</p>
           <p>{company.phone} · {company.email}</p>
         </div>
       </header>
 
-      <div className="flex items-end justify-between gap-6">
+      <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end sm:gap-6">
         <div>
           <p className="font-[family-name:var(--font-heading)] text-[28px] font-medium leading-none tracking-[-0.02em]">{title}</p>
           <p className="mt-2 font-semibold tabular-nums text-base-content/70">{number}</p>
@@ -52,7 +52,7 @@ export function DevisDocument(props: DevisDocumentProps) {
             <p className="text-base-content/55">Valable jusqu&apos;au {DATE_FMT.format(new Date(props.devis.validUntil))}</p>
           )}
         </div>
-        <div className="max-w-[46%] text-right">
+        <div className="sm:max-w-[46%] sm:text-right">
           <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--brand-taupe-muted)]">Destinataire</p>
           {billTo ? (
             <>
@@ -75,8 +75,8 @@ export function DevisDocument(props: DevisDocumentProps) {
         <thead>
           <tr className="border-b border-base-content/80 text-left text-xs font-semibold uppercase tracking-[0.06em] text-base-content/60">
             <th className="pb-2 font-semibold">Désignation</th>
-            <th className="w-12 pb-2 text-right font-semibold">Qté</th>
-            <th className="w-24 pb-2 text-right font-semibold">Prix</th>
+            <th className="w-10 pb-2 text-right font-semibold">Qté</th>
+            <th className="hidden w-24 pb-2 text-right font-semibold sm:table-cell">Prix</th>
             <th className="w-28 pb-2 text-right font-semibold">Montant</th>
           </tr>
         </thead>
@@ -90,7 +90,7 @@ export function DevisDocument(props: DevisDocumentProps) {
                   <span className="block text-xs text-base-content/50">{l.kind === "service" ? "Prestation" : "Produit"}</span>
                 </td>
                 <td className="py-2.5 text-right tabular-nums">{l.qty}</td>
-                <td className="py-2.5 text-right tabular-nums">{formatFcfa(l.unitPrice)}</td>
+                <td className="hidden py-2.5 text-right tabular-nums sm:table-cell">{formatFcfa(l.unitPrice)}</td>
                 <td className="py-2.5 text-right tabular-nums">
                   {formatFcfa(l.unitPrice * l.qty)}
                   {off > 0 && <span className="block text-xs text-[var(--brand-taupe-muted)]">− {formatFcfa(off)}</span>}
@@ -101,7 +101,7 @@ export function DevisDocument(props: DevisDocumentProps) {
         </tbody>
       </table>
 
-      <div className="ml-auto flex w-64 flex-col gap-1 tabular-nums">
+      <div className="flex w-full flex-col gap-1 tabular-nums sm:ml-auto sm:w-64">
         {discount > 0 && (
           <>
             <div className="flex justify-between text-base-content/65"><span>Sous-total</span><span>{formatFcfa(subtotal)}</span></div>

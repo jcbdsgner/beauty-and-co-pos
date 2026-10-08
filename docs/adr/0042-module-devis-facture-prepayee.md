@@ -45,3 +45,7 @@ Prototypée, la section **Devis** reprenait la grammaire maître-détail de Mess
 
 Écartés : un module en file de tâches façon Cartes cadeaux (ne se justifie qu'à fort volume) ; le devis porté par la seule fiche cliente, suivi par les Alertes (aucune vue d'ensemble).
 
+## Révision 2026-10-08 — le document est un PDF, le lien de paiement hors périmètre
+
+Devis et facture partent dans le fil comme un **PDF** (téléchargeable depuis la pièce jointe). Le PDF de facture porte un lien de paiement, mais **son fonctionnement ne relève pas de ce projet** : pas de page côté cliente, pas de paiement simulé par lien. La réceptionniste **enregistre le paiement reçu** (Wave, Orange Money, carte, espèces) depuis le bandeau du dossier — `Facture.payment` ne garde que le moyen.
+

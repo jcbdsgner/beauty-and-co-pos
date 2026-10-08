@@ -6,13 +6,15 @@
  * l'en-tête du fil, le dossier en cours épinglé, seul endroit où l'on agit.
  */
 
-import { useState } from "react";
-import { FileText, X } from "lucide-react";
+import { useRef, useState } from "react";
+import { useReactToPrint } from "react-to-print";
+import { Download, FileText, X } from "lucide-react";
 import { Button } from "@/components/ui/atoms/button";
 import { FlipChip } from "@/components/ui/board";
 import { Dialog } from "@/components/ui/molecules/dialog";
 import { ConfirmDialog } from "@/components/ui/molecules/confirm-dialog";
 import { CancelFactureDialog, RecordPaymentDialog } from "@/components/devis/facture-dialogs";
+import { ProductsToHandOver } from "@/components/devis/products-to-hand-over";
 import { DevisDocument } from "@/components/devis/devis-document";
 import { buildDossiers, devisStatus, documentTotals, sinceLabel, SHORT_DATE_FMT, type Dossier } from "@/components/devis/lib";
 import { useAppData } from "@/components/providers/app-data-provider";
@@ -120,10 +122,10 @@ function docStatusLine(doc: ThreadDoc, now = new Date()) {
     const f = doc.facture;
     if (f.status === "payee") {
       const products = f.lines.some((l) => l.kind === "produit");
-      return `Payée le ${SHORT_DATE_FMT.format(new Date(f.paidAt!))} · ${PAY[f.payment!.mode]}${f.payment!.via === "lien" ? " par le lien" : " au salon"}${products && !f.productsHandedOverAt ? " · produits à remettre au comptoir" : ""}`;
+      return `Payée le ${SHORT_DATE_FMT.format(new Date(f.paidAt!))} · ${PAY[f.payment!.mode]}${products && !f.productsHandedOverAt ? " · produits à remettre au comptoir" : ""}`;
     }
     if (f.status === "annulee") return `Annulée par l'avoir ${f.avoir?.number}`;
-    return `Émise ${sinceLabel(f.issuedAt, now)} · lien de paiement envoyé`;
+    return `Émise ${sinceLabel(f.issuedAt, now)}`;
   }
   const s = devisStatus(doc.devis, now);
   if (s === "envoye") return `Valable jusqu'au ${SHORT_DATE_FMT.format(new Date(doc.devis.validUntil))}`;
@@ -134,20 +136,30 @@ function docStatusLine(doc: ThreadDoc, now = new Date()) {
   return "";
 }
 
+/** Le PDF reçu par la cliente, ouvert en grand — « Télécharger le PDF » passe par l'impression. */
 function FullDocDialog({ doc, client, open, onClose }: { doc: ThreadDoc; client: Cliente; open: boolean; onClose: () => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const print = useReactToPrint({ contentRef: ref, documentTitle: docNumber(doc).replace(/\s·\s/g, "-") });
   return (
     <Dialog open={open} onClose={onClose} labelledBy="doc-dialog-title" className="max-h-[92dvh] max-w-[760px] overflow-y-auto rounded-[28px] bg-base-200 p-6">
       <div className="mb-4 flex items-center justify-between gap-3">
         <p id="doc-dialog-title" className="font-semibold">{docNumber(doc)}</p>
-        <button type="button" aria-label="Fermer" onClick={onClose} className="grid size-12 place-items-center rounded-full hover:bg-base-300">
-          <X className="size-5" />
-        </button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" icon={<Download className="size-4" />} onClick={() => print()}>
+            Télécharger le PDF
+          </Button>
+          <button type="button" aria-label="Fermer" onClick={onClose} className="grid size-12 place-items-center rounded-full hover:bg-base-300">
+            <X className="size-5" />
+          </button>
+        </div>
       </div>
-      {doc.kind === "facture" ? (
-        <DevisDocument kind="facture" facture={doc.facture} client={client} />
-      ) : (
-        <DevisDocument kind="devis" devis={doc.devis} client={client} />
-      )}
+      <div ref={ref}>
+        {doc.kind === "facture" ? (
+          <DevisDocument kind="facture" facture={doc.facture} client={client} />
+        ) : (
+          <DevisDocument kind="devis" devis={doc.devis} client={client} />
+        )}
+      </div>
     </Dialog>
   );
 }
@@ -209,7 +221,9 @@ export function PinnedDossier({ client, onEditDraft }: { client: Cliente; onEdit
     );
   }
 
-  if (!live) return null;
+  if (!live) {
+    return <ProductsToHandOver clientId={client.id} className="shrink-0 border-b border-base-300 px-5 py-3" />;
+  }
   const doc: ThreadDoc = live.facture
     ? { kind: "facture", facture: live.facture, dossier: live, current: true }
     : { kind: "devis", devis: live.devis, dossier: live, current: true };

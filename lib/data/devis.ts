@@ -109,13 +109,13 @@ export const FACTURES: Facture[] = [
     id: "fac-06", number: "FAC-2026-0006", devisId: "dev-10", clientId: "cl-3",
     lines: d10Lines, remises: [], total: sum(d10Lines),
     status: "payee", issuedAt: "2026-09-29T10:00:00", paidAt: "2026-10-01T18:42:00",
-    payment: { mode: "wave", via: "lien" }, redeemedLineIds: [],
+    payment: { mode: "wave" }, redeemedLineIds: [],
   },
   {
     id: "fac-05", number: "FAC-2026-0005", devisId: "dev-09", clientId: "cl-4",
     lines: d09Lines, remises: [], total: sum(d09Lines),
     status: "payee", issuedAt: "2026-09-20T15:00:00", paidAt: "2026-09-21T11:05:00",
-    payment: { mode: "especes", via: "salon" }, redeemedLineIds: [], productsHandedOverAt: "2026-09-27T12:00:00",
+    payment: { mode: "especes" }, redeemedLineIds: [], productsHandedOverAt: "2026-09-27T12:00:00",
   },
 ];
 
@@ -126,7 +126,7 @@ export const FACTURES: Facture[] = [
 type SeedMessage = { clientId: string; m: Omit<Message, "id"> };
 
 const DEVIS_BODY = "Bonjour, voici votre devis. N'hésitez pas si vous avez une question.";
-const FACTURE_BODY = "Merci pour votre accord ! Voici votre facture, vous pouvez la régler directement avec le bouton Payer.";
+const FACTURE_BODY = "Merci pour votre accord ! Voici votre facture.";
 
 const SEED: SeedMessage[] = [
   { clientId: "cl-1", m: { sender: "receptionniste", channel: "whatsapp", at: "2026-10-04T11:05:00", body: DEVIS_BODY, devisId: "dev-13-v1" } },
@@ -160,4 +160,26 @@ export function withDevisMessages(conversations: Conversation[]): Conversation[]
       messages: [...c.messages, ...extra],
     };
   });
+}
+
+/** Les prestations encore prépayées d'une facture payée — un serviceId par unité restante. */
+export function factureRemainingServiceIds(f: Facture): string[] {
+  if (f.status !== "payee") return [];
+  const out: string[] = [];
+  for (const l of f.lines) {
+    if (l.kind !== "service") continue;
+    const used = f.redeemedLineIds.filter((id) => id === l.id).length;
+    for (let i = used; i < l.qty; i++) out.push(l.refId);
+  }
+  return out;
+}
+
+/** Décompte une unité de chaque prestation donnée sur la facture — renvoie ses `redeemedLineIds` à jour. */
+export function redeemFactureServices(f: Facture, serviceIds: string[]): string[] {
+  const redeemed = [...f.redeemedLineIds];
+  for (const sid of serviceIds) {
+    const line = f.lines.find((l) => l.kind === "service" && l.refId === sid && redeemed.filter((x) => x === l.id).length < l.qty);
+    if (line) redeemed.push(line.id);
+  }
+  return redeemed;
 }

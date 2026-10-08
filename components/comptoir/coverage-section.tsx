@@ -1,16 +1,17 @@
 "use client";
 
-import { CheckCircle2, CalendarClock, PackageCheck } from "lucide-react";
+import { CheckCircle2, CalendarClock, FileText, PackageCheck } from "lucide-react";
 import { Checkbox } from "@/components/ui/atoms/checkbox";
 import { useAppData, computeTotals } from "@/components/providers/app-data-provider";
 import { serviceById } from "@/lib/data/menu";
 import { abonnementById, abonnementAvailablePrestations } from "@/lib/data/abonnements";
 import { packPurchaseById, packRemainingPrestations } from "@/lib/data/pack-purchases";
+import { factureRemainingServiceIds } from "@/lib/data/devis";
 import { formatFcfa } from "@/lib/utils";
 import type { Sale, SaleCoverage } from "@/lib/data/types";
 
 /**
- * « Prestations déjà payées » (ADR 0017) — le Pack / l'Abonnement de la payeuse. Ce n'est pas une
+ * « Prestations déjà payées » (ADR 0017, 0042) — le Pack / l'Abonnement / la Facture payée de la payeuse. Ce n'est pas une
  * Remise : c'est du prépayé, comme l'acompte. Rien à faire — les lignes couvrables sont cochées
  * d'office, groupées par instrument ; la réceptionniste valide l'encaissement et avance. Elle
  * décoche une ligne (ou tout un groupe, en un clic) quand la cliente préfère la garder pour plus
@@ -56,6 +57,7 @@ function CoverageGroup({
   cov: SaleCoverage;
   onSet: (checkedServiceIds: string[]) => void;
 }) {
+  const { factures } = useAppData();
   const inCart = cov.serviceIds.filter((id) => sale.cart.some((l) => l.kind === "service" && l.refId === id));
   if (inCart.length === 0) return null;
 
@@ -63,14 +65,18 @@ function CoverageGroup({
   const noneChecked = inCart.every((id) => !cov.checkedServiceIds.includes(id));
 
   const isAbo = cov.source === "abonnement";
+  const isFacture = cov.source === "facture";
   const ab = isAbo ? abonnementById(cov.instanceId) : undefined;
-  const pp = !isAbo ? packPurchaseById(cov.instanceId) : undefined;
+  const pp = cov.source === "pack" ? packPurchaseById(cov.instanceId) : undefined;
+  const facture = isFacture ? factures.find((f) => f.id === cov.instanceId) : undefined;
   const checkedCount = inCart.filter((id) => cov.checkedServiceIds.includes(id)).length;
   const poolAfter = ab
     ? abonnementAvailablePrestations(ab).length - checkedCount
     : pp
       ? packRemainingPrestations(pp).length - checkedCount
-      : 0;
+      : facture
+        ? factureRemainingServiceIds(facture).length - checkedCount
+        : 0;
 
   function toggleOne(id: string, next: boolean) {
     const set = new Set(cov.checkedServiceIds);
@@ -83,7 +89,13 @@ function CoverageGroup({
     <section>
       <div className="mb-1 flex items-center justify-between gap-2">
         <p className="flex min-w-0 items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-success">
-          {isAbo ? <CalendarClock aria-hidden className="size-3.5 shrink-0" /> : <PackageCheck aria-hidden className="size-3.5 shrink-0" />}
+          {isAbo ? (
+            <CalendarClock aria-hidden className="size-3.5 shrink-0" />
+          ) : isFacture ? (
+            <FileText aria-hidden className="size-3.5 shrink-0" />
+          ) : (
+            <PackageCheck aria-hidden className="size-3.5 shrink-0" />
+          )}
           <span className="truncate">{cov.planLabel}</span>
         </p>
         <button
@@ -112,7 +124,13 @@ function CoverageGroup({
       </div>
 
       <p className="mt-1 text-xs text-success/80">
-        {noneChecked
+        {isFacture
+          ? noneChecked
+            ? "Gardé sur la facture — rien décompté."
+            : poolAfter <= 0
+              ? "Décompté · plus rien de prépayé sur la facture après cette vente"
+              : `Décompté · reste ${poolAfter} prestation${poolAfter > 1 ? "s" : ""} prépayée${poolAfter > 1 ? "s" : ""}`
+          : noneChecked
           ? isAbo
             ? "Gardé pour ce cycle — rien décompté."
             : "Gardé sur le pack — rien décompté."

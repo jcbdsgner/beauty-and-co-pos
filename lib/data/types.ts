@@ -427,7 +427,8 @@ export type PackPurchase = {
  * plus tard). Une unité par prestation.
  */
 export type SaleCoverage = {
-  source: "abonnement" | "pack";
+  /** `facture` : une Facture payée — ses prestations prépayées (ADR 0042). */
+  source: "abonnement" | "pack" | "facture";
   /** id de l'instance Abonnement / PackPurchase. */
   instanceId: string;
   /** id + libellé du Forfait / Pack, pour le ticket. */
@@ -559,7 +560,7 @@ export type Message = {
   /** Un devis envoyé dans le fil (ADR 0042) — la version précise ; le fil le montre comme une
    *  pièce vivante (statut et action du moment lus dans le store). */
   devisId?: string;
-  /** Une facture envoyée dans le fil, bouton Payer compris (ADR 0042). */
+  /** Une facture envoyée dans le fil, en PDF (ADR 0042). */
   factureId?: string;
 };
 
@@ -651,10 +652,11 @@ export type Facture = {
   status: FactureStatus;
   issuedAt: string;
   paidAt?: string;
-  /** « lien » = payée par la cliente via le bouton Payer ; « salon » = enregistrée au comptoir. */
-  payment?: { mode: PaymentMode; via: "lien" | "salon" };
+  /** Le paiement, enregistré au poste quand il est reçu — le lien de paiement du PDF est hors périmètre. */
+  payment?: { mode: PaymentMode };
   avoir?: { number: string; reason: string; at: string; managerCode: string };
-  /** Lignes de prestation déjà consommées au comptoir (prépayé, comme un Pack). */
+  /** Prestations déjà consommées au comptoir (prépayé, comme un Pack) — un id de ligne par unité
+   *  décomptée, une ligne ×2 peut donc y figurer deux fois. */
   redeemedLineIds: string[];
   /** Quand les produits ont été remis à la cliente. */
   productsHandedOverAt?: string;

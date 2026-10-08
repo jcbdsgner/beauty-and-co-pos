@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useAppStore } from "@/lib/store/app-store";
 import { CalendarClock, Gift, PackageCheck, Star } from "lucide-react";
 import { Dialog } from "@/components/ui/molecules/dialog";
 import { Button } from "@/components/ui/atoms/button";
@@ -99,7 +100,7 @@ export function staffLabel(rv: RendezVous, praticiennes: Praticienne[]) {
 export function reservationFigures(reservation: Reservation | undefined, lines: RendezVous[]) {
   const extras = reservation?.extras ?? [];
   // Lignes décomptées d'un pack / abonnement : facturées 0 F (ADR 0017), hors Total et sous-totaux.
-  const coverage = reservation ? rendezVousCoverage(reservation.payerClientId, lines) : new Map<string, RendezVousCoverage>();
+  const coverage = reservation ? rendezVousCoverage(reservation.payerClientId, lines, useAppStore.getState().factures) : new Map<string, RendezVousCoverage>();
   const billable = (rv: RendezVous) => rv.status !== "annule" && !coverage.has(rv.id);
   const linePrice = (rv: RendezVous) => serviceById(rv.serviceId)?.price ?? 0;
   const prestationsTotal = lines.filter(billable).reduce((sum, rv) => sum + linePrice(rv), 0);

@@ -15,11 +15,11 @@ import { PRODUITS, serviceById } from "@/lib/data/menu";
 import { boissonById } from "@/lib/data/boissons";
 import { PRATICIENNES } from "@/lib/data/praticiennes";
 import { CONVERSATIONS } from "@/lib/data/conversations";
-import { DEVIS, FACTURES, DEVIS_VALIDITY_DAYS, addDays, withDevisMessages } from "@/lib/data/devis";
+import { DEVIS, FACTURES, DEVIS_VALIDITY_DAYS, addDays, redeemFactureServices, withDevisMessages } from "@/lib/data/devis";
 import { CARTES_CADEAUX, GIFT_CARD_ORDERS, giftCardForClient } from "@/lib/data/cartes-cadeaux";
 import { ABONNEMENTS } from "@/lib/data/abonnements";
 import { PACK_PURCHASES } from "@/lib/data/pack-purchases";
-import { detectCoverage } from "@/lib/data/coverage";
+import { detectCoverage as detectCoverageFrom } from "@/lib/data/coverage";
 import { POSTE_SALON_ID } from "@/lib/session";
 import { formatFcfa } from "@/lib/utils";
 import type {
@@ -59,6 +59,11 @@ let uid = 0;
 function nextId(prefix: string) {
   uid += 1;
   return `${prefix}-${Date.now()}-${uid}`;
+}
+
+/** Couverture avec les factures payées du store (ADR 0042) — lu à l'appel, jamais à l'import. */
+function detectCoverage(clientId: string | null, cart: CartLine[]) {
+  return detectCoverageFrom(clientId, cart, useAppStore.getState().factures);
 }
 
 /** Patch one atomic rendez-vous wherever it sits in the nested réservation tree. */
@@ -505,9 +510,9 @@ export type AppState = {
   /** Ouvre la version suivante d'un devis envoyé, en brouillon (même numéro). */
   reviseDevis: (id: string) => Devis | undefined;
   refuseDevis: (id: string) => void;
-  /** La cliente a dit oui : émet la facture (à payer) et l'envoie dans le fil, bouton Payer compris. */
+  /** La cliente a dit oui : émet la facture (à payer) et l'envoie dans le fil, en PDF. */
   invoiceDevis: (id: string) => Facture | undefined;
-  recordFacturePayment: (factureId: string, mode: PaymentMode, via: "lien" | "salon") => void;
+  recordFacturePayment: (factureId: string, mode: PaymentMode) => void;
   /** Annule une facture à payer par un avoir — code manager + motif. */
   cancelFacture: (factureId: string, reason: string, managerCode: string) => void;
   handOverFactureProducts: (factureId: string) => void;
@@ -1111,7 +1116,12 @@ export const useAppStore = create<AppState>((set, get) => ({
     // place, like the gift card above.
     for (const cov of coverageByInstance) {
       if (cov.serviceIds.length === 0) continue;
-      if (cov.source === "abonnement") {
+      if (cov.source === "facture") {
+        const ids = cov.serviceIds;
+        set((s) => ({
+          factures: s.factures.map((f) => (f.id === cov.instanceId ? { ...f, redeemedLineIds: redeemFactureServices(f, ids) } : f)),
+        }));
+      } else if (cov.source === "abonnement") {
         const ab = ABONNEMENTS.find((a) => a.id === cov.instanceId);
         if (ab) ab.redeemedPrestationIds = [...new Set([...ab.redeemedPrestationIds, ...cov.serviceIds])];
       } else {
@@ -1330,16 +1340,16 @@ export const useAppStore = create<AppState>((set, get) => ({
       devis: s.devis.map((x) => (x.id === id ? { ...x, status: "facture", factureId: facture.id } : x)),
     }));
     postDocumentMessage(d.clientId, d.sentChannel ?? "whatsapp", {
-      body: "Merci pour votre accord ! Voici votre facture, vous pouvez la régler directement avec le bouton Payer.",
+      body: "Merci pour votre accord ! Voici votre facture.",
       factureId: facture.id,
     });
     return facture;
   },
 
-  recordFacturePayment: (factureId, mode, via) =>
+  recordFacturePayment: (factureId, mode) =>
     set((s) => ({
       factures: s.factures.map((f) =>
-        f.id === factureId && f.status === "a_payer" ? { ...f, status: "payee", paidAt: new Date().toISOString(), payment: { mode, via } } : f,
+        f.id === factureId && f.status === "a_payer" ? { ...f, status: "payee", paidAt: new Date().toISOString(), payment: { mode } } : f,
       ),
     })),
 

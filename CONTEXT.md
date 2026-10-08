@@ -216,7 +216,7 @@ Une estimation chiffrée, envoyée à une cliente qui veut savoir combien lui re
 _Avoid_: Estimation, proforma, offre, cotation
 
 **Facture**:
-Le document qui demande le paiement d'un **Devis** accepté : la cliente dit oui (dans son fil ou au téléphone), la réceptionniste **facture**. Numéro unique, jamais modifiée. **À payer** puis **payée** — en une fois, par le bouton « Payer » sous la facture envoyée ou enregistré au salon. Montant unique, sans TVA ni mention de TVA. Payée, elle devient du **prépayé** : ses prestations sont des **Prestations déjà payées**, ses produits sont **à remettre** — tous deux se présentent d'eux-mêmes au Comptoir dès que la cliente est identifiée. Une facture ne naît jamais d'une vente du comptoir — le reçu y suffit (ADR 0042).
+Le document qui demande le paiement d'un **Devis** accepté : la cliente dit oui (dans son fil ou au téléphone), la réceptionniste **facture**. Numéro unique, jamais modifiée. Envoyée à la cliente en **PDF** dans son fil. **À payer** puis **payée** — en une fois ; le lien de paiement du PDF ne relève pas de cette app, la réceptionniste **enregistre** le paiement reçu. Montant unique, sans TVA ni mention de TVA. Payée, elle devient du **prépayé** : ses prestations sont des **Prestations déjà payées**, ses produits sont **à remettre** — tous deux se présentent d'eux-mêmes au Comptoir dès que la cliente est identifiée. Une facture ne naît jamais d'une vente du comptoir — le reçu y suffit (ADR 0042).
 _Avoid_: Note, reçu (le reçu est le document du comptoir), bon de commande
 
 **Avoir**:

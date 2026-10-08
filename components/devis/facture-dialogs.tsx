@@ -12,7 +12,8 @@ import { cn, formatFcfa } from "@/lib/utils";
 import type { Facture, PaymentMode } from "@/lib/data/types";
 
 /**
- * La cliente règle sa facture au salon (ADR 0042) — un seul moyen, toute la somme : les mêmes
+ * Le paiement d'une facture, enregistré au poste quand il est reçu — au salon ou par le lien du PDF,
+ * dont le fonctionnement est hors périmètre (ADR 0042). Un seul moyen, toute la somme : les mêmes
  * tuiles que le Règlement du Comptoir, sans parts ni pourboire.
  */
 export function RecordPaymentDialog({ facture, onClose }: { facture: Facture; onClose: () => void }) {
@@ -50,7 +51,7 @@ export function RecordPaymentDialog({ facture, onClose }: { facture: Facture; on
         size="xl"
         disabled={!mode}
         onClick={() => {
-          recordFacturePayment(facture.id, mode!, "salon");
+          recordFacturePayment(facture.id, mode!);
           onClose();
         }}
       >

@@ -8,6 +8,7 @@ import { IconButton } from "@/components/ui/atoms/icon-button";
 import { ClientSearchField } from "@/components/shared/client-search-field";
 import { TipDialog } from "@/components/comptoir/tip-dialog";
 import { RemisesDialog, RemisesTrigger } from "@/components/comptoir/remises-dialog";
+import { ProductsToHandOver } from "@/components/devis/products-to-hand-over";
 import { RemiseTag } from "@/components/comptoir/settlement-ticket";
 import { TicketClientCard, TicketFrame, TicketHead, TicketLineBody, TicketTotals } from "@/components/comptoir/ticket-parts";
 import { useAppData, computeTotals, saleNeedsClient } from "@/components/providers/app-data-provider";
@@ -37,7 +38,10 @@ export function SaleCartPanel({ sale, onOpenScanner }: { sale: Sale; onOpenScann
     <TicketFrame>
       <TicketHead sale={sale}>
           {client ? (
-            <TicketClientCard client={client} onRemove={() => updateSale(sale.id, { clientId: null })} />
+            <>
+              <TicketClientCard client={client} onRemove={() => updateSale(sale.id, { clientId: null })} />
+              <ProductsToHandOver clientId={client.id} className="mt-2" />
+            </>
           ) : (
             <div className="flex flex-col gap-2">
               <div className="flex gap-2">

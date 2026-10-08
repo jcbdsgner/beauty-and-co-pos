@@ -2,21 +2,34 @@ import { forfaitById } from "@/lib/data/forfaits";
 import { packById } from "@/lib/data/packs";
 import { abonnementsForClient, abonnementAvailablePrestations } from "@/lib/data/abonnements";
 import { packPurchasesForClient, packRemainingPrestations } from "@/lib/data/pack-purchases";
-import type { CartLine, RendezVous, SaleCoverage } from "@/lib/data/types";
+import { factureRemainingServiceIds } from "@/lib/data/devis";
+import type { CartLine, Facture, RendezVous, SaleCoverage } from "@/lib/data/types";
 
 /**
- * Auto-detect which cart prestations the payer's Pack(s) / Abonnement(s) can cover (ADR 0017).
- * Abonnement before Pack (it recharges next cycle — cheaper to burn), most recent first; one
+ * Auto-detect which cart prestations the payer's Facture(s) payée(s), Pack(s) / Abonnement(s) can
+ * cover (ADR 0017, 0042). Facture first (paid ahead for this very visit), then Abonnement before Pack (it recharges next cycle — cheaper to burn), most recent first; one
  * instrument per serviceId; one unit each. Everything it returns is ticked by default — the
  * receptionist un-ticks what the cliente wants to keep for later.
  */
-export function detectCoverage(clientId: string | null, cart: CartLine[]): SaleCoverage[] {
+export function detectCoverage(clientId: string | null, cart: CartLine[], factures: Facture[] = []): SaleCoverage[] {
   if (!clientId) return [];
   const serviceIds = cart.filter((l) => l.kind === "service").map((l) => l.refId);
   if (serviceIds.length === 0) return [];
 
   const claimed = new Set<string>();
   const out: SaleCoverage[] = [];
+
+  // Factures payées d'abord (ADR 0042) : ces prestations ont été réglées d'avance pour ce passage.
+  const paid = factures
+    .filter((f) => f.clientId === clientId && f.status === "payee")
+    .sort((a, b) => (a.paidAt ?? "").localeCompare(b.paidAt ?? ""));
+  for (const f of paid) {
+    const remaining = factureRemainingServiceIds(f);
+    const hit = [...new Set(serviceIds.filter((id) => remaining.includes(id) && !claimed.has(id)))];
+    if (hit.length === 0) continue;
+    hit.forEach((id) => claimed.add(id));
+    out.push({ source: "facture", instanceId: f.id, planId: f.id, planLabel: `Facture ${f.number}`, serviceIds: hit, checkedServiceIds: hit });
+  }
 
   const abos = abonnementsForClient(clientId)
     .filter((a) => abonnementAvailablePrestations(a).length > 0)
@@ -45,7 +58,7 @@ export function detectCoverage(clientId: string | null, cart: CartLine[]): SaleC
   return out;
 }
 
-export type RendezVousCoverage = { source: "pack" | "abonnement"; planLabel: string };
+export type RendezVousCoverage = { source: SaleCoverage["source"]; planLabel: string };
 
 /**
  * Which rendez-vous of a réservation the payer's Pack(s) / Abonnement(s) would cover — same rules
@@ -57,6 +70,7 @@ export type RendezVousCoverage = { source: "pack" | "abonnement"; planLabel: str
 export function rendezVousCoverage(
   payerClientId: string | null | undefined,
   lines: RendezVous[],
+  factures: Facture[] = [],
 ): Map<string, RendezVousCoverage> {
   const out = new Map<string, RendezVousCoverage>();
   if (!payerClientId) return out;
@@ -74,7 +88,7 @@ export function rendezVousCoverage(
     qty: 1,
   }));
 
-  for (const cov of detectCoverage(payerClientId, cart)) {
+  for (const cov of detectCoverage(payerClientId, cart, factures)) {
     for (const serviceId of cov.serviceIds) {
       const rv = firstByService.get(serviceId);
       if (rv) out.set(rv.id, { source: cov.source, planLabel: cov.planLabel });
