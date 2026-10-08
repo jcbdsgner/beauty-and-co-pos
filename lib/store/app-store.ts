@@ -513,8 +513,8 @@ export type AppState = {
   /** La cliente a dit oui : émet la facture (à payer) et l'envoie dans le fil, en PDF. */
   invoiceDevis: (id: string) => Facture | undefined;
   recordFacturePayment: (factureId: string, mode: PaymentMode) => void;
-  /** Annule une facture à payer par un avoir — code manager + motif. */
-  cancelFacture: (factureId: string, reason: string, managerCode: string) => void;
+  /** Annule une facture à payer par un avoir — motif seul. */
+  cancelFacture: (factureId: string, reason: string) => void;
   handOverFactureProducts: (factureId: string) => void;
 
   // Pointage de l'équipe (ADR 0040)
@@ -1360,7 +1360,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       ),
     })),
 
-  cancelFacture: (factureId, reason, managerCode) =>
+  cancelFacture: (factureId, reason) =>
     set((s) => {
       const next = s.factures.filter((f) => f.avoir).length + 1;
       return {
@@ -1369,7 +1369,7 @@ export const useAppStore = create<AppState>((set, get) => ({
             ? {
                 ...f,
                 status: "annulee",
-                avoir: { number: `AV-${new Date().getFullYear()}-${String(next).padStart(4, "0")}`, reason, at: new Date().toISOString(), managerCode },
+                avoir: { number: `AV-${new Date().getFullYear()}-${String(next).padStart(4, "0")}`, reason, at: new Date().toISOString() },
               }
             : f,
         ),

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/atoms/button";
 import { CloseButton } from "@/components/ui/atoms/icon-button";
 import { TextInput } from "@/components/ui/atoms/text-input";
@@ -62,14 +61,13 @@ export function RecordPaymentDialog({ facture, onClose }: { facture: Facture; on
 }
 
 /**
- * Annuler une facture à payer — elle ne se supprime jamais : un avoir l'annule, avec le code
- * manager et un motif (ADR 0042).
+ * Annuler une facture à payer — elle ne se supprime jamais : un avoir l'annule, avec un motif
+ * (ADR 0042). Pas de code manager (décision du 2026-10-08).
  */
 export function CancelFactureDialog({ facture, onClose }: { facture: Facture; onClose: () => void }) {
   const { cancelFacture } = useAppData();
   const [reason, setReason] = useState("");
-  const [code, setCode] = useState("");
-  const ok = reason.trim().length > 0 && /^\d{4,6}$/.test(code);
+  const ok = reason.trim().length > 0;
   return (
     <Dialog open labelledBy="avoir-title" className="relative flex max-w-[520px] flex-col gap-5 p-7">
       <CloseButton onClick={onClose} className="top-4 right-4" />
@@ -78,26 +76,13 @@ export function CancelFactureDialog({ facture, onClose }: { facture: Facture; on
         <p className="mt-1 text-base-content/65">Cette action est définitive.</p>
       </div>
       <TextInput placeholder="Motif de l'annulation" aria-label="Motif de l'annulation" value={reason} onChange={(e) => setReason(e.target.value)} />
-      <div className="flex items-center gap-3 rounded-field bg-accent p-2.5 pl-3">
-        <ShieldCheck aria-hidden className="size-4 shrink-0 text-secondary" />
-        <span className="flex-1 text-sm font-medium text-secondary">Code manager</span>
-        <TextInput
-          size="compact"
-          inputMode="numeric"
-          value={code}
-          onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-          placeholder="••••"
-          aria-label="Code manager"
-          className="w-40 tabular-nums tracking-[0.25em]"
-        />
-      </div>
       <div className="grid grid-cols-2 gap-3">
         <Button variant="outline" onClick={onClose}>Retour</Button>
         <Button
           variant="danger"
           disabled={!ok}
           onClick={() => {
-            cancelFacture(facture.id, reason.trim(), code);
+            cancelFacture(facture.id, reason.trim());
             onClose();
           }}
         >

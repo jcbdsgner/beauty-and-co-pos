@@ -70,3 +70,7 @@ Le bloc destinataire porte tout ce qu'on sait de lui. **Société** : raison soc
 ## Révision 2026-10-08 — pas de remise pour une société
 
 Un devis facturé à une société n'a **aucune remise accordée** : cocher « Facturer une société » retire les remises déjà posées et masque la ligne « Remise accordée ». Les remises restent possibles pour une personne, aux mêmes règles qu'au panier.
+
+## Révision 2026-10-08 — annuler une facture sans code manager
+
+Annuler une facture à payer ne demande plus que le **motif** : le code manager est retiré (décision produit, cas rare au comptoir). Le risque accepté : une facture réglée en espèces au salon pourrait être annulée au lieu d'être encaissée ; le motif et l'avoir numéroté en gardent la trace.

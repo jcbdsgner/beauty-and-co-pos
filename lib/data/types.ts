@@ -662,7 +662,7 @@ export type Facture = {
   paidAt?: string;
   /** Le paiement, enregistré au poste quand il est reçu — le lien de paiement du PDF est hors périmètre. */
   payment?: { mode: PaymentMode };
-  avoir?: { number: string; reason: string; at: string; managerCode: string };
+  avoir?: { number: string; reason: string; at: string };
   /** Prestations déjà consommées au comptoir (prépayé, comme un Pack) — un id de ligne par unité
    *  décomptée, une ligne ×2 peut donc y figurer deux fois. */
   redeemedLineIds: string[];
