@@ -71,7 +71,7 @@ function docTotal(doc: ThreadDoc) {
 
 /** Ce qu'il y a à faire sur le dossier, maintenant — porté par le bandeau épinglé seulement. */
 function DocActions({ doc, onEditDraft }: { doc: ThreadDoc; onEditDraft: (devisId: string) => void }) {
-  const { invoiceDevis, reviseDevis, refuseDevis } = useAppData();
+  const { invoiceDevis, reviseDevis, refuseDevis, clients } = useAppData();
   const [dialog, setDialog] = useState<"refuse" | "invoice" | "pay" | "cancel" | null>(null);
   if (doc.kind === "devis") {
     if (!doc.current || devisStatus(doc.devis) !== "envoye") return null;
@@ -94,7 +94,7 @@ function DocActions({ doc, onEditDraft }: { doc: ThreadDoc; onEditDraft: (devisI
           tone="neutral"
           confirmVariant="brand"
           title="Facturer ce devis ?"
-          description="Cette action ne pourra pas être annulée."
+          description={`La facture sera envoyée à ${clients.find((c) => c.id === doc.devis.clientId)?.firstName ?? "la cliente"} par ${doc.devis.sentChannel === "email" ? "e-mail" : "WhatsApp"}.`}
           confirmLabel="Facturer"
           onCancel={() => setDialog(null)}
           onConfirm={() => {
