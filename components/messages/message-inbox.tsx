@@ -294,7 +294,7 @@ function openDevisFor(conv: Conversation, dossiers: ReturnType<typeof buildDossi
     const replied = last?.sender === "cliente" && last.at > first.at;
     const what = first.stage === "a_payer" ? "Facture à payer" : "Devis sans réponse";
     const subtitle = replied
-      ? `A répondu : ${last!.body}`
+      ? `Réponse : ${last!.body}`
       : `${what} · ${formatFcfa(first.total)}${live.length > 1 ? ` · +${live.length - 1}` : ""}`;
     return { subtitle, replied, at: first.at };
   }

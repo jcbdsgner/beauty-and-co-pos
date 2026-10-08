@@ -55,10 +55,7 @@ function MessagesViewInner() {
         <ConversationPanel key={selectedConv.id} conversationId={selectedConv.id} />
       ) : (
         <div className="flex h-full flex-col items-center justify-center gap-2 rounded-box border border-base-300 bg-white text-center">
-          <Legend>Aucune conversation ouverte</Legend>
-          <p className="max-w-xs text-sm text-base-content/55">
-            Choisissez une conversation dans la liste pour voir le fil et répondre à la cliente.
-          </p>
+          <Legend>Choisissez une conversation</Legend>
         </div>
       )}
     </div>

@@ -60,7 +60,7 @@ export function DevisFacturesBoard({ client, onNew }: { client: Cliente; onNew: 
   return (
     <Board legend="Devis et factures" legendRight={<Button variant="outline" size="sm" icon={<Plus className="size-4" />} onClick={onNew}>Nouveau devis</Button>}>
       {dossiers.length === 0 ? (
-        <BoardEmpty title="Aucun devis" hint="Un devis envoyé part dans son fil Messages." />
+        <BoardEmpty title="Aucun devis" />
       ) : (
         <div className="flex flex-col divide-y divide-border">{dossiers.map((d) => <DossierRow key={d.number} d={d} clientId={client.id} />)}</div>
       )}

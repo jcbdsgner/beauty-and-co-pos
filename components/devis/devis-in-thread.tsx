@@ -71,7 +71,7 @@ function docTotal(doc: ThreadDoc) {
 
 /** Ce qu'il y a à faire sur le dossier, maintenant — porté par le bandeau épinglé seulement. */
 function DocActions({ doc, onEditDraft }: { doc: ThreadDoc; onEditDraft: (devisId: string) => void }) {
-  const { invoiceDevis, reviseDevis, refuseDevis, clients } = useAppData();
+  const { invoiceDevis, reviseDevis, refuseDevis } = useAppData();
   const [dialog, setDialog] = useState<"refuse" | "invoice" | "pay" | "cancel" | null>(null);
   if (doc.kind === "devis") {
     if (!doc.current || devisStatus(doc.devis) !== "envoye") return null;
@@ -93,8 +93,8 @@ function DocActions({ doc, onEditDraft }: { doc: ThreadDoc; onEditDraft: (devisI
           open={dialog === "invoice"}
           tone="neutral"
           confirmVariant="brand"
-          title="La cliente a accepté le devis ?"
-          description={`La facture de ${formatFcfa(docTotal(doc))} part tout de suite à ${clients.find((c) => c.id === doc.devis.clientId)?.firstName ?? "la cliente"} par ${doc.devis.sentChannel === "email" ? "e-mail" : "WhatsApp"}. Elle ne se modifie plus : seul un avoir l'annule.`}
+          title="Facturer ce devis ?"
+          description="Cette action ne pourra pas être annulée."
           confirmLabel="Facturer"
           onCancel={() => setDialog(null)}
           onConfirm={() => {
@@ -106,8 +106,8 @@ function DocActions({ doc, onEditDraft }: { doc: ThreadDoc; onEditDraft: (devisI
           open={dialog === "refuse"}
           tone="neutral"
           confirmVariant="brand"
-          title="La cliente refuse le devis ?"
-          description={`${doc.devis.number} sera clos. Il reste lisible dans le fil.`}
+          title="Marquer le devis refusé ?"
+          description="Cette action ne pourra pas être annulée."
           confirmLabel="Marquer refusé"
           onCancel={() => setDialog(null)}
           onConfirm={() => {
@@ -121,7 +121,7 @@ function DocActions({ doc, onEditDraft }: { doc: ThreadDoc; onEditDraft: (devisI
   if (doc.facture.status !== "a_payer") return null;
   return (
     <div className="flex shrink-0 gap-2">
-      <Button variant="outline" size="sm" onClick={() => setDialog("cancel")}>Annuler par un avoir</Button>
+      <Button variant="outline" size="sm" onClick={() => setDialog("cancel")}>Annuler la facture</Button>
       <Button size="sm" onClick={() => setDialog("pay")}>Enregistrer le paiement</Button>
       {dialog === "pay" && <RecordPaymentDialog facture={doc.facture} onClose={() => setDialog(null)} />}
       {dialog === "cancel" && <CancelFactureDialog facture={doc.facture} onClose={() => setDialog(null)} />}
@@ -135,17 +135,17 @@ function docStatusLine(doc: ThreadDoc, now = new Date()) {
     const f = doc.facture;
     if (f.status === "payee") {
       const products = f.lines.some((l) => l.kind === "produit");
-      return `Payée le ${SHORT_DATE_FMT.format(new Date(f.paidAt!))} · ${PAY[f.payment!.mode]}${products && !f.productsHandedOverAt ? " · produits à remettre au comptoir" : ""}`;
+      return `Payée le ${SHORT_DATE_FMT.format(new Date(f.paidAt!))} · ${PAY[f.payment!.mode]}${products && !f.productsHandedOverAt ? " · produits à remettre" : ""}`;
     }
-    if (f.status === "annulee") return `Annulée par l'avoir ${f.avoir?.number}`;
+    if (f.status === "annulee") return "Annulée";
     return `Émise ${sinceLabel(f.issuedAt, now)}`;
   }
   const s = devisStatus(doc.devis, now);
   if (s === "envoye") return `Valable jusqu'au ${SHORT_DATE_FMT.format(new Date(doc.devis.validUntil))}`;
-  if (s === "facture") return "Accepté · facturé";
-  if (s === "remplace") return "Remplacé par une version plus récente";
+  if (s === "facture") return "Facturé";
+  if (s === "remplace") return "Remplacé";
   if (s === "expire") return `Expiré le ${SHORT_DATE_FMT.format(new Date(doc.devis.validUntil))}`;
-  if (s === "refuse") return "Refusé par la cliente";
+  if (s === "refuse") return "Refusé";
   return "";
 }
 
@@ -236,7 +236,7 @@ export function PinnedDossier({ client, onEditDraft }: { client: Cliente; onEdit
               <span className="font-semibold tabular-nums">Devis {draft.number}{draft.version > 1 ? ` · v${draft.version}` : ""}</span>
               <FlipChip value="Brouillon" tone="neutral" className="ring-1 ring-inset ring-[var(--color-gray-300)]" />
             </span>
-            <span className="block truncate text-sm text-base-content/65">{formatFcfa(documentTotals(draft.lines, draft.remises).total)} · pas encore envoyé à {client.firstName}</span>
+            <span className="block truncate text-sm text-base-content/65">{formatFcfa(documentTotals(draft.lines, draft.remises).total)} · non envoyé</span>
           </div>
           <Button variant="outline" size="sm" onClick={() => setConfirmDelete(draft.id)}>Supprimer</Button>
           <Button size="sm" onClick={() => onEditDraft(draft.id)}>Reprendre</Button>
@@ -248,7 +248,7 @@ export function PinnedDossier({ client, onEditDraft }: { client: Cliente; onEdit
       <ConfirmDialog
         open={confirmDelete !== null}
         title="Supprimer ce brouillon ?"
-        description="Il n'a jamais été envoyé ; rien ne reste dans le fil."
+        description="Cette action ne pourra pas être annulée."
         confirmLabel="Supprimer"
         onCancel={() => setConfirmDelete(null)}
         onConfirm={() => {

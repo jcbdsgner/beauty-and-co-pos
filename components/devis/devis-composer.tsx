@@ -108,7 +108,7 @@ export function DevisComposer({ clientId, devisId, onClose }: { clientId: string
             </label>
             {toCompany && (
               <div className="grid gap-2">
-                <TextInput placeholder="Raison sociale" aria-label="Raison sociale" value={company.name} onChange={(e) => setCompany({ ...company, name: e.target.value })} />
+                <TextInput placeholder="Nom de la société" aria-label="Nom de la société" value={company.name} onChange={(e) => setCompany({ ...company, name: e.target.value })} />
                 <TextInput placeholder="Adresse" aria-label="Adresse" value={company.address} onChange={(e) => setCompany({ ...company, address: e.target.value })} />
                 <div className="grid grid-cols-2 gap-2">
                   <TextInput placeholder="NINEA" aria-label="NINEA" value={company.ninea} onChange={(e) => setCompany({ ...company, ninea: e.target.value })} />
@@ -120,7 +120,7 @@ export function DevisComposer({ clientId, devisId, onClose }: { clientId: string
 
           <div className="min-h-0 flex-1 overflow-y-auto px-5">
             {lines.length === 0 ? (
-              <p className="py-10 text-center text-sm text-base-content/65">Touchez une prestation ou un produit pour l&apos;ajouter.</p>
+              <p className="py-10 text-center text-sm text-base-content/65">Aucune ligne</p>
             ) : (
               lines.map((l) => (
                 <LineRow key={l.id} line={l} discount={totals.lineDiscount[l.id] ?? 0} onQty={(q) => setQty(l.id, q)} />
@@ -159,7 +159,7 @@ export function DevisComposer({ clientId, devisId, onClose }: { clientId: string
             />
             {lines.length > 0 && !ready && (
               <p className="text-sm font-medium text-warning">
-                {!companyOk ? "Société facturée incomplète : raison sociale, adresse et NINEA." : "Le motif de la remise est demandé avant l'envoi."}
+                {!companyOk ? "Complétez la société : nom, adresse, NINEA." : "Indiquez le motif de la remise."}
               </p>
             )}
             <div className="grid grid-cols-[auto_1fr] gap-3">
@@ -174,9 +174,9 @@ export function DevisComposer({ clientId, devisId, onClose }: { clientId: string
 
       <ConfirmDialog
         open={confirmClose}
-        title="Abandonner ces changements ?"
-        description={existing ? "Le brouillon garde sa version précédente." : "Ce devis n'est enregistré nulle part."}
-        confirmLabel="Abandonner"
+        title="Quitter sans enregistrer ?"
+        description="Les changements seront perdus."
+        confirmLabel="Quitter"
         cancelLabel="Continuer"
         onCancel={() => setConfirmClose(false)}
         onConfirm={() => {

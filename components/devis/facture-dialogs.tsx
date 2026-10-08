@@ -55,7 +55,7 @@ export function RecordPaymentDialog({ facture, onClose }: { facture: Facture; on
           onClose();
         }}
       >
-        Facture payée
+        Valider le paiement
       </Button>
     </Dialog>
   );
@@ -75,11 +75,9 @@ export function CancelFactureDialog({ facture, onClose }: { facture: Facture; on
       <CloseButton onClick={onClose} className="top-4 right-4" />
       <div>
         <h2 id="avoir-title" className="text-[22px] font-semibold">Annuler la facture</h2>
-        <p className="mt-1 text-base-content/60">
-          {facture.number} sera annulée par un avoir. Elle reste visible, barrée.
-        </p>
+        <p className="mt-1 text-base-content/65">Cette action est définitive.</p>
       </div>
-      <TextInput placeholder="Motif" aria-label="Motif de l'annulation" value={reason} onChange={(e) => setReason(e.target.value)} />
+      <TextInput placeholder="Motif de l'annulation" aria-label="Motif de l'annulation" value={reason} onChange={(e) => setReason(e.target.value)} />
       <div className="flex items-center gap-3 rounded-field bg-accent p-2.5 pl-3">
         <ShieldCheck aria-hidden className="size-4 shrink-0 text-secondary" />
         <span className="flex-1 text-sm font-medium text-secondary">Code manager</span>
@@ -88,13 +86,13 @@ export function CancelFactureDialog({ facture, onClose }: { facture: Facture; on
           inputMode="numeric"
           value={code}
           onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-          placeholder="4 à 6 chiffres"
+          placeholder="••••"
           aria-label="Code manager"
           className="w-40 tabular-nums tracking-[0.25em]"
         />
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <Button variant="outline" onClick={onClose}>Garder la facture</Button>
+        <Button variant="outline" onClick={onClose}>Retour</Button>
         <Button
           variant="danger"
           disabled={!ok}
@@ -103,7 +101,7 @@ export function CancelFactureDialog({ facture, onClose }: { facture: Facture; on
             onClose();
           }}
         >
-          Émettre l&apos;avoir
+          Annuler la facture
         </Button>
       </div>
     </Dialog>

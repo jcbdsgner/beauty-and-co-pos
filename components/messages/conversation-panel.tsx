@@ -138,7 +138,7 @@ export function ConversationPanel({ conversationId }: { conversationId: string }
         tone="neutral"
         confirmVariant="brand"
         title="Transférer à la manager ?"
-        description={`${clientFullName(client)} sera prise en charge par la manager, hors de l'app. Le fil reste visible ici en lecture seule.`}
+        description="La conversation continuera hors de l'app."
         confirmLabel="Transférer"
         onCancel={() => setConfirmTransfer(false)}
         onConfirm={() => {

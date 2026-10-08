@@ -47,10 +47,10 @@ export function NewDevisLauncher() {
   // facture à payer se signale — sans quoi on en ouvrait un second sans le savoir.
   function openNote(clientId: string): string | null {
     const draft = devis.find((d) => d.clientId === clientId && d.status === "brouillon");
-    if (draft) return `Reprend le brouillon ${draft.number}`;
+    if (draft) return `Brouillon en cours · ${draft.number}`;
     const live = buildDossiers(devis.filter((d) => d.clientId === clientId), factures).find((d) => d.stage === "envoye" || d.stage === "a_payer");
     if (!live) return null;
-    return live.stage === "a_payer" ? `Facture ${live.facture!.number} à payer · un nouveau devis s'y ajoute` : `Devis ${live.number} en attente · un nouveau devis s'y ajoute`;
+    return live.stage === "a_payer" ? `Facture à payer · ${live.facture!.number}` : `Devis en attente · ${live.number}`;
   }
 
   function choose(clientId: string) {
@@ -93,7 +93,7 @@ export function NewDevisLauncher() {
               autoFocus={!suggested}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder={suggested ? "Ou une autre cliente : nom ou téléphone" : "Nom ou téléphone"}
+              placeholder={suggested ? "Autre cliente : nom ou téléphone" : "Nom ou téléphone"}
               aria-label="Chercher une cliente"
               className="pl-12"
             />
