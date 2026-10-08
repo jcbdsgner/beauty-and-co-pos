@@ -139,7 +139,12 @@ function docStatusLine(doc: ThreadDoc, now = new Date()) {
 /** Le PDF reçu par la cliente, ouvert en grand — « Télécharger le PDF » passe par l'impression. */
 function FullDocDialog({ doc, client, open, onClose }: { doc: ThreadDoc; client: Cliente; open: boolean; onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
-  const print = useReactToPrint({ contentRef: ref, documentTitle: docNumber(doc).replace(/\s·\s/g, "-") });
+  const print = useReactToPrint({
+    contentRef: ref,
+    documentTitle: docNumber(doc).replace(/\s·\s/g, "-"),
+    // Une page A4 pleine : le document porte ses propres marges.
+    pageStyle: "@page { size: A4; margin: 0 } @media print { html, body { margin: 0; background: #fff } }",
+  });
   return (
     <Dialog open={open} onClose={onClose} labelledBy="doc-dialog-title" className="max-h-[92dvh] max-w-[760px] overflow-y-auto rounded-[28px] bg-base-200 p-6">
       <div className="mb-4 flex items-center justify-between gap-3">

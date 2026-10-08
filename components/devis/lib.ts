@@ -108,5 +108,4 @@ export function sinceLabel(iso: string, now = new Date()) {
   return `il y a ${days} j`;
 }
 
-export const DATE_FMT = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 export const SHORT_DATE_FMT = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short" });

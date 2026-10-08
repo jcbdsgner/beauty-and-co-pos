@@ -1,134 +1,114 @@
-import { Logo } from "@/components/ui/atoms/logo";
-import { COMPANIES } from "@/lib/data/entreprises";
+import Image from "next/image";
+import { salonById } from "@/lib/data/entreprises";
 import { clientFullName } from "@/lib/data/clientele";
-import { cn, formatFcfa, formatPhone } from "@/lib/utils";
-import { DATE_FMT, documentTotals } from "@/components/devis/lib";
-import type { Cliente, Devis, Facture } from "@/lib/data/types";
-
-const PAYMENT_LABEL = { wave: "Wave", orange_money: "Orange Money", especes: "espèces", carte: "carte" } as const;
+import { documentTotals } from "@/components/devis/lib";
+import { cn } from "@/lib/utils";
+import type { Cliente, Devis, DevisLine, Facture } from "@/lib/data/types";
 
 type DevisDocumentProps =
   | { kind: "devis"; devis: Devis; client: Cliente; className?: string }
   | { kind: "facture"; facture: Facture; client: Cliente; className?: string };
 
+const DATE = new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" });
+const DECIMAL = new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const INTEGER = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 });
+
+/** « 389 700 CFA » — espaces insécables, pour qu'un montant ne se coupe jamais. */
+const cfa = (n: number) => `${INTEGER.format(Math.round(n))} CFA`.replace(/\s/g, " ");
+const decimal = (n: number) => DECIMAL.format(n).replace(/\s/g, " ");
+
 /**
- * Le document tel que la cliente le reçoit (ADR 0042) — une feuille, pas une carte d'interface :
- * l'émettrice en tête, la destinataire (la cliente, ou sa société facturée), les lignes au prix
- * du Menu, les remises accordées ventilées, un seul total TTC. Montré tel quel dans la section
- * Devis et sur la page côté cliente.
+ * Le PDF envoyé à la cliente (ADR 0042) — devis ou facture, le contenu exact de l'ébauche validée :
+ * logo, salon et pays, la cliente, « Devis # / Facture # », date, vendeur, le tableau (description,
+ * quantité, prix unitaire, taxes, montant), montant hors taxes, total. Rien d'autre.
+ * Une remise accordée se lit dans le prix unitaire de la ligne (prix négocié) : quantité × prix
+ * unitaire = montant, toujours.
  */
 export function DevisDocument(props: DevisDocumentProps) {
   const { client, className } = props;
-  const company = COMPANIES[0];
   const doc = props.kind === "devis" ? props.devis : props.facture;
-  const { subtotal, lineDiscount, discount, total } = documentTotals(doc.lines, doc.remises);
-  const billTo = doc.billTo;
+  const salon = salonById(doc.salonId);
+  const { lineDiscount, total } = documentTotals(doc.lines, doc.remises);
   const title = props.kind === "devis" ? "Devis" : "Facture";
-  const number = props.kind === "devis" ? `${props.devis.number}${props.devis.version > 1 ? ` · v${props.devis.version}` : ""}` : props.facture.number;
-  const issued = props.kind === "devis" ? (props.devis.sentAt ?? props.devis.createdAt) : props.facture.issuedAt;
+  const number = props.kind === "devis" && props.devis.version > 1 ? `${props.devis.number} v${props.devis.version}` : doc.number;
+  const date = props.kind === "devis" ? (props.devis.sentAt ?? props.devis.createdAt) : props.facture.issuedAt;
+  const recipient = doc.billTo?.name ?? clientFullName(client);
+
+  const net = (l: DevisLine) => l.unitPrice * l.qty - (lineDiscount[l.id] ?? 0);
 
   return (
     <article
       className={cn(
-        "relative flex flex-col gap-6 bg-white px-5 py-6 text-[13px] sm:gap-8 sm:px-10 sm:py-9 leading-relaxed text-base-content shadow-[0_1px_2px_rgba(42,35,32,0.06),0_8px_24px_-12px_rgba(42,35,32,0.18)]",
+        "flex aspect-[210/297] w-full flex-col bg-white print:aspect-auto print:h-[297mm] print:w-[210mm] px-[7.5%] pt-[7%] pb-[6%] text-[11px] leading-snug text-[#2a2320]",
+        "shadow-[0_1px_2px_rgba(42,35,32,0.06),0_10px_30px_-14px_rgba(42,35,32,0.22)] print:shadow-none",
         className,
       )}
     >
-      <header className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:gap-6">
-        <Logo size="footer" className="h-12 w-[104px] shrink-0" />
-        <div className="text-xs leading-5 text-base-content/60 sm:text-right">
-          <p className="font-semibold text-base-content">{company.name}</p>
-          <p>{company.address}</p>
-          <p>{company.phone} · {company.email}</p>
+      {/* Émettrice : le logo, le salon et son pays */}
+      <header className="flex items-start justify-between">
+        <Image src="/images/brand/logo-bc.jpg" alt="Beauty & Co London" width={1200} height={1197} className="size-[104px] object-contain" priority />
+        <div className="pt-2 text-right">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em]">{salon?.name ?? ""}</p>
+          <p className="mt-0.5 text-[#2a2320]/60">Sénégal</p>
         </div>
       </header>
 
-      <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end sm:gap-6">
-        <div>
-          <p className="font-[family-name:var(--font-heading)] text-[28px] font-medium leading-none tracking-[-0.02em]">{title}</p>
-          <p className="mt-2 font-semibold tabular-nums text-base-content/70">{number}</p>
-          <p className="text-base-content/55">Émis le {DATE_FMT.format(new Date(issued))}</p>
-          {props.kind === "devis" && (
-            <p className="text-base-content/55">Valable jusqu&apos;au {DATE_FMT.format(new Date(props.devis.validUntil))}</p>
-          )}
-        </div>
-        <div className="sm:max-w-[46%] sm:text-right">
-          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--brand-taupe-muted)]">Destinataire</p>
-          {billTo ? (
-            <>
-              <p className="font-semibold">{billTo.name}</p>
-              <p className="text-base-content/65">{billTo.address}</p>
-              <p className="text-base-content/65 tabular-nums">NINEA {billTo.ninea}{billTo.rccm ? ` · RCCM ${billTo.rccm}` : ""}</p>
-              <p className="text-base-content/65">À l&apos;attention de {clientFullName(client)}</p>
-            </>
-          ) : (
-            <>
-              <p className="font-semibold">{clientFullName(client)}</p>
-              <p className="text-base-content/65 tabular-nums">{formatPhone(client.phone)}</p>
-              <p className="text-base-content/65">{client.email}</p>
-            </>
-          )}
-        </div>
-      </div>
+      {/* Destinataire */}
+      <p className="mt-10 self-end text-[13px] font-medium">{recipient}</p>
 
-      <table className="w-full border-collapse">
+      {/* Titre et références */}
+      <h1 className="mt-10 text-[26px] font-light leading-none tracking-[-0.01em] text-[#886666]">
+        {title} <span className="text-[#886666]/55">#</span> <span className="tabular-nums">{number}</span>
+      </h1>
+
+      <dl className="mt-6 grid grid-cols-2 gap-x-10 border-y border-[#886666]/25 py-3">
+        <div>
+          <dt className="text-[9.5px] font-semibold uppercase tracking-[0.14em] text-[#2a2320]/55">
+            {props.kind === "devis" ? "Date du devis" : "Date de la facture"}
+          </dt>
+          <dd className="mt-1 text-[12px] font-medium tabular-nums">{DATE.format(new Date(date))}</dd>
+        </div>
+        <div>
+          <dt className="text-[9.5px] font-semibold uppercase tracking-[0.14em] text-[#2a2320]/55">Vendeur</dt>
+          <dd className="mt-1 text-[12px] font-medium">{doc.sellerName}</dd>
+        </div>
+      </dl>
+
+      {/* Lignes */}
+      <table className="mt-8 w-full border-collapse">
         <thead>
-          <tr className="border-b border-base-content/80 text-left text-xs font-semibold uppercase tracking-[0.06em] text-base-content/60">
-            <th className="pb-2 font-semibold">Désignation</th>
-            <th className="w-10 pb-2 text-right font-semibold">Qté</th>
-            <th className="hidden w-24 pb-2 text-right font-semibold sm:table-cell">Prix</th>
-            <th className="w-28 pb-2 text-right font-semibold">Montant</th>
+          <tr className="text-[9.5px] [&>th]:border-b-[1.5px] [&>th]:border-[#886666] font-semibold uppercase tracking-[0.12em] text-[#886666]">
+            <th className="pb-2 text-left font-semibold">Description</th>
+            <th className="w-[15%] pb-2 text-right font-semibold">Quantité</th>
+            <th className="w-[17%] pb-2 text-right font-semibold">Prix unitaire</th>
+            <th className="w-[10%] pb-2 text-right font-semibold">Taxes</th>
+            <th className="w-[17%] pb-2 text-right font-semibold">Montant</th>
           </tr>
         </thead>
         <tbody>
-          {doc.lines.map((l) => {
-            const off = lineDiscount[l.id] ?? 0;
-            return (
-              <tr key={l.id} className="border-b border-base-300 align-top">
-                <td className="py-2.5 pr-3">
-                  <span className="font-medium">{l.name}</span>
-                  <span className="block text-xs text-base-content/50">{l.kind === "service" ? "Prestation" : "Produit"}</span>
-                </td>
-                <td className="py-2.5 text-right tabular-nums">{l.qty}</td>
-                <td className="hidden py-2.5 text-right tabular-nums sm:table-cell">{formatFcfa(l.unitPrice)}</td>
-                <td className="py-2.5 text-right tabular-nums">
-                  {formatFcfa(l.unitPrice * l.qty)}
-                  {off > 0 && <span className="block text-xs text-[var(--brand-taupe-muted)]">− {formatFcfa(off)}</span>}
-                </td>
-              </tr>
-            );
-          })}
+          {doc.lines.map((l) => (
+            <tr key={l.id} className="align-top [&>td]:border-b [&>td]:border-[#886666]/20">
+              <td className="py-3 pr-4 font-medium uppercase">{l.name}</td>
+              <td className="py-3 text-right tabular-nums text-[#2a2320]/75">{decimal(l.qty)}&nbsp;Unité(s)</td>
+              <td className="py-3 text-right tabular-nums text-[#2a2320]/75">{decimal(net(l) / l.qty)}</td>
+              <td className="py-3 text-right" />
+              <td className="py-3 text-right font-medium tabular-nums">{cfa(net(l))}</td>
+            </tr>
+          ))}
         </tbody>
       </table>
 
-      <div className="flex w-full flex-col gap-1 tabular-nums sm:ml-auto sm:w-64">
-        {discount > 0 && (
-          <>
-            <div className="flex justify-between text-base-content/65"><span>Sous-total</span><span>{formatFcfa(subtotal)}</span></div>
-            <div className="flex justify-between text-[var(--brand-taupe-muted)]"><span>Remise accordée</span><span>− {formatFcfa(discount)}</span></div>
-          </>
-        )}
-        <div className="mt-1 flex items-baseline justify-between border-t border-base-content/80 pt-2">
-          <span className="font-semibold">Total</span>
-          <span className="font-[family-name:var(--font-heading)] text-xl font-semibold">{formatFcfa(total)}</span>
+      {/* Totaux */}
+      <div className="mt-6 ml-auto w-[52%] tabular-nums">
+        <div className="flex items-baseline justify-between px-4 py-2.5 text-[#2a2320]/70">
+          <span>Montant hors taxes</span>
+          <span>{cfa(total)}</span>
+        </div>
+        <div className="flex items-baseline justify-between bg-[#886666] px-4 py-3 text-white [-webkit-print-color-adjust:exact] [print-color-adjust:exact]">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.14em]">Total</span>
+          <span className="text-[16px] font-semibold">{cfa(total)}</span>
         </div>
       </div>
-
-      {props.kind === "facture" && props.facture.status === "payee" && props.facture.paidAt && (
-        <p className="self-start rounded-sm border border-[var(--color-success)]/40 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--color-success)]">
-          Payée le {DATE_FMT.format(new Date(props.facture.paidAt))}
-          {props.facture.payment ? ` · ${PAYMENT_LABEL[props.facture.payment.mode]}` : ""}
-        </p>
-      )}
-      {props.kind === "facture" && props.facture.status === "annulee" && props.facture.avoir && (
-        <p className="self-start rounded-sm border border-base-300 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-base-content/55">
-          Annulée par l&apos;avoir {props.facture.avoir.number}
-        </p>
-      )}
-
-      <footer className="mt-auto border-t border-base-300 pt-3 text-[11px] leading-4 text-base-content/50">
-        {company.name} · NINEA {company.ninea} · RCCM {company.rccm}
-      </footer>
     </article>
   );
 }

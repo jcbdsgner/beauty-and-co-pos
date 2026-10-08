@@ -45,52 +45,52 @@ const d09Lines = [L("soin-du-visage-glow-me-facial", 2), L("nutritive-bain-satin
 
 export const DEVIS: Devis[] = [
   {
-    id: "dev-14", number: "DEV-2026-0014", version: 1, clientId: "cl-5",
+    id: "dev-14", number: "DEV-2026-0014", version: 1, clientId: "cl-5", salonId: "almadies", sellerName: "Ndiole",
     lines: [L("soin-du-visage-glow-me-facial"), L("spa-steam-time")],
     remises: [], remiseReason: null, status: "brouillon",
     createdAt: "2026-10-08T09:40:00", validUntil: addDays("2026-10-08T09:40:00", DEVIS_VALIDITY_DAYS),
   },
   {
-    id: "dev-13-v2", number: "DEV-2026-0013", version: 2, clientId: "cl-1", billTo: KER_DIGITAL,
+    id: "dev-13-v2", number: "DEV-2026-0013", version: 2, clientId: "cl-1", salonId: "sea-plaza-bco", sellerName: "Ndiole", billTo: KER_DIGITAL,
     lines: d13v2Lines,
     remises: [{ id: "rm-13", lineIds: d13v2Lines.map((l) => l.id), mode: "pourcentage", value: 10 }],
     remiseReason: "Geste commercial — prise en charge par l'employeur",
     status: "envoye", createdAt: "2026-10-06T15:10:00", sentChannel: "whatsapp", ...sent("2026-10-06T15:12:00"),
   },
   {
-    id: "dev-13-v1", number: "DEV-2026-0013", version: 1, clientId: "cl-1", billTo: KER_DIGITAL,
+    id: "dev-13-v1", number: "DEV-2026-0013", version: 1, clientId: "cl-1", salonId: "sea-plaza-bco", sellerName: "Ndiole", billTo: KER_DIGITAL,
     lines: d13v1Lines, remises: [], remiseReason: null,
     status: "remplace", createdAt: "2026-10-04T11:00:00", sentChannel: "whatsapp", ...sent("2026-10-04T11:05:00"),
   },
   {
-    id: "dev-12", number: "DEV-2026-0012", version: 1, clientId: "cl-2",
+    id: "dev-12", number: "DEV-2026-0012", version: 1, clientId: "cl-2", salonId: "almadies", sellerName: "Ndiole",
     lines: [L("onglerie-polygel-extensions"), L("manucure-pedicure-manucure-russe-sans-vernis-sans-gel"), L("k-chroma-oil")],
     remises: [], remiseReason: null,
     status: "envoye", createdAt: "2026-10-02T10:20:00", sentChannel: "email", ...sent("2026-10-02T10:25:00"),
   },
   {
-    id: "dev-11", number: "DEV-2026-0011", version: 1, clientId: "cl-10",
+    id: "dev-11", number: "DEV-2026-0011", version: 1, clientId: "cl-10", salonId: "sea-plaza-bco", sellerName: "Ndiole",
     lines: d11Lines, remises: [], remiseReason: null,
     status: "facture", factureId: "fac-07", createdAt: "2026-09-30T16:00:00", sentChannel: "whatsapp", ...sent("2026-09-30T16:02:00"),
   },
   {
-    id: "dev-10", number: "DEV-2026-0010", version: 1, clientId: "cl-3",
+    id: "dev-10", number: "DEV-2026-0010", version: 1, clientId: "cl-3", salonId: "almadies", sellerName: "Ndiole",
     lines: d10Lines, remises: [], remiseReason: null,
     status: "facture", factureId: "fac-06", createdAt: "2026-09-26T12:00:00", sentChannel: "whatsapp", ...sent("2026-09-26T12:01:00"),
   },
   {
-    id: "dev-09", number: "DEV-2026-0009", version: 1, clientId: "cl-4",
+    id: "dev-09", number: "DEV-2026-0009", version: 1, clientId: "cl-4", salonId: "almadies", sellerName: "Ndiole",
     lines: d09Lines, remises: [], remiseReason: null,
     status: "facture", factureId: "fac-05", createdAt: "2026-09-18T10:00:00", sentChannel: "email", ...sent("2026-09-18T10:03:00"),
   },
   {
-    id: "dev-08", number: "DEV-2026-0008", version: 1, clientId: "cl-7",
+    id: "dev-08", number: "DEV-2026-0008", version: 1, clientId: "cl-7", salonId: "sea-plaza-bco", sellerName: "Ndiole",
     lines: [L("spa-steam-time"), L("epilation-epilation-maillot-bresilien")],
     remises: [], remiseReason: null,
     status: "refuse", createdAt: "2026-09-15T09:00:00", sentChannel: "whatsapp", ...sent("2026-09-15T09:02:00"),
   },
   {
-    id: "dev-07", number: "DEV-2026-0007", version: 1, clientId: "cl-9",
+    id: "dev-07", number: "DEV-2026-0007", version: 1, clientId: "cl-9", salonId: "almadies", sellerName: "Ndiole",
     lines: [L("coiffure-pose-clips"), L("soin-du-visage-detox-me-facial")],
     remises: [], remiseReason: null,
     status: "expire", createdAt: "2026-09-01T14:00:00", sentChannel: "email", ...sent("2026-09-01T14:05:00"),
@@ -101,18 +101,18 @@ const sum = (lines: DevisLine[]) => lines.reduce((s, l) => s + l.unitPrice * l.q
 
 export const FACTURES: Facture[] = [
   {
-    id: "fac-07", number: "FAC-2026-0007", devisId: "dev-11", clientId: "cl-10",
+    id: "fac-07", number: "FAC-2026-0007", devisId: "dev-11", clientId: "cl-10", salonId: "sea-plaza-bco", sellerName: "Ndiole",
     lines: d11Lines, remises: [], total: sum(d11Lines),
     status: "a_payer", issuedAt: "2026-10-05T11:30:00", redeemedLineIds: [],
   },
   {
-    id: "fac-06", number: "FAC-2026-0006", devisId: "dev-10", clientId: "cl-3",
+    id: "fac-06", number: "FAC-2026-0006", devisId: "dev-10", clientId: "cl-3", salonId: "almadies", sellerName: "Ndiole",
     lines: d10Lines, remises: [], total: sum(d10Lines),
     status: "payee", issuedAt: "2026-09-29T10:00:00", paidAt: "2026-10-01T18:42:00",
     payment: { mode: "wave" }, redeemedLineIds: [],
   },
   {
-    id: "fac-05", number: "FAC-2026-0005", devisId: "dev-09", clientId: "cl-4",
+    id: "fac-05", number: "FAC-2026-0005", devisId: "dev-09", clientId: "cl-4", salonId: "almadies", sellerName: "Ndiole",
     lines: d09Lines, remises: [], total: sum(d09Lines),
     status: "payee", issuedAt: "2026-09-20T15:00:00", paidAt: "2026-09-21T11:05:00",
     payment: { mode: "especes" }, redeemedLineIds: [], productsHandedOverAt: "2026-09-27T12:00:00",

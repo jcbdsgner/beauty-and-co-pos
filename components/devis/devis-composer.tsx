@@ -11,6 +11,7 @@ import { MenuBrowser } from "@/components/comptoir/menu-panel";
 import { RemisesDialog } from "@/components/comptoir/remises-dialog";
 import { documentTotals } from "@/components/devis/lib";
 import { useAppData } from "@/components/providers/app-data-provider";
+import { POSTE_SALON_ID, useSession } from "@/lib/session";
 import { applyRemise, devisAsSale } from "@/lib/store/app-store";
 import { devisLineFrom } from "@/lib/data/devis";
 import { clientFullName } from "@/lib/data/clientele";
@@ -28,6 +29,7 @@ const EMPTY_COMPANY: BillingCompany = { name: "", address: "", ninea: "" };
  */
 export function DevisComposer({ clientId, devisId, onClose }: { clientId: string; devisId?: string; onClose: () => void }) {
   const { clients, devis, createDevis, updateDevisDraft, sendDevis, updateClient } = useAppData();
+  const { currentUser } = useSession();
   const client = clients.find((c) => c.id === clientId);
   const existing = devisId ? devis.find((d) => d.id === devisId && d.status === "brouillon") : undefined;
 
@@ -67,7 +69,7 @@ export function DevisComposer({ clientId, devisId, onClose }: { clientId: string
     if (!ready) return;
     const billTo = toCompany ? { ...company, rccm: company.rccm?.trim() || undefined } : undefined;
     const data = { lines, remises, remiseReason: hasRemise ? reason.trim() : null, billTo };
-    const id = existing ? (updateDevisDraft(existing.id, data), existing.id) : createDevis({ clientId, ...data }).id;
+    const id = existing ? (updateDevisDraft(existing.id, data), existing.id) : createDevis({ clientId, salonId: POSTE_SALON_ID, sellerName: currentUser.name, ...data }).id;
     // La société facturée se retient sur la fiche, pour le devis suivant.
     if (billTo) updateClient(clientId, { billingCompany: billTo });
     if (send) sendDevis(id, channel);

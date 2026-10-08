@@ -623,6 +623,10 @@ export type Devis = {
   clientId: string;
   /** Société facturée recopiée au moment du devis — absente = facturé à la cliente elle-même. */
   billTo?: BillingCompany;
+  /** Salon émetteur — celui du poste qui a fait le devis (en tête du document). */
+  salonId: string;
+  /** Qui a fait le devis — « Vendeur » sur le document. */
+  sellerName: string;
   lines: DevisLine[];
   /** Remises accordées, mêmes règles qu'au panier (prestations seulement). */
   remises: RemiseAccordee[];
@@ -647,6 +651,8 @@ export type Facture = {
   devisId: string;
   clientId: string;
   billTo?: BillingCompany;
+  salonId: string;
+  sellerName: string;
   /** Recopiées du devis : une facture ne change jamais. */
   lines: DevisLine[];
   remises: RemiseAccordee[];

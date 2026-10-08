@@ -500,7 +500,7 @@ export type AppState = {
   devis: Devis[];
   factures: Facture[];
   /** Nouveau brouillon (version 1, numéro suivant). */
-  createDevis: (data: Pick<Devis, "clientId" | "lines" | "remises" | "remiseReason" | "billTo">) => Devis;
+  createDevis: (data: Pick<Devis, "clientId" | "lines" | "remises" | "remiseReason" | "billTo" | "salonId" | "sellerName">) => Devis;
   /** Modifie un brouillon — un devis envoyé ne se modifie pas, il se réémet (`reviseDevis`). */
   updateDevisDraft: (id: string, patch: Partial<Pick<Devis, "lines" | "remises" | "remiseReason" | "billTo">>) => void;
   deleteDevisDraft: (id: string) => void;
@@ -1328,6 +1328,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       devisId: d.id,
       clientId: d.clientId,
       billTo: d.billTo,
+      salonId: d.salonId,
+      sellerName: d.sellerName,
       lines: d.lines,
       remises: d.remises,
       total: computeTotals(devisAsSale(d)).total,
