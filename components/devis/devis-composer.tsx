@@ -120,25 +120,37 @@ export function DevisComposer({ clientId, devisId, onClose }: { clientId: string
                 ))
               )}
             </div>
-            <button
-              type="button"
-              disabled={!lines.some((l) => l.kind === "service")}
-              onClick={() => setRemisesOpen(true)}
-              className="flex min-h-14 w-full items-center gap-3 rounded-field border border-border bg-white px-4 text-left transition hover:bg-base-200 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-50"
-            >
-              <Percent aria-hidden className="size-4 shrink-0 text-secondary" />
-              <span className="flex-1 text-[15px] font-semibold text-secondary">Remise accordée</span>
-              <span className={cn("text-sm tabular-nums", hasRemise ? "font-semibold text-success" : "text-base-content/65")}>
-                {hasRemise ? `−${formatFcfa(totals.discount)}` : "Aucune"}
-              </span>
-              <ChevronRight aria-hidden className="size-4 shrink-0 text-base-content/40" />
-            </button>
+            {/* Pas de remise pour une société. */}
+            {!toCompany && (
+              <button
+                type="button"
+                disabled={!lines.some((l) => l.kind === "service")}
+                onClick={() => setRemisesOpen(true)}
+                className="flex min-h-14 w-full items-center gap-3 rounded-field border border-border bg-white px-4 text-left transition hover:bg-base-200 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-50"
+              >
+                <Percent aria-hidden className="size-4 shrink-0 text-secondary" />
+                <span className="flex-1 text-[15px] font-semibold text-secondary">Remise accordée</span>
+                <span className={cn("text-sm tabular-nums", hasRemise ? "font-semibold text-success" : "text-base-content/65")}>
+                  {hasRemise ? `−${formatFcfa(totals.discount)}` : "Aucune"}
+                </span>
+                <ChevronRight aria-hidden className="size-4 shrink-0 text-base-content/40" />
+              </button>
+            )}
             {hasRemise && (
               <TextInput placeholder="Motif de la remise" aria-label="Motif de la remise" value={reason} onChange={(e) => setReason(e.target.value)} />
             )}
             <div className="flex flex-col gap-2">
               <label className="flex min-h-12 cursor-pointer items-center gap-3">
-                <input type="checkbox" className="checkbox checkbox-primary" checked={toCompany} onChange={(e) => setToCompany(e.target.checked)} />
+                <input
+                type="checkbox"
+                className="checkbox checkbox-primary"
+                checked={toCompany}
+                onChange={(e) => {
+                  setToCompany(e.target.checked);
+                  // Pas de remise pour une société : elle tombe dès qu'on la coche.
+                  if (e.target.checked) setRemises([]);
+                }}
+              />
                 <Building2 aria-hidden className="size-5 text-base-content/50" />
                 <span className="font-medium">Facturer une société</span>
               </label>

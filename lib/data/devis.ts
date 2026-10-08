@@ -39,6 +39,7 @@ const L = devisLineFrom;
 
 const d13v1Lines = [L("soin-du-visage-golden-vip-facial"), L("coiffure-head-spa-ultimate-deep-relaxation"), L("nutritive-masque-riche-200ml")];
 const d13v2Lines = [L("soin-du-visage-golden-vip-facial"), L("coiffure-head-spa-ultimate-deep-relaxation")];
+const d12Lines = [L("onglerie-polygel-extensions"), L("manucure-pedicure-manucure-russe-sans-vernis-sans-gel"), L("k-chroma-oil")];
 const d11Lines = [L("soin-du-visage-hydrafacial-deep-clean"), L("nutritive-bain-riche-250ml")];
 const d10Lines = [L("coiffure-pose-clips"), L("genesis-cure-90ml"), L("k-chroma-oil")];
 const d09Lines = [L("soin-du-visage-glow-me-facial", 2), L("nutritive-bain-satin-250ml")];
@@ -52,9 +53,7 @@ export const DEVIS: Devis[] = [
   },
   {
     id: "dev-13-v2", number: "DEV-2026-0013", version: 2, clientId: "cl-1", salonId: "sea-plaza-bco", sellerName: "Ndiole", billTo: KER_DIGITAL,
-    lines: d13v2Lines,
-    remises: [{ id: "rm-13", lineIds: d13v2Lines.map((l) => l.id), mode: "pourcentage", value: 10 }],
-    remiseReason: "Geste commercial — prise en charge par l'employeur",
+    lines: d13v2Lines, remises: [], remiseReason: null,
     status: "envoye", createdAt: "2026-10-06T15:10:00", sentChannel: "whatsapp", ...sent("2026-10-06T15:12:00"),
   },
   {
@@ -64,8 +63,9 @@ export const DEVIS: Devis[] = [
   },
   {
     id: "dev-12", number: "DEV-2026-0012", version: 1, clientId: "cl-2", salonId: "almadies", sellerName: "Ndiole",
-    lines: [L("onglerie-polygel-extensions"), L("manucure-pedicure-manucure-russe-sans-vernis-sans-gel"), L("k-chroma-oil")],
-    remises: [], remiseReason: null,
+    lines: d12Lines,
+    remises: [{ id: "rm-12", lineIds: [d12Lines[0].id], mode: "pourcentage", value: 10 }],
+    remiseReason: "Fidèle cliente — geste sur la pose",
     status: "envoye", createdAt: "2026-10-02T10:20:00", sentChannel: "email", ...sent("2026-10-02T10:25:00"),
   },
   {
@@ -131,7 +131,7 @@ const FACTURE_BODY = "Merci pour votre accord ! Voici votre facture.";
 const SEED: SeedMessage[] = [
   { clientId: "cl-1", m: { sender: "receptionniste", channel: "whatsapp", at: "2026-10-04T11:05:00", body: DEVIS_BODY, devisId: "dev-13-v1" } },
   { clientId: "cl-1", m: { sender: "cliente", channel: "whatsapp", at: "2026-10-04T13:20:00", body: "Mon employeur ne prend pas les produits en charge. Vous pouvez retirer le masque ? Et la facture doit être au nom de Kër Digital." } },
-  { clientId: "cl-1", m: { sender: "receptionniste", channel: "whatsapp", at: "2026-10-06T15:12:00", body: "C'est fait, voici le devis mis à jour au nom de Kër Digital, avec un geste de 10 %.", devisId: "dev-13-v2" } },
+  { clientId: "cl-1", m: { sender: "receptionniste", channel: "whatsapp", at: "2026-10-06T15:12:00", body: "C'est fait, voici le devis mis à jour au nom de Kër Digital, sans le masque.", devisId: "dev-13-v2" } },
   { clientId: "cl-2", m: { sender: "receptionniste", channel: "email", at: "2026-10-02T10:25:00", body: DEVIS_BODY, devisId: "dev-12" } },
   { clientId: "cl-2", m: { sender: "cliente", channel: "email", at: "2026-10-03T18:40:00", body: "Merci ! Le soin du visage peut-il se faire un samedi matin ?" } },
   { clientId: "cl-10", m: { sender: "receptionniste", channel: "whatsapp", at: "2026-09-30T16:02:00", body: DEVIS_BODY, devisId: "dev-11" } },

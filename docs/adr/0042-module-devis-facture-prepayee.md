@@ -65,4 +65,8 @@ Le PDF reprend exactement le contenu de l'ébauche fournie : logo, salon et pays
 
 ## Révision 2026-10-08 — le destinataire complet sur le document
 
-Le bloc destinataire porte tout ce qu'on sait de lui. **Société** : raison sociale, adresse, NINEA, RCCM (chacun sur sa ligne), et à côté « À l'attention de » la cliente avec son téléphone et son e-mail. **Personne** : nom, adresse si la fiche en a une, téléphone, e-mail. Une donnée absente ne laisse pas de ligne vide. (Les NINEA / RCCM écartés plus haut sont ceux de l'émettrice, Beauty and Co.) Un long devis s'imprime sur plusieurs pages A4 : en-tête du tableau répété, aucune ligne coupée, total jamais scindé.
+Le bloc destinataire porte tout ce qu'on sait de lui. **Société** : raison sociale, adresse, NINEA, RCCM (chacun sur sa ligne), et à côté « À l'attention de » le **nom seul** de la cliente — la facture circule au service comptable, ses coordonnées personnelles n'y ont pas leur place. **Personne** : nom, adresse si la fiche en a une, téléphone, e-mail. Une donnée absente ne laisse pas de ligne vide. (Les NINEA / RCCM écartés plus haut sont ceux de l'émettrice, Beauty and Co.) Un long devis s'imprime sur plusieurs pages A4 : en-tête du tableau répété, aucune ligne coupée, total jamais scindé.
+
+## Révision 2026-10-08 — pas de remise pour une société
+
+Un devis facturé à une société n'a **aucune remise accordée** : cocher « Facturer une société » retire les remises déjà posées et masque la ligne « Remise accordée ». Les remises restent possibles pour une personne, aux mêmes règles qu'au panier.

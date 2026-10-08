@@ -108,7 +108,8 @@ export function DevisDocument(props: DevisDocumentProps) {
 
 /**
  * Le destinataire, avec tout ce qu'on sait de lui. Une société : raison sociale, adresse, NINEA,
- * RCCM, puis la cliente « à l'attention de » avec son téléphone et son e-mail. Une personne : son
+ * RCCM, puis la cliente « à l'attention de » — son nom seul : la facture circule au service
+ * comptable, ses coordonnées personnelles n'y ont pas leur place. Une personne : son
  * nom, son adresse si on l'a, son téléphone, son e-mail. Une ligne manquante ne laisse pas de trou.
  */
 function Recipient({ client, billTo }: { client: Cliente; billTo?: BillingCompany }) {
@@ -127,8 +128,6 @@ function Recipient({ client, billTo }: { client: Cliente; billTo?: BillingCompan
         <div>
           <p className={label}>À l&apos;attention de</p>
           <p className="text-[12px] font-medium">{clientFullName(client)}</p>
-          <p className="mt-0.5 tabular-nums text-[#2a2320]/75">{formatPhone(client.phone)}</p>
-          {client.email && <p className="break-all text-[#2a2320]/75">{client.email}</p>}
         </div>
       </div>
     );
