@@ -45,21 +45,19 @@ export function DevisDocument(props: DevisDocumentProps) {
       )}
     >
       {/* Émettrice : le logo, le salon et son pays */}
-      <header className="flex items-start justify-between">
+      <header className="flex items-center justify-between">
         <Image src="/images/brand/logo-bc.jpg" alt="Beauty & Co London" width={1200} height={1197} className="size-[104px] object-contain" priority />
-        <div className="pt-2 text-right">
+        <div className="text-right">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em]">{salon?.name ?? ""}</p>
           <p className="mt-0.5 text-[#2a2320]/60">Sénégal</p>
         </div>
       </header>
 
-      {/* Destinataire */}
-      <p className="mt-10 self-end text-[13px] font-medium">{recipient}</p>
-
-      {/* Titre et références */}
-      <h1 className="mt-10 text-[26px] font-light leading-none tracking-[-0.01em] text-[#886666]">
+      {/* Le document et sa destinataire, une seule colonne alignée à gauche */}
+      <h1 className="mt-12 text-[26px] font-light leading-none tracking-[-0.01em] text-[#886666]">
         {title} <span className="text-[#886666]/55">#</span> <span className="tabular-nums">{number}</span>
       </h1>
+      <p className="mt-2.5 text-[14px] font-medium">{recipient}</p>
 
       <dl className="mt-6 grid grid-cols-2 gap-x-10 border-y border-[#886666]/25 py-3">
         <div>
