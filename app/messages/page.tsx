@@ -10,9 +10,9 @@ import { NewDevisLauncher } from "@/components/devis/new-devis-launcher";
  */
 export default function MessagesPage() {
   // Fill the work area: cancel the shell's `py-8` gutter (-my-8) and subtract the docked
-  // Comptoir bar (~76–85px depending on its state) so the composer never hides behind it.
+  // Comptoir bar (`--comptoir-bar-h`, 0 when hidden) so the composer never hides behind it.
   return (
-    <div className="-my-8 flex h-[calc(100dvh-5.5rem)] flex-col pt-6">
+    <div className="-my-8 flex h-[calc(100dvh-var(--comptoir-bar-h,0px))] flex-col pt-6 pb-6">
       <BoardHeader section="Messages" className="mb-4 shrink-0" action={
           <Suspense fallback={null}>
             <NewDevisLauncher />

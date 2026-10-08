@@ -1,7 +1,7 @@
 "use client";
 
 import { Sidebar } from "@/components/shell/sidebar";
-import { ComptoirBar } from "@/components/shell/comptoir-bar";
+import { ComptoirBar, useComptoirBarMode } from "@/components/shell/comptoir-bar";
 import { ComptoirPanel } from "@/components/comptoir/comptoir-panel";
 import { LockScreen } from "@/components/shell/lock-screen";
 import { useSession } from "@/lib/session";
@@ -15,11 +15,15 @@ import { useSession } from "@/lib/session";
  */
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { authenticated } = useSession();
+  const barMode = useComptoirBarMode();
 
   if (!authenticated) return <LockScreen />;
 
+  // Hauteur occupée par la barre du Comptoir — les écrans pleine hauteur (Messages) s'en servent.
+  const barHeight = barMode === "new" ? "5.5rem" : barMode === "open" ? "76px" : "0px";
+
   return (
-    <div className="flex h-screen bg-base-200">
+    <div className="flex h-screen bg-base-200" style={{ "--comptoir-bar-h": barHeight } as React.CSSProperties}>
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="min-h-0 flex-1 overflow-y-auto scroll-pt-24">

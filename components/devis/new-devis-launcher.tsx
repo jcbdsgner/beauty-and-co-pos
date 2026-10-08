@@ -63,7 +63,7 @@ export function NewDevisLauncher() {
 
   return (
     <>
-      <Button variant="outline" size="sm" icon={<FileText className="size-4" />} onClick={() => setPicking(true)}>
+      <Button size="sm" icon={<FileText className="size-4" />} onClick={() => setPicking(true)}>
         Nouveau devis
       </Button>
 

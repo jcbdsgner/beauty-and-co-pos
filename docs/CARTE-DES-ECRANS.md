@@ -44,7 +44,7 @@ Structure : `Sidebar` | ( page scrollable `max-w-6xl` + `ComptoirBar` ) + `Compt
 | Composant | Fichier | Rôle |
 |---|---|---|
 | `Sidebar` | [`components/shell/sidebar.tsx`](../components/shell/sidebar.tsx) | Logo + nav 5 items + menu identité au pied (Mon compte / Déconnexion — plus de « Changer d'utilisateur » depuis ce menu, ADR 0026). Pas de section Réglages (ADR 0001). |
-| `ComptoirBar` | [`components/shell/comptoir-bar.tsx`](../components/shell/comptoir-bar.tsx) | Barre pleine largeur ancrée au pied. Rose « Nouvelle vente » si 0 vente ; taupe (cliente + total + « Ouvrir le comptoir ») si ≥1 vente ouverte. Cachée quand le Comptoir est déployé. |
+| `ComptoirBar` | [`components/shell/comptoir-bar.tsx`](../components/shell/comptoir-bar.tsx) | Barre pleine largeur ancrée au pied. Rose « Nouvelle vente » si 0 vente ; taupe (cliente + total + « Ouvrir le comptoir ») si ≥1 vente ouverte. Cachée quand le Comptoir est déployé, et sur Messages tant qu'aucune vente n'est ouverte (`useComptoirBarMode`, hauteur exposée en `--comptoir-bar-h`). |
 | `ComptoirPanel` | [`components/comptoir/comptoir-panel.tsx`](../components/comptoir/comptoir-panel.tsx) | Le Comptoir déployé (voir §4). |
 | `AppDataProvider` | [`components/providers/app-data-provider.tsx`](../components/providers/app-data-provider.tsx) | Façade de compat ; `useAppData()` = `useAppStore()`. `computeTotals` réexporté ici. |
 | `useSession` | [`lib/session.ts`](../lib/session.ts) | Qui tient le poste + PIN. `sessionStorage`, simulé. |

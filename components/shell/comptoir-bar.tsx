@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { ChevronUp, ShoppingCart } from "lucide-react";
 import { useAppData, computeTotals } from "@/components/providers/app-data-provider";
 import { clientFullName } from "@/lib/data/clientele";
@@ -7,7 +8,8 @@ import { formatFcfa } from "@/lib/utils";
 
 /**
  * The Comptoir, collapsed — a full-width dock at the foot of the working area, present on every
- * section (Accueil / Planning / Clientèle / Messages / Catalogue). This is the counter's single most
+ * section (Accueil / Planning / Clientèle / Catalogue ; sur Messages seulement quand une vente est
+ * ouverte). This is the counter's single most
  * important affordance, so it is a real bar, not a corner pill:
  *
  * - no open sale → a rose bar, "Nouvelle vente", one tap opens a fresh tab in the deployed
@@ -19,16 +21,29 @@ import { formatFcfa } from "@/lib/utils";
  * Hidden while the Comptoir is deployed — the full panel covers the screen and owns "Replier".
  * The rose → taupe flip is itself the cue that money is now on the counter.
  */
-export function ComptoirBar() {
-  const { sales, openTabIds, activeSaleId, comptoirDeployed, deployComptoir, openNewTab, clients } = useAppData();
+/** Ce que la barre affiche : rien, « Nouvelle vente », ou la vente ouverte. Sur Messages, pas de
+ *  « Nouvelle vente » (on n'y vend pas) — mais une vente en cours reste toujours visible : c'est de
+ *  l'argent sur le comptoir. Le shell s'en sert aussi pour réserver la hauteur de la barre. */
+export function useComptoirBarMode(): "none" | "new" | "open" {
+  const { sales, openTabIds, comptoirDeployed } = useAppData();
+  const pathname = usePathname();
+  if (comptoirDeployed) return "none";
+  const hasOpen = openTabIds.some((id) => sales.find((s) => s.id === id)?.status === "ouverte");
+  if (hasOpen) return "open";
+  return pathname.startsWith("/messages") ? "none" : "new";
+}
 
-  if (comptoirDeployed) return null;
+export function ComptoirBar() {
+  const { sales, openTabIds, activeSaleId, deployComptoir, openNewTab, clients } = useAppData();
+  const mode = useComptoirBarMode();
+
+  if (mode === "none") return null;
 
   const openSales = openTabIds
     .map((id) => sales.find((s) => s.id === id))
     .filter((s): s is NonNullable<typeof s> => !!s && s.status === "ouverte");
 
-  if (openSales.length === 0) {
+  if (mode === "new") {
     return (
       <div className="shrink-0 border-t border-base-300 bg-base-200 px-6 py-3">
         <button
