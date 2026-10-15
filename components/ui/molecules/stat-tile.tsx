@@ -56,7 +56,7 @@ export type StatBandItem = {
 
 /**
  * A single card holding a row of hero figures split by hairlines — the "at a glance" band at the
- * head of Accueil and Récap des ventes. Each cell can be a link/button (tap-through to detail).
+ * head of Accueil and la vue Ventes de l’Accueil. Each cell can be a link/button (tap-through to detail).
  */
 export function StatBand({ items, className }: { items: StatBandItem[]; className?: string }) {
   return (

@@ -21,6 +21,7 @@ import { ABONNEMENTS } from "@/lib/data/abonnements";
 import { PACK_PURCHASES } from "@/lib/data/pack-purchases";
 import { detectCoverage as detectCoverageFrom } from "@/lib/data/coverage";
 import { POSTE_SALON_ID } from "@/lib/session";
+import { generateSalesHistory, saleSalonId } from "@/lib/data/ventes";
 import { formatFcfa } from "@/lib/utils";
 import type {
   CarteCadeau,
@@ -623,7 +624,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   reservations: RESERVATIONS,
   praticiennes: PRATICIENNES,
   produits: PRODUITS,
-  sales: [],
+  // Historique de démo (ADR 0043) : sans ventes passées, la vue Ventes de l'Accueil n'aurait pas de période.
+  sales: generateSalesHistory(),
   openTabIds: [],
   activeSaleId: null,
   comptoirDeployed: false,
@@ -884,7 +886,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
     }
 
-    const sale = emptySale(`Vente ${sales.length + 1}`);
+    // Numérotées sur la session seulement — l'historique de démo n'occupe pas les numéros d'onglet.
+    const sale = emptySale(`Vente ${sales.filter((x) => !x.id.startsWith("sale-h")).length + 1}`);
     sale.clientId = prefill?.clientId ?? null;
 
     if (prefill?.reservationId) {
@@ -1140,6 +1143,7 @@ export const useAppStore = create<AppState>((set, get) => ({
               ...(tip && tip.amount > 0 && { tip }),
               loyaltyPointsEarned: earned,
               encaisseeAt: new Date().toISOString(),
+              salonId: saleSalonId(x, s.reservations, POSTE_SALON_ID),
             }
           : x,
       ),

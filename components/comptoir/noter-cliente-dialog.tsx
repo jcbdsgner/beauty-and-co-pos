@@ -16,7 +16,7 @@ import type { Cliente, Sale } from "@/lib/data/types";
 /**
  * « Noter la cliente » — run from the receipt (« Continuer ») once the sale is cashed in. When a
  * remise was granted, its motif comes first (`needsReason`) — internal, never on the receipt, it
- * lands in `Sale.remiseReason` for Récap des ventes. Then one question per screen,
+ * lands in `Sale.remiseReason` for la vue Ventes de l’Accueil. Then one question per screen,
  * answered by tapping photo tiles (several answers allowed), then a free internal note. The answers
  * are kept as one more round in her `notationRounds` (the fiche counts how often each comes back), the note
  * into her internal log, signed by the poste's account; finishing stamps

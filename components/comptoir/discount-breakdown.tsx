@@ -5,10 +5,10 @@ import type { Sale } from "@/lib/data/types";
 /**
  * The itemised discount lines — one per mechanism that actually reduced the total, plus the
  * gift-card reliquat as a caption. The granted-discount motif is internal: it never prints on the
- * receipt, only shows in Récap des ventes (`showReason`). Also carries the « prestations
+ * receipt, only shows in la vue Ventes de l’Accueil (`showReason`). Also carries the « prestations
  * déjà payées » lines (Pack / Abonnement, ADR 0017) — prepaid, not a Remise, so listed above the
  * discounts and not counted in `totalDiscount`. Shared by the receipt step and the read-only
- * receipt in Récap des ventes so the two never drift. Renders nothing when the sale carries
+ * receipt in la vue Ventes de l’Accueil so the two never drift. Renders nothing when the sale carries
  * neither a discount nor a coverage.
  */
 export function DiscountBreakdown({ sale, className, showReason = false }: { sale: Sale; className?: string; showReason?: boolean }) {

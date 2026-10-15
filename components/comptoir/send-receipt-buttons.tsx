@@ -10,7 +10,7 @@ import type { Cliente } from "@/lib/data/types";
 
 /**
  * Envoi du reçu — simulé (aucun backend). Les deux mêmes boutons servent l'écran reçu du Comptoir
- * (juste après l'encaissement) et le reçu historique du Récap des ventes. Rien ne s'affiche quand
+ * (juste après l'encaissement) et le reçu historique du la vue Ventes de l’Accueil. Rien ne s'affiche quand
  * la vente n'a pas de cliente rattachée ; chaque bouton est désactivé si son canal manque.
  */
 export function SendReceiptButtons({

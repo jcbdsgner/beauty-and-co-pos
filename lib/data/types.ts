@@ -514,6 +514,10 @@ export type Sale = {
   loyaltyPointsEarned?: number;
   createdAt: string;
   encaisseeAt?: string;
+  /** Salon où la vente est entrée en caisse (ADR 0043) — posé à « Confirmer l'encaissement » :
+   *  celui de la réservation d'origine, sinon celui du poste. Lu par le filtre de salon de la vue
+   *  Ventes de l'Accueil. */
+  salonId?: string;
 };
 
 export type StyleCategory = "coiffure" | "ongles" | "soin-visage" | "massage";

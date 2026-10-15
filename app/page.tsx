@@ -17,6 +17,7 @@ import { AccueilCalendar } from "@/components/journee/accueil-calendar";
 import { AccueilDayList } from "@/components/journee/accueil-day-list";
 import { AccueilAlerts } from "@/components/journee/accueil-alerts";
 import { AccueilPointage } from "@/components/journee/accueil-pointage";
+import { AccueilVentes } from "@/components/journee/accueil-ventes";
 import { useEncaissement } from "@/components/journee/use-encaissement";
 import { useAppData } from "@/components/providers/app-data-provider";
 import { dateISO, groupDayByReservation, reservationDate, todayISO } from "@/lib/data/planning";
@@ -27,6 +28,9 @@ import { POSTE_SALON_ID, useSession } from "@/lib/session";
 import type { Cliente, RendezVous } from "@/lib/data/types";
 
 type AccueilView = "liste" | "calendrier";
+
+/** Les deux vues de la section : les rendez-vous (défaut) ou ce qui est entré en caisse (ADR 0043). */
+type AccueilSection = "rendez-vous" | "ventes";
 
 /** Filtre de salon de l'Accueil (ADR 0028, étendu au-delà du Planning) — "tous" montre les deux
  *  salons sans distinction, le défaut, cohérent avec le comportement historique non filtré. */
@@ -64,7 +68,8 @@ function reservationNumberMatches(reservationId: string, q: string): boolean {
  * par jour puis par tranche de 2h, docs/adr/0018) et **Calendrier** (rail heures, un bloc = une
  * réservation, docs/adr/0019) — le Calendrier ne couvrant qu'un seul jour, il n'est proposé que
  * quand Du = Au. Plus de bloc de
- * compteurs : la journée est là, la file a son lien.
+ * compteurs : la journée est là, la file a son lien. La section se bascule aussi vers **Ventes**
+ * (ADR 0043) — ce qui est entré en caisse sur la même période, avec la même recherche.
  */
 export default function AccueilPage() {
   return (
@@ -98,13 +103,17 @@ function AccueilPageInner() {
   // quitte l'Accueil vers la fiche, et sans ça la recherche se perdait au retour (passe impeccable
   // du 22/09). `ClientMatchCard` relaie `q` à la fiche pour reconstruire le lien "Retour à l'Accueil".
   const query = searchParams.get("q") ?? "";
-  function setQuery(next: string) {
+  function setParam(key: string, next: string) {
     const params = new URLSearchParams(searchParams.toString());
-    if (next) params.set("q", next);
-    else params.delete("q");
+    if (next) params.set(key, next);
+    else params.delete(key);
     const qs = params.toString();
     router.replace(qs ? `/?${qs}` : "/", { scroll: false });
   }
+  const setQuery = (next: string) => setParam("q", next);
+  // Rendez-vous / Ventes (ADR 0043) — dans l'URL comme la recherche, pour revenir sur la même vue.
+  const section: AccueilSection = searchParams.get("vue") === "ventes" ? "ventes" : "rendez-vous";
+  const setSection = (next: AccueilSection) => setParam("vue", next === "ventes" ? "ventes" : "");
   const [salonFilter, setSalonFilter] = useState<string>(POSTE_SALON_ID);
   const todayIso = todayISO();
   const [persoStart, setPersoStart] = useState(todayIso);
@@ -208,8 +217,15 @@ function AccueilPageInner() {
 
       <section>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3 pl-1">
-          <Legend size="section">Rendez-vous</Legend>
-          {canShowCalendar && (reservationRows.length > 0 || calendarWhenEmpty) && (
+          <SegmentedToggle
+            value={section}
+            onChange={(v) => setSection(v as AccueilSection)}
+            options={[
+              { value: "rendez-vous", label: "Rendez-vous" },
+              { value: "ventes", label: "Ventes" },
+            ]}
+          />
+          {section === "rendez-vous" && canShowCalendar && (reservationRows.length > 0 || calendarWhenEmpty) && (
             <SegmentedToggle
               value={view}
               onChange={(v) => setView(v as AccueilView)}
@@ -224,7 +240,7 @@ function AccueilPageInner() {
         {/* Recherche à gauche, dates Du/Au calées à droite (Figma 362:470). */}
         <div className="mb-4 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           <SearchInput
-            placeholder="Cliente ou n° de rendez-vous"
+            placeholder={section === "ventes" ? "Cliente ou n° de vente / rendez-vous" : "Cliente ou n° de rendez-vous"}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="flex-1 sm:max-w-sm"
@@ -236,7 +252,7 @@ function AccueilPageInner() {
           </div>
         </div>
 
-        {clientMatches.length > 0 && (
+        {section === "rendez-vous" && clientMatches.length > 0 && (
           <div className="mb-5 flex flex-col gap-2">
             <Legend size="section">Clientes</Legend>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -247,7 +263,14 @@ function AccueilPageInner() {
           </div>
         )}
 
-        {reservationRows.length === 0 && !(effectiveView === "calendrier" && calendarWhenEmpty) ? (
+        {section === "ventes" ? (
+          <AccueilVentes
+            rangeStart={rangeStart}
+            rangeEnd={rangeEnd}
+            query={query}
+            salonFilter={salonFilter}
+          />
+        ) : reservationRows.length === 0 && !(effectiveView === "calendrier" && calendarWhenEmpty) ? (
           <div className="rounded-field border border-dashed border-base-300 px-4 py-12 text-center">
             <p className="font-[family-name:var(--font-heading)] text-[15px] font-semibold text-base-content/60">
               {query ? "Aucun résultat" : closedSalon ? `${closedSalon.name} est fermé le ${closedWeekday}` : "Journée libre"}

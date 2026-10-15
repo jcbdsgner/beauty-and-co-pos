@@ -14,7 +14,7 @@ const MODE_LABEL = { wave: "Wave", orange_money: "Orange Money", especes: "Espè
 /**
  * Read-only reçu — same visual structure as the Comptoir's ReceiptStep (never a re-typed
  * duplicate), minus its post-encaissement actions ("Imprimer", "Nouvelle vente"…), which don't
- * belong on a historical lookup from Récap des ventes. Per USERFLOW.md § Récap des ventes.
+ * belong on a historical lookup from the Accueil « Ventes » view (ADR 0043).
  */
 export function ReceiptView({ sale }: { sale: Sale }) {
   const { clients } = useAppData();
