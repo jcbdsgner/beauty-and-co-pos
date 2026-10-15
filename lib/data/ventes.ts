@@ -4,7 +4,7 @@ import { BOISSONS } from "@/lib/data/boissons";
 import { SALONS, salonById } from "@/lib/data/entreprises";
 import { dateISO } from "@/lib/data/planning";
 import { isSalonClosed } from "@/lib/data/praticiennes";
-import type { CartLine, DepositMode, PaymentMode, Reservation, Sale } from "@/lib/data/types";
+import type { CartLine, DepositMode, PaymentMode, RemiseAccordee, Reservation, Sale } from "@/lib/data/types";
 
 /**
  * Vue « Ventes » de l'Accueil (ADR 0043) — tout ce qui est entré en caisse sur une période : les
@@ -125,6 +125,7 @@ function mulberry32(seed: number) {
 }
 
 const HISTORY_DAYS = 35;
+const REMISE_REASONS = ["Cliente fidèle", "Retard de la praticienne", "Geste commercial", "Anniversaire", "Retouche offerte"];
 const MODES: PaymentMode[] = ["especes", "carte", "wave", "orange_money"];
 const MODE_WEIGHTS = [0.3, 0.2, 0.32, 0.18];
 
@@ -145,6 +146,9 @@ export function generateSalesHistory(now = new Date()): Sale[] {
   const salons = SALONS.filter((s) => s.active);
   const sales: Sale[] = [];
   let seq = 0;
+  // La première vente de prestations du jour aux Almadies cumule tout (remise, points, deux parts,
+  // pourboire) : un ticket complet toujours à portée pour la démo.
+  let showcaseDone = false;
 
   for (let offset = HISTORY_DAYS; offset >= 0; offset--) {
     const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() - offset);
@@ -182,16 +186,45 @@ export function generateSalesHistory(now = new Date()): Sale[] {
           line("boisson", pick(boissons), 1 + Math.floor(rand() * 2));
         }
 
-        const total = cart.reduce((sum, l) => sum + l.unitPrice * l.qty, 0);
+        const subtotal = cart.reduce((sum, l) => sum + l.unitPrice * l.qty, 0);
+        const serviceLines = cart.filter((l) => l.kind === "service");
+        const showcase = !showcaseDone && offset === 0 && salon.id === "almadies" && serviceLines.length > 0 && clientId !== null;
+        if (showcase) showcaseDone = true;
+
+        // Remise accordée sur les prestations (ADR 0031) — même calcul que `computeTotals` pour une
+        // remise unique sans prestation couverte : % de l'assiette, ou montant plafonné à 20 %.
+        const remises: RemiseAccordee[] = [];
+        let remiseAmount = 0;
+        if (serviceLines.length > 0 && (showcase || rand() < 0.22)) {
+          const base = serviceLines.reduce((sum, l) => sum + l.unitPrice * l.qty, 0);
+          const pct = showcase ? 15 : pick([5, 10, 10, 15, 20]);
+          const flat = !showcase && rand() < 0.3;
+          const value = flat ? Math.min(pick([2000, 5000, 10000]), Math.round(base * 0.2)) : pct;
+          remiseAmount = flat ? value : Math.round((base * pct) / 100);
+          const overTen = remiseAmount > Math.round(base * 0.1);
+          remises.push({
+            id: `hr-${seq}`,
+            lineIds: serviceLines.map((l) => l.id),
+            mode: flat ? "montant" : "pourcentage",
+            value,
+            ...(overTen && { managerCode: `MGR-${100 + Math.floor(rand() * 900)}` }),
+          });
+        }
+        const pointsUsed = clientId && (showcase || rand() < 0.12) ? pick([100, 200, 300]) : 0;
+        const total = Math.max(0, subtotal - remiseAmount - Math.floor(pointsUsed / 100) * 1000);
+
         const modes: { mode: PaymentMode; amount: number }[] = [];
-        if (total >= 30000 && rand() < 0.2) {
+        if (showcase) {
+          const first = Math.round((total * 0.6) / 1000) * 1000;
+          modes.push({ mode: "especes", amount: total - first }, { mode: "wave", amount: first });
+        } else if (total >= 30000 && rand() < 0.2) {
           const first = Math.round((total * (0.3 + rand() * 0.4)) / 1000) * 1000;
           modes.push({ mode: pickMode(), amount: first }, { mode: pickMode(), amount: total - first });
         } else {
           modes.push({ mode: pickMode(), amount: total });
         }
         const hasService = cart.some((l) => l.kind === "service");
-        const tipAmount = hasService && rand() < 0.25 ? pick([2000, 2000, 5000, 5000, 10000]) : 0;
+        const tipAmount = showcase ? 5000 : hasService && rand() < 0.25 ? pick([2000, 2000, 5000, 5000, 10000]) : 0;
 
         sales.push({
           id: `sale-h${String(seq).padStart(4, "0")}-${Math.floor(rand() * 36 ** 5).toString(36).padStart(5, "0")}`,
@@ -199,13 +232,17 @@ export function generateSalesHistory(now = new Date()): Sale[] {
           clientId,
           cart,
           giftCardApplied: null,
-          loyaltyPointsUsed: 0,
+          loyaltyPointsUsed: pointsUsed,
           coverage: [],
-          remises: [],
-          remiseReason: null,
+          remises,
+          remiseReason: remises.length ? pick(REMISE_REASONS) : null,
           status: "encaissee",
           step: "recu",
-          payment: { modes },
+          // Espèces de la vente vitrine : billet arrondi au 5 000 supérieur, monnaie rendue ; le
+          // pourboire suit la dernière part (Wave), pas les espèces.
+          payment: showcase
+            ? { modes, cashReceived: Math.ceil(modes[0].amount / 5000) * 5000, change: Math.ceil(modes[0].amount / 5000) * 5000 - modes[0].amount }
+            : { modes },
           ...(tipAmount > 0 && { tip: { amount: tipAmount, mode: modes[modes.length - 1].mode } }),
           loyaltyPointsEarned: clientId ? Math.floor(total / 1000) * 10 : 0,
           salonId: salon.id,

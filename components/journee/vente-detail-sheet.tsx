@@ -1,5 +1,6 @@
 "use client";
 
+import { Fragment } from "react";
 import Link from "next/link";
 import { ArrowUpRight, Coffee, ShoppingBag, Sparkles } from "lucide-react";
 import { Avatar } from "@/components/ui/atoms/avatar";
@@ -135,11 +136,14 @@ function VenteBody({ entry, client }: { entry: Extract<CaisseEntry, { type: "ven
         <Legend>Règlement</Legend>
         <div className="flex flex-col gap-1 text-sm">
           {(sale.payment?.modes ?? []).map((m, i) => (
-            <Row key={i} label={PAYMENT_MODE_LABEL[m.mode]} value={formatFcfa(m.amount)} />
+            <Fragment key={i}>
+              <Row label={PAYMENT_MODE_LABEL[m.mode]} value={formatFcfa(m.amount)} />
+              {/* Reçu / rendu sous la part en espèces (une seule par vente, ADR 0031). */}
+              {m.mode === "especes" && sale.payment?.cashReceived !== undefined && (
+                <Row label="Reçu · rendu" value={`${formatFcfa(sale.payment.cashReceived)} · ${formatFcfa(sale.payment.change ?? 0)}`} muted />
+              )}
+            </Fragment>
           ))}
-          {sale.payment?.cashReceived !== undefined && (
-            <Row label="Espèces reçues · rendu" value={`${formatFcfa(sale.payment.cashReceived)} · ${formatFcfa(sale.payment.change ?? 0)}`} muted />
-          )}
           {(sale.payment?.modes.length ?? 0) > 1 && <Row label="Encaissé" value={formatFcfa(t.amountDue)} strong />}
           {sale.tip && <Row label={`Pourboire · ${PAYMENT_MODE_LABEL[sale.tip.mode]}`} value={formatFcfa(sale.tip.amount)} muted />}
           {client && <Row label="Points gagnés" value={`+${sale.loyaltyPointsEarned ?? 0} pts · solde ${client.points} pts`} muted />}
